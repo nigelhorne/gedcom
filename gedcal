@@ -1,0 +1,201 @@
+#!/usr/bin/env perl
+
+# Author Nigel Horne: njh@bandsman.co.uk
+# Copyright (C) 2012-2014, Nigel Horne
+
+# Usage is subject to licence terms.
+# The licence terms of this software are as follows:
+# Personal single user, single computer use: GPL2
+# All other users (including Commercial, Charity, Educational, Government)
+#	must apply in writing for a licence for use from Nigel Horne at the
+#	above e-mail.
+
+use strict;
+use warnings;
+use diagnostics;
+
+use Gedcom;
+use Date::Parse;	# For strptime
+
+die "Usage: $0 filename\n" unless($ARGV[0]);
+
+my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
+
+my($day, $month) = (localtime)[3,4];
+
+foreach my $person($ged->individuals()) {
+	# Gather the information on this person
+	my $name = $person->name();
+
+	# print "$name\n";
+	if($name =~ /(.+)\s*Jr\.?/i) {
+		$name = $1;
+	}
+	if($name =~ /(.+)Mc\s+(.+)/) {
+		$name = "$1$2";
+	}
+	$name =~ s/[\(\)]//g;
+
+	next unless($name =~ /^(.+)\s+\/(.+)\/$/);
+
+	my ($firstname, $middlename, $lastname);
+	$firstname = lc($1);
+	$lastname = lc($2);
+
+	next unless($firstname && $lastname);
+
+	if($firstname =~ /(.+)?\s+(.+)/) {
+		$firstname = $1;
+		unless($2 eq $lastname) {
+			$middlename = $2;
+		}
+	}
+
+	my $dob;
+	eval {
+		$dob = $person->get_value('birth date');
+	};
+	if($@) {
+		warn "Can't parse record for $firstname $lastname";
+		next;
+	}
+
+	my $dod = $person->get_value('death date') ? $person->get_value('death date') : $person->get_value('burial date');
+
+	my $yod;	# Year of death
+	if($dod && ($dod =~ /.*?(\d{3,4})/)) {
+		$yod = $1;
+	}
+
+	# unless($dob) {
+		# $dob = $person->get_value('baptism date');
+	# }
+
+	my $yob;	# Year of birth
+	if($dob && ($dob =~ /.*?(\d{3,4})/)) {
+		$yob = $1;
+	} elsif($dob) {
+		print $person->name() . ": invalid date of birth $dob\n";
+		$yob = undef;
+	} else {
+		$yob = $dob;
+	}
+
+	if((!defined($yod)) && defined($yob) && ($yob > 1900)) {
+		# Assuming living if we don't have a date of death and
+		# they were born after 1900
+		next;
+	}
+
+	# Change surname of a married woman
+	my $sex = $person->get_value('sex');
+	my $maidenname;
+	if(defined($sex) && ($sex eq 'F')) {
+		my $husband = $person->husband();
+		if(defined($husband)) {
+			my $hname = $husband->name();
+			if($hname =~ /(.+)\s*Jr\.?/i) {
+				$hname = $1;
+			}
+			if($hname =~ /(.+)Mc\s+(.+)/) {
+				$hname = "$1$2";
+			}
+			# print $person->name() . " married to $hname\n";
+			if($hname =~ /^.+\s+\/(.+)\/$/) {
+				$maidenname = $lastname;
+				$lastname = lc($1);
+			}
+		}
+	}
+
+	# Remove alternatives - go with the first
+	# TODO: try both alternatives
+	if($lastname =~ /(.+)[\/\\]/) {
+		$lastname = $1;
+	}
+	if($firstname =~ /(.+)[\/\\]/) {
+		$firstname = $1;
+	}
+
+	unless($dob || $dod) {
+		next;
+	}
+
+	my %params = (
+		dob => $yob,
+		dod => $yod,
+		# dcsp => $dcsp,
+		firstname => $firstname,
+		middlename => $middlename,
+		lastname => $lastname,
+		maidenname => $maidenname,
+	);
+
+	my $print = 0;
+
+	if($dob) {
+		my @btime = strptime($dob . ' 12:00');
+		if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month)) {
+			$print = 1;
+		}
+	}
+	if($dod) {
+		my @dtime = strptime($dod . ' 12:00');
+		if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month)) {
+			$print = 1;
+		}
+	}
+	if($print) {
+		print stringify(\%params), "\n";
+
+		if(defined($dob)) {
+			print "\tBorn: $dob\n";
+		}
+		if(defined($dod)) {
+			print "\tDied: $dod\n";
+		}
+	}
+}
+
+# Pretty print a person
+sub stringify {
+	my $params = shift;
+
+	my $dob = $$params{dob};
+	my $dod = $$params{dod};
+	my $dcsp = $$params{dcsp};
+	my $firstname = $$params{firstname};
+	my $lastname = $$params{lastname};
+	my $middlename = $$params{middlename};
+	my $maidenname = $$params{maidenname};
+
+	my $rc = ucfirst($lastname);
+
+	if($firstname) {
+		my $f = ucfirst($firstname);
+		$rc .= ", $f";
+		if($middlename) {
+			$f = ucfirst($middlename);
+			$rc .= " $f";
+		}
+	}
+
+	if($maidenname && ($maidenname ne $lastname)) {
+		my $m = ucfirst($maidenname);
+		$rc .= " (nee $m)";
+	}
+
+	$rc .= ' ';
+
+	if($dob) {
+		$rc .= $dob;
+	}
+
+	$rc .= '-';
+
+	if($dod) {
+		$rc .= "$dod";
+	}
+
+	return $rc;
+}
