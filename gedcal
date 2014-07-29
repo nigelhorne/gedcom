@@ -109,7 +109,6 @@ foreach my $person($ged->individuals()) {
 	}
 
 	# Remove alternatives - go with the first
-	# TODO: try both alternatives
 	if($lastname =~ /(.+)[\/\\]/) {
 		$lastname = $1;
 	}
