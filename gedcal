@@ -11,6 +11,7 @@
 #	above e-mail.
 
 # -a: all days otherwise just today
+# -l: ignore living people
 # -w: print warning about invalid day
 
 use strict;
@@ -23,26 +24,26 @@ use Getopt::Std;
 
 my %opts;
 
-getopts('aw', \%opts);
-die "Usage: $0 [ -a ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('alw', \%opts);
+die "Usage: $0 [ -a ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 if($opts{a}) {
 	my $year = (localtime)[5];
-	foreach my $month(1..12) {
+	foreach my $month(0..11) {
 		foreach my $day(1..28) {
 			generate(day => $day, month => $month);
 		}
-		if(($month == 2) && (($year % 4) || ($year % 400))) {
+		if(($month == 1) && (($year % 4) || ($year % 400))) {
 			next;
 		}
 		generate(day => 29, month => $month);
-		if($month == 2) {
+		if($month == 1) {
 			next;
 		}
 		generate(day => 30, month => $month);
-		if(($month == 1) || ($month == 3) || ($month == 5) || ($month == 7) || ($month == 8) || ($month == 10) || ($month == 12)) {
+		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
 			generate(day => 31, month => $month);
 		}
 	}
@@ -62,7 +63,7 @@ sub generate {
 		my $name = $person->name();
 
 		# print "$name\n";
-		if($name =~ /(.+)\s*Jr\.?/i) {
+		if($name =~ /(.+?)\s*[SJ]r\.?/i) {
 			$name = $1;
 		}
 		if($name =~ /(.+)Mc\s+(.+)/) {
@@ -117,7 +118,7 @@ sub generate {
 			$yob = $dob;
 		}
 
-		if((!defined($yod)) && defined($yob) && ($yob > 1900)) {
+		if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
 			# Assuming living if we don't have a date of death and
 			# they were born after 1900
 			next;
@@ -217,8 +218,13 @@ sub stringify {
 	}
 
 	if($maidenname && ($maidenname ne $lastname)) {
-		my $m = ucfirst($maidenname);
-		$rc .= " (nee $m)";
+		foreach(split / /, $maidenname) {
+			if($_ ne $lastname) {
+				my $m .= ucfirst($_);
+				$rc .= " (nee $m)";
+				last;
+			}
+		}
 	}
 
 	$rc .= ' ';
@@ -230,7 +236,7 @@ sub stringify {
 	$rc .= '-';
 
 	if($dod) {
-		$rc .= "$dod";
+		$rc .= $dod;
 	}
 
 	return $rc;
