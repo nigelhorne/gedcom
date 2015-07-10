@@ -10,6 +10,8 @@
 #	must apply in writing for a licence for use from Nigel Horne at the
 #	above e-mail.
 
+# TODO: Use Gedcom::Date - needs a couple of bug fixes in that first though
+
 # -a: all days otherwise just today
 # -l: ignore living people
 # -w: print warning about invalid day
@@ -19,6 +21,7 @@ use warnings;
 use diagnostics;
 
 use Gedcom;
+use Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 
@@ -184,10 +187,20 @@ sub generate {
 			print stringify(\%params), "\n";
 
 			if(defined($dob)) {
-				print "\tBorn: $dob\n";
+				# my $d = Gedcom::Date::parse($dob);
+				# if($d) {
+					# print "\tBorn: $d->as_text()\n";
+				# } else {
+					print "\tBorn: $dob\n";
+				# }
 			}
 			if(defined($dod)) {
-				print "\tDied: $dod\n";
+				# my $d = Gedcom::Date::parse($dob);
+				# if($d) {
+					# print "\tDied: $d->as_text()\n";
+				# } else {
+					print "\tDied: $dod\n";
+				# }
 			}
 		}
 	}
