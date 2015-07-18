@@ -27,7 +27,7 @@ use Getopt::Std;
 
 my %opts;
 
-getopts('alw', \%opts);
+getopts('adlw', \%opts);
 die "Usage: $0 [ -a ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
@@ -65,7 +65,7 @@ sub generate {
 		# Gather the information on this person
 		my $name = $person->name();
 
-		# print "$name\n";
+		print "$name\n" if($opts{d});
 		if($name =~ /(.+?)\s*[SJ]r\.?/i) {
 			$name = $1;
 		}
@@ -74,11 +74,14 @@ sub generate {
 		}
 		$name =~ s/[\(\)]//g;
 
-		next unless($name =~ /^(.+)\s+\/(.+)\/$/);
+		print "Sanity check $name\n" if($opts{d});
+		next unless($name =~ /^(.+)\s+\/(.+)\/(.*)/);
+		print "Sanity check $name passed\n" if($opts{d});
 
-		my ($firstname, $middlename, $lastname);
+		my ($firstname, $middlename, $lastname, $suffix);
 		$firstname = lc($1);
 		$lastname = lc($2);
+		$suffix = $3;
 
 		next unless($firstname && $lastname);
 
@@ -88,6 +91,8 @@ sub generate {
 				$middlename = $2;
 			}
 		}
+
+		$suffix =~ s/^\s+//;
 
 		my $dob;
 		eval {
@@ -167,7 +172,10 @@ sub generate {
 			middlename => $middlename,
 			lastname => $lastname,
 			maidenname => $maidenname,
+			suffix => $suffix,
 		);
+
+		print 'Checking ', stringify(\%params), "\n" if($opts{'d'});
 
 		my $print = 0;
 
@@ -216,6 +224,7 @@ sub stringify {
 	my $lastname = $$params{lastname};
 	my $middlename = $$params{middlename};
 	my $maidenname = $$params{maidenname};
+	my $suffix = $$params{suffix};
 
 	my $rc = ucfirst($lastname);
 
@@ -236,6 +245,10 @@ sub stringify {
 				last;
 			}
 		}
+	}
+
+	if($suffix) {
+		$rc .= " $suffix";
 	}
 
 	$rc .= ' ';
