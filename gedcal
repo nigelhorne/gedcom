@@ -11,14 +11,18 @@
 #	above e-mail.
 
 # TODO: Use Gedcom::Date - needs a couple of bug fixes in that first though
+# FIXME: -a Goes through the entire file once for each day without remembering
+#	anything
 
 # -a: all days otherwise just today
+# -d: give a detailed lifetime information about the person
 # -l: ignore living people
+# -v: verbose - for debugging
 # -w: print warning about invalid day
 
 use strict;
 use warnings;
-use diagnostics;
+# use diagnostics;
 
 use Gedcom;
 use Gedcom::Date;
@@ -27,21 +31,16 @@ use Getopt::Std;
 
 my %opts;
 
-getopts('adlw', \%opts);
-die "Usage: $0 [ -a ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('adlwv', \%opts);
+die "Usage: $0 [ -a ] [ -d ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 if($opts{a}) {
-	my $year = (localtime)[5];
 	foreach my $month(0..11) {
-		foreach my $day(1..28) {
+		foreach my $day(1..29) {
 			generate(day => $day, month => $month);
 		}
-		if(($month == 1) && (($year % 4) || ($year % 400))) {
-			next;
-		}
-		generate(day => 29, month => $month);
 		if($month == 1) {
 			next;
 		}
@@ -65,7 +64,7 @@ sub generate {
 		# Gather the information on this person
 		my $name = $person->name();
 
-		print "$name\n" if($opts{d});
+		print "$name\n" if($opts{v});
 		if($name =~ /(.+?)\s*[SJ]r\.?/i) {
 			$name = $1;
 		}
@@ -74,9 +73,9 @@ sub generate {
 		}
 		$name =~ s/[\(\)]//g;
 
-		print "Sanity check $name\n" if($opts{d});
+		print "Sanity check $name\n" if($opts{v});
 		next unless($name =~ /^(.+)\s+\/(.+)\/(.*)/);
-		print "Sanity check $name passed\n" if($opts{d});
+		print "Sanity check $name passed\n" if($opts{v});
 
 		my ($firstname, $middlename, $lastname, $suffix);
 		$firstname = lc($1);
@@ -175,7 +174,7 @@ sub generate {
 			suffix => $suffix,
 		);
 
-		print 'Checking ', stringify(\%params), "\n" if($opts{'d'});
+		print 'Checking ', stringify(\%params), "\n" if($opts{'v'});
 
 		my $print = 0;
 
@@ -192,9 +191,34 @@ sub generate {
 			}
 		}
 		if($print) {
-			print stringify(\%params), "\n";
+			print $person->as_string({
+				include_years => 1,
+				nee => 1,
+			}), "\n";
 
-			if(defined($dob)) {
+			if($opts{d}) {
+				print "\t", $person->given_names(), ' was born';
+				my @father = $person->father();
+				my $father = $father[0];
+				my @mother = $person->mother();
+				my $mother = $mother[0];
+				if($father || $mother) {
+					print ' to';
+					if($father) {
+						print ' ', $father->as_string();
+						if($mother) {
+							print ' and';
+						}
+					}
+					if($mother) {
+						print ' ', $mother->as_string({ give_maidenname => 0 });
+					}
+				}
+				if(defined($dob)) {
+					print " on $dob";
+				}
+				print '.';
+			} elsif(defined($dob)) {
 				# my $d = Gedcom::Date::parse($dob);
 				# if($d) {
 					# print "\tBorn: $d->as_text()\n";
@@ -203,13 +227,30 @@ sub generate {
 				# }
 			}
 			if(defined($dod)) {
-				# my $d = Gedcom::Date::parse($dob);
-				# if($d) {
-					# print "\tDied: $d->as_text()\n";
-				# } else {
-					print "\tDied: $dod\n";
-				# }
+				if($opts{d}) {
+					my $sex = $person->get_value('sex');
+					if(defined($sex)) {
+						if($sex eq 'F') {
+							print ' She ';
+						} elsif($sex eq 'M') {
+							print ' He ';
+						} else {
+							print ' They ';
+						}
+					} else {
+						print ' They ';
+					}
+					print "died on $dod.";
+				} else {
+					# my $d = Gedcom::Date::parse($dob);
+					# if($d) {
+						# print "\tDied: $d->as_text()\n";
+					# } else {
+						print "\tDied: $dod";
+					# }
+				}
 			}
+			print "\n";
 		}
 	}
 }
@@ -264,4 +305,83 @@ sub stringify {
 	}
 
 	return $rc;
+}
+
+sub Gedcom::Individual::as_string
+{
+	my $self = shift;
+	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $surname = $self->surname();
+
+	if($args{'nee'}) {
+		my $sex = $self->get_value('sex');
+		if(defined($sex) && ($sex eq 'F')) {
+			my $husband = $self->husband();
+			if(defined($husband)) {
+				$surname = $husband->surname();
+			}
+		}
+	}
+
+	my $rc = normalize_name($surname);
+
+	if($self->given_names()) {
+		$rc .= ',';
+
+		foreach my $name(split(' ', $self->given_names())) {
+			$rc .= ' ' . normalize_name($name);
+		}
+	}
+
+	if($args{'nee'} && ($surname ne $self->surname())) {
+		$rc .= ' (nee ' . normalize_name($self->surname()) . ')';
+	}
+
+	if($args{'include_years'}) {
+		my $dob = $self->get_value('birth date');
+
+		my $yob;	# Year of birth
+		if($dob && ($dob =~ /.*?(\d{3,4})/)) {
+			$yob = $1;
+		} else {
+			$dob = $self->get_value('baptism date');
+			if($dob && ($dob =~ /.*?(\d{3,4})/)) {
+				$yob = "c$1";
+			}
+		}
+
+		my $dod = $self->get_value('death date');
+
+		my $yod;	# Year of death
+		if($dod && ($dod =~ /.*?(\d{3,4})/)) {
+			$yod = $1;
+		} else {
+			$dod = $self->get_value('burial date');
+			if($dod && ($dod =~ /.*?(\d{3,4})/)) {
+				$yod = "c$1";
+			}
+		}
+
+		$rc .= ' ';
+
+		if($yob) {
+			$rc .= $yob;
+		}
+
+		$rc .= ' -';
+
+		if($yod) {
+			$rc .= " $yod";
+		}
+	}
+
+	return $rc;
+}
+
+sub normalize_name
+{
+	my $name = shift;
+
+	return ucfirst(lc($name));
 }
