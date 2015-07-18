@@ -194,10 +194,12 @@ sub generate {
 			print $person->as_string({
 				include_years => 1,
 				nee => 1,
+				middle_names => 1,
 			}), "\n";
 
 			if($opts{d}) {
-				print "\t", $person->given_names(), ' was born';
+				my $first_name = (split(/ /, $person->given_names()))[0];
+				print "\t$first_name was born";
 				my @father = $person->father();
 				my $father = $father[0];
 				my @mother = $person->mother();
@@ -331,6 +333,7 @@ sub Gedcom::Individual::as_string
 
 		foreach my $name(split(' ', $self->given_names())) {
 			$rc .= ' ' . normalize_name($name);
+			last unless($args{'middle_names'});
 		}
 	}
 
