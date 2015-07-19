@@ -197,6 +197,9 @@ sub generate {
 				middle_names => 1,
 			}), "\n";
 
+			my $sex = $person->get_value('sex');
+			my $spouse = $person->spouse();
+
 			if($opts{d}) {
 				my $first_name = (split(/ /, $person->given_names()))[0];
 				print "\t$first_name was born";
@@ -220,6 +223,28 @@ sub generate {
 					print " on $dob";
 				}
 				print '.';
+				# TODO: $person->marriage_count()
+				if($spouse) {
+					if(defined($sex)) {
+						if($sex eq 'F') {
+							print ' She';
+						} elsif($sex eq 'M') {
+							print ' He';
+						} else {
+							print ' They';
+						}
+					} else {
+						print ' They';
+					}
+					print ' married ', $spouse->as_string();
+					my $dom = $person->get_value('marriage date');
+					if($dom) {
+						print " on $dom";
+					}
+					unless($dod) {
+						print '.';
+					}
+				}
 			} elsif(defined($dob)) {
 				# my $d = Gedcom::Date::parse($dob);
 				# if($d) {
@@ -230,19 +255,20 @@ sub generate {
 			}
 			if(defined($dod)) {
 				if($opts{d}) {
-					my $sex = $person->get_value('sex');
-					if(defined($sex)) {
+					if($spouse) {
+						print ' and';
+					} elsif(defined($sex)) {
 						if($sex eq 'F') {
-							print ' She ';
+							print ' She';
 						} elsif($sex eq 'M') {
-							print ' He ';
+							print ' He';
 						} else {
-							print ' They ';
+							print ' They';
 						}
 					} else {
-						print ' They ';
+						print ' They';
 					}
-					print "died on $dod.";
+					print " died on $dod.";
 				} else {
 					# my $d = Gedcom::Date::parse($dob);
 					# if($d) {
