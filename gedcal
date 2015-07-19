@@ -225,18 +225,7 @@ sub generate {
 				print '.';
 				# TODO: $person->marriage_count()
 				if($spouse) {
-					if(defined($sex)) {
-						if($sex eq 'F') {
-							print ' She';
-						} elsif($sex eq 'M') {
-							print ' He';
-						} else {
-							print ' They';
-						}
-					} else {
-						print ' They';
-					}
-					print ' married ', $spouse->as_string();
+					print ' ', $person->pronoun(), ' married ', $spouse->as_string();
 					my $dom = $person->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
@@ -257,16 +246,8 @@ sub generate {
 				if($opts{d}) {
 					if($spouse) {
 						print ' and';
-					} elsif(defined($sex)) {
-						if($sex eq 'F') {
-							print ' She';
-						} elsif($sex eq 'M') {
-							print ' He';
-						} else {
-							print ' They';
-						}
 					} else {
-						print ' They';
+						print ' ', $person->pronoun();
 					}
 					print " died on $dod.";
 				} else {
@@ -279,6 +260,40 @@ sub generate {
 				}
 			}
 			print "\n";
+			if($opts{'d'}) {
+				my $family = $person->fams();
+				if((defined($family)) && $family->number_of_children()) {
+					print "\t", $person->pronoun(), ' had ';
+
+					my $child_count = $family->number_of_children();
+					if($child_count == 1) {
+						print "1 child: ";
+						print $family->children()->given_names();
+					} else {
+						print "$child_count children: ";
+
+						my @children_names = map { $_->given_names() } $family->children();
+
+						my $children = join(', ', @children_names);
+						substr($children, rindex($children, ', '), 2, ' and ');
+						print $children;
+					}
+					print ".\n";
+					foreach my $child($family->children()) {
+						if($child->get_value('birth date')) {
+							print "\t\t", $child->given_names();
+							print ' was born on ';
+							print $child->get_value('birth date');
+							print ".\n";
+						} elsif($child->get_value('baptism date')) {
+							print "\t\t", $child->given_names();
+							print ' was born c';
+							print $child->get_value('baptism date');
+							print ".\n";
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -413,4 +428,23 @@ sub normalize_name
 	my $name = shift;
 
 	return ucfirst(lc($name));
+}
+
+sub Gedcom::Individual::pronoun
+{
+	my $self = shift;
+
+	my $sex = $self->get_value('sex');
+
+	if(defined($sex)) {
+		if($sex eq 'F') {
+			return 'She';
+		} elsif($sex eq 'M') {
+			return 'He';
+		} else {
+			return 'They';
+		}
+	} else {
+		return 'They';
+	}
 }
