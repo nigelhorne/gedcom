@@ -202,7 +202,10 @@ sub generate {
 
 			if($opts{d}) {
 				my $first_name = (split(/ /, $person->given_names()))[0];
-				print "\t$first_name was born";
+
+				print $opts{'a'} ? "\n" : "\t";
+
+				print "$first_name was born";
 				my @father = $person->father();
 				my $father = $father[0];
 				my @mother = $person->mother();
@@ -220,12 +223,15 @@ sub generate {
 					}
 				}
 				if(defined($dob)) {
-					print " on $dob";
+					if($dob =~ /^\d{4}$/) {
+						print " in $dob";
+					} else {
+						print " on $dob";
+					}
 				}
-				print ".\n";
 				# TODO: $person->marriage_count()
 				if($spouse) {
-					print "\t", $person->pronoun(), ' was married to ', $spouse->as_string();
+					print ', was married to ', $spouse->as_string();
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
@@ -234,58 +240,54 @@ sub generate {
 					if($marriage) {
 						print ' at ', $marriage->place();
 					}
-					unless($dod) {
-						print '.';
-					}
 				}
 			} elsif(defined($dob)) {
 				# my $d = Gedcom::Date::parse($dob);
 				# if($d) {
 					# print "\tBorn: $d->as_text()\n";
 				# } else {
-					print "\tBorn: $dob\n";
+					print "\tBorn: $dob";
 				# }
 			}
 			if(defined($dod)) {
 				if($opts{d}) {
-					if($spouse) {
-						print ' and';
-					} else {
-						print ' ', $person->pronoun();
-					}
-					print " died on $dod.";
+					print " and died on $dod.";
 				} else {
 					# my $d = Gedcom::Date::parse($dob);
 					# if($d) {
 						# print "\tDied: $d->as_text()\n";
 					# } else {
-						print "\tDied: $dod";
+						print "\n\tDied: $dod";
 					# }
 				}
 			}
-			print "\n";
 			if($opts{'d'}) {
 				$dob = $person->get_value('baptism date');
 				if($dob) {
 					my $baptism = $person->record('baptism');
-					print "\t", $person->pronoun(), ' was baptised ';
+					if($dod) {
+						print '  ', $person->pronoun();
+					} else {
+						print ' and';
+					}
+					print ' was baptised ';
 					if($baptism) {
 						print 'at ', $baptism->place();
-						print ' on ', $baptism->date(), ".\n";
+						print ' on ', $baptism->date(), '.';
 					} else {
-						print " on $dob.\n";
+						print "on $dob.";
 					}
 				}
 				my $family = $person->fams();
 				if((defined($family)) && $family->number_of_children()) {
-					print "\t", $person->pronoun(), ' had ';
+					print '  ', $person->pronoun(), ' had ';
 
 					my $child_count = $family->number_of_children();
 					if($child_count == 1) {
-						print "1 child: ";
+						print "1 child, ";
 						print $family->children()->given_names();
 					} else {
-						print "$child_count children: ";
+						print "$child_count children, ";
 
 						my @children_names = map { $_->given_names() } $family->children();
 
@@ -295,23 +297,32 @@ sub generate {
 					}
 					print ".\n";
 					foreach my $child($family->children()) {
+						print "\t" unless($opts{'a'});
+
 						if($child->get_value('birth date')) {
-							print "\t\t", $child->given_names();
-							print ' was born on ';
-							print $child->get_value('birth date');
+							print "\t", $child->given_names();
+							print ' was born ';
+							my $dob = $child->get_value('birth date');
+							if($dob =~ /^\d{4}$/) {
+								print "in $dob";
+							} else {
+								print "on $dob";
+							}
 							print ".\n";
 						} elsif($child->get_value('baptism date')) {
-							print "\t\t", $child->given_names();
+							print "\t", $child->given_names();
 							print ' was born c';
 							print $child->get_value('baptism date');
 							print ".\n";
 						}
 					}
+				} elsif(!$person->get_value('burial date')) {
+					print "\n";
 				}
 				$dod = $person->get_value('burial date');
 				if($dod) {
 					my $burial = $person->record('burial');
-					print "\t", $person->pronoun(), ' was buried ';
+					print '  ', $person->pronoun(), ' was buried ';
 					if($burial) {
 						print 'at ', $burial->place();
 						print ' on ', $burial->date(), ".\n";
@@ -320,6 +331,10 @@ sub generate {
 					}
 				}
 			}
+			if($opts{'a'} && $opts{'d'}) {
+				print '-' x 80;
+			}
+			print "\n";
 		}
 	}
 }
