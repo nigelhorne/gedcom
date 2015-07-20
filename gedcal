@@ -222,7 +222,8 @@ sub generate {
 				if($relationships{$person}) {
 					my $r = relationship($relationships{$person}, $person->get_value('sex'));
 					if($r) {
-						print ", your $r,";
+						# TODO
+						# print ", your $r,";
 					}
 				}
 
@@ -511,6 +512,7 @@ sub Gedcom::Individual::pronoun
 	}
 }
 
+# TODO: misses some people
 sub build_relationships
 {
 	my $person = shift;
@@ -531,8 +533,6 @@ sub build_relationships
 	if($mother) {
 		build_relationships($mother, $place . 'p');
 	}
-
-	return;	# More complex ones to be done
 
 	if($siblings) {
 		 if(ref($siblings) eq 'ARRAY') {
@@ -570,19 +570,20 @@ die $_->name();
 	}
 }
 
+# FIXME: you get great-cousin instead of cousin once-removed
 sub relationship
 {
 	my $relationship = shift;
 	my $sex = shift;
 
-	return if((!defined($relationship)) || ($relationship eq ''));
+	return '' if((!defined($relationship)) || ($relationship eq ''));
 
-	return unless($sex && ($sex =~ /[MF]/));
+	return '' unless($sex && ($sex =~ /[MF]/));
 
 	$relationship =~ s/pc|cp//g;
 	$relationship =~ s/pSp/pp/g;	# your father's wife's mother is your grandmother
 
-	return if($relationship eq '');
+	return '' if($relationship eq '');
 
 	if($relationship eq 'p') {
 		return ($sex eq 'M') ? 'father' : 'mother';
