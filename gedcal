@@ -9,9 +9,6 @@
 # All other users (including Commercial, Charity, Educational, Government)
 #	must apply in writing for a licence for use from Nigel Horne at the
 #	above e-mail.
-#
-# Try adding this to your crontab:
-#	23 5 * * * gedcal -d gedcom-file.ged
 
 # TODO: Use Gedcom::Date - needs a couple of bug fixes in that first though
 # FIXME: -a Goes through the entire file once for each day without remembering
