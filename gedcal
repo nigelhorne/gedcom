@@ -9,6 +9,9 @@
 # All other users (including Commercial, Charity, Educational, Government)
 #	must apply in writing for a licence for use from Nigel Horne at the
 #	above e-mail.
+#
+# Try adding this to your crontab:
+#	23 5 * * * gedcal -d gedcom-file.ged
 
 # TODO: Use Gedcom::Date - needs a couple of bug fixes in that first though
 # FIXME: -a Goes through the entire file once for each day without remembering
@@ -222,13 +225,17 @@ sub generate {
 				if(defined($dob)) {
 					print " on $dob";
 				}
-				print '.';
+				print ".\n";
 				# TODO: $person->marriage_count()
 				if($spouse) {
-					print ' ', $person->pronoun(), ' married ', $spouse->as_string();
-					my $dom = $person->get_value('marriage date');
+					print "\t", $person->pronoun(), ' was married to ', $spouse->as_string();
+					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
+					}
+					my $marriage = $person->record('marriage') || $spouse->record('marriage');
+					if($marriage) {
+						print ' at ', $marriage->place();
 					}
 					unless($dod) {
 						print '.';
@@ -261,6 +268,17 @@ sub generate {
 			}
 			print "\n";
 			if($opts{'d'}) {
+				$dob = $person->get_value('baptism date');
+				if($dob) {
+					my $baptism = $person->record('baptism');
+					print "\t", $person->pronoun(), ' was baptised ';
+					if($baptism) {
+						print 'at ', $baptism->place();
+						print ' on ', $baptism->date(), ".\n";
+					} else {
+						print " on $dob.\n";
+					}
+				}
 				my $family = $person->fams();
 				if((defined($family)) && $family->number_of_children()) {
 					print "\t", $person->pronoun(), ' had ';
@@ -291,6 +309,17 @@ sub generate {
 							print $child->get_value('baptism date');
 							print ".\n";
 						}
+					}
+				}
+				$dod = $person->get_value('burial date');
+				if($dod) {
+					my $burial = $person->record('burial');
+					print "\t", $person->pronoun(), ' was buried ';
+					if($burial) {
+						print 'at ', $burial->place();
+						print ' on ', $burial->date(), ".\n";
+					} else {
+						print " on $dod.\n";
 					}
 				}
 			}
