@@ -28,13 +28,26 @@ use Gedcom;
 use Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
+use Tie::RefHash;
 
 my %opts;
 
-getopts('adlwv', \%opts);
-die "Usage: $0 [ -a ] [ -d ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('adh:lwv', \%opts);
+die "Usage: $0 [ -a ] [ -d ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
+
+tie my %relationships, 'Tie::RefHash';
+
+if($opts{h}) {
+	my $me = $ged->get_individual($opts{h});
+
+	unless($me) {
+		die "$0: Can't find '$opts{h}' in $ARGV[0]";
+	}
+
+	build_relationships($me, '');
+}
 
 if($opts{a}) {
 	foreach my $month(0..11) {
@@ -205,7 +218,15 @@ sub generate {
 
 				print $opts{'a'} ? "\n" : "\t";
 
-				print "$first_name was born";
+				print $first_name;
+				if($relationships{$person}) {
+					my $r = relationship($relationships{$person}, $person->get_value('sex'));
+					if($r) {
+						print ", your $r,";
+					}
+				}
+
+				print ' was born';
 				my @father = $person->father();
 				my $father = $father[0];
 				my @mother = $person->mother();
@@ -487,5 +508,103 @@ sub Gedcom::Individual::pronoun
 		}
 	} else {
 		return 'They';
+	}
+}
+
+sub build_relationships
+{
+	my $person = shift;
+	my $place = shift;
+
+	return if($relationships{$person});	# already done
+
+	$relationships{$person} = $place;
+
+	my $father = $person->father();
+	my $mother = $person->mother();
+	my $spouse = $person->spouse();
+	my $siblings = $person->siblings();
+	
+	if($father) {
+		build_relationships($father, $place . 'p');
+	}
+	if($mother) {
+		build_relationships($mother, $place . 'p');
+	}
+
+	return;	# More complex ones to be done
+
+	if($siblings) {
+		 if(ref($siblings) eq 'ARRAY') {
+			 foreach(@{$siblings}) {
+				 build_relationships($_, $place . 's');
+			 }
+		 } else {
+			 build_relationships($siblings, $place . 's');
+		 }
+	}
+	my $children;
+	my $family = $person->fams();
+	if($family) {
+		$children = $family->children();
+	}
+
+	if($children) {
+		if(ref($children) eq 'ARRAY') {
+			foreach(@{$children}) {
+die $_->name();
+				build_relationships($_, $place . 'c');
+			}
+		} else {
+			build_relationships($children, $place . 'c');
+		}
+	}
+	if($spouse) {
+		if(ref($spouse) eq 'ARRAY') {
+			foreach(@{$spouse}) {
+				build_relationships($_, $place . 'S');
+			}
+		} else {
+			build_relationships($spouse, $place . 'S');
+		}
+	}
+}
+
+sub relationship
+{
+	my $relationship = shift;
+	my $sex = shift;
+
+	return if((!defined($relationship)) || ($relationship eq ''));
+
+	return unless($sex && ($sex =~ /[MF]/));
+
+	$relationship =~ s/pc|cp//g;
+	$relationship =~ s/pSp/pp/g;	# your father's wife's mother is your grandmother
+
+	return if($relationship eq '');
+
+	if($relationship eq 'p') {
+		return ($sex eq 'M') ? 'father' : 'mother';
+	} elsif($relationship eq 'pp') {
+		return ($sex eq 'M') ? 'grandfather' : 'grandmother';
+	} elsif($relationship eq 'ps') {
+		return ($sex eq 'M') ? 'uncle' : 'aunt';
+	} elsif($relationship eq 'S') {
+		return ($sex eq 'M') ? 'husband' : 'wife';
+	} elsif($relationship eq 's') {
+		return ($sex eq 'M') ? 'brother' : 'sister';
+	} elsif($relationship eq 'psc') {
+		return 'cousin';
+	} else {
+		$relationship =~ /^(.?)(.+)$/;
+		my ($first, $rest) = ($1, $2);
+		if(!defined($first)) {
+			die "'$relationship'";
+		}
+		if($first eq 'p') {
+			return 'great-' . relationship($rest, $sex);
+		}
+		return "RELATIONSHIP TO BE DETERMINED $relationship";
 	}
 }
