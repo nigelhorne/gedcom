@@ -506,6 +506,7 @@ sub Gedcom::Individual::pronoun
 	}
 }
 
+# FIXME: currently only finds ancestors
 # TODO: find in-laws
 # See http://www.myrelative.com/html/relationship.html for inspiration
 sub Gedcom::Individual::relationship
