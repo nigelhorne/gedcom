@@ -28,7 +28,6 @@ use Gedcom;
 use Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
-use Tie::RefHash;
 
 my %opts;
 
@@ -37,16 +36,12 @@ die "Usage: $0 [ -a ] [ -d ] [ -h home-person-name] [ -l ] [ -w ] filename\n" un
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
-tie my %relationships, 'Tie::RefHash';
-
+my $me;
 if($opts{h}) {
-	my $me = $ged->get_individual($opts{h});
-
+	$me = $ged->get_individual($opts{h});
 	unless($me) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
 	}
-
-	build_relationships($me, '');
 }
 
 if($opts{a}) {
@@ -219,11 +214,10 @@ sub generate {
 				print $opts{'a'} ? "\n" : "\t";
 
 				print $first_name;
-				if($relationships{$person}) {
-					my $r = relationship($relationships{$person}, $person->get_value('sex'));
+				if($me) {
+					my $r = $me->relationship($person);
 					if($r) {
-						# TODO
-						# print ", your $r,";
+						print ", your $r,";
 					}
 				}
 
@@ -512,100 +506,147 @@ sub Gedcom::Individual::pronoun
 	}
 }
 
-# TODO: misses some people
-sub build_relationships
+# TODO: find in-laws
+# See http://www.myrelative.com/html/relationship.html for inspiration
+sub Gedcom::Individual::relationship
 {
-	my $person = shift;
-	my $place = shift;
+	my $self = shift;
+	my $other = shift;
 
-	return if($relationships{$person});	# already done
+	my $sex = $other->get_value('sex');
 
-	$relationships{$person} = $place;
-
-	my $father = $person->father();
-	my $mother = $person->mother();
-	my $spouse = $person->spouse();
-	my $siblings = $person->siblings();
-	
-	if($father) {
-		build_relationships($father, $place . 'p');
-	}
-	if($mother) {
-		build_relationships($mother, $place . 'p');
+	if((!defined($sex)) || ($sex !~ /[MF]/)) {
+		return 'Unknown';
 	}
 
-	if($siblings) {
-		 if(ref($siblings) eq 'ARRAY') {
-			 foreach(@{$siblings}) {
-				 build_relationships($_, $place . 's');
-			 }
-		 } else {
-			 build_relationships($siblings, $place . 's');
-		 }
-	}
-	my $children;
-	my $family = $person->fams();
-	if($family) {
-		$children = $family->children();
-	}
+	my @ancestors1 = $self->ancestors();
+	return unless @ancestors1;
 
-	if($children) {
-		if(ref($children) eq 'ARRAY') {
-			foreach(@{$children}) {
-die $_->name();
-				build_relationships($_, $place . 'c');
+	my $s1 = $other->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+	});
+
+	foreach my $person1(@ancestors1) {
+		my $s2 = $person1->as_string({
+				include_years => 1,
+				nee => 1,
+				middle_names => 1,
+		});
+
+		if($s1 eq $s2) {
+			# Direct ancestor
+			my $steps = stepsabove($self, $other, 0);
+			my $title = ($sex eq 'M') ? 'father' : 'mother';
+			if($steps >= 5) {
+				$steps--;
+				return "$steps times great-grand$title";
+			} elsif($steps == 1) {
+				return $title;
+			} elsif($steps == 2) {
+				return "grand$title";
+			} else {
+				return 'great-' x ($steps - 2) . "grand$title";
 			}
-		} else {
-			build_relationships($children, $place . 'c');
+			die other2->as_string(), ': Bug - not a direct ancestor';
 		}
 	}
-	if($spouse) {
-		if(ref($spouse) eq 'ARRAY') {
-			foreach(@{$spouse}) {
-				build_relationships($_, $place . 'S');
+
+	my @ancestors2 = $other->ancestors();
+	return unless @ancestors2;
+
+	foreach my $person1(@ancestors1) {
+		my $s1 = $person1->as_string({
+				include_years => 1,
+				nee => 1,
+				middle_names => 1,
+		});
+		foreach my $person2(@ancestors2) {
+			my $s2 = $person2->as_string({
+					include_years => 1,
+					nee => 1,
+					middle_names => 1,
+			});
+			# print $person1->as_string(), '->', $person2->as_string(), "\n";
+			# G::C is noisy
+			# my $c = Gedcom::Comparison->new($person1, $person2);
+			# if($c->identical($person2)) {
+				# die 'match found';
+			# }
+			if($s1 eq $s2) {
+				# Common ancestor is $person2
+				my $steps1 = stepsabove($self, $person1, 0);
+				my $steps2 = stepsabove($other, $person2, 0);
+
+				return if ($steps1 > 7) || ($steps2 > 7);
+
+				# It would be nice to do this as an algorithm, but this will do
+				# e.g. 2, 1 is uncle
+				my %male_relationships = (
+					1 << 8 | 1 => 'brother',
+					2 << 8 | 1 => 'uncle',
+					3 << 8 | 1 => 'great-uncle',
+					4 << 8 | 1 => 'great-great-uncle',
+					2 << 2 | 2 => 'cousin',
+					3 << 8 | 2 => 'first cousin once-removed',
+					3 << 8 | 3 => 'second cousin',
+					2 << 8 | 3 => 'first cousin once-removed',
+					2 << 8 | 4 => 'first cousin twice-removed',
+				);
+				my %female_relationships = (
+					1 << 8 | 1 => 'sister',
+					2 << 8 | 1 => 'aunt',
+					3 << 8 | 1 => 'great-aunt',
+					4 << 8 | 1 => 'great-great-aunt',
+					2 << 2 | 2 => 'cousin',
+					3 << 8 | 2 => 'first cousin once-removed',
+					3 << 8 | 3 => 'second cousin',
+					2 << 8 | 3 => 'first cousin once-removed',
+					2 << 8 | 4 => 'first cousin twice-removed',
+				);
+
+				my $rc = ($sex eq 'M') ?
+					$male_relationships{($steps1 << 8) | $steps2} :
+					$female_relationships{($steps1 << 8) | $steps2};
+				# print "$steps1, $steps2\n" unless($rc);
+				return $rc;
 			}
-		} else {
-			build_relationships($spouse, $place . 'S');
 		}
 	}
 }
 
-# FIXME: you get great-cousin instead of cousin once-removed
-sub relationship
+sub stepsabove
 {
-	my $relationship = shift;
-	my $sex = shift;
+	my $me = shift;
+	my $target = shift;
+	my $count = shift;
 
-	return '' if((!defined($relationship)) || ($relationship eq ''));
+	return -1 if($count == -1);
 
-	return '' unless($sex && ($sex =~ /[MF]/));
+	my $s1 = $me->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+	});
 
-	$relationship =~ s/pc|cp//g;
-	$relationship =~ s/pSp/pp/g;	# your father's wife's mother is your grandmother
+	my $s2 = $target->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+	});
+	# print "$s1 $s2 $count\n";
 
-	return '' if($relationship eq '');
-
-	if($relationship eq 'p') {
-		return ($sex eq 'M') ? 'father' : 'mother';
-	} elsif($relationship eq 'pp') {
-		return ($sex eq 'M') ? 'grandfather' : 'grandmother';
-	} elsif($relationship eq 'ps') {
-		return ($sex eq 'M') ? 'uncle' : 'aunt';
-	} elsif($relationship eq 'S') {
-		return ($sex eq 'M') ? 'husband' : 'wife';
-	} elsif($relationship eq 's') {
-		return ($sex eq 'M') ? 'brother' : 'sister';
-	} elsif($relationship eq 'psc') {
-		return 'cousin';
-	} else {
-		$relationship =~ /^(.?)(.+)$/;
-		my ($first, $rest) = ($1, $2);
-		if(!defined($first)) {
-			die "'$relationship'";
-		}
-		if($first eq 'p') {
-			return 'great-' . relationship($rest, $sex);
-		}
-		return "RELATIONSHIP TO BE DETERMINED $relationship";
+	if($s1 eq $s2) {
+		return $count;
 	}
+	if($me->father()) {
+		my $rc = stepsabove($me->father(), $target, $count + 1);
+		return $rc if($rc != -1);
+	}
+	if($me->mother()) {
+		my $rc = stepsabove($me->mother(), $target, $count + 1);
+		return $rc if($rc != -1);
+	}
+	return -1;
 }
