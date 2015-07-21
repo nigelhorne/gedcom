@@ -246,7 +246,7 @@ sub generate {
 					} else {
 						print " on $dob";
 					}
-					my $birth = $person->record('birth');
+					my $birth = $person->get_record('birth');
 					if($birth && $birth->place()) {
 						print ' in ', $birth->place();
 					}
@@ -265,7 +265,7 @@ sub generate {
 					if($dom) {
 						print " on $dom";
 					}
-					my $marriage = $person->record('marriage') || $spouse->record('marriage');
+					my $marriage = $person->get_record('marriage') || $spouse->get_record('marriage');
 					if($marriage && $marriage->place()) {
 						print ' at ', $marriage->place();
 					}
@@ -281,7 +281,14 @@ sub generate {
 			if(defined($dod)) {
 				if($opts{d}) {
 					print ' and died ';
-					if($dod =~ /^Abt\s*(.+)/i) {
+					if(!$person->get_value('death date')) {
+						# Use the burial date for approximation
+						if($dod =~ /(\d{4})$/) {
+							print "around $1.";
+						} else {
+							print "around $dod.";
+						}
+					} elsif($dod =~ /^Abt\s*(.+)/i) {
 						print "around $1.";
 					} elsif($dod =~ /^\d{4}$/) {
 						print "in $dod.";
@@ -301,7 +308,7 @@ sub generate {
 				$dob = $person->get_value('baptism date');
 				my $baptism;
 				if($dob) {
-					$baptism = $person->record('baptism');
+					$baptism = $person->get_record('baptism');
 					if($dod) {
 						print '  ', $person->pronoun();
 					} else {
@@ -322,7 +329,7 @@ sub generate {
 					print '.';
 				}
 				if($doburial) {
-					my $burial = $person->record('burial');
+					my $burial = $person->get_record('burial');
 					if($dob) {
 						print ' and ';
 					} else {
