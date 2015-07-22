@@ -571,7 +571,11 @@ sub Gedcom::Individual::relationship
 	my $sex = $other->get_value('sex');
 
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
-		return 'Unknown';
+		if($opts{w}) {
+			print "\n", $other->as_string(), ":  unknown sex\n";
+		}
+		# return 'Unknown';
+		return;
 	}
 
 	my @ancestors1 = $self->ancestors();
