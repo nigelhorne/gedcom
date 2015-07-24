@@ -28,6 +28,7 @@ use Gedcom;
 use Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
+use Data::Compare;
 
 my %opts;
 
@@ -69,6 +70,8 @@ sub generate {
 	my $month = $params{'month'};
 
 	foreach my $person($ged->individuals()) {
+		next if(Compare($person, $me) == 1);
+
 		# Gather the information on this person
 		my $name = $person->name();
 
@@ -218,6 +221,11 @@ sub generate {
 					my $r = $me->relationship($person);
 					if($r) {
 						print ", your $r,";
+					} elsif($person->spouse()) {
+						$r = $me->relationship($person->spouse());
+						if($r) {
+							print ', the ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $r,";
+						}
 					}
 				}
 
@@ -241,7 +249,7 @@ sub generate {
 				if(defined($dob)) {
 					if($dob =~ /^\d{4}$/) {
 						print " in $dob";
-					} elsif($dob =~ /^Abt\s*(.+)/i) {
+					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
 						print " around $1";
 					} else {
 						print " on $dob";
@@ -351,7 +359,8 @@ sub generate {
 				}
 				my $family = $person->fams();
 				if((defined($family)) && $family->number_of_children()) {
-					print '  ', $person->pronoun(), ' had ';
+					print '  ', $person->pronoun(), ' ';
+					print $dod ? 'had ' : 'has ';
 
 					my $child_count = $family->number_of_children();
 					if($child_count == 1) {
@@ -580,25 +589,14 @@ sub Gedcom::Individual::relationship
 	my @ancestors1 = $self->ancestors();
 	return unless @ancestors1;
 
-	my $s1 = $other->as_string({
-			include_years => 1,
-			nee => 1,
-			middle_names => 1,
-	});
-
 	foreach my $person1(@ancestors1) {
-		my $s2 = $person1->as_string({
-				include_years => 1,
-				nee => 1,
-				middle_names => 1,
-		});
-
-		if($s1 eq $s2) {
+		# if($s1 eq $s2) {
+		if(Compare($person1, $other)) {
 			# Direct ancestor
 			my $steps = stepsabove($self, $other, 0);
 			my $title = ($sex eq 'M') ? 'father' : 'mother';
 			if($steps >= 5) {
-				$steps--;
+				$steps -= 2;
 				return "$steps times great-grand$title";
 			} elsif($steps == 1) {
 				return $title;
@@ -607,40 +605,22 @@ sub Gedcom::Individual::relationship
 			} else {
 				return 'great-' x ($steps - 2) . "grand$title";
 			}
-			die other2->as_string(), ': Bug - not a direct ancestor';
+			die $other->as_string(), ': Bug - not a direct ancestor';
 		}
 	}
 
 	my @ancestors2 = $other->ancestors();
-	unless(@ancestors2) {
-		if($other->spouse()) {
-			my $rc = $self->relationship($other->spouse());
-			if($rc) {
-				return (($sex eq 'F') ? 'wife of ' : 'husband of ') . $rc;
-			}
-		}
-		return;
-	}
+	return unless(@ancestors2);
 
 	foreach my $person1(@ancestors1) {
-		my $s1 = $person1->as_string({
-				include_years => 1,
-				nee => 1,
-				middle_names => 1,
-		});
 		foreach my $person2(@ancestors2) {
-			my $s2 = $person2->as_string({
-					include_years => 1,
-					nee => 1,
-					middle_names => 1,
-			});
 			# print $person1->as_string(), '->', $person2->as_string(), "\n";
 			# G::C is noisy
 			# my $c = Gedcom::Comparison->new($person1, $person2);
 			# if($c->identical($person2)) {
 				# die 'match found';
 			# }
-			if($s1 eq $s2) {
+			if(Compare($person1, $person2)) {
 				# Common ancestor is $person2
 				my $steps1 = stepsabove($self, $person1, 0);
 				my $steps2 = stepsabove($other, $person2, 0);
@@ -696,20 +676,7 @@ sub stepsabove
 
 	return -1 if($count == -1);
 
-	my $s1 = $me->as_string({
-			include_years => 1,
-			nee => 1,
-			middle_names => 1,
-	});
-
-	my $s2 = $target->as_string({
-			include_years => 1,
-			nee => 1,
-			middle_names => 1,
-	});
-	# print "$s1 $s2 $count\n";
-
-	if($s1 eq $s2) {
+	if(Compare($me, $target)) {
 		return $count;
 	}
 	if($me->father()) {
