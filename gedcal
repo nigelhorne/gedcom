@@ -129,7 +129,7 @@ sub generate {
 			$yob = $1;
 		} elsif($dob) {
 			if($opts{w}) {
-				print $person->name() . ": invalid date of birth $dob\n";
+				print $person->name(), ": invalid date of birth $dob\n";
 			}
 			$yob = undef;
 		} else {
@@ -155,7 +155,7 @@ sub generate {
 				if($hname =~ /(.+)Mc\s+(.+)/) {
 					$hname = "$1$2";
 				}
-				# print $person->name() . " married to $hname\n";
+				# print $person->name(), " married to $hname\n";
 				if($hname =~ /^.+\s+\/(.+)\/$/) {
 					$maidenname = $lastname;
 					$lastname = lc($1);
@@ -266,9 +266,12 @@ sub generate {
 					} else {
 						print ' and';
 					}
-					# FIXME: if this person and the spouse
-					# are still alive, say "is" not "was"
-					print ' was married to ', $spouse->as_string();
+					if($dod || $spouse->get_value('death date') || $spouse->get_value('burial date') || $person->get_value('marriage date')) {
+						print ' was ';
+					} else {
+						print ' is ';
+					}
+					print 'married to ', $spouse->as_string();
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
