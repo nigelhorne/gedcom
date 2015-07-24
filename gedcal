@@ -574,7 +574,6 @@ sub Gedcom::Individual::relationship
 		if($opts{w}) {
 			print "\n", $other->as_string(), ":  unknown sex\n";
 		}
-		# return 'Unknown';
 		return;
 	}
 
@@ -613,7 +612,15 @@ sub Gedcom::Individual::relationship
 	}
 
 	my @ancestors2 = $other->ancestors();
-	return unless @ancestors2;
+	unless(@ancestors2) {
+		if($other->spouse()) {
+			my $rc = $self->relationship($other->spouse());
+			if($rc) {
+				return (($sex eq 'F') ? 'wife of ' : 'husband of ') . $rc;
+			}
+		}
+		return;
+	}
 
 	foreach my $person1(@ancestors1) {
 		my $s1 = $person1->as_string({
@@ -654,6 +661,7 @@ sub Gedcom::Individual::relationship
 					4 << 8 | 2 => 'first cousin twice-removed',
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
+					6 << 8 | 4 => 'third cousin twice-removed',
 				);
 				my %female_relationships = (
 					1 << 8 | 1 => 'sister',
@@ -667,6 +675,7 @@ sub Gedcom::Individual::relationship
 					4 << 8 | 2 => 'first cousin twice-removed',
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
+					6 << 8 | 4 => 'third cousin twice-removed',
 				);
 
 				my $rc = ($sex eq 'M') ?
