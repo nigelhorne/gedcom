@@ -380,9 +380,8 @@ sub generate {
 					}
 					print ".\n";
 					foreach my $child($family->children()) {
-						print "\t" unless($opts{'a'});
-
 						if($child->get_value('birth date')) {
+							print "\t" unless($opts{'a'});
 							print "\t", $child->given_names();
 							print ' was born ';
 							my $dob = $child->get_value('birth date');
@@ -395,6 +394,7 @@ sub generate {
 							}
 							print ".\n";
 						} elsif($child->get_value('baptism date')) {
+							print "\t" unless($opts{'a'});
 							print "\t", $child->given_names();
 							print ' was born c';
 							print $child->get_value('baptism date');
