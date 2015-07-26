@@ -347,9 +347,9 @@ sub generate {
 					print ' was baptised ';
 					if($baptism) {
 						if($baptism->place()) {
-							print 'at ', $baptism->place();
+							print 'at ', $baptism->place(), ' ';
 						}
-						print ' on ', $baptism->date();
+						print 'on ', $baptism->date();
 					} else {
 						print "on $dob";
 					}
@@ -371,7 +371,7 @@ sub generate {
 							if($baptism && $baptism->place() && ($burial->place() eq $baptism->place())) {
 								print 'there ';
 							} else {
-								print 'at ', $burial->place();
+								print 'at ', $burial->place(), ' ';
 							}
 						}
 						print 'on ', $burial->date(), ".";
