@@ -189,16 +189,27 @@ sub generate {
 
 		my $print = 0;
 
+		my $aob;
+		my $aod;
+
 		if($dob) {
 			my @btime = strptime($dob . ' 12:00');
 			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month)) {
 				$print = 1;
+				$aob = (localtime)[5] - $btime[5];
+				if($aob <= 0) {
+					$aob += 1900;
+				}
 			}
 		}
 		if($dod) {
 			my @dtime = strptime($dod . ' 12:00');
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month)) {
 				$print = 1;
+				$aod = (localtime)[5] - $dtime[5];
+				if($aod <= 0) {
+					$aod += 1900;
+				}
 			}
 		}
 		if($print) {
@@ -212,6 +223,14 @@ sub generate {
 			my $spouse = $person->spouse();
 
 			if($opts{d}) {
+				if(!$opts{a}) {
+					if($aob) {
+						print "\t", $person->given_names(), " was born $aob years ago today\n";
+					}
+					if($aod) {
+						print "\t", $person->given_names(), " died $aod years ago today\n";
+					}
+				}
 				my $first_name = (split(/ /, $person->given_names()))[0];
 
 				print $opts{'a'} ? "\n" : "\t";
