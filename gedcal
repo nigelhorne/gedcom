@@ -223,19 +223,21 @@ sub generate {
 			my $spouse = $person->spouse();
 
 			if($opts{d}) {
+				# my $first_name = (split(/ /, $person->given_names()))[0];
+				my $first_name = ucfirst($firstname);
+
 				if(!$opts{a}) {
 					if($aob) {
-						print "\t", $person->given_names(), " was born $aob years ago today\n";
+						print "\tBorn $aob years ago today, $first_name";
 					}
 					if($aod) {
-						print "\t", $person->given_names(), " died $aod years ago today\n";
+						print "\t$first_name died $aod years ago today. ";
+						print $person->pronoun();
 					}
+				} else {
+					print "\n$first_name";
 				}
-				my $first_name = (split(/ /, $person->given_names()))[0];
 
-				print $opts{'a'} ? "\n" : "\t";
-
-				print $first_name;
 				if($me) {
 					my $r = $me->relationship($person);
 					if($r) {
