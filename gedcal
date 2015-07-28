@@ -288,11 +288,11 @@ sub generate {
 						print ' and';
 					}
 					if($dod || $spouse->get_value('death date') || $spouse->get_value('burial date') || $person->get_value('marriage date')) {
-						print ' was ';
+						print ' was';
 					} else {
-						print ' is ';
+						print ' is';
 					}
-					print 'married to ', $spouse->as_string();
+					print ' married to ', $spouse->as_string();
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
