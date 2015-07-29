@@ -242,7 +242,7 @@ sub generate {
 					} elsif($aob) {
 						print "\tBorn $aob years ago today, ";
 					} elsif($aod) {
-						print "\t$first_name died $aod years ago today. ";
+						print "\t$first_name died $aod years ago today.  ";
 						$printed_first_name = 1;
 					}
 					$any_output = 1;
@@ -339,12 +339,12 @@ sub generate {
 							if((!$father) && (!$mother)) {
 								print $first_name;
 							} else {
-								print '. ', $person->pronoun();
+								print '.  ', $person->pronoun();
 							}
 							print ' was born';
 						} elsif($opts{a} && !$dob) {
 							if($father || $mother) {
-								print '. ', $person->pronoun();
+								print '.  ', $person->pronoun();
 							} else {
 								print $firstname;
 							}
@@ -389,17 +389,25 @@ sub generate {
 					if(!$person->get_value('death date')) {
 						# Use the burial date for approximation
 						if($dod =~ /(\d{4})$/) {
-							print "around $1.";
+							print "around $1";
 						} else {
-							print "around $dod.";
+							print "around $dod";
 						}
 					} elsif($dod =~ /^Abt\s*(.+)/i) {
-						print "around $1.";
+						print "around $1";
 					} elsif($dod =~ /^\d{4}$/) {
-						print "in $dod.";
+						print "in $dod";
 					} else {
-						print "on $dod.";
+						print "on $dod";
 					}
+					my $death = $person->get_record('death');
+					if($death) {
+						my $pod = $death->place();
+						if($pod) {
+							print " at $pod";
+						}
+					}
+					print '.';
 				} else {
 					# my $d = Gedcom::Date::parse($dob);
 					# if($d) {
