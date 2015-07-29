@@ -194,7 +194,7 @@ sub generate {
 
 		if($dob) {
 			my @btime = strptime($dob . ' 12:00');
-			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month)) {
+			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
 				$print = 1;
 				$aob = (localtime)[5] - $btime[5];
 				if($aob <= 0) {
@@ -204,7 +204,7 @@ sub generate {
 		}
 		if($dod) {
 			my @dtime = strptime($dod . ' 12:00');
-			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month)) {
+			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
 				$print = 1;
 				$aod = (localtime)[5] - $dtime[5];
 				if($aod <= 0) {
@@ -227,36 +227,56 @@ sub generate {
 				my $first_name = ucfirst($firstname);
 
 				if(!$opts{a}) {
-					if($aob) {
-						print "\tBorn $aob years ago today, $first_name";
-					}
-					if($aod) {
+					if($aob && $aod) {
+						print "\t$first_name was born $aob years ago and died $dod years ago today.";
+					} elsif($aob) {
+						print "\tBorn $aob years ago today, ";
+					} elsif($aod) {
 						print "\t$first_name died $aod years ago today. ";
-						print $person->pronoun();
 					}
-				} else {
-					print "\n$first_name";
 				}
 
+				my $relationship;
 				if($me) {
-					my $r = $me->relationship($person);
-					if($r) {
-						print ", your $r,";
+					$relationship = $me->relationship($person);
+					if($relationship) {
+						if($aob || $aod) {
+							print "$first_name, your";
+						} else {
+							print 'Your';
+						}
+						print " $relationship,";
 					} elsif($person->spouse()) {
-						$r = $me->relationship($person->spouse());
-						if($r) {
-							print ', the ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $r,";
+						$relationship = $me->relationship($person->spouse());
+						if($relationship) {
+							if($aob) {
+								print 'the';
+							} else {
+								print 'The';
+							}
+							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
 						}
 					}
+					# if($aod) {
+						# print ' ', lcfirst($person->pronoun());
+					# } else {
+						# print "\n$first_name";
+					# }
 				}
 
-				print ' was born';
 				my @father = $person->father();
 				my $father = $father[0];
 				my @mother = $person->mother();
 				my $mother = $mother[0];
 				if($father || $mother) {
-					print ' to';
+					if((!$me) || $opts{a}) {
+						print $first_name;
+					}
+					if($aob || $opts{a}) {
+						print ' was the child of';
+					} else {
+						print ' to';
+					}
 					if($father) {
 						print ' ', $father->as_string();
 						if($mother) {
@@ -268,15 +288,35 @@ sub generate {
 					}
 				}
 				if(defined($dob)) {
-					if($dob =~ /^\d{4}$/) {
-						print " in $dob";
-					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
-						print " around $1";
-					} else {
-						print " on $dob";
+					unless($aob) {
+						if($opts{a}) {
+							print '. ', $person->pronoun();
+						} elsif($father || $mother || $relationship) {
+							print ', ', lcfirst($person->pronoun());
+						} else {
+							print $person->pronoun();
+						}
+						print ' was born ';
+						if($dob =~ /^\d{4}$/) {
+							print "in $dob";
+						} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
+							print "around $1";
+						} else {
+							print "on $dob";
+						}
 					}
 					my $birth = $person->get_record('birth');
 					if($birth && $birth->place()) {
+						if($aob) {
+							print '. ', $person->pronoun(), ' was born';
+						} elsif($opts{a} && !$dob) {
+							if($father || $mother) {
+								print '. ', $person->pronoun();
+							} else {
+								print $firstname;
+							}
+							print ' was born';
+						}
 						print ' in ', $birth->place();
 					}
 				}
