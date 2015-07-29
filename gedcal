@@ -192,26 +192,31 @@ sub generate {
 		my $aob;
 		my $aod;
 
-		if($dob) {
+		if($dob && ($dob !~ /^\d{4}$/)) {
 			my @btime = strptime($dob . ' 12:00');
 			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
 				$print = 1;
-				$aob = (localtime)[5] - $btime[5];
-				if($aob <= 0) {
-					$aob += 1900;
+				if(!$opts{a}) {
+					$aob = (localtime)[5] - $btime[5];
+					if($aob <= 0) {
+						$aob += 1900;
+					}
 				}
 			}
 		}
-		if($dod) {
+		if($dod && ($dod !~ /^\d{4}$/)) {
 			my @dtime = strptime($dod . ' 12:00');
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
 				$print = 1;
-				$aod = (localtime)[5] - $dtime[5];
-				if($aod <= 0) {
-					$aod += 1900;
+				if(!$opts{a}) {
+					$aod = (localtime)[5] - $dtime[5];
+					if($aod <= 0) {
+						$aod += 1900;
+					}
 				}
 			}
 		}
+
 		if($print) {
 			print $person->as_string({
 				include_years => 1,
@@ -221,19 +226,26 @@ sub generate {
 
 			my $sex = $person->get_value('sex');
 			my $spouse = $person->spouse();
+			my $birth = $person->get_record('birth');
 
 			if($opts{d}) {
 				# my $first_name = (split(/ /, $person->given_names()))[0];
 				my $first_name = ucfirst($firstname);
+				my $printed_first_name;
+				my $printed_comma;
+				my $any_output;
 
 				if(!$opts{a}) {
 					if($aob && $aod) {
 						print "\t$first_name was born $aob years ago and died $dod years ago today.";
+						$printed_first_name = 1;
 					} elsif($aob) {
 						print "\tBorn $aob years ago today, ";
 					} elsif($aod) {
 						print "\t$first_name died $aod years ago today. ";
+						$printed_first_name = 1;
 					}
+					$any_output = 1;
 				}
 
 				my $relationship;
@@ -242,20 +254,28 @@ sub generate {
 					if($relationship) {
 						if($aob || $aod) {
 							print "$first_name, your";
+							$printed_first_name = 1;
 						} else {
 							print 'Your';
 						}
-						print " $relationship,";
+						print " $relationship";
+						$any_output = 1;
 					} elsif($person->spouse()) {
 						$relationship = $me->relationship($person->spouse());
 						if($relationship) {
 							if($aob) {
-								print 'the';
+								print "the";
 							} else {
 								print 'The';
 							}
-							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
+							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship";
+							$any_output = 1;
 						}
+					}
+					if($printed_first_name) {
+						print ',';
+						$printed_comma = 1;
+						$any_output = 1;
 					}
 					# if($aod) {
 						# print ' ', lcfirst($person->pronoun());
@@ -269,7 +289,10 @@ sub generate {
 				my @mother = $person->mother();
 				my $mother = $mother[0];
 				if($father || $mother) {
-					if((!$me) || $opts{a}) {
+					unless($printed_first_name) {
+						if($any_output) {
+							print ' ';
+						}
 						print $first_name;
 					}
 					if($aob || $opts{a}) {
@@ -289,10 +312,16 @@ sub generate {
 				}
 				if(defined($dob)) {
 					unless($aob) {
-						if($opts{a}) {
-							print '. ', $person->pronoun();
-						} elsif($father || $mother || $relationship) {
-							print ', ', lcfirst($person->pronoun());
+						if($father || $mother || $relationship) {
+							unless($printed_comma) {
+								print ',';
+							}
+							print ' ', lcfirst($person->pronoun());
+						} elsif($opts{a}) {
+							if($relationship) {
+								print ' ';
+							}
+							print $first_name;
 						} else {
 							print $person->pronoun();
 						}
@@ -305,10 +334,14 @@ sub generate {
 							print "on $dob";
 						}
 					}
-					my $birth = $person->get_record('birth');
 					if($birth && $birth->place()) {
 						if($aob) {
-							print '. ', $person->pronoun(), ' was born';
+							if((!$father) && (!$mother)) {
+								print $first_name;
+							} else {
+								print '. ', $person->pronoun();
+							}
+							print ' was born';
 						} elsif($opts{a} && !$dob) {
 							if($father || $mother) {
 								print '. ', $person->pronoun();
@@ -389,7 +422,11 @@ sub generate {
 					print ' was baptised ';
 					if($baptism) {
 						if($baptism->place()) {
-							print 'at ', $baptism->place(), ' ';
+							if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
+								print 'there ';
+							} else {
+								print 'at ', $baptism->place(), ' ';
+							}
 						}
 						print 'on ', $baptism->date();
 					} else {
