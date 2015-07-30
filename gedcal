@@ -175,17 +175,7 @@ sub generate {
 			next;
 		}
 
-		my %params = (
-			dob => $yob,
-			dod => $yod,
-			firstname => $firstname,
-			middlename => $middlename,
-			lastname => $lastname,
-			maidenname => $maidenname,
-			suffix => $suffix,
-		);
-
-		print 'Checking ', stringify(\%params), "\n" if($opts{'v'});
+		print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
 		my $print = 0;
 
@@ -224,7 +214,6 @@ sub generate {
 				middle_names => 1,
 			}), "\n";
 
-			my $sex = $person->get_value('sex');
 			my $spouse = $person->spouse();
 			my $birth = $person->get_record('birth');
 
@@ -234,6 +223,7 @@ sub generate {
 				my $printed_first_name;
 				my $printed_comma;
 				my $any_output;
+				my $space_count;
 
 				if(!$opts{a}) {
 					if($aob && $aod) {
@@ -241,9 +231,11 @@ sub generate {
 						$printed_first_name = 1;
 					} elsif($aob) {
 						print "\tBorn $aob years ago today, ";
+						$space_count = 1;
 					} elsif($aod) {
 						print "\t$first_name died $aod years ago today.  ";
 						$printed_first_name = 1;
+						$space_count = 2;
 					}
 					$any_output = 1;
 				}
@@ -264,7 +256,7 @@ sub generate {
 						$relationship = $me->relationship($person->spouse());
 						if($relationship) {
 							if($aob) {
-								print "the";
+								print 'the';
 							} else {
 								print 'The';
 							}
@@ -290,7 +282,7 @@ sub generate {
 				my $mother = $mother[0];
 				if($father || $mother) {
 					unless($printed_first_name) {
-						if($any_output) {
+						if($any_output && !$space_count) {
 							print ' ';
 						}
 						print $first_name;
@@ -360,13 +352,13 @@ sub generate {
 					} else {
 						print ' and';
 					}
-					if($dod || $spouse->get_value('death date') || $spouse->get_value('burial date') || $person->get_value('marriage date')) {
+					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
+					if($dod || $dom || $person->get_value('burial date')) {
 						print ' was';
 					} else {
 						print ' is';
 					}
 					print ' married to ', $spouse->as_string();
-					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if($dom) {
 						print " on $dom";
 					}
@@ -517,58 +509,6 @@ sub generate {
 			print "\n";
 		}
 	}
-}
-
-# Pretty print a person
-sub stringify {
-	my $params = shift;
-
-	my $dob = $$params{dob};
-	my $dod = $$params{dod};
-	my $firstname = $$params{firstname};
-	my $lastname = $$params{lastname};
-	my $middlename = $$params{middlename};
-	my $maidenname = $$params{maidenname};
-	my $suffix = $$params{suffix};
-
-	my $rc = ucfirst($lastname);
-
-	if($firstname) {
-		my $f = ucfirst($firstname);
-		$rc .= ", $f";
-		if($middlename) {
-			$f = ucfirst($middlename);
-			$rc .= " $f";
-		}
-	}
-
-	if($maidenname && ($maidenname ne $lastname)) {
-		foreach(split / /, $maidenname) {
-			if($_ ne $lastname) {
-				my $m .= ucfirst($_);
-				$rc .= " (nee $m)";
-				last;
-			}
-		}
-	}
-
-	if($suffix) {
-		$rc .= " $suffix";
-	}
-
-	$rc .= ' ';
-
-	if($dob) {
-		$rc .= $dob;
-	}
-
-	$rc .= '-';
-
-	if($dod) {
-		$rc .= $dod;
-	}
-
-	return $rc;
 }
 
 sub Gedcom::Individual::as_string
