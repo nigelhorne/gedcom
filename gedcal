@@ -226,75 +226,78 @@ sub generate {
 				my $any_output;
 				my $space_count;
 
+				my $relationship;
 				if(!$opts{a}) {
-					if($aob && $aod) {
-						print "\t$first_name was born $aob years ago and died $dod years ago today.";
-						$printed_first_name = 1;
-					} elsif($aob) {
-						print "\tBorn $aob years ago today, ";
-						$space_count = 1;
-					} elsif($aod) {
-						print "\t$first_name died $aod years ago today.  ";
-						$printed_first_name = 1;
-						$space_count = 2;
+					if($me) {
+						$relationship = $me->relationship($person);
+						if($relationship) {
+							print "\tYour $relationship $first_name";
+							$any_output = 1;
+							$printed_first_name = 1;
+						} elsif($person->spouse()) {
+							$relationship = $me->relationship($person->spouse());
+							if($relationship) {
+								print "\t$first_name, the";
+								print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
+								$printed_first_name = 1;
+								$any_output = 1;
+								$printed_comma = 1;
+							}
+						}
+						# if($aod) {
+							# print ' ', lcfirst($person->pronoun());
+						# } else {
+							# print "\n$first_name";
+						# }
 					}
+
+					if($aob || $aod) {
+						unless($any_output) {
+							print "\t$first_name";
+							$any_output = 1;
+							$printed_first_name = 1;
+						}
+					}
+					if($aob && $aod) {
+						print " was born $aob years ago and died $dod years ago today";
+					} elsif($aob) {
+						print " was born $aob years ago today";
+					} elsif($aod) {
+						print " died $aod years ago today";
+					}
+				} elsif($dob) {
+					print "$first_name was born ";
+					if($dob =~ /^\d{4}$/) {
+						print "in $dob";
+					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
+						print "around $1";
+					} else {
+						print "on $dob";
+					}
+					$any_output = 1;
+					$printed_first_name = 1;
+				}
+				if($birth && $birth->place()) {
+					print ' in ', $birth->place();
+					$any_output = 1;
+				}
+				if($any_output) {
+					print '.  ';
+					$space_count = 2;
 					$any_output = 1;
 				}
 
-				my $relationship;
-				if($me) {
-					$relationship = $me->relationship($person);
-					if($relationship) {
-						if($aob || $aod) {
-							print "$first_name, your";
-							$printed_first_name = 1;
-						} else {
-							print 'Your';
-						}
-						print " $relationship";
-						$any_output = 1;
-					} elsif($person->spouse()) {
-						$relationship = $me->relationship($person->spouse());
-						if($relationship) {
-							if($aob) {
-								print 'the';
-							} else {
-								print 'The';
-							}
-							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship";
-							$any_output = 1;
-						}
-					}
-					if($printed_first_name && !$space_count) {
-						print ',';
-						$printed_comma = 1;
-						$any_output = 1;
-					}
-					# if($aod) {
-						# print ' ', lcfirst($person->pronoun());
-					# } else {
-						# print "\n$first_name";
-					# }
-				}
 
 				my @father = $person->father();
 				my $father = $father[0];
 				my @mother = $person->mother();
 				my $mother = $mother[0];
 				if($father || $mother) {
-					unless($printed_first_name) {
-						if($any_output && !$space_count) {
-							print ' ';
-						}
-						print $first_name;
+					unless($space_count) {
+						print ' ';
 					}
-					if($aob || $opts{a} || $relationship) {
-						print ' was the child of';
-					} elsif($space_count == 2) {
-						print $person->pronoun(), ' was the child of';
-					} else {
-						print ' to';
-					}
+					print $person->pronoun(), ' was the child of';
+
 					if($father) {
 						print ' ', $father->as_string();
 						if($mother) {
@@ -305,63 +308,21 @@ sub generate {
 						print ' ', $mother->as_string({ give_maidenname => 0 });
 					}
 				}
-				if(defined($dob)) {
-					unless($aob) {
-						if($father || $mother || $relationship) {
-							unless($printed_comma || $space_count) {
-								print ',';
-							}
-							print ' ';
-							if($printed_first_name) {
-								print lcfirst($person->pronoun());
-							} else {
-								print $first_name;
-							}
-						} elsif($opts{a}) {
-							if($relationship) {
-								print ' ';
-							}
-							print $first_name;
-						} else {
-							print $person->pronoun();
-						}
-						print ' was born ';
-						if($dob =~ /^\d{4}$/) {
-							print "in $dob";
-						} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
-							print "around $1";
-						} else {
-							print "on $dob";
-						}
-					}
-					if($birth && $birth->place()) {
-						if($aob) {
-							if((!$father) && (!$mother)) {
-								print $first_name;
-							} else {
-								print '.  ', $person->pronoun();
-							}
-							print ' was born';
-						} elsif($opts{a} && !$dob) {
-							if($father || $mother) {
-								print '.  ', $person->pronoun();
-							} else {
-								print $firstname;
-							}
-							print ' was born';
-						}
-						print ' in ', $birth->place();
-					}
-				}
 				# TODO: $person->marriage_count()
 				if($spouse) {
 					if($dod) {
-						print ',';
+						if($father || $mother) {
+							print ',';
+						} else {
+							print $person->pronoun();
+						}
 					} else {
 						print ' and';
 					}
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
-					if($dod || $dom || $person->get_value('burial date')) {
+					if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
+						print ' was';
+					} elsif($yob && ($yob <= 1900)) {
 						print ' was';
 					} else {
 						print ' is';
@@ -385,26 +346,35 @@ sub generate {
 			}
 			if(defined($dod)) {
 				if($opts{d}) {
-					print ' and died ';
-					if(!$person->get_value('death date')) {
-						# Use the burial date for approximation
-						if($dod =~ /(\d{4})$/) {
-							print "around $1";
-						} else {
-							print "around $dod";
-						}
-					} elsif($dod =~ /^Abt\s*(.+)/i) {
-						print "around $1";
-					} elsif($dod =~ /^\d{4}$/) {
-						print "in $dod";
-					} else {
-						print "on $dod";
-					}
 					my $death = $person->get_record('death');
-					if($death) {
-						my $pod = $death->place();
-						if($pod) {
-							print " at $pod";
+					if($aod) {
+						if($death) {
+							my $pod = $death->place();
+							if($pod) {
+								print " and died at $pod";
+							}
+						}
+					} else {
+						print ' and died ';
+						if(!$person->get_value('death date')) {
+							# Use the burial date for approximation
+							if($dod =~ /(\d{4})$/) {
+								print "around $1";
+							} else {
+								print "around $dod";
+							}
+						} elsif($dod =~ /^Abt\s*(.+)/i) {
+							print "around $1";
+						} elsif($dod =~ /^\d{4}$/) {
+							print "in $dod";
+						} else {
+							print "on $dod";
+						}
+						if($death) {
+							my $pod = $death->place();
+							if($pod) {
+								print " at $pod";
+							}
 						}
 					}
 					print '.';
