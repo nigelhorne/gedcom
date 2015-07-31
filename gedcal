@@ -113,7 +113,7 @@ sub generate {
 			next;
 		}
 
-		my $dod = $person->get_value('death date') ? $person->get_value('death date') : $person->get_value('burial date');
+		my $dod = $person->get_value('death date') || $person->get_value('burial date');
 
 		my $yod;	# Year of death
 		if($dod && ($dod =~ /.*?(\d{3,4})/)) {
@@ -171,7 +171,7 @@ sub generate {
 			$firstname = $1;
 		}
 
-		unless($dob || $dod) {
+		unless($dob || $dod || $opts{a}) {
 			next;
 		}
 
@@ -265,7 +265,7 @@ sub generate {
 							$any_output = 1;
 						}
 					}
-					if($printed_first_name) {
+					if($printed_first_name && !$space_count) {
 						print ',';
 						$printed_comma = 1;
 						$any_output = 1;
@@ -288,8 +288,10 @@ sub generate {
 						}
 						print $first_name;
 					}
-					if($aob || $opts{a}) {
+					if($aob || $opts{a} || $relationship) {
 						print ' was the child of';
+					} elsif($space_count == 2) {
+						print $person->pronoun(), ' was the child of';
 					} else {
 						print ' to';
 					}
@@ -306,10 +308,15 @@ sub generate {
 				if(defined($dob)) {
 					unless($aob) {
 						if($father || $mother || $relationship) {
-							unless($printed_comma) {
+							unless($printed_comma || $space_count) {
 								print ',';
 							}
-							print ' ', lcfirst($person->pronoun());
+							print ' ';
+							if($printed_first_name) {
+								print lcfirst($person->pronoun());
+							} else {
+								print $first_name;
+							}
 						} elsif($opts{a}) {
 							if($relationship) {
 								print ' ';
