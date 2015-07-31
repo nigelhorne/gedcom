@@ -420,7 +420,12 @@ sub generate {
 					if($dob) {
 						print ' and ';
 					} else {
-						print '  ', $person->pronoun(), ' was ';
+						print '  ', $person->pronoun();
+						if($burial->date()) {
+							print ' was ';
+						} else {
+							print ' is ';
+						}
 					}
 					print 'buried ';
 					if($burial) {
