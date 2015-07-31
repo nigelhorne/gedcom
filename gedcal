@@ -220,6 +220,7 @@ sub generate {
 			if($opts{d}) {
 				# my $first_name = (split(/ /, $person->given_names()))[0];
 				my $first_name = ucfirst($firstname);
+				$first_name =~ s/\s.+//;
 				my $printed_first_name;
 				my $printed_comma;
 				my $any_output;
