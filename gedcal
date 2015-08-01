@@ -461,11 +461,11 @@ sub generate {
 					}
 					print ".\n";
 					foreach my $child($family->children()) {
-						if($child->get_value('birth date')) {
+						my $dob = $child->get_value('birth date');
+						if($dob) {
 							print "\t" unless($opts{'a'});
 							print "\t", $child->given_names();
 							print ' was born ';
-							my $dob = $child->get_value('birth date');
 							if($dob =~ /^\d{4}$/) {
 								print "in $dob";
 							} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
@@ -609,17 +609,16 @@ sub Gedcom::Individual::relationship
 	my $self = shift;
 	my $other = shift;
 
-	my $sex = $other->get_value('sex');
+	my @ancestors1 = $self->ancestors();
+	return unless @ancestors1;
 
+	my $sex = $other->get_value('sex');
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
 		if($opts{w}) {
 			print "\n", $other->as_string(), ":  unknown sex\n";
 		}
 		return;
 	}
-
-	my @ancestors1 = $self->ancestors();
-	return unless @ancestors1;
 
 	foreach my $person1(@ancestors1) {
 		# if($s1 eq $s2) {
