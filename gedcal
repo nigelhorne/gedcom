@@ -226,10 +226,9 @@ sub generate {
 				my $any_output;
 				my $space_count;
 
-				my $relationship;
 				if(!$opts{a}) {
 					if($me) {
-						$relationship = $me->relationship($person);
+						my $relationship = $me->relationship($person);
 						if($relationship) {
 							print "\tYour $relationship $first_name";
 							$any_output = 1;
@@ -266,7 +265,28 @@ sub generate {
 						print " died $aod years ago today";
 					}
 				} elsif($dob) {
-					print "$first_name was born ";
+					print $first_name;
+					$any_output = 1;
+					$printed_first_name = 1;
+
+					my $relationship = $me->relationship($person);
+					if($relationship) {
+						if($relationship) {
+							print ", your $relationship,";
+							$any_output = 1;
+							$printed_first_name = 1;
+						} elsif($person->spouse()) {
+							$relationship = $me->relationship($person->spouse());
+							if($relationship) {
+								print ', the';
+								print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
+								$printed_first_name = 1;
+								$any_output = 1;
+								$printed_comma = 1;
+							}
+						}
+					}
+					print ' was born ';
 					if($dob =~ /^\d{4}$/) {
 						print "in $dob";
 					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
@@ -654,9 +674,9 @@ sub Gedcom::Individual::relationship
 			if(Compare($person1, $person2)) {
 				# Common ancestor is $person2
 				my $steps1 = stepsabove($self, $person1, 0);
+				return if($steps1 > 7);
 				my $steps2 = stepsabove($other, $person2, 0);
-
-				return if ($steps1 > 7) || ($steps2 > 7);
+				return if($steps2 > 7);
 
 				# It would be nice to do this as an algorithm, but this will do
 				# e.g. 2, 1 is uncle
