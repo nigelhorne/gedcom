@@ -23,12 +23,12 @@
 use strict;
 use warnings;
 # use diagnostics;
+# use warnings::unused;
 
 use Gedcom;
 use Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
-use Data::Compare;
 
 my %opts;
 
@@ -70,7 +70,7 @@ sub generate {
 	my $month = $params{'month'};
 
 	foreach my $person($ged->individuals()) {
-		next if(Compare($person, $me) == 1);
+		next if($person eq $me);
 
 		# Gather the information on this person
 		my $name = $person->name();
@@ -291,8 +291,10 @@ sub generate {
 						print "in $dob";
 					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
 						print "around $1";
-					} else {
+					} elsif($dob =~ /^\d/) {
 						print "on $dob";
+					} else {
+						print "in $dob";
 					}
 					$any_output = 1;
 					$printed_first_name = 1;
@@ -349,7 +351,11 @@ sub generate {
 					}
 					print ' married to ', $spouse->as_string();
 					if($dom) {
-						print " on $dom";
+						if($dom =~ /^\d/) {
+							print " on $dom";
+						} else {
+							print " in $dom";
+						}
 					}
 					my $marriage = $person->get_record('marriage') || $spouse->get_record('marriage');
 					if($marriage && $marriage->place()) {
@@ -613,12 +619,9 @@ sub Gedcom::Individual::pronoun
 			return 'She';
 		} elsif($sex eq 'M') {
 			return 'He';
-		} else {
-			return 'They';
 		}
-	} else {
-		return 'They';
 	}
+	return 'They';
 }
 
 # FIXME: currently only finds ancestors
@@ -641,8 +644,7 @@ sub Gedcom::Individual::relationship
 	}
 
 	foreach my $person1(@ancestors1) {
-		# if($s1 eq $s2) {
-		if(Compare($person1, $other)) {
+		if($person1 eq $other) {
 			# Direct ancestor
 			my $steps = stepsabove($self, $other, 0);
 			my $title = ($sex eq 'M') ? 'father' : 'mother';
@@ -663,15 +665,23 @@ sub Gedcom::Individual::relationship
 	my @ancestors2 = $other->ancestors();
 	return unless(@ancestors2);
 
+	my $p1level = 0;
 	foreach my $person1(@ancestors1) {
+		if($p1level++ >= 8) {
+			last;
+		}
+		my $p2level = 0;
 		foreach my $person2(@ancestors2) {
+			if($p2level++ >= 8) {
+				last;
+			}
 			# print $person1->as_string(), '->', $person2->as_string(), "\n";
 			# G::C is noisy
 			# my $c = Gedcom::Comparison->new($person1, $person2);
 			# if($c->identical($person2)) {
 				# die 'match found';
 			# }
-			if(Compare($person1, $person2)) {
+			if($person1 eq $person2) {
 				# Common ancestor is $person2
 				my $steps1 = stepsabove($self, $person1, 0);
 				return if($steps1 > 7);
@@ -727,7 +737,7 @@ sub stepsabove
 
 	return -1 if($count == -1);
 
-	if(Compare($me, $target)) {
+	if($target eq $me) {
 		return $count;
 	}
 	if($me->father()) {
