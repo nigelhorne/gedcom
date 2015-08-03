@@ -262,7 +262,7 @@ sub generate {
 					} elsif($aob) {
 						print " was born $aob years ago today";
 					} elsif($aod) {
-						print " died $aod years ago today";
+						print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
 					}
 				} elsif($dob) {
 					print $first_name;
