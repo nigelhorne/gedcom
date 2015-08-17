@@ -216,6 +216,8 @@ sub generate {
 
 			my $spouse = $person->spouse();
 			my $birth = $person->get_record('birth');
+			my $death = $person->get_record('death');
+			my $printed_death_year;
 
 			if($opts{d}) {
 				# my $first_name = (split(/ /, $person->given_names()))[0];
@@ -225,6 +227,7 @@ sub generate {
 				my $printed_comma;
 				my $any_output;
 				my $space_count;
+				my $printed_birth_year;
 
 				if(!$opts{a}) {
 					if($me) {
@@ -259,10 +262,13 @@ sub generate {
 					}
 					if($aob && $aod) {
 						print " was born $aob years ago and died $dod years ago today";
+						$printed_birth_year = 1;
 					} elsif($aob) {
 						print " was born $aob years ago today";
+						$printed_birth_year = 1;
 					} elsif($aod) {
 						print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
+						$printed_death_year = 1;
 					}
 				} elsif($dob) {
 					print $first_name;
@@ -298,10 +304,18 @@ sub generate {
 					}
 					$any_output = 1;
 					$printed_first_name = 1;
+					$printed_birth_year = 1;
 				}
-				if($birth && $birth->place()) {
-					print ' in ', $birth->place();
-					$any_output = 1;
+				if($printed_birth_year) {
+					if($birth && $birth->place()) {
+						print ' in ', $birth->place();
+						$any_output = 1;
+					}
+				} elsif($printed_death_year) {
+					if($death && $death->place()) {
+						print ' in ', $death->place();
+						$any_output = 1;
+					}
 				}
 				if($any_output) {
 					print '.  ';
@@ -372,9 +386,8 @@ sub generate {
 			}
 			if(defined($dod)) {
 				if($opts{d}) {
-					my $death = $person->get_record('death');
 					if($aod) {
-						if($death) {
+						if($death && !$printed_death_year) {
 							my $pod = $death->place();
 							if($pod) {
 								print " and died at $pod";
