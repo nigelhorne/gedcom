@@ -70,7 +70,7 @@ sub generate {
 	my $month = $params{'month'};
 
 	foreach my $person($ged->individuals()) {
-		next if($person eq $me);
+		next if($me && ($person eq $me));
 
 		# Gather the information on this person
 		my $name = $person->name();
