@@ -436,7 +436,11 @@ sub generate {
 					} else {
 						print ' and';
 					}
-					print ' was baptised ';
+					if($ENV{'LANG'} =~ /^en_US/) {
+						print ' was baptized ';
+					} else {
+						print ' was baptised ';
+					}
 					if($baptism) {
 						if($baptism->place()) {
 							if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
