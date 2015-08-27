@@ -346,13 +346,16 @@ sub generate {
 				}
 				# TODO: $person->marriage_count()
 				if($spouse) {
-					if($dod) {
+					if($dod && !$aod) {
 						if($father || $mother) {
 							print ',';
 						} else {
 							print $person->pronoun();
 						}
 					} else {
+						if($father || $mother) {
+							print ',';
+						}
 						print ' and';
 					}
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
@@ -390,7 +393,7 @@ sub generate {
 						if($death && !$printed_death_year) {
 							my $pod = $death->place();
 							if($pod) {
-								print " and died at $pod";
+								print " and died in $pod";
 							}
 						}
 					} else {
@@ -412,7 +415,7 @@ sub generate {
 						if($death) {
 							my $pod = $death->place();
 							if($pod) {
-								print " at $pod";
+								print " in $pod";
 							}
 						}
 					}
@@ -560,15 +563,7 @@ sub Gedcom::Individual::as_string
 	}
 
 	my $rc;
-	if($surname) {
-		$rc = normalize_name($surname);
-	}
-
 	if($self->given_names()) {
-		if($surname) {
-			$rc .= ',';
-		}
-
 		foreach my $name(split(' ', $self->given_names())) {
 			if($rc) {
 				$rc .= ' ';
@@ -576,6 +571,10 @@ sub Gedcom::Individual::as_string
 			$rc .= normalize_name($name);
 			last unless($args{'middle_names'});
 		}
+	}
+
+	if($surname) {
+		$rc .= ' ' . normalize_name($surname);
 	}
 
 	if($args{'nee'} && ($surname ne $self->surname())) {
