@@ -529,8 +529,13 @@ sub generate {
 					print "\n";
 				}
 			}
-			if($opts{'a'} && $opts{'d'}) {
-				print '-' x 80;
+			if($opts{'d'}) {
+				if($person->get_value('note')) {
+					print "Note: ", $person->get_value('note'), "\n";
+				}
+				if($opts{'a'}) {
+					print '-' x 80;
+				}
 			}
 			print "\n";
 		}
