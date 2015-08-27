@@ -26,7 +26,7 @@ use warnings;
 # use warnings::unused;
 
 use Gedcom;
-use Gedcom::Date;
+use Genealogy::Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 
@@ -43,7 +43,9 @@ if($opts{h}) {
 	unless($me) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
 	}
-}
+} 
+
+my $date_parser = Genealogy::Gedcom::Date->new();
 
 if($opts{a}) {
 	foreach my $month(0..11) {
@@ -380,12 +382,14 @@ sub generate {
 					}
 				}
 			} elsif(defined($dob)) {
-				# my $d = Gedcom::Date::parse($dob);
-				# if($d) {
-					# print "\tBorn: $d->as_text()\n";
-				# } else {
+				my $d = $date_parser->parse_date_value(date => $dob);
+				if($d) {
+					$d = $d->{one_date};
+					print "\tBorn: ", $d->strftime('%x');
+				} else {
 					print "\tBorn: $dob";
-				# }
+				}
+				print "\n" if(defined($dod));
 			}
 			if(defined($dod)) {
 				if($opts{d}) {
@@ -421,12 +425,14 @@ sub generate {
 					}
 					print '.';
 				} else {
-					# my $d = Gedcom::Date::parse($dob);
-					# if($d) {
-						# print "\tDied: $d->as_text()\n";
-					# } else {
-						print "\n\tDied: $dod";
-					# }
+					my $d = $date_parser->parse_date_value(date => $dod);
+					if($d) {
+						$d = $d->{one_date};
+						# print "\tDied: ", $d->day(), ' ', $d->month_abbr(), ' ', $d->year();
+						print "\tDied: ", $d->strftime('%x');
+					} else {
+						print "\tDied: $dob";
+					}
 				}
 			}
 			if($opts{'d'}) {
