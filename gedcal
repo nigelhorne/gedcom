@@ -130,7 +130,7 @@ sub generate {
 		if($dob && ($dob =~ /.*?(\d{3,4})/)) {
 			$yob = $1;
 		} elsif($dob) {
-			if($opts{w}) {
+			if($opts{'w'}) {
 				print $person->name(), ": invalid date of birth $dob\n";
 			}
 			$yob = undef;
@@ -382,12 +382,20 @@ sub generate {
 					}
 				}
 			} elsif(defined($dob)) {
-				my $d = $date_parser->parse_date_value(date => $dob);
+				my $d;
+				eval {
+					$d = $date_parser->parse_date_value(date => $dob);
+				};
 				if($d) {
 					$d = $d->{one_date};
 					print "\tBorn: ", $d->strftime('%x');
 				} else {
+					if($opts{'w'}) {
+						print $@;
+					}
 					print "\tBorn: $dob";
+					# RT 106705
+					$date_parser = Genealogy::Gedcom::Date->new();
 				}
 				print "\n" if(defined($dod));
 			}
@@ -425,13 +433,20 @@ sub generate {
 					}
 					print '.';
 				} else {
-					my $d = $date_parser->parse_date_value(date => $dod);
+					my $d;
+					eval {
+						$d = $date_parser->parse_date_value(date => $dod);
+					};
 					if($d) {
 						$d = $d->{one_date};
-						# print "\tDied: ", $d->day(), ' ', $d->month_abbr(), ' ', $d->year();
 						print "\tDied: ", $d->strftime('%x');
 					} else {
-						print "\tDied: $dob";
+						if($opts{'w'}) {
+							print $@;
+						}
+						print "\tDied: $dod";
+						# RT 106705
+						$date_parser = Genealogy::Gedcom::Date->new();
 					}
 				}
 			}
@@ -664,7 +679,7 @@ sub Gedcom::Individual::relationship
 
 	my $sex = $other->get_value('sex');
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
-		if($opts{w}) {
+		if($opts{'w'}) {
 			print "\n", $other->as_string(), ":  unknown sex\n";
 		}
 		return;
