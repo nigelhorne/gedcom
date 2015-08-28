@@ -319,12 +319,13 @@ sub generate {
 						$any_output = 1;
 					}
 				}
+				my $end_of_sentence;
 				if($any_output) {
 					print '.  ';
 					$space_count = 2;
 					$any_output = 1;
+					$end_of_sentence = 1;
 				}
-
 
 				my @father = $person->father();
 				my $father = $father[0];
@@ -345,20 +346,14 @@ sub generate {
 					if($mother) {
 						print ' ', $mother->as_string({ give_maidenname => 0 });
 					}
+					$end_of_sentence = 0;
 				}
 				# TODO: $person->marriage_count()
 				if($spouse) {
-					if($dod && !$aod) {
-						if($father || $mother) {
-							print ',';
-						} else {
-							print $person->pronoun();
-						}
+					if($end_of_sentence) {
+						print $person->pronoun();
 					} else {
-						if($father || $mother) {
-							print ',';
-						}
-						print ' and';
+						print ', and';
 					}
 					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 					if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
@@ -409,7 +404,7 @@ sub generate {
 							}
 						}
 					} else {
-						print ' and died ';
+						print ', and died ';
 						if(!$person->get_value('death date')) {
 							# Use the burial date for approximation
 							if($dod =~ /(\d{4})$/) {
