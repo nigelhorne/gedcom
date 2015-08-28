@@ -1,0 +1,14 @@
+os:
+  - linux
+  - osx
+language: perl
+perl:
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+install:
+  - cpanm --installdeps --quiet --notest Gedcom Genealogy::Gedcom::date Date::Parse Getopt::Std
+  - cpanm --notest --quiet Gedcom Genealogy::Gedcom::date Date::Parse Getopt::Std
+script:
+  - perl -c ./gedcal

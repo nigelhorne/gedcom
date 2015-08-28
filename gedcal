@@ -220,6 +220,7 @@ sub generate {
 			my $birth = $person->get_record('birth');
 			my $death = $person->get_record('death');
 			my $printed_death_year;
+			my $printed_birth_year;
 
 			if($opts{d}) {
 				# my $first_name = (split(/ /, $person->given_names()))[0];
@@ -229,7 +230,6 @@ sub generate {
 				my $printed_comma;
 				my $any_output;
 				my $space_count;
-				my $printed_birth_year;
 
 				if(!$opts{a}) {
 					if($me) {
@@ -319,6 +319,30 @@ sub generate {
 						$any_output = 1;
 					}
 				}
+				if($birth && !$printed_birth_year) {
+					print ' having been born';
+					my $pob = $birth->place();
+					my $pod = $death->place();
+					if($pob && $pod && ($pob eq $pod)) {
+						print ' there ';
+					} else {
+						print " in $pob ";
+					}
+					if(!$person->get_value('birth date')) {
+						# Use the baptism date for approximation
+						if($dob =~ /(\d{4})$/) {
+							print "around $1";
+						} else {
+							print "around $dob";
+						}
+					} elsif($dob =~ /^Abt\s*(.+)/i) {
+						print "around $1";
+					} elsif($dob =~ /^\d{4}$/) {
+						print "in $dod";
+					} else {
+						print "on $dod";
+					}
+				}
 				my $end_of_sentence;
 				if($any_output) {
 					print '.  ';
@@ -352,6 +376,8 @@ sub generate {
 				if($spouse) {
 					if($end_of_sentence) {
 						print $person->pronoun();
+					} elsif($dod) {
+						print ',';
 					} else {
 						print ', and';
 					}
