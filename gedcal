@@ -16,6 +16,7 @@
 
 # -a: all days otherwise just today
 # -d: give a detailed lifetime information about the person
+# -f: treat warnings as fatals, implies -w
 # -l: ignore living people
 # -v: verbose - for debugging
 # -w: print warning about invalid day
@@ -32,18 +33,24 @@ use Getopt::Std;
 
 my %opts;
 
-getopts('adh:lwv', \%opts);
-die "Usage: $0 [ -a ] [ -d ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('adfh:lwv', \%opts);
+die "Usage: $0 [ -a ] [ -d ] [ -f ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 my $me;
+my %warned;
+
 if($opts{h}) {
 	$me = $ged->get_individual($opts{h});
 	unless($me) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
 	}
 } 
+
+if($opts{'f'}) {
+	$opts{'w'} = 1;
+}
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 
@@ -130,8 +137,12 @@ sub generate {
 		if($dob && ($dob =~ /.*?(\d{3,4})/)) {
 			$yob = $1;
 		} elsif($dob) {
-			if($opts{'w'}) {
-				print $person->name(), ": invalid date of birth $dob\n";
+			if($opts{'w'} && !$warned{$person}) {
+				if($opts{'f'}) {
+					die $person->name(), ": invalid date of birth $dob\n";
+				}
+				warn $person->name(), ": invalid date of birth $dob\n";
+				$warned{$person} = 1;
 			}
 			$yob = undef;
 		} else {
@@ -338,9 +349,9 @@ sub generate {
 					} elsif($dob =~ /^Abt\s*(.+)/i) {
 						print "around $1";
 					} elsif($dob =~ /^\d{4}$/) {
-						print "in $dod";
+						print "in $dob";
 					} else {
-						print "on $dod";
+						print "on $dob";
 					}
 				}
 				my $end_of_sentence;
@@ -376,7 +387,7 @@ sub generate {
 				if($spouse) {
 					if($end_of_sentence) {
 						print $person->pronoun();
-					} elsif($dod) {
+					} elsif($dod && !$aod) {
 						print ',';
 					} else {
 						print ', and';
@@ -404,15 +415,22 @@ sub generate {
 				}
 			} elsif(defined($dob)) {
 				my $d;
-				eval {
-					$d = $date_parser->parse_date_value(date => $dob);
-				};
+				if(($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
+					eval {
+						$d = $date_parser->parse_date_value(date => $dob);
+					};
+				}
 				if($d) {
 					$d = $d->{one_date};
 					print "\tBorn: ", $d->strftime('%x');
 				} else {
-					if($opts{'w'}) {
-						print $@;
+					if($@) {
+						if($opts{'f'}) {
+							die $@;
+						}
+						if($opts{'w'}) {
+							warn $@;
+						}
 					}
 					print "\tBorn: $dob";
 					# RT 106705
@@ -455,15 +473,22 @@ sub generate {
 					print '.';
 				} else {
 					my $d;
-					eval {
-						$d = $date_parser->parse_date_value(date => $dod);
-					};
+					if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
+						eval {
+							$d = $date_parser->parse_date_value(date => $dod);
+						};
+					}
 					if($d) {
 						$d = $d->{one_date};
 						print "\tDied: ", $d->strftime('%x');
 					} else {
-						if($opts{'w'}) {
-							print $@;
+						if($@) {
+							if($opts{'f'}) {
+								die $@;
+							}
+							if($opts{'w'}) {
+								warn $@;
+							}
 						}
 						print "\tDied: $dod";
 						# RT 106705
@@ -554,12 +579,29 @@ sub generate {
 							print "\t" unless($opts{'a'});
 							print "\t", $child->given_names();
 							print ' was born ';
-							if($dob =~ /^\d{4}$/) {
-								print "in $dob";
-							} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
+							if($dob =~ /^Abt\.?\s*(.+)/i) {
 								print "around $1";
+							} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
+								print "in $dob";
 							} else {
-								print "on $dob";
+								my $d;
+								eval {
+									$d = $date_parser->parse_date_value(date => $dob);
+								};
+								if($d) {
+									$d = $d->{one_date};
+									print 'on ', $d->strftime('%x');
+								} else {
+									if($@) {
+										if($opts{'f'}) {
+											die $@;
+										}
+										if($opts{'w'}) {
+											warn $@;
+										}
+									}
+									$date_parser = Genealogy::Gedcom::Date->new();
+								}
 							}
 							print ".\n";
 						} elsif($child->get_value('baptism date')) {
@@ -700,8 +742,11 @@ sub Gedcom::Individual::relationship
 
 	my $sex = $other->get_value('sex');
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
+		if($opts{'f'}) {
+			die "\n", $other->as_string(), ":  unknown sex\n";
+		}
 		if($opts{'w'}) {
-			print "\n", $other->as_string(), ":  unknown sex\n";
+			warn "\n", $other->as_string(), ":  unknown sex\n";
 		}
 		return;
 	}
