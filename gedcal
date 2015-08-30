@@ -712,7 +712,13 @@ sub normalize_name
 {
 	my $name = shift;
 
-	return ucfirst(lc($name));
+	my $rc;
+	foreach my $word(split(/-| /, lc($name))) {
+		$rc .= '-' if($rc);
+		$rc .= ucfirst($word);
+	}
+
+	return $rc;
 }
 
 sub Gedcom::Individual::pronoun
