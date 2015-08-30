@@ -15,7 +15,9 @@
 #	anything
 
 # -a: all days otherwise just today
+# -b: only print birthdays
 # -d: give a detailed lifetime information about the person
+# -D: only print anniversaries of deaths
 # -f: treat warnings as fatals, implies -w
 # -l: ignore living people
 # -v: verbose - for debugging
@@ -33,8 +35,8 @@ use Getopt::Std;
 
 my %opts;
 
-getopts('adfh:lwv', \%opts);
-die "Usage: $0 [ -a ] [ -d ] [ -f ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('abdDfh:lwv', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
@@ -55,6 +57,9 @@ if($opts{'f'}) {
 my $date_parser = Genealogy::Gedcom::Date->new();
 
 if($opts{a}) {
+	die '-b and -a should not be given together' if($opts{'b'});
+	die '-D and -a should not be given together' if($opts{'D'});
+
 	foreach my $month(0..11) {
 		foreach my $day(1..29) {
 			generate(day => $day, month => $month);
@@ -67,6 +72,30 @@ if($opts{a}) {
 			generate(day => 31, month => $month);
 		}
 	}
+} elsif($opts{'b'}) {
+	die '-b and -d should not be given together' if($opts{'d'});
+	die '-b and -a should not be given together' if($opts{'a'});
+	my($day, $month) = (localtime)[3,4];
+	if($opts{'D'}) {
+		print "Today's birthdays:\n";
+	}
+	generate(day => $day, month => $month, onlybirthdays => 1, onlydeaths => 0);
+	if($opts{'D'}) {
+		print "Today's anniversaries of deaths:\n";
+		generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1);
+	}
+} elsif($opts{'D'}) {
+	die '-D and -d should not be given together' if($opts{'d'});
+	die '-D and -a should not be given together' if($opts{'a'});
+	my($day, $month) = (localtime)[3,4];
+	if($opts{'D'}) {
+		print "Today's anniversaries of deaths:\n";
+	}
+	generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1);
+	if($opts{'b'}) {
+		print "Today's birthdays:\n";
+		generate(day => $day, month => $month, onlybirthdays => 1, onlydeaths => 0);
+	}
 } else {
 	my($day, $month) = (localtime)[3,4];
 	generate(day => $day, month => $month);
@@ -78,7 +107,13 @@ sub generate {
 	my $day = $params{'day'};
 	my $month = $params{'month'};
 
+	my $onlybirthdays = $params{'onlybirthdays'};
+	my $onlydeaths = $params{'onlydeaths'};
+
+	die "BUG: onlydeaths and onlybirths given" if($onlydeaths && $onlybirthdays);
+
 	foreach my $person($ged->individuals()) {
+	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		next if($me && ($person eq $me));
 
 		# Gather the information on this person
@@ -122,7 +157,11 @@ sub generate {
 			next;
 		}
 
+		next if($onlybirthdays && !defined($dob));
+
 		my $dod = $person->get_value('death date') || $person->get_value('burial date');
+
+		next if($onlydeaths && !defined($dod));
 
 		my $yod;	# Year of death
 		if($dod && ($dod =~ /.*?(\d{3,4})/)) {
@@ -207,6 +246,7 @@ sub generate {
 				}
 			}
 		}
+		next if($onlybirthdays && !defined($aob));
 		if($dod && ($dod !~ /^\d{4}$/)) {
 			my @dtime = strptime($dod . ' 12:00');
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
@@ -219,212 +259,274 @@ sub generate {
 				}
 			}
 		}
+		next if($onlydeaths && !defined($aod));
 
-		if($print) {
-			print $person->as_string({
-				include_years => 1,
-				nee => 1,
-				middle_names => 1,
-			}), "\n";
+		next unless($print);
 
-			my $spouse = $person->spouse();
-			my $birth = $person->get_record('birth');
-			my $death = $person->get_record('death');
-			my $printed_death_year;
-			my $printed_birth_year;
+		print $person->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+		}), "\n";
 
-			if($opts{d}) {
-				# my $first_name = (split(/ /, $person->given_names()))[0];
-				my $first_name = ucfirst($firstname);
-				$first_name =~ s/\s.+//;
-				my $printed_first_name;
-				my $printed_comma;
-				my $any_output;
-				my $space_count;
+		my $spouse = $person->spouse();
+		my $birth = $person->get_record('birth');
+		my $death = $person->get_record('death');
+		my $printed_death_year;
+		my $printed_birth_year;
+		my $birth_dt;
+		my $death_dt;
 
-				if(!$opts{a}) {
-					if($me) {
-						my $relationship = $me->relationship($person);
+		if($opts{d}) {
+			# my $first_name = (split(/ /, $person->given_names()))[0];
+			my $first_name = ucfirst($firstname);
+			$first_name =~ s/\s.+//;
+			my $printed_first_name;
+			my $printed_comma;
+			my $any_output;
+			my $space_count;
+
+			if(!$opts{a}) {
+				if($me) {
+					my $relationship = $me->relationship($person);
+					if($relationship) {
+						print "\tYour $relationship $first_name";
+						$any_output = 1;
+						$printed_first_name = 1;
+					} elsif($person->spouse()) {
+						$relationship = $me->relationship($person->spouse());
 						if($relationship) {
-							print "\tYour $relationship $first_name";
+							print "\t$first_name, the";
+							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
+							$printed_first_name = 1;
+							$any_output = 1;
+							$printed_comma = 1;
+						}
+					}
+					# if($aod) {
+						# print ' ', lcfirst($person->pronoun());
+					# } else {
+						# print "\n$first_name";
+					# }
+				}
+
+				if($aob || $aod) {
+					unless($any_output) {
+						print "\t$first_name";
+						$any_output = 1;
+						$printed_first_name = 1;
+					}
+				}
+				if($aob && $aod) {
+					print " was born $aob years ago and died $dod years ago today";
+					$printed_birth_year = 1;
+				} elsif($aob) {
+					print " was born $aob years ago today";
+					$printed_birth_year = 1;
+				} elsif($aod) {
+					print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
+					$printed_death_year = 1;
+				}
+			} elsif($dob) {
+				print $first_name;
+				$any_output = 1;
+				$printed_first_name = 1;
+
+				if($me) {
+					my $relationship = $me->relationship($person);
+					if($relationship) {
+						if($relationship) {
+							print ", your $relationship,";
 							$any_output = 1;
 							$printed_first_name = 1;
 						} elsif($person->spouse()) {
 							$relationship = $me->relationship($person->spouse());
 							if($relationship) {
-								print "\t$first_name, the";
+								print ', the';
 								print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
 								$printed_first_name = 1;
 								$any_output = 1;
 								$printed_comma = 1;
 							}
 						}
-						# if($aod) {
-							# print ' ', lcfirst($person->pronoun());
-						# } else {
-							# print "\n$first_name";
-						# }
 					}
-
-					if($aob || $aod) {
-						unless($any_output) {
-							print "\t$first_name";
-							$any_output = 1;
-							$printed_first_name = 1;
-						}
-					}
-					if($aob && $aod) {
-						print " was born $aob years ago and died $dod years ago today";
-						$printed_birth_year = 1;
-					} elsif($aob) {
-						print " was born $aob years ago today";
-						$printed_birth_year = 1;
-					} elsif($aod) {
-						print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
-						$printed_death_year = 1;
-					}
-				} elsif($dob) {
-					print $first_name;
+				}
+				print ' was born ';
+				if($dob =~ /^\d{4}$/) {
+					print "in $dob";
+				} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
+					print "around $1";
+				} elsif($dob =~ /^\d/) {
+					print "on $dob";
+				} else {
+					print "in $dob";
+				}
+				$any_output = 1;
+				$printed_first_name = 1;
+				$printed_birth_year = 1;
+			}
+			if($printed_birth_year) {
+				if($birth && $birth->place()) {
+					print ' in ', $birth->place();
 					$any_output = 1;
-					$printed_first_name = 1;
-
-					if($me) {
-						my $relationship = $me->relationship($person);
-						if($relationship) {
-							if($relationship) {
-								print ", your $relationship,";
-								$any_output = 1;
-								$printed_first_name = 1;
-							} elsif($person->spouse()) {
-								$relationship = $me->relationship($person->spouse());
-								if($relationship) {
-									print ', the';
-									print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
-									$printed_first_name = 1;
-									$any_output = 1;
-									$printed_comma = 1;
-								}
-							}
-						}
-					}
-					print ' was born ';
-					if($dob =~ /^\d{4}$/) {
-						print "in $dob";
-					} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
+				}
+			} elsif($printed_death_year) {
+				if($death && $death->place()) {
+					print ' in ', $death->place();
+					$any_output = 1;
+				}
+			}
+			if($birth && !$printed_birth_year) {
+				print ' having been born';
+				my $pob = $birth->place();
+				my $pod = $death->place();
+				if($pob && $pod && ($pob eq $pod)) {
+					print ' there ';
+				} else {
+					print " in $pob ";
+				}
+				if(!$person->get_value('birth date')) {
+					# Use the baptism date for approximation
+					if($dob =~ /(\d{4})$/) {
 						print "around $1";
-					} elsif($dob =~ /^\d/) {
-						print "on $dob";
 					} else {
-						print "in $dob";
+						print "around $dob";
 					}
-					$any_output = 1;
-					$printed_first_name = 1;
-					$printed_birth_year = 1;
+				} elsif($dob =~ /^Abt\s*(.+)/i) {
+					print "around $1";
+				} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
+					print "in $dob";
+				} else {
+					print "on $dob";
 				}
-				if($printed_birth_year) {
-					if($birth && $birth->place()) {
-						print ' in ', $birth->place();
-						$any_output = 1;
-					}
-				} elsif($printed_death_year) {
-					if($death && $death->place()) {
-						print ' in ', $death->place();
-						$any_output = 1;
+			}
+			my $end_of_sentence;
+			if($any_output) {
+				print '.  ';
+				$space_count = 2;
+				$any_output = 1;
+				$end_of_sentence = 1;
+			}
+
+			my @father = $person->father();
+			my $father = $father[0];
+			my @mother = $person->mother();
+			my $mother = $mother[0];
+			if($father || $mother) {
+				unless($space_count) {
+					print ' ';
+				}
+				print $person->pronoun(), ' was the child of';
+
+				if($father) {
+					print ' ', $father->as_string();
+					if($mother) {
+						print ' and';
 					}
 				}
-				if($birth && !$printed_birth_year) {
-					print ' having been born';
-					my $pob = $birth->place();
-					my $pod = $death->place();
-					if($pob && $pod && ($pob eq $pod)) {
-						print ' there ';
+				if($mother) {
+					print ' ', $mother->as_string({ give_maidenname => 0 });
+				}
+				$end_of_sentence = 0;
+			}
+			# TODO: $person->marriage_count()
+			if($spouse) {
+				if($end_of_sentence) {
+					print $person->pronoun();
+				} elsif($dod && (!$aod) || $person->get_value('baptism date')) {
+					print ',';
+				} else {
+					print ', and';
+				}
+				my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
+				if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
+					print ' was';
+				} elsif($yob && ($yob <= 1900)) {
+					print ' was';
+				} else {
+					print ' is';
+				}
+				print ' married to ', $spouse->as_string();
+				if($dom) {
+					if($dom =~ /^\d/) {
+						print " on $dom";
 					} else {
-						print " in $pob ";
+						print " in $dom";
 					}
-					if(!$person->get_value('birth date')) {
-						# Use the baptism date for approximation
-						if($dob =~ /(\d{4})$/) {
+				}
+				my $marriage = $person->get_record('marriage') || $spouse->get_record('marriage');
+				if($marriage && $marriage->place()) {
+					print ' at ', $marriage->place();
+				}
+			}
+		} elsif(defined($dob) && (!$onlydeaths) && !$onlybirthdays) {
+			my $d;
+			if(($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
+				eval {
+					$d = $date_parser->parse_date_value(date => $dob);
+				};
+			}
+			if($d) {
+				$birth_dt = $d->{one_date};
+				print "\tBorn: ", $birth_dt->strftime('%x');
+			} else {
+				if($@) {
+					if($opts{'f'}) {
+						die $@;
+					}
+					if($opts{'w'}) {
+						warn $@;
+					}
+				}
+				print "\tBorn: $dob";
+				# RT 106705
+				$date_parser = Genealogy::Gedcom::Date->new();
+			}
+			print "\n" if(defined($dod));
+		}
+		if(defined($dod) && (!$onlydeaths) && !$onlybirthdays) {
+			if($opts{d}) {
+				if($aod) {
+					if($death && !$printed_death_year) {
+						my $pod = $death->place();
+						if($pod) {
+							print " and died in $pod";
+						}
+					}
+				} else {
+					print ', and died ';
+					if(!$person->get_value('death date')) {
+						# Use the burial date for approximation
+						if($dod =~ /(\d{4})$/) {
 							print "around $1";
 						} else {
-							print "around $dob";
+							print "around $dod";
 						}
-					} elsif($dob =~ /^Abt\s*(.+)/i) {
+					} elsif($dod =~ /^Abt\s*(.+)/i) {
 						print "around $1";
-					} elsif($dob =~ /^\d{4}$/) {
-						print "in $dob";
+					} elsif($dod =~ /^\d{4}$/) {
+						print "in $dod";
 					} else {
-						print "on $dob";
+						print "on $dod";
 					}
-				}
-				my $end_of_sentence;
-				if($any_output) {
-					print '.  ';
-					$space_count = 2;
-					$any_output = 1;
-					$end_of_sentence = 1;
-				}
-
-				my @father = $person->father();
-				my $father = $father[0];
-				my @mother = $person->mother();
-				my $mother = $mother[0];
-				if($father || $mother) {
-					unless($space_count) {
-						print ' ';
-					}
-					print $person->pronoun(), ' was the child of';
-
-					if($father) {
-						print ' ', $father->as_string();
-						if($mother) {
-							print ' and';
+					if($death) {
+						my $pod = $death->place();
+						if($pod) {
+							print " in $pod";
 						}
 					}
-					if($mother) {
-						print ' ', $mother->as_string({ give_maidenname => 0 });
-					}
-					$end_of_sentence = 0;
 				}
-				# TODO: $person->marriage_count()
-				if($spouse) {
-					if($end_of_sentence) {
-						print $person->pronoun();
-					} elsif($dod && (!$aod) || $person->get_value('baptism date')) {
-						print ',';
-					} else {
-						print ', and';
-					}
-					my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
-					if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
-						print ' was';
-					} elsif($yob && ($yob <= 1900)) {
-						print ' was';
-					} else {
-						print ' is';
-					}
-					print ' married to ', $spouse->as_string();
-					if($dom) {
-						if($dom =~ /^\d/) {
-							print " on $dom";
-						} else {
-							print " in $dom";
-						}
-					}
-					my $marriage = $person->get_record('marriage') || $spouse->get_record('marriage');
-					if($marriage && $marriage->place()) {
-						print ' at ', $marriage->place();
-					}
-				}
-			} elsif(defined($dob)) {
+				print '.';
+			} else {
 				my $d;
-				if(($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
+				if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
 					eval {
-						$d = $date_parser->parse_date_value(date => $dob);
+						$d = $date_parser->parse_date_value(date => $dod);
 					};
 				}
 				if($d) {
-					$d = $d->{one_date};
-					print "\tBorn: ", $d->strftime('%x');
+					$death_dt = $d->{one_date};
+					print "\tDied: ", $death_dt->strftime('%x');
 				} else {
 					if($@) {
 						if($opts{'f'}) {
@@ -434,200 +536,141 @@ sub generate {
 							warn $@;
 						}
 					}
-					print "\tBorn: $dob";
+					print "\tDied: $dod";
 					# RT 106705
 					$date_parser = Genealogy::Gedcom::Date->new();
 				}
-				print "\n" if(defined($dod));
 			}
-			if(defined($dod)) {
-				if($opts{d}) {
-					if($aod) {
-						if($death && !$printed_death_year) {
-							my $pod = $death->place();
-							if($pod) {
-								print " and died in $pod";
-							}
-						}
-					} else {
-						print ', and died ';
-						if(!$person->get_value('death date')) {
-							# Use the burial date for approximation
-							if($dod =~ /(\d{4})$/) {
-								print "around $1";
-							} else {
-								print "around $dod";
-							}
-						} elsif($dod =~ /^Abt\s*(.+)/i) {
-							print "around $1";
-						} elsif($dod =~ /^\d{4}$/) {
-							print "in $dod";
-						} else {
-							print "on $dod";
-						}
-						if($death) {
-							my $pod = $death->place();
-							if($pod) {
-								print " in $pod";
-							}
-						}
-					}
-					print '.';
-				} else {
-					my $d;
-					if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
-						eval {
-							$d = $date_parser->parse_date_value(date => $dod);
-						};
-					}
-					if($d) {
-						$d = $d->{one_date};
-						print "\tDied: ", $d->strftime('%x');
-					} else {
-						if($@) {
-							if($opts{'f'}) {
-								die $@;
-							}
-							if($opts{'w'}) {
-								warn $@;
-							}
-						}
-						print "\tDied: $dod";
-						# RT 106705
-						$date_parser = Genealogy::Gedcom::Date->new();
-					}
-				}
-			}
-			if($opts{'d'}) {
-				$dob = $person->get_value('baptism date');
-				my $baptism;
-				if($dob) {
-					$baptism = $person->get_record('baptism');
-					if($dod) {
-						print '  ', $person->pronoun();
-					} else {
-						print ' and';
-					}
-					if($ENV{'LANG'} =~ /^en_US/) {
-						print ' was baptized ';
-					} else {
-						print ' was baptised ';
-					}
-					if($baptism) {
-						if($baptism->place()) {
-							if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
-								print 'there ';
-							} else {
-								print 'at ', $baptism->place(), ' ';
-							}
-						}
-						print 'on ', $baptism->date();
-					} else {
-						print "on $dob";
-					}
-				}
-				my $doburial = $person->get_value('burial date');
-				if((defined($dob) && !defined($doburial)) || !defined($dod)) {
-					print '.';
-				}
-				if($doburial) {
-					my $burial = $person->get_record('burial');
-					if($dob) {
-						print ' and ';
-					} else {
-						print '  ', $person->pronoun();
-						if($burial->date()) {
-							print ' was ';
-						} else {
-							print ' is ';
-						}
-					}
-					print 'buried ';
-					if($burial) {
-						if($burial->place()) {
-							if($baptism && $baptism->place() && ($burial->place() eq $baptism->place())) {
-								print 'there ';
-							} else {
-								print 'at ', $burial->place(), ' ';
-							}
-						}
-						print 'on ', $burial->date(), ".";
-					} else {
-						print "on $doburial.";
-					}
-				}
-				my $family = $person->fams();
-				if((defined($family)) && $family->number_of_children()) {
-					print '  ', $person->pronoun(), ' ';
-					print $dod ? 'had ' : 'has ';
-
-					my $child_count = $family->number_of_children();
-					if($child_count == 1) {
-						print "1 child, ";
-						print $family->children()->given_names();
-					} else {
-						print "$child_count children, ";
-
-						my @children_names = map { $_->given_names() } $family->children();
-
-						my $children = join(', ', @children_names);
-						substr($children, rindex($children, ', '), 2, ' and ');
-						print $children;
-					}
-					print ".\n";
-					foreach my $child($family->children()) {
-						my $dob = $child->get_value('birth date');
-						if($dob) {
-							print "\t" unless($opts{'a'});
-							print "\t", $child->given_names();
-							print ' was born ';
-							if($dob =~ /^Abt\.?\s*(.+)/i) {
-								print "around $1";
-							} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
-								print "in $dob";
-							} else {
-								my $d;
-								eval {
-									$d = $date_parser->parse_date_value(date => $dob);
-								};
-								if($d) {
-									$d = $d->{one_date};
-									print 'on ', $d->strftime('%x');
-								} else {
-									if($@) {
-										if($opts{'f'}) {
-											die $@;
-										}
-										if($opts{'w'}) {
-											warn $@;
-										}
-									}
-									$date_parser = Genealogy::Gedcom::Date->new();
-								}
-							}
-							print ".\n";
-						} elsif($child->get_value('baptism date')) {
-							print "\t" unless($opts{'a'});
-							print "\t", $child->given_names();
-							print ' was born c';
-							print $child->get_value('baptism date');
-							print ".\n";
-						}
-					}
-				} else {
-					print "\n";
-				}
-			}
-			if($opts{'d'}) {
-				if($person->get_value('note')) {
-					print "Note: ", $person->get_value('note'), "\n";
-				}
-				if($opts{'a'}) {
-					print '-' x 80;
-				}
-			}
-			print "\n";
 		}
+		if($opts{'d'}) {
+			$dob = $person->get_value('baptism date');
+			my $baptism;
+			if($dob) {
+				$baptism = $person->get_record('baptism');
+				if($dod) {
+					print '  ', $person->pronoun();
+				} else {
+					print ' and';
+				}
+				if($ENV{'LANG'} =~ /^en_US/) {
+					print ' was baptized ';
+				} else {
+					print ' was baptised ';
+				}
+				if($baptism) {
+					if($baptism->place()) {
+						if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
+							print 'there ';
+						} else {
+							print 'at ', $baptism->place(), ' ';
+						}
+					}
+					print 'on ', $baptism->date();
+				} else {
+					print "on $dob";
+				}
+			}
+			my $doburial = $person->get_value('burial date');
+			if((defined($dob) && !defined($doburial)) || !defined($dod)) {
+				print '.';
+			}
+			if($doburial) {
+				my $burial = $person->get_record('burial');
+				if($dob) {
+					print ' and ';
+				} else {
+					print '  ', $person->pronoun();
+					if($burial->date()) {
+						print ' was ';
+					} else {
+						print ' is ';
+					}
+				}
+				print 'buried ';
+				if($burial) {
+					if($burial->place()) {
+						if($baptism && $baptism->place() && ($burial->place() eq $baptism->place())) {
+							print 'there ';
+						} else {
+							print 'at ', $burial->place(), ' ';
+						}
+					}
+					print 'on ', $burial->date(), ".";
+				} else {
+					print "on $doburial.";
+				}
+			}
+			my $family = $person->fams();
+			if((defined($family)) && $family->number_of_children()) {
+				print '  ', $person->pronoun(), ' ';
+				print $dod ? 'had ' : 'has ';
+
+				my $child_count = $family->number_of_children();
+				if($child_count == 1) {
+					print "1 child, ";
+					print $family->children()->given_names();
+				} else {
+					print "$child_count children, ";
+
+					my @children_names = map { $_->given_names() } $family->children();
+
+					my $children = join(', ', @children_names);
+					substr($children, rindex($children, ', '), 2, ' and ');
+					print $children;
+				}
+				print ".\n";
+				foreach my $child($family->children()) {
+					my $dob = $child->get_value('birth date');
+					if($dob) {
+						print "\t" unless($opts{'a'});
+						print "\t", $child->given_names();
+						print ' was born ';
+						if($dob =~ /^Abt\.?\s*(.+)/i) {
+							print "around $1";
+						} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
+							print "in $dob";
+						} else {
+							my $d;
+							eval {
+								$d = $date_parser->parse_date_value(date => $dob);
+							};
+							if($d) {
+								$d = $d->{one_date};
+								print 'on ', $d->strftime('%x');
+							} else {
+								if($@) {
+									if($opts{'f'}) {
+										die $@;
+									}
+									if($opts{'w'}) {
+										warn $@;
+									}
+								}
+								$date_parser = Genealogy::Gedcom::Date->new();
+							}
+						}
+						print ".\n";
+					} elsif($child->get_value('baptism date')) {
+						print "\t" unless($opts{'a'});
+						print "\t", $child->given_names();
+						print ' was born c';
+						print $child->get_value('baptism date');
+						print ".\n";
+					}
+				}
+			} else {
+				print "\n";
+			}
+		}
+		if($opts{'d'}) {
+			if($person->get_value('note')) {
+				print "Note: ", $person->get_value('note'), "\n";
+			}
+			if($opts{'a'}) {
+				print '-' x 80;
+			}
+		}
+		print "\n" unless($onlybirthdays || $onlydeaths);
 	}
 }
 
@@ -713,8 +756,9 @@ sub normalize_name
 	my $name = shift;
 
 	my $rc;
-	foreach my $word(split(/-| /, lc($name))) {
-		$rc .= '-' if($rc);
+	foreach my $word(split(/-| |'/, lc($name))) {
+		$rc .= '-' if($rc && ($name =~ /-/));
+		$rc .= "'" if($rc && ($name =~ /'/));
 		$rc .= ucfirst($word);
 	}
 
