@@ -389,7 +389,7 @@ sub generate {
 				if($spouse) {
 					if($end_of_sentence) {
 						print $person->pronoun();
-					} elsif($dod && !$aod) {
+					} elsif($dod && (!$aod) || $person->get_value('baptism date')) {
 						print ',';
 					} else {
 						print ', and';
