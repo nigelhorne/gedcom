@@ -88,7 +88,7 @@ if($opts{a}) {
 	die '-D and -d should not be given together' if($opts{'d'});
 	die '-D and -a should not be given together' if($opts{'a'});
 	my($day, $month) = (localtime)[3,4];
-	if($opts{'D'}) {
+	if($opts{'b'}) {
 		print "Today's anniversaries of deaths:\n";
 	}
 	generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1);
