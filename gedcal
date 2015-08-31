@@ -399,6 +399,7 @@ sub generate {
 				} else {
 					print "on $dob";
 				}
+				$any_output = 1;
 			}
 			my $end_of_sentence;
 			if($any_output) {
@@ -428,13 +429,18 @@ sub generate {
 					print ' ', $mother->as_string({ give_maidenname => 0 });
 				}
 				$end_of_sentence = 0;
+				$any_output = 1;
 			}
 			# TODO: $person->marriage_count()
 			if($spouse) {
 				if($end_of_sentence) {
 					print $person->pronoun();
 				} elsif($dod && (!$aod) || $person->get_value('baptism date')) {
-					print ',';
+					if($any_output) {
+						print ',';
+					} else {
+						print $first_name;
+					}
 				} else {
 					print ', and';
 				}
