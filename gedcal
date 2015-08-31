@@ -558,10 +558,14 @@ sub generate {
 				} else {
 					print ' and';
 				}
+				print ' was';
+				if($baptism && $baptism->place() && $death && $death->place() && ($baptism->place() eq $death->place())) {
+					print ' also';
+				}
 				if($ENV{'LANG'} =~ /^en_US/) {
-					print ' was baptized ';
+					print ' baptized ';
 				} else {
-					print ' was baptised ';
+					print ' baptised ';
 				}
 				if($baptism) {
 					if($baptism->place()) {
