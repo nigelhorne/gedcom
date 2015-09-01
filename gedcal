@@ -55,6 +55,8 @@ if($opts{'f'}) {
 }
 
 my $date_parser = Genealogy::Gedcom::Date->new();
+my $year = (localtime)[5];
+$year += 1900 if($year < 1900);
 
 if($opts{a}) {
 	die '-b and -a should not be given together' if($opts{'b'});
@@ -492,6 +494,7 @@ sub generate {
 			}
 			print "\n" if(defined($dod));
 		}
+		my $just_printed_death_year = 0;
 		if(defined($dod) && (!$onlydeaths) && !$onlybirthdays) {
 			if($opts{d}) {
 				if($aod) {
@@ -523,8 +526,8 @@ sub generate {
 							print " in $pod";
 						}
 					}
+					$just_printed_death_year = 1;
 				}
-				print '.';
 			} else {
 				my $d;
 				if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
@@ -556,7 +559,7 @@ sub generate {
 			if($dob) {
 				$baptism = $person->get_record('baptism');
 				if($dod) {
-					print '  ', $person->pronoun();
+					print '.  ', $person->pronoun();
 				} else {
 					print ' and';
 				}
@@ -583,15 +586,12 @@ sub generate {
 				}
 			}
 			my $doburial = $person->get_value('burial date');
-			if((defined($dob) && !defined($doburial)) || !defined($dod)) {
-				print '.';
-			}
 			if($doburial) {
 				my $burial = $person->get_record('burial');
 				if($dob) {
 					print ' and ';
 				} else {
-					print '  ', $person->pronoun();
+					print '.  ', $person->pronoun();
 					if($burial->date()) {
 						print ' was ';
 					} else {
@@ -614,8 +614,16 @@ sub generate {
 			}
 			my $family = $person->fams();
 			if((defined($family)) && $family->number_of_children()) {
-				print '  ', $person->pronoun(), ' ';
-				print $dod ? 'had ' : 'has ';
+				if(!$just_printed_death_year) {
+					print ' with whom ', lcfirst($person->pronoun());
+				} else {
+					print '.  ', $person->pronoun();
+				}
+				if((!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
+					print ' had ';
+				} else {
+					print $dod ? ' had ' : ' has ';
+				}
 
 				my $child_count = $family->number_of_children();
 				if($child_count == 1) {
@@ -671,7 +679,7 @@ sub generate {
 					}
 				}
 			} else {
-				print "\n";
+				print ".\n";
 			}
 		}
 		if($opts{'d'}) {
