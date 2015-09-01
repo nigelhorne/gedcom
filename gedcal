@@ -379,25 +379,27 @@ sub generate {
 			if($birth && !$printed_birth_year) {
 				print ' having been born';
 				my $pob = $birth->place();
-				my $pod = $death->place();
-				if($pob && $pod && ($pob eq $pod)) {
-					print ' there ';
-				} else {
-					print " in $pob ";
+				if(defined($pob)) {
+					my $pod = $death->place();
+					if($pod && ($pob eq $pod)) {
+						print ' there';
+					} else {
+						print " in $pob";
+					}
 				}
 				if(!$person->get_value('birth date')) {
 					# Use the baptism date for approximation
 					if($dob =~ /(\d{4})$/) {
-						print "around $1";
+						print " around $1";
 					} else {
-						print "around $dob";
+						print " around $dob";
 					}
 				} elsif($dob =~ /^Abt\s*(.+)/i) {
-					print "around $1";
+					print " around $1";
 				} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
-					print "in $dob";
+					print " in $dob";
 				} else {
-					print "on $dob";
+					print " on $dob";
 				}
 				$any_output = 1;
 			}
