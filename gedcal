@@ -275,11 +275,13 @@ sub generate {
 		my $birth = $person->get_record('birth');
 		my $death = $person->get_record('death');
 		my $printed_death_year;
+		my $end_of_sentence;
 		my $printed_birth_year;
 		my $birth_dt;
 		my $death_dt;
 		my $mother;
 		my $father;
+		my $dom;
 
 		if($opts{d}) {
 			# my $first_name = (split(/ /, $person->given_names()))[0];
@@ -355,16 +357,7 @@ sub generate {
 						}
 					}
 				}
-				print ' was born ';
-				if($dob =~ /^\d{4}$/) {
-					print "in $dob";
-				} elsif($dob =~ /^Abt\.?\s*(.+)/i) {
-					print "around $1";
-				} elsif($dob =~ /^\d/) {
-					print "on $dob";
-				} else {
-					print "in $dob";
-				}
+				print ' was born ', year($dob);
 				$any_output = 1;
 				$printed_first_name = 1;
 				$printed_birth_year = 1;
@@ -399,17 +392,12 @@ sub generate {
 						} else {
 							print " around $dob";
 						}
-					} elsif($dob =~ /^Abt\s*(.+)/i) {
-						print " around $1";
-					} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
-						print " in $dob";
 					} else {
-						print " on $dob";
+						print ' ', year($dob);
 					}
 				}
 				$any_output = 1;
 			}
-			my $end_of_sentence;
 			if($any_output) {
 				print '.  ';
 				$space_count = 2;
@@ -452,7 +440,7 @@ sub generate {
 				} else {
 					print ', and';
 				}
-				my $dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
+				$dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 				if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
 					print ' was';
 				} elsif($yob && ($yob <= 1900)) {
@@ -472,6 +460,7 @@ sub generate {
 				if($marriage && $marriage->place()) {
 					print ' at ', $marriage->place();
 				}
+				$end_of_sentence = 0;
 			}
 		} elsif(defined($dob) && (!$onlydeaths) && !$onlybirthdays) {
 			my $d;
@@ -498,7 +487,7 @@ sub generate {
 			}
 			print "\n" if(defined($dod));
 		}
-		my $just_printed_death_year = 0;
+		my $just_printed_death = 0;
 		if(defined($dod) && (!$onlydeaths) && !$onlybirthdays) {
 			if($opts{d}) {
 				if($aod) {
@@ -512,6 +501,7 @@ sub generate {
 					if($mother || $father) {
 						print ', and died ';
 					} else {
+						print '.  ' if(!$end_of_sentence);
 						print $person->pronoun(), ' died ';
 					}
 					if(!$person->get_value('death date')) {
@@ -521,12 +511,8 @@ sub generate {
 						} else {
 							print "around $dod";
 						}
-					} elsif($dod =~ /^Abt\s*(.+)/i) {
-						print "around $1";
-					} elsif($dod =~ /^\d{4}$/) {
-						print "in $dod";
 					} else {
-						print "on $dod";
+						print year($dod);
 					}
 					if($death) {
 						my $pod = $death->place();
@@ -534,7 +520,7 @@ sub generate {
 							print " in $pod";
 						}
 					}
-					$just_printed_death_year = 1;
+					$just_printed_death = 1;
 				}
 			} else {
 				my $d;
@@ -562,6 +548,7 @@ sub generate {
 			}
 		}
 		if($opts{'d'}) {
+			$end_of_sentence = 0;
 			$dob = $person->get_value('baptism date');
 			my $baptism;
 			if($dob) {
@@ -592,11 +579,12 @@ sub generate {
 				} else {
 					print "on $dob";
 				}
+				$end_of_sentence = 0;
 			}
 			my $doburial = $person->get_value('burial date');
 			if($doburial) {
 				my $burial = $person->get_record('burial');
-				if($dob) {
+				if(($dob || $spouse) && !$dom) {
 					print ' and ';
 				} else {
 					print '.  ', $person->pronoun();
@@ -614,18 +602,21 @@ sub generate {
 						} else {
 							print 'at ', $burial->place(), ' ';
 						}
+						$just_printed_death = 1;
 					}
-					print 'on ', $burial->date(), ".";
+					print year($burial->date()), '.';
 				} else {
 					print "on $doburial.";
 				}
+				$end_of_sentence = 1;
 			}
 			my $family = $person->fams();
 			if((defined($family)) && $family->number_of_children()) {
-				if(!$just_printed_death_year) {
+				if(!$just_printed_death) {
 					print ' with whom ', lcfirst($person->pronoun());
 				} else {
-					print '.  ', $person->pronoun();
+					print '. ' if(!$end_of_sentence);
+					print ' ', $person->pronoun();
 				}
 				if((!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 					print ' had ';
@@ -938,4 +929,35 @@ sub stepsabove
 		return $rc if($rc != -1);
 	}
 	return -1;
+}
+
+sub year
+{
+	my $string = shift;
+
+	if($string =~ /^\d{4}$/) {
+		return "in $string";
+	}
+	if($string =~ /^Abt\.?\s*(.+)/i) {
+		return "around $1";
+	}
+	if($string =~ /^\d/) {
+		my $d;
+		eval {
+			$d = $date_parser->parse_date_value(date => $string);
+		};
+		if($d) {
+			return 'on ', $d->{one_date}->strftime('%x');
+		}
+		if($@) {
+			if($opts{'f'}) {
+				die $@;
+			}
+			if($opts{'w'}) {
+				warn $@;
+			}
+		}
+		return "on $string";
+	}
+	return "in $string";
 }
