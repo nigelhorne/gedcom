@@ -278,6 +278,8 @@ sub generate {
 		my $printed_birth_year;
 		my $birth_dt;
 		my $death_dt;
+		my $mother;
+		my $father;
 
 		if($opts{d}) {
 			# my $first_name = (split(/ /, $person->given_names()))[0];
@@ -389,19 +391,21 @@ sub generate {
 						print " in $pob";
 					}
 				}
-				if(!$person->get_value('birth date')) {
-					# Use the baptism date for approximation
-					if($dob =~ /(\d{4})$/) {
+				if($dob) {
+					if(!$person->get_value('birth date')) {
+						# Use the baptism date for approximation
+						if($dob =~ /(\d{4})$/) {
+							print " around $1";
+						} else {
+							print " around $dob";
+						}
+					} elsif($dob =~ /^Abt\s*(.+)/i) {
 						print " around $1";
+					} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
+						print " in $dob";
 					} else {
-						print " around $dob";
+						print " on $dob";
 					}
-				} elsif($dob =~ /^Abt\s*(.+)/i) {
-					print " around $1";
-				} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
-					print " in $dob";
-				} else {
-					print " on $dob";
 				}
 				$any_output = 1;
 			}
@@ -414,9 +418,9 @@ sub generate {
 			}
 
 			my @father = $person->father();
-			my $father = $father[0];
+			$father = $father[0];
 			my @mother = $person->mother();
-			my $mother = $mother[0];
+			$mother = $mother[0];
 			if($father || $mother) {
 				unless($space_count) {
 					print ' ';
@@ -505,7 +509,11 @@ sub generate {
 						}
 					}
 				} else {
-					print ', and died ';
+					if($mother || $father) {
+						print ', and died ';
+					} else {
+						print $person->pronoun(), ' died ';
+					}
 					if(!$person->get_value('death date')) {
 						# Use the burial date for approximation
 						if($dod =~ /(\d{4})$/) {
@@ -779,6 +787,7 @@ sub normalize_name
 	foreach my $word(split(/-| |'/, lc($name))) {
 		$rc .= '-' if($rc && ($name =~ /-/));
 		$rc .= "'" if($rc && ($name =~ /'/));
+		$rc .= ' ' if($rc && ($name =~ / /));
 		$rc .= ucfirst($word);
 	}
 
