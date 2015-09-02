@@ -42,13 +42,14 @@ my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 my $me;
 my %warned;
+my %printed;
 
 if($opts{h}) {
 	$me = $ged->get_individual($opts{h});
 	unless($me) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
 	}
-} 
+}
 
 if($opts{'f'}) {
 	$opts{'w'} = 1;
@@ -74,6 +75,7 @@ if($opts{a}) {
 			generate(day => 31, month => $month);
 		}
 	}
+	generate(day => -1, month => -1);
 } elsif($opts{'b'}) {
 	die '-b and -d should not be given together' if($opts{'d'});
 	die '-b and -a should not be given together' if($opts{'a'});
@@ -117,6 +119,9 @@ sub generate {
 	foreach my $person($ged->individuals()) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		next if($me && ($person eq $me));
+
+		my $xref = $person->{'xref'};
+		next if($printed{$xref});
 
 		# Gather the information on this person
 		my $name = $person->name();
@@ -232,7 +237,6 @@ sub generate {
 		print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
 		my $print = 0;
-
 		my $aob;
 		my $aod;
 
@@ -263,7 +267,9 @@ sub generate {
 		}
 		next if($onlydeaths && !defined($aod));
 
-		next unless($print);
+		next unless($print or ($day == -1));
+
+		$printed{$xref} = 1;
 
 		print $person->as_string({
 			include_years => 1,
@@ -377,9 +383,13 @@ sub generate {
 				print ' having been born';
 				my $pob = $birth->place();
 				if(defined($pob)) {
-					my $pod = $death->place();
-					if($pod && ($pob eq $pod)) {
-						print ' there';
+					if($death) {
+						my $pod = $death->place();
+						if($pod && ($pob eq $pod)) {
+							print ' there';
+						} else {
+							print " in $pob";
+						}
 					} else {
 						print " in $pob";
 					}
@@ -437,8 +447,10 @@ sub generate {
 					} else {
 						print $first_name;
 					}
-				} else {
+				} elsif($any_output) {
 					print ', and';
+				} else {
+					print $first_name;
 				}
 				$dom = $person->get_value('marriage date') || $spouse->get_value('marriage date');
 				if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
@@ -604,7 +616,7 @@ sub generate {
 						}
 						$just_printed_death = 1;
 					}
-					print year($burial->date()), '.';
+					print year($burial->date(), $death_dt), '.';
 				} else {
 					print "on $doburial.";
 				}
@@ -656,6 +668,14 @@ sub generate {
 							if($d) {
 								$d = $d->{one_date};
 								print 'on ', $d->strftime('%x');
+								if($birth_dt && ($d < $birth_dt)) {
+									if($opts{'f'}) {
+										die 'Born after parent had died';
+									}
+									if($opts{'w'}) {
+										warn 'Born after parent had died';
+									}
+								}
 							} else {
 								if($@) {
 									if($opts{'f'}) {
@@ -678,7 +698,8 @@ sub generate {
 					}
 				}
 			} else {
-				print ".\n";
+				print '.' if(!$end_of_sentence);
+				print "\n";
 			}
 		}
 		if($opts{'d'}) {
@@ -934,6 +955,7 @@ sub stepsabove
 sub year
 {
 	my $string = shift;
+	my $must_postdate = shift;
 
 	if($string =~ /^\d{4}$/) {
 		return "in $string";
@@ -947,7 +969,16 @@ sub year
 			$d = $date_parser->parse_date_value(date => $string);
 		};
 		if($d) {
-			return 'on ', $d->{one_date}->strftime('%x');
+			$d = $d->{one_date};
+			if($must_postdate) {
+				if($opts{'f'}) {
+					die "Something is wrong" if($d < $must_postdate);
+				}
+				if($opts{'w'}) {
+					warn "Something is wrong" if($d < $must_postdate);
+				}
+			}
+			return 'on ', $d->strftime('%x');
 		}
 		if($@) {
 			if($opts{'f'}) {
