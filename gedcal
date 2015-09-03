@@ -32,6 +32,8 @@ use Gedcom;
 use Genealogy::Gedcom::Date;
 use Date::Parse;	# For strptime
 use Getopt::Std;
+use Geo::Coder::OSM;
+use Term::ANSIColor;
 
 my %opts;
 
@@ -55,7 +57,25 @@ if($opts{'f'}) {
 	$opts{'w'} = 1;
 }
 
+if($opts{'w'}) {
+	# Cache calls to openstreetmap
+	require File::Spec;
+	File::Spec->import();
+
+	require HTTP::Cache::Transparent;
+	HTTP::Cache::Transparent->import();
+
+	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache');
+
+	HTTP::Cache::Transparent::init( {
+	BasePath => $cachedir . '/http-cache-transparent',
+	# Verbose => 1,
+	NoUpdate => 60 * 60,
+	MaxAge => 15 * 24} ) || die "$0/cache: $!";
+}
+
 my $date_parser = Genealogy::Gedcom::Date->new();
+my $geocoder = Geo::Coder::OSM->new();
 my $year = (localtime)[5];
 $year += 1900 if($year < 1900);
 
@@ -370,13 +390,17 @@ sub generate {
 			}
 			if($printed_birth_year) {
 				if($birth && $birth->place()) {
-					print ' in ', $birth->place();
+					my $pob = $birth->place();
+					print " in $pob";
 					$any_output = 1;
+					validate_place($pob);
 				}
 			} elsif($printed_death_year) {
 				if($death && $death->place()) {
-					print ' in ', $death->place();
+					my $pod = $death->place();
+					print " in $pod";
 					$any_output = 1;
+					validate_place($pod);
 				}
 			}
 			if($birth && !$printed_birth_year) {
@@ -389,9 +413,11 @@ sub generate {
 							print ' there';
 						} else {
 							print " in $pob";
+							validate_place($pob);
 						}
 					} else {
 						print " in $pob";
+						validate_place($pob);
 					}
 				}
 				if($dob) {
@@ -470,7 +496,9 @@ sub generate {
 				}
 				my $marriage = $person->get_record('marriage') || $spouse->get_record('marriage');
 				if($marriage && $marriage->place()) {
-					print ' at ', $marriage->place();
+					my $pom = $marriage->place();
+					print " at $pom";
+					validate_place($pom);
 				}
 				$end_of_sentence = 0;
 			}
@@ -507,6 +535,7 @@ sub generate {
 						my $pod = $death->place();
 						if($pod) {
 							print " and died in $pod";
+							validate_place($pod);
 						}
 					}
 				} else {
@@ -530,6 +559,7 @@ sub generate {
 						my $pod = $death->place();
 						if($pod) {
 							print " in $pod";
+							validate_place($pod);
 						}
 					}
 					$just_printed_death = 1;
@@ -580,12 +610,14 @@ sub generate {
 					print ' baptised ';
 				}
 				if($baptism) {
-					if($baptism->place()) {
+					my $pob = $baptism->place();
+					if($pob) {
 						if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
 							print 'there ';
 						} else {
-							print 'at ', $baptism->place(), ' ';
+							print "at $pob ";
 						}
+						validate_place($pob);
 					}
 					print 'on ', $baptism->date();
 				} else {
@@ -612,7 +644,9 @@ sub generate {
 						if($baptism && $baptism->place() && ($burial->place() eq $baptism->place())) {
 							print 'there ';
 						} else {
-							print 'at ', $burial->place(), ' ';
+							my $pob = $burial->place();
+							print " at $pob ";
+							validate_place($pob);
 						}
 						$just_printed_death = 1;
 					}
@@ -975,7 +1009,7 @@ sub year
 					die "Something is wrong" if($d < $must_postdate);
 				}
 				if($opts{'w'}) {
-					warn "Something is wrong" if($d < $must_postdate);
+					warn colored('Something is wrong', 'red') if($d < $must_postdate);
 				}
 			}
 			return 'on ', $d->strftime('%x');
@@ -991,4 +1025,21 @@ sub year
 		return "on $string";
 	}
 	return "in $string";
+}
+
+sub validate_place
+{
+	my $place = shift;
+
+	# US and Canada are more logical in city,county,state,country than other countries
+	if($opts{'w'} && (($place !~ /,.*,.*,.*/) || ($place =~ /USA|Canada/i))) {
+		if(!$geocoder->geocode($place)) {
+			# Don't die because there are many
+			# false positives as locations
+			# may no longer exist
+			warn colored("Unknown location $place", 'red');
+			return 0;
+		}
+	}
+	return 1;
 }
