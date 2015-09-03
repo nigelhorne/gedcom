@@ -13,3 +13,6 @@ Try adding this to your crontab:
 or
 
 	23 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
+
+Gedcal also includes rudimentary santity checking of your Gedcom file.  You
+can enable this mode with -w, which will print warnings of anything it finds.

@@ -1,8 +1,8 @@
 os:
   - linux
   - osx
-services:
-  - docker
+# services:
+  # - docker
 language: perl
 perl:
   - "5.20"
@@ -10,7 +10,7 @@ perl:
   - "5.16"
   - "5.14"
 before_install:
-  - cpanm --installdeps --quiet --notest Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std
-  - cpanm --notest --quiet Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std
+  - cpanm --skip-satisfied --installdeps -q -n Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Term::ANSIColor
+  - cpanm --skip-satisfied -n -q Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Term::ANSIColor
 script:
   - perl -c ./gedcal

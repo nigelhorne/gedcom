@@ -38,7 +38,7 @@ use Term::ANSIColor;
 my %opts;
 
 getopts('abdDfh:lwv', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
+die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
