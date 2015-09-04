@@ -45,6 +45,7 @@ my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $me;
 my %warned;
 my %printed;
+my %places;
 
 if($opts{h}) {
 	$me = $ged->get_individual($opts{h});
@@ -645,7 +646,7 @@ sub generate {
 							print 'there ';
 						} else {
 							my $pob = $burial->place();
-							print " at $pob ";
+							print "at $pob ";
 							validate_place($pob);
 						}
 						$just_printed_death = 1;
@@ -1031,6 +1032,10 @@ sub validate_place
 {
 	my $place = shift;
 
+	if($places{$place}) {
+		return $places{$place};
+	}
+
 	# US and Canada are more logical in city,county,state,country than other countries
 	if($opts{'w'} && (($place !~ /,.*,.*,.*/) || ($place =~ /USA|Canada/i))) {
 		if(!$geocoder->geocode($place)) {
@@ -1038,8 +1043,10 @@ sub validate_place
 			# false positives as locations
 			# may no longer exist
 			warn colored("Unknown location $place", 'red');
+			$places{$place} = 0;
 			return 0;
 		}
 	}
+	$places{$place} = 1;
 	return 1;
 }
