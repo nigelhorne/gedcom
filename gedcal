@@ -397,11 +397,10 @@ sub generate {
 					validate_place($pob);
 				}
 			} elsif($printed_death_year) {
-				if($death && $death->place()) {
-					my $pod = $death->place();
-					print " in $pod";
+				my $pod = place($death);
+				if($pod) {
+					print " $pod";
 					$any_output = 1;
-					validate_place($pod);
 				}
 			}
 			if($birth && !$printed_birth_year) {
@@ -540,8 +539,13 @@ sub generate {
 						}
 					}
 				} else {
-					if($mother || $father) {
-						print ', and died ';
+					if($mother || $father || ($spouse && !$end_of_sentence)) {
+						my $burial = $person->get_record('burial');
+						if($burial && $burial->place()) {
+							print ', died ';
+						} else {
+							print ', and died ';
+						}
 					} else {
 						print '.  ' if(!$end_of_sentence);
 						print $person->pronoun(), ' died ';
@@ -631,6 +635,7 @@ sub generate {
 				my $burial = $person->get_record('burial');
 				if(($dob || $spouse) && !$dom) {
 					print ' and ';
+					print 'was ' if($just_printed_death)
 				} else {
 					print '.  ', $person->pronoun();
 					if($burial->date()) {
@@ -1026,6 +1031,22 @@ sub year
 		return "on $string";
 	}
 	return "in $string";
+}
+
+sub place
+{
+	my $place = shift;
+	return unless($place);
+
+	$place = $place->place();
+	return unless($place);
+
+	validate_place($place);
+
+	if($place =~ /^\d/) {
+		return "at $place";
+	}
+	return "in $place";
 }
 
 sub validate_place
