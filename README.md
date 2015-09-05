@@ -3,8 +3,8 @@ gedcal
 
 Print today's family anniversaries.
 
-Given your family tree as a gedcom, gedcal will tell you whose birthday it is
-and who died on this day.
+Given your family tree as a gedcom, gedcal will tell you whose birthday it is and who
+died on this day.
 
 Try adding this to your crontab:
 
@@ -14,5 +14,7 @@ or
 
 	23 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
 
-Gedcal also includes rudimentary santity checking of your Gedcom file.  You
-can enable this mode with -w, which will print warnings of anything it finds.
+Gedcal also includes rudimentary santity checking of your Gedcom file.  You can enable
+this mode with -w, which will print warnings of anything it finds.
+For example:
+	gedcal -dawl gedcom-file.ged > /dev/null

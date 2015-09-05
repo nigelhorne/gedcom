@@ -384,7 +384,7 @@ sub generate {
 						}
 					}
 				}
-				print ' was born ', year($dob);
+				print ' was born ', year(person => $person, string => $dob);
 				$any_output = 1;
 				$printed_first_name = 1;
 				$printed_birth_year = 1;
@@ -394,7 +394,7 @@ sub generate {
 					my $pob = $birth->place();
 					print " in $pob";
 					$any_output = 1;
-					validate_place($pob);
+					validate_place(person => $person, place => $pob);
 				}
 			} elsif($printed_death_year) {
 				my $pod = place($death);
@@ -413,11 +413,11 @@ sub generate {
 							print ' there';
 						} else {
 							print " in $pob";
-							validate_place($pob);
+							validate_place(person => $person, place => $pob);
 						}
 					} else {
 						print " in $pob";
-						validate_place($pob);
+						validate_place(person => $person, place => $pob);
 					}
 				}
 				if($dob) {
@@ -429,7 +429,7 @@ sub generate {
 							print " around $dob";
 						}
 					} else {
-						print ' ', year($dob);
+						print ' ', year(person => $person, string => $dob);
 					}
 				}
 				$any_output = 1;
@@ -498,7 +498,7 @@ sub generate {
 				if($marriage && $marriage->place()) {
 					my $pom = $marriage->place();
 					print " at $pom";
-					validate_place($pom);
+					validate_place(person => $person, place => $pom);
 				}
 				$end_of_sentence = 0;
 			}
@@ -518,12 +518,12 @@ sub generate {
 						die $@;
 					}
 					if($opts{'w'}) {
-						warn $@;
+						warn colored($@, 'red');
 					}
 				}
 				print "\tBorn: $dob";
 				# RT 106705
-				$date_parser = Genealogy::Gedcom::Date->new();
+				# $date_parser = Genealogy::Gedcom::Date->new();
 			}
 			print "\n" if(defined($dod));
 		}
@@ -535,7 +535,7 @@ sub generate {
 						my $pod = $death->place();
 						if($pod) {
 							print " and died in $pod";
-							validate_place($pod);
+							validate_place(person => $person, place => $pod);
 						}
 					}
 				} else {
@@ -558,13 +558,13 @@ sub generate {
 							print "around $dod";
 						}
 					} else {
-						print year($dod);
+						print year(person => $person, string => $dod);
 					}
 					if($death) {
 						my $pod = $death->place();
 						if($pod) {
 							print " in $pod";
-							validate_place($pod);
+							validate_place(person => $person, place => $pod);
 						}
 					}
 					$just_printed_death = 1;
@@ -585,12 +585,12 @@ sub generate {
 							die $@;
 						}
 						if($opts{'w'}) {
-							warn $@;
+							warn colored($@, 'red');
 						}
 					}
 					print "\tDied: $dod";
 					# RT 106705
-					$date_parser = Genealogy::Gedcom::Date->new();
+					# $date_parser = Genealogy::Gedcom::Date->new();
 				}
 			}
 		}
@@ -622,7 +622,7 @@ sub generate {
 						} else {
 							print "at $pob ";
 						}
-						validate_place($pob);
+						validate_place(person => $person, place => $pob);
 					}
 					print 'on ', $baptism->date();
 				} else {
@@ -652,11 +652,11 @@ sub generate {
 						} else {
 							my $pob = $burial->place();
 							print "at $pob ";
-							validate_place($pob);
+							validate_place(person => $person, place => $pob);
 						}
 						$just_printed_death = 1;
 					}
-					print year($burial->date(), $death_dt), '.';
+					print year(person => $person, string => $burial->date(), must_validate => $death_dt), '.';
 				} else {
 					print "on $doburial.";
 				}
@@ -722,10 +722,11 @@ sub generate {
 										die $@;
 									}
 									if($opts{'w'}) {
-										warn $@;
+										warn colored($@, 'red');
 									}
 								}
-								$date_parser = Genealogy::Gedcom::Date->new();
+								# RT 106705
+								# $date_parser = Genealogy::Gedcom::Date->new();
 							}
 						}
 						print ".\n";
@@ -879,7 +880,7 @@ sub Gedcom::Individual::relationship
 			die "\n", $other->as_string(), ":  unknown sex\n";
 		}
 		if($opts{'w'}) {
-			warn "\n", $other->as_string(), ":  unknown sex\n";
+			warn colored("\n".  $other->as_string() . ':  unknown sex', 'red');
 		}
 		return;
 	}
@@ -896,10 +897,14 @@ sub Gedcom::Individual::relationship
 				return $title;
 			} elsif($steps == 2) {
 				return "grand$title";
-			} else {
+			} elsif($steps == 3) {
+				return "great-grand$title";
+			} elsif($steps == 4) {
+				return "great-great-grand$title";
+			} elsif($steps <= 0) {
 				return 'great-' x ($steps - 2) . "grand$title";
 			}
-			die $other->as_string(), ': Bug - not a direct ancestor';
+			die $other->as_string(), ": Bug - not a direct ancestor, steps = $steps";
 		}
 	}
 
@@ -994,8 +999,9 @@ sub stepsabove
 
 sub year
 {
-	my $string = shift;
-	my $must_postdate = shift;
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $string = $params{'string'};
 
 	if($string =~ /^\d{4}$/) {
 		return "in $string";
@@ -1010,6 +1016,7 @@ sub year
 		};
 		if($d) {
 			$d = $d->{one_date};
+			my $must_postdate = $params{'must_postdate'};
 			if($must_postdate) {
 				if($opts{'f'}) {
 					die "Something is wrong" if($d < $must_postdate);
@@ -1021,11 +1028,20 @@ sub year
 			return 'on ', $d->strftime('%x');
 		}
 		if($@) {
+			my $person = $params{'person'};
 			if($opts{'f'}) {
-				die $@;
+				if($person) {
+					die colored($person->as_string() . ": $@", 'red');
+				} else {
+					die colored($@, 'red');
+				}
 			}
 			if($opts{'w'}) {
-				warn $@;
+				if($person) {
+					warn colored($person->as_string() . ": $@", 'red');
+				} else {
+					warn colored($@, 'red');
+				}
 			}
 		}
 		return "on $string";
@@ -1041,7 +1057,7 @@ sub place
 	$place = $place->place();
 	return unless($place);
 
-	validate_place($place);
+	validate_place(place => $place);
 
 	if($place =~ /^\d/) {
 		return "at $place";
@@ -1051,7 +1067,9 @@ sub place
 
 sub validate_place
 {
-	my $place = shift;
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $place = $params{'place'};
 
 	if($places{$place}) {
 		return $places{$place};
@@ -1063,7 +1081,12 @@ sub validate_place
 			# Don't die because there are many
 			# false positives as locations
 			# may no longer exist
-			warn colored("Unknown location $place", 'red');
+			my $person = $params{'person'};
+			if($person) {
+				warn colored($person->as_string() . ": unknown location $place", 'red');
+			} else {
+				warn colored("Unknown location $place", 'red');
+			}
 			$places{$place} = 0;
 			return 0;
 		}
