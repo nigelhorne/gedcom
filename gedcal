@@ -719,10 +719,10 @@ sub generate {
 							} else {
 								if($@) {
 									if($opts{'f'}) {
-										die $@;
+										die $person->as_string() . ": $@";
 									}
 									if($opts{'w'}) {
-										warn colored($@, 'red');
+										warn colored($person->as_string() . ": $@", 'red');
 									}
 								}
 								# RT 106705
@@ -877,10 +877,10 @@ sub Gedcom::Individual::relationship
 	my $sex = $other->get_value('sex');
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
 		if($opts{'f'}) {
-			die "\n", $other->as_string(), ":  unknown sex\n";
+			die "\n", $other->as_string(), ": unknown sex\n";
 		}
 		if($opts{'w'}) {
-			warn colored("\n".  $other->as_string() . ':  unknown sex', 'red');
+			warn colored("\n".  $other->as_string() . ': unknown sex', 'red');
 		}
 		return;
 	}
@@ -902,9 +902,12 @@ sub Gedcom::Individual::relationship
 			} elsif($steps == 4) {
 				return "great-great-grand$title";
 			} elsif($steps <= 0) {
-				return 'great-' x ($steps - 2) . "grand$title";
+				if($opts{'f'}) {
+					die $other->as_string(), ": Bug - not a direct ancestor, steps = $steps";
+				} else {
+					warn colored($other->as_string() . ": Bug - not a direct ancestor, steps = $steps", 'red');
+				}
 			}
-			die $other->as_string(), ": Bug - not a direct ancestor, steps = $steps";
 		}
 	}
 
