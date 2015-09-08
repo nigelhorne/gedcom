@@ -326,8 +326,8 @@ sub generate {
 						print "\tYour $relationship $first_name";
 						$any_output = 1;
 						$printed_first_name = 1;
-					} elsif($person->spouse()) {
-						$relationship = $me->relationship($person->spouse());
+					} elsif($spouse) {
+						$relationship = $me->relationship($spouse);
 						if($relationship) {
 							print "\t$first_name, the";
 							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
@@ -372,8 +372,8 @@ sub generate {
 							print ", your $relationship,";
 							$any_output = 1;
 							$printed_first_name = 1;
-						} elsif($person->spouse()) {
-							$relationship = $me->relationship($person->spouse());
+						} elsif($spouse) {
+							$relationship = $me->relationship($spouse);
 							if($relationship) {
 								print ', the';
 								print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
