@@ -222,14 +222,6 @@ sub generate {
 			}
 		}
 
-		# Remove alternatives - go with the first
-		if($lastname =~ /(.+)[\/\\]/) {
-			$lastname = $1;
-		}
-		if($firstname =~ /(.+)[\/\\]/) {
-			$firstname = $1;
-		}
-
 		unless($dob || $dod || $opts{a}) {
 			next;
 		}
@@ -377,9 +369,9 @@ sub generate {
 				$any_output = 1;
 				validate_place(person => $person, place => $pob);
 			} elsif($printed_death_year) {
-				my $pod = place($death);
+				my $pod = place(person => $person, place => $death);
 				if($pod) {
-					print " $pod";
+					print $pod;
 					$any_output = 1;
 				}
 			}
@@ -492,20 +484,13 @@ sub generate {
 					} else {
 						print scalar(@spouses), ' times';
 					}
-					print ', to ';
-					for(my $i = 0; $i <= scalar(@spouses) - 1; $i++) {
-						print $spouses[$i]->as_string();
-						if($i < scalar(@spouses) - 2) {
-							print ', ';
-						} elsif($i == scalar(@spouses) - 2) {
-							print ' and ';
-						}
-					}
-					print '.  ';
+					my @spouse_names = map { $_->as_string() } @spouses;
+					my $names = join(', ', @spouse_names);
+					substr($names, rindex($names, ', '), 2, ' and ');
+					print ", to $names.  ";
 					# TODO: print the date and places of the marriages
 					$end_of_sentence = 1;
 				}
-					
 			}
 		} elsif(defined($dob) && (!$onlydeaths) && !$onlybirthdays) {
 			my $d;
@@ -576,13 +561,7 @@ sub generate {
 					} else {
 						print year(person => $person, string => $dod);
 					}
-					if($death) {
-						my $pod = $death->place();
-						if($pod) {
-							print " in $pod";
-							validate_place(person => $person, place => $pod);
-						}
-					}
+					print place(place => $death, person => $person);
 					$just_printed_death = 1;
 				}
 			} else {
@@ -1082,18 +1061,20 @@ sub year
 
 sub place
 {
-	my $place = shift;
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $place = $params{'place'};
 	return unless($place);
 
 	$place = $place->place();
 	return unless($place);
 
-	validate_place(place => $place);
+	validate_place(person => $params{'person'}, place => $place);
 
 	if($place =~ /^\d/) {
-		return "at $place";
+		return " at $place";
 	}
-	return "in $place";
+	return " in $place";
 }
 
 sub validate_place
@@ -1101,6 +1082,7 @@ sub validate_place
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $place = $params{'place'};
+	die 'place is not optional' unless $place;
 
 	if($places{$place}) {
 		return $places{$place};
