@@ -668,7 +668,11 @@ sub generate {
 			my $family = $person->fams();
 			if((defined($family)) && $family->number_of_children()) {
 				if(!$just_printed_death) {
-					print ' with whom ', lcfirst($person->pronoun());
+					if($end_of_sentence) {
+						print $person->pronoun();
+					} else {
+						print ' with whom ', lcfirst($person->pronoun());
+					}
 				} else {
 					print '. ' if(!$end_of_sentence);
 					print ' ', $person->pronoun();
