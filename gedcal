@@ -155,7 +155,7 @@ sub generate {
 		$nameparser->parse($name);
 		my %name_components = $nameparser->components();
 		my $firstname = $name_components{'given_name_1'};
-		my $middlename = $name_components{'middle_name'};
+		my $middle_name = $name_components{'middle_name'};
 		my $lastname = $name_components{'surname_1'};
 		my $suffix = $name_components{'suffix'};
 
@@ -531,6 +531,7 @@ sub generate {
 							}
 							print " died in $pod";
 							validate_place(person => $person, place => $pod);
+							$end_of_sentence = 0;
 						}
 					}
 				} else {
@@ -563,6 +564,7 @@ sub generate {
 					}
 					print place(place => $death, person => $person);
 					$just_printed_death = 1;
+					$end_of_sentence = 0;
 				}
 			} else {
 				my $d;
@@ -590,7 +592,6 @@ sub generate {
 			}
 		}
 		if($opts{'d'}) {
-			$end_of_sentence = 0;
 			$dob = $person->get_value('baptism date');
 			my $baptism;
 			if($dob) {
@@ -762,34 +763,42 @@ sub Gedcom::Individual::as_string
 	my $self = shift;
 	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $surname = $self->surname();
+	my $name = $self->name();
 
+	$name =~ s/\///g;
+	$nameparser->parse($name);
+
+	my %name_components = $nameparser->components();
+	my $first_name = $name_components{'given_name_1'};
+	my $middle_name = $name_components{'middle_name'};
+	my $surname = $name_components{'surname_1'} || $self->surname();
+	my $suffix = $name_components{'suffix'};
+
+	my $has_maiden_name;
 	if($args{'nee'}) {
 		my $sex = $self->get_value('sex');
 		if(defined($sex) && ($sex eq 'F')) {
 			my $husband = $self->husband();
 			if(defined($husband)) {
 				$surname = $husband->surname();
+				$has_maiden_name = 1;
 			}
 		}
 	}
 
-	my $rc;
-	if($self->given_names()) {
-		foreach my $name(split(' ', $self->given_names())) {
-			if($rc) {
-				$rc .= ' ';
-			}
-			$rc .= normalize_name($name);
-			last unless($args{'middle_names'});
-		}
+	my $rc = $first_name;
+	if($args{'middle_names'} && $middle_name) {
+		$rc .= " $middle_name";
 	}
 
 	if($surname) {
 		$rc .= ' ' . normalize_name($surname);
+		if($suffix) {
+			$rc .= " $suffix";
+		}
 	}
 
-	if($args{'nee'} && ($surname ne $self->surname())) {
+	if($has_maiden_name) {
 		$rc .= ' (nee ' . normalize_name($self->surname()) . ')';
 	}
 
@@ -1013,8 +1022,8 @@ sub year
 	if($string =~ /^\d{4}$/) {
 		return "in $string";
 	}
-	if($string =~ /^Abt\.?\s*(.+)/i) {
-		return "around $1";
+	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
+		return "c$2";
 	}
 	if($string =~ /^\d/) {
 		my $d;
