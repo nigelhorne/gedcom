@@ -620,7 +620,7 @@ sub generate {
 						}
 						validate_place(person => $person, place => $pob);
 					}
-					print 'on ', $baptism->date();
+					print year(string => $baptism->date(), person => $person, must_postdate => $birth_dt);
 				} else {
 					print "on $dob";
 				}
