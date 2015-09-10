@@ -289,6 +289,7 @@ sub generate {
 			my $printed_comma;
 			my $any_output;
 			my $space_count;
+			my $printed_spouse_name;
 
 			if(!$opts{a}) {
 				if($me) {
@@ -298,13 +299,19 @@ sub generate {
 						$any_output = 1;
 						$printed_first_name = 1;
 					} elsif($spouses[0]) {
+						# FIXME: go through all the spouses until we find
+						# the right one - perhaps using surname
 						$relationship = $me->relationship($spouses[0]);
 						if($relationship) {
 							print "\t$first_name, the";
-							print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
+							print ' ',
+								(($sex eq 'F') ? 'wife of' : 'husband of'),
+								" your $relationship ",
+								$spouses[0]->given_names(), ',';
 							$printed_first_name = 1;
 							$any_output = 1;
 							$printed_comma = 1;
+							$printed_spouse_name = 1;
 						}
 					}
 					# if($aod) {
@@ -453,7 +460,10 @@ sub generate {
 				} else {
 					print $first_name;
 				}
-				$dom = $person->get_value('marriage date') || $spouses[0]->get_value('marriage date');
+				my $marriage = $person->get_record('marriage') || $spouses[0]->get_record('marriage') || $person->get_record('fams marriage');
+				if($marriage) {
+					$dom = $marriage->date() || $person->get_value('marriage date') || $spouses[0]->get_value('marriage date');
+				}
 				if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
 					print ' was';
 				} elsif($yob && ($yob <= 1900)) {
@@ -471,12 +481,7 @@ sub generate {
 							print " in $dom";
 						}
 					}
-					my $marriage = $person->get_record('marriage') || $spouses[0]->get_record('marriage');
-					if($marriage && $marriage->place()) {
-						my $pom = $marriage->place();
-						print " at $pom";
-						validate_place(person => $person, place => $pom);
-					}
+					print place(record => $marriage, person => $person);
 					$end_of_sentence = 0;
 				} else {
 					if(scalar(@spouses) == 2) {
@@ -562,7 +567,7 @@ sub generate {
 					} else {
 						print year(person => $person, string => $dod);
 					}
-					print place(place => $death, person => $person);
+					print place(record => $death, person => $person);
 					$just_printed_death = 1;
 					$end_of_sentence = 0;
 				}
@@ -1076,7 +1081,7 @@ sub place
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $place = $params{'place'};
+	my $place = $params{'record'};
 	return unless($place);
 
 	$place = $place->place();
