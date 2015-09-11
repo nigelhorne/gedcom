@@ -382,7 +382,7 @@ sub generate {
 					$any_output = 1;
 				}
 			}
-			if($birth && !$printed_birth_year) {
+			if($birth && !$printed_birth_year && ($pob || $dob)) {
 				print ' having been born';
 				if(defined($pob)) {
 					if($death) {
@@ -407,7 +407,7 @@ sub generate {
 							print " around $dob";
 						}
 					} else {
-						print ' ', year(person => $person, string => $dob);
+						print year(person => $person, string => $dob);
 					}
 				}
 				$any_output = 1;
@@ -473,14 +473,8 @@ sub generate {
 				}
 				print ' married ';
 				if(scalar(@spouses) == 1) {
-					print 'to ', $spouses[0]->as_string();
-					if($dom) {
-						if($dom =~ /^\d/) {
-							print " on $dom";
-						} else {
-							print " in $dom";
-						}
-					}
+					print 'to ', $spouses[0]->as_string(),
+						year(person => $person, string => $dom, must_postdate => $birth_dt);
 					print place(record => $marriage, person => $person);
 					$end_of_sentence = 0;
 				} else {
@@ -545,24 +539,20 @@ sub generate {
 							print $person->pronoun();
 						} else {
 							my $burial = $person->get_record('burial');
-							if($burial && $burial->place() && (!$person->get_value('baptism date'))) {
-								print ',';
-							} else {
-								print ',' if($spouses[0]);
-								print ' and';
-							}
+							print ',' if($spouses[0]);
+							print ' and' unless($burial && (($dob || $spouses[0]) && (!$dom) && !$person->get_value('baptism date')));
 						}
-						print ' died ';
+						print ' died';
 					} else {
 						print '.  ' if(!$end_of_sentence);
-						print $person->pronoun(), ' died ';
+						print $person->pronoun(), ' died';
 					}
 					if(!$person->get_value('death date')) {
 						# Use the burial date for approximation
 						if($dod =~ /(\d{4})$/) {
-							print "around $1";
+							print " around $1";
 						} else {
-							print "around $dod";
+							print " around $dod";
 						}
 					} else {
 						print year(person => $person, string => $dod);
@@ -662,12 +652,9 @@ sub generate {
 					$just_printed_death = 1;
 				}
 				if($doburial) {
-					if($poburial) {
-						print ' ';
-					}
 					print year(person => $person, string => $burial->date(), must_validate => $death_dt);
 				}
-				print '.';
+				print '. ';
 				$end_of_sentence = 1;
 			}
 			my $family = $person->fams();
@@ -1027,12 +1014,13 @@ sub year
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $string = $params{'string'};
+	return unless($string);
 
 	if($string =~ /^\d{4}$/) {
-		return "in $string";
+		return " in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
-		return "c$2";
+		return " c$2";
 	}
 	if($string =~ /^\d/) {
 		my $d;
@@ -1050,7 +1038,7 @@ sub year
 					warn colored('Something is wrong', 'red') if($d < $must_postdate);
 				}
 			}
-			return 'on ', $d->strftime('%x');
+			return ' on ', $d->strftime('%x');
 		}
 		if($@) {
 			my $person = $params{'person'};
@@ -1069,12 +1057,12 @@ sub year
 				}
 			}
 		}
-		return "on $string";
+		return " on $string";
 	}
 	if($string =~ /^bef.? (\d{4})/i) {
-		return "before $1";
+		return " before $1";
 	}
-	return "in $string";
+	return " in $string";
 }
 
 sub place
