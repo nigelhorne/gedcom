@@ -369,14 +369,14 @@ sub generate {
 			}
 			my $pob;
 			if($birth && $birth->place()) {
-				my $pob = $birth->place();
+				$pob = $birth->place();
 			}
 			if($printed_birth_year && defined($pob)) {
 				print " in $pob";
 				$any_output = 1;
 				validate_place(person => $person, place => $pob);
 			} elsif($printed_death_year) {
-				my $pod = place(person => $person, place => $death);
+				my $pod = place(person => $person, record => $death);
 				if($pod) {
 					print $pod;
 					$any_output = 1;
@@ -608,7 +608,7 @@ sub generate {
 				if($baptism) {
 					my $pob = $baptism->place();
 					if($pob) {
-						if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
+						if((!$dod) && $pob && ($baptism->place() eq $pob)) {
 							print 'there';
 						} else {
 							print "at $pob";
@@ -1075,7 +1075,7 @@ sub place
 	$place = $place->place();
 	return unless($place);
 
-	validate_place(person => $params{'person'}, place => $place);
+	validate_place({ person => $params{'person'}, place => $place });
 
 	if($place =~ /^\d/) {
 		return " at $place";
@@ -1102,7 +1102,7 @@ sub validate_place
 			# may no longer exist
 			my $person = $params{'person'};
 			if($person) {
-				warn colored($person->as_string() . ": unknown location $place", 'red');
+				warn colored($person->as_string({ include_dates => 1 }) . ": unknown location $place", 'red');
 			} else {
 				warn colored("Unknown location $place", 'red');
 			}
