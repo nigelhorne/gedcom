@@ -362,7 +362,7 @@ sub generate {
 						}
 					}
 				}
-				print ' was born ', year(person => $person, string => $dob);
+				print ' was born', year(person => $person, string => $dob);
 				$any_output = 1;
 				$printed_first_name = 1;
 				$printed_birth_year = 1;
@@ -609,9 +609,9 @@ sub generate {
 					my $pob = $baptism->place();
 					if($pob) {
 						if((!$dod) && $birth && $birth->place() && ($baptism->place() eq $birth->place())) {
-							print 'there ';
+							print 'there';
 						} else {
-							print "at $pob ";
+							print "at $pob";
 						}
 						validate_place(person => $person, place => $pob);
 					}
