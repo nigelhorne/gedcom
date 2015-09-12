@@ -155,9 +155,7 @@ sub generate {
 		$nameparser->parse($name);
 		my %name_components = $nameparser->components();
 		my $firstname = $name_components{'given_name_1'};
-		my $middle_name = $name_components{'middle_name'};
 		my $lastname = $name_components{'surname_1'};
-		my $suffix = $name_components{'suffix'};
 
 		my $dob;
 		eval {
@@ -369,7 +367,7 @@ sub generate {
 			}
 			my $pob;
 			if($birth && $birth->place()) {
-				my $pob = $birth->place();
+				$pob = $birth->place();
 			}
 			if($printed_birth_year && defined($pob)) {
 				print " in $pob";
