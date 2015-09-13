@@ -370,9 +370,8 @@ sub generate {
 				$pob = $birth->place();
 			}
 			if($printed_birth_year && defined($pob)) {
-				print " in $pob";
+				print place(person => $person, place => $pob);
 				$any_output = 1;
-				validate_place(person => $person, place => $pob);
 			} elsif($printed_death_year) {
 				my $pod = place(person => $person, record => $death);
 				if($pod) {
@@ -443,9 +442,9 @@ sub generate {
 			if($spouses[0]) {
 				if($end_of_sentence) {
 					print $person->pronoun();
-				} elsif($dod && (!$aod) || $person->get_value('baptism date')) {
+				} elsif(($dod && (!$aod)) || $person->get_value('baptism date')) {
 					if($any_output) {
-						if(scalar(@spouses) == 1) {
+						if((scalar(@spouses) == 1) && !$aod) {
 							print ',';
 						} else {
 							print ' and';
@@ -657,7 +656,7 @@ sub generate {
 			}
 			my $family = $person->fams();
 			if((defined($family)) && $family->number_of_children()) {
-				if(!$just_printed_death) {
+				if((!$just_printed_death) && (!$baptism)) {
 					if($end_of_sentence) {
 						print $person->pronoun();
 					} else {
@@ -1042,9 +1041,9 @@ sub year
 			my $person = $params{'person'};
 			if($opts{'f'}) {
 				if($person) {
-					die colored($person->as_string() . ": $@", 'red');
+					die $person->as_string() . ": $@";
 				} else {
-					die colored($@, 'red');
+					die $@;
 				}
 			}
 			if($opts{'w'}) {
@@ -1060,6 +1059,25 @@ sub year
 	if($string =~ /^bef.? (\d{4})/i) {
 		return " before $1";
 	}
+	if($string =~ /^By (\d{4})/i) {
+		my $person = $params{'person'};
+		if($opts{'f'}) {
+			if($person) {
+				die $person->as_string() . " says 'By' instead of 'Bef'";
+			} else {
+				die "Got 'By' instead of 'Bef'";
+			}
+		}
+		if($opts{'w'}) {
+			if($person) {
+				warn colored($person->as_string() . " says 'By' instead of 'Bef'", 'red');
+			} else {
+				warn colored("Got 'By' instead of 'Bef'", 'red');
+			}
+		}
+		return " before $1";
+	}
+
 	return " in $string";
 }
 
@@ -1067,16 +1085,22 @@ sub place
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $place = $params{'record'};
-	return unless($place);
+	my $place = $params{'place'};
+	if(!defined($place)) {
+		$place = $params{'record'};
+		return unless($place);
 
-	$place = $place->place();
-	return unless($place);
+		$place = $place->place();
+		return unless($place);
+	}
 
 	validate_place({ person => $params{'person'}, place => $place });
 
 	if($place =~ /^\d/) {
 		return " at $place";
+	}
+	if($place eq 'USA') {
+		return ' in the USA';
 	}
 	return " in $place";
 }
