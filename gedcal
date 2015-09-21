@@ -589,7 +589,8 @@ sub generate {
 			if($dob) {
 				$baptism = $person->get_record('baptism');
 				if($dod) {
-					print '.  ', $person->pronoun();
+					print '.  ' if(!$end_of_sentence);
+					print $person->pronoun();
 				} else {
 					print ' and';
 				}
@@ -631,19 +632,20 @@ sub generate {
 						print 'was ';
 					}
 				} else {
-					print '.  ', $person->pronoun();
+					print '.  ' if(!$end_of_sentence);
+					print $person->pronoun();
 					if($burial->date()) {
 						print ' was ';
 					} else {
 						print ' is ';
 					}
 				}
-				print 'buried ';
+				print 'buried';
 				if($poburial) {
 					if($baptism && $baptism->place() && ($poburial eq $baptism->place())) {
-						print 'there';
+						print ' there';
 					} else {
-						print "at $poburial";
+						print " at $poburial";
 						validate_place(person => $person, place => $poburial);
 					}
 					$just_printed_death = 1;
@@ -791,7 +793,7 @@ sub Gedcom::Individual::as_string
 		}
 	}
 
-	if($has_maiden_name) {
+	if($has_maiden_name && $self->surname()) {
 		$rc .= ' (nee ' . normalize_name($self->surname()) . ')';
 	}
 
