@@ -428,12 +428,30 @@ sub generate {
 
 				if($father) {
 					print ' ', $father->as_string();
+					my @occupations = $father->get_value('occupation');
+					# TODO: print all occupations
+					if($occupations[0]) {
+						print ' (a';
+						if($occupations[0] =~ /^[aeiou]/i) {
+							print 'n';
+						}
+						print ' ', lc($occupations[0]), ')';
+					}
 					if($mother) {
 						print ' and';
 					}
 				}
 				if($mother) {
 					print ' ', $mother->as_string({ give_maidenname => 0 });
+					my @occupations = $mother->get_value('occupation');
+					# TODO: print all occupations
+					if($occupations[0]) {
+						print ' (a';
+						if($occupations[0] =~ /^[aeiou]/i) {
+							print 'n';
+						}
+						print ' ', lc($occupations[0]), ')';
+					}
 				}
 				$end_of_sentence = 0;
 				$any_output = 1;
