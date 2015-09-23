@@ -10,12 +10,16 @@ Although primarily a tool for genealogy, the -l flag tells gedcal to print
 matches for family members that are still alive.
 
 Try adding this to your crontab:
-	23 5 * * * gedcal -dl gedcom-file.ged
+
+    23 5 * * * gedcal -dl gedcom-file.ged
+
 or
-	23 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
+
+    23 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
 
 Gedcal also includes rudimentary santity checking of your Gedcom file.  You can
 enable this mode with -w, which will print warnings of anything it finds.
 
 For example:
-	gedcal -dawl gedcom-file.ged > /dev/null
+
+    gedcal -dawl gedcom-file.ged > /dev/null
