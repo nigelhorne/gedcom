@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2012-2015, Nigel Horne
+# Copyright (C) 2015, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -942,9 +942,6 @@ sub Gedcom::Individual::relationship
 
 	my $p1level = 0;
 	foreach my $person1(@ancestors1) {
-		if($p1level++ >= 8) {
-			last;
-		}
 		my $p2level = 0;
 		foreach my $person2(@ancestors2) {
 			if($p2level++ >= 8) {
