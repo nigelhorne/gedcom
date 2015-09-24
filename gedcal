@@ -639,7 +639,11 @@ sub generate {
 				$just_printed_death = 0;
 			}
 			my $burial = $person->get_record('burial');
-			my $doburial = ($burial && $burial->date()) || $person->get_value('burial date');
+			my $doburial;
+			if($burial) {
+				$doburial = $burial->date() || $person->get_record('burial')
+			}
+			= ($burial && $burial->date()) || $person->get_value('burial date');
 			my $poburial;
 			if($burial) {
 				$poburial = $burial->place();
