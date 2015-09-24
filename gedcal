@@ -624,52 +624,63 @@ sub generate {
 				if($baptism) {
 					my $pob = $baptism->place();
 					if($pob) {
-						if((!$dod) && $pob && ($baptism->place() eq $pob)) {
+						if((!$dod) && $pob && ($pob eq $birth->place())) {
 							print 'there';
 						} else {
 							print "at $pob";
+							validate_place(person => $person, place => $pob);
 						}
-						validate_place(person => $person, place => $pob);
 					}
 					print year(string => $baptism->date(), person => $person, must_postdate => $birth_dt);
 				} else {
 					print "on $dob";
 				}
 				$end_of_sentence = 0;
+				$just_printed_death = 0;
 			}
 			my $burial = $person->get_record('burial');
-			my $doburial = $person->get_value('burial date');
+			my $doburial = ($burial && $burial->date()) || $person->get_value('burial date');
 			my $poburial;
 			if($burial) {
 				$poburial = $burial->place();
 			}
 			if($doburial || $poburial) {
-				if(($dob || $spouses[0]) && !$dom) {
-					print ' and ';
-					if($just_printed_death && ((!defined($baptism)) || (!defined($baptism->place())))) {
-						print 'was ';
-					}
+				if($just_printed_death && (!$end_of_sentence) && $poburial and $death && $death->place() && ($poburial eq $death->place()) && !$burial->date()) {
+					print ' where ', lcfirst($person->pronoun()), ' is buried';
 				} else {
-					print '.  ' if(!$end_of_sentence);
-					print $person->pronoun();
-					if($burial->date()) {
-						print ' was ';
+					if((($dob || $spouses[0]) && !$dom) ||
+					   ((!$baptism) && $death && $death->place() && $poburial && ($poburial eq $death->place()))) {
+						print ' and ';
+						if($just_printed_death && ((!defined($baptism)) || !defined($baptism->place()))) {
+							if($burial->date()) {
+								print 'was ';
+							} else {
+								print 'is ';
+							}
+						}
 					} else {
-						print ' is ';
+						print '.  ' if(!$end_of_sentence);
+						print $person->pronoun();
+						if($burial->date()) {
+							print ' was ';
+						} else {
+							print ' is ';
+						}
 					}
-				}
-				print 'buried';
-				if($poburial) {
-					if($baptism && $baptism->place() && ($poburial eq $baptism->place())) {
-						print ' there';
-					} else {
-						print " at $poburial";
-						validate_place(person => $person, place => $poburial);
+					print 'buried';
+					if($poburial) {
+						if(($baptism && $baptism->place() && ($poburial eq $baptism->place())) ||
+						   ((!$baptism) && $death && $death->place() && ($poburial eq $death->place()))) {
+							print ' there';
+						} else {
+							print " at $poburial";
+							validate_place(person => $person, place => $poburial);
+						}
+						$just_printed_death = 1;
 					}
-					$just_printed_death = 1;
-				}
-				if($doburial) {
-					print year(person => $person, string => $burial->date(), must_validate => $death_dt);
+					if($doburial) {
+						print year(person => $person, string => $burial->date(), must_validate => $death_dt);
+					}
 				}
 				print '. ';
 				$end_of_sentence = 1;
