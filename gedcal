@@ -641,18 +641,26 @@ sub generate {
 			my $burial = $person->get_record('burial');
 			my $doburial;
 			if($burial) {
-				$doburial = $burial->date() || $person->get_record('burial')
+				$doburial = $burial->date();
 			}
-			= ($burial && $burial->date()) || $person->get_value('burial date');
+			if(!$doburial) {
+				$doburial = $person->get_value('burial date');
+			}
 			my $poburial;
 			if($burial) {
 				$poburial = $burial->place();
 			}
+			if(!$poburial) {
+				$poburial = $person->get_value('burial place');
+			}
 			if($doburial || $poburial) {
+				# FIXME: This entire block is complex
 				if($just_printed_death && (!$end_of_sentence) && $poburial and $death && $death->place() && ($poburial eq $death->place()) && !$burial->date()) {
 					print ' where ', lcfirst($person->pronoun()), ' is buried';
 				} else {
-					if((($dob || $spouses[0]) && !$dom) ||
+					if((!$just_printed_death) && (!$end_of_sentence) && $baptism) {
+						print ' and ';
+					} elsif((($dob || $spouses[0]) && !$dom) ||
 					   ((!$baptism) && $death && $death->place() && $poburial && ($poburial eq $death->place()))) {
 						print ' and ';
 						if($just_printed_death && ((!defined($baptism)) || !defined($baptism->place()))) {
@@ -701,18 +709,44 @@ sub generate {
 					print '. ' if(!$end_of_sentence);
 					print ' ', $person->pronoun();
 				}
-				if((!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
+				my $child_count = $family->number_of_children();
+				my $all_alive = 1;
+				if($yob && ($year > $yob + 200)) {
+					$all_alive = 0;
+				} else {
+					foreach my $child($family->children()) {
+						if($child->get_record('death')) {
+							$all_alive = 0;
+							last;
+						}
+						if($child->get_record('burial')) {
+							$all_alive = 0;
+							last;
+						}
+					}
+				}
+
+				if($all_alive) {
+					print ' has ';
+				} elsif((!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 					print ' had ';
 				} else {
 					print $dod ? ' had ' : ' has ';
 				}
 
-				my $child_count = $family->number_of_children();
 				if($child_count == 1) {
-					print "1 child, ";
+					if($all_alive) {
+						print 'one surviving child, ';
+					} else {
+						print 'one child, ';
+					}
 					print $family->children()->given_names();
 				} else {
-					print "$child_count children, ";
+					if($all_alive) {
+						print "$child_count surviving children, ";
+					} else {
+						print "$child_count children, ";
+					}
 
 					my @children_names = map { $_->given_names() } $family->children();
 
