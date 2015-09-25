@@ -854,7 +854,10 @@ sub Gedcom::Individual::as_string
 	}
 
 	if($surname) {
-		$rc .= ' ' . normalize_name($surname);
+		if($rc) {
+			$rc .= ' ';
+		}
+		$rc .= normalize_name($surname);
 		if($suffix) {
 			$rc .= " $suffix";
 		}
