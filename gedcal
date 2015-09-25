@@ -294,6 +294,15 @@ sub generate {
 					my $relationship = $me->relationship($person);
 					if($relationship) {
 						print "\tYour $relationship $first_name";
+						my @occupations = $person->get_value('occupation');
+						# TODO: print all occupations
+						if($occupations[0]) {
+							print ' (a';
+							if($occupations[0] =~ /^[aeiou]/i) {
+								print 'n';
+							}
+							print ' ', lc($occupations[0]), ')';
+						}
 						$any_output = 1;
 						$printed_first_name = 1;
 					} elsif($spouses[0]) {
@@ -301,8 +310,17 @@ sub generate {
 						# the right one - perhaps using surname
 						$relationship = $me->relationship($spouses[0]);
 						if($relationship) {
-							print "\t$first_name, the";
-							print ' ',
+							print "\t$first_name";
+							my @occupations = $person->get_value('occupation');
+							# TODO: print all occupations
+							if($occupations[0]) {
+								print ' (a';
+								if($occupations[0] =~ /^[aeiou]/i) {
+									print 'n';
+								}
+								print ' ', lc($occupations[0]), ')';
+							}
+							print ', the ',
 								(($sex eq 'F') ? 'wife of' : 'husband of'),
 								" your $relationship ",
 								$spouses[0]->given_names(), ',';
@@ -312,11 +330,6 @@ sub generate {
 							$printed_spouse_name = 1;
 						}
 					}
-					# if($aod) {
-						# print ' ', lcfirst($person->pronoun());
-					# } else {
-						# print "\n$first_name";
-					# }
 				}
 
 				if($aob || $aod) {
@@ -324,6 +337,15 @@ sub generate {
 						print "\t$first_name";
 						$any_output = 1;
 						$printed_first_name = 1;
+						my @occupations = $person->get_value('occupation');
+						# TODO: print all occupations
+						if($occupations[0]) {
+							print ' (a';
+							if($occupations[0] =~ /^[aeiou]/i) {
+								print 'n';
+							}
+							print ' ', lc($occupations[0]), ')';
+						}
 					}
 				}
 				if($aob && $aod) {
@@ -338,6 +360,15 @@ sub generate {
 				}
 			} elsif($dob) {
 				print $first_name;
+				my @occupations = $person->get_value('occupation');
+				# TODO: print all occupations
+				if($occupations[0]) {
+					print ' (a';
+					if($occupations[0] =~ /^[aeiou]/i) {
+						print 'n';
+					}
+					print ' ', lc($occupations[0]), ')';
+				}
 				$any_output = 1;
 				$printed_first_name = 1;
 
