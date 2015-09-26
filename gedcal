@@ -238,6 +238,15 @@ sub generate {
 
 		next unless($print or ($day == -1));
 
+		if($opts{'w'} && (!$person->fams()) && (!$person->siblings()) && (!$person->parents()) && (!$person->spouse())) {
+			if($opts{'f'}) {
+				die $person->as_string() . ': not connected to the tree';
+			}
+			if($opts{'w'}) {
+				warn colored($person->as_string() . ': not connected to the tree', 'red');
+			}
+		}
+
 		print $person->as_string({
 			include_years => 1,
 			nee => 1,
