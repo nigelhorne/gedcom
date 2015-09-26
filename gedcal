@@ -912,7 +912,11 @@ sub Gedcom::Individual::as_string
 
 		my $yob;	# Year of birth
 		if($dob && ($dob =~ /.*?(\d{3,4})/)) {
-			$yob = $1;
+			if($dob =~ /^(Abt|ca?)\.?\s*(.+)/i) {
+				$yob = "c$2";
+			} else {
+				$yob = $1;
+			}
 		} else {
 			$dob = $self->get_value('baptism date');
 			if($dob && ($dob =~ /.*?(\d{3,4})/)) {
