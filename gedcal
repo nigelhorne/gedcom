@@ -426,7 +426,9 @@ sub generate {
 						validate_place(person => $person, place => $pob);
 					}
 				}
-				if(!$dob) {
+				if(defined($dob)) {
+					print year(person => $person, string => $dob);
+				} else {
 					$dob = $person->get_value('baptism date');
 					if($dob) {
 						# Use the baptism date for approximation
@@ -435,8 +437,6 @@ sub generate {
 						} else {
 							print " around $dob";
 						}
-					} else {
-						print year(person => $person, string => $dob);
 					}
 				}
 				$any_output = 1;
