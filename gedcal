@@ -10,7 +10,6 @@
 #	must apply in writing for a licence for use from Nigel Horne at the
 #	above e-mail.
 
-# TODO: Use Gedcom::Date - needs a couple of bug fixes in that first though
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
 
@@ -19,7 +18,7 @@
 # -d: give a detailed lifetime information about the person
 # -D: only print anniversaries of deaths
 # -f: treat warnings as fatals, implies -w
-# -l: ignore living people
+# -l: include living people
 # -v: verbose - for debugging
 # -w: print warning about invalid day
 
@@ -199,27 +198,6 @@ sub generate {
 			next;
 		}
 
-		# Change surname of a married woman
-		my $sex = $person->get_value('sex');
-		my $maidenname;
-		if(defined($sex) && ($sex eq 'F')) {
-			my $husband = $person->husband();
-			if(defined($husband)) {
-				my $hname = $husband->name();
-				if($hname =~ /(.+)\s*Jr\.?/i) {
-					$hname = $1;
-				}
-				if($hname =~ /(.+)Mc\s+(.+)/) {
-					$hname = "$1$2";
-				}
-				# print $person->name(), " married to $hname\n";
-				if($hname =~ /^.+\s+\/(.+)\/$/) {
-					$maidenname = $lastname;
-					$lastname = lc($1);
-				}
-			}
-		}
-
 		unless($dob || $dod || $opts{a}) {
 			next;
 		}
@@ -243,6 +221,7 @@ sub generate {
 			}
 		}
 		next if($onlybirthdays && !defined($aob));
+
 		if($dod && ($dod !~ /^\d{4}$/)) {
 			my @dtime = strptime($dod . ' 12:00');
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
@@ -259,13 +238,34 @@ sub generate {
 
 		next unless($print or ($day == -1));
 
-		$printed{$xref} = 1;
-
 		print $person->as_string({
 			include_years => 1,
 			nee => 1,
 			middle_names => 1,
 		}), "\n";
+
+		# Change surname of a married woman
+		my $sex = $person->get_value('sex');
+		my $maidenname;
+		if(defined($sex) && ($sex eq 'F')) {
+			my $husband = $person->husband();
+			if(defined($husband)) {
+				my $hname = $husband->name();
+				if($hname =~ /(.+)\s*Jr\.?/i) {
+					$hname = $1;
+				}
+				if($hname =~ /(.+)Mc\s+(.+)/) {
+					$hname = "$1$2";
+				}
+				# print $person->name(), " married to $hname\n";
+				if($hname =~ /^.+\s+\/(.+)\/$/) {
+					$maidenname = $lastname;
+					$lastname = lc($1);
+				}
+			}
+		}
+
+		$printed{$xref} = 1;
 
 		my @spouses = $person->spouse();
 		my $birth = $person->get_record('birth');
@@ -426,8 +426,9 @@ sub generate {
 						validate_place(person => $person, place => $pob);
 					}
 				}
-				if($dob) {
-					if(!$person->get_value('birth date')) {
+				if(!$dob) {
+					$dob = $person->get_value('baptism date');
+					if($dob) {
 						# Use the baptism date for approximation
 						if($dob =~ /(\d{4})$/) {
 							print " around $1";
@@ -965,7 +966,8 @@ sub Gedcom::Individual::pronoun
 	if(defined($sex)) {
 		if($sex eq 'F') {
 			return 'She';
-		} elsif($sex eq 'M') {
+		}
+		if($sex eq 'M') {
 			return 'He';
 		}
 	}
