@@ -633,6 +633,14 @@ sub generate {
 				}
 			}
 		}
+		if($opts{'w'} && defined($yob) && defined($yod) && (($yod - $yob) > 120)) {
+			if($opts{'f'}) {
+				die $person->as_string() . ': age at death too large';
+			}
+			if($opts{'w'}) {
+				warn colored($person->as_string() . ': age at death too large', 'red');
+			}
+		}
 		if($opts{'d'}) {
 			$dob = $person->get_value('baptism date');
 			my $baptism;
