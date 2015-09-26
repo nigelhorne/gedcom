@@ -567,8 +567,6 @@ sub generate {
 					}
 				}
 				print "\tBorn: $dob";
-				# RT 106705
-				# $date_parser = Genealogy::Gedcom::Date->new();
 			}
 			print "\n" if(defined($dod));
 		}
@@ -637,8 +635,6 @@ sub generate {
 						}
 					}
 					print "\tDied: $dod";
-					# RT 106705
-					# $date_parser = Genealogy::Gedcom::Date->new();
 				}
 			}
 		}
@@ -832,6 +828,8 @@ sub generate {
 								}
 							} else {
 								if($@) {
+									# RT 107354
+									chomp $@;
 									if($opts{'f'}) {
 										die $person->as_string() . ": $@";
 									}
@@ -839,8 +837,6 @@ sub generate {
 										warn colored($person->as_string() . ": $@", 'red');
 									}
 								}
-								# RT 106705
-								# $date_parser = Genealogy::Gedcom::Date->new();
 							}
 						}
 						print ".\n";
@@ -1161,6 +1157,8 @@ sub year
 			return ' on ', $d->strftime('%x');
 		}
 		if($@) {
+			# RT 107354
+			chomp $@;
 			my $person = $params{'person'};
 			if($opts{'f'}) {
 				if($person) {
