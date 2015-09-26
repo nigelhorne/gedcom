@@ -238,7 +238,7 @@ sub generate {
 
 		next unless($print or ($day == -1));
 
-		if($opts{'w'} && (!$person->fams()) && (!$person->siblings()) && (!$person->parents()) && (!$person->spouse())) {
+		if($opts{'w'} && (!$person->fams()) && (!$person->siblings()) && (!$person->mother()) && (!$person->father()) && (!$person->spouse())) {
 			if($opts{'f'}) {
 				die $person->as_string() . ': not connected to the tree';
 			}
@@ -673,7 +673,7 @@ sub generate {
 				if($baptism) {
 					my $pob = $baptism->place();
 					if($pob) {
-						if((!$dod) && $pob && ($pob eq $birth->place())) {
+						if((!$dod) && $pob && $birth && $birth->place() && ($pob eq $birth->place())) {
 							print 'there';
 						} else {
 							print "at $pob";
@@ -1012,7 +1012,7 @@ sub Gedcom::Individual::relationship
 			die "\n", $other->as_string(), ": unknown sex\n";
 		}
 		if($opts{'w'}) {
-			warn colored("\n".  $other->as_string() . ': unknown sex', 'red');
+			warn colored("\n" . $other->as_string() . ': unknown sex', 'red');
 		}
 		return;
 	}
