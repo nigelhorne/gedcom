@@ -908,7 +908,7 @@ sub generate {
 					} elsif($child->get_value('baptism date')) {
 						print "\t" unless($opts{'a'});
 						print "\t", $child->given_names(),
-							' was born c';
+							' was born c',
 							$child->get_value('baptism date'),
 							".\n";
 					}
