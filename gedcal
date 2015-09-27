@@ -243,9 +243,7 @@ sub generate {
 			if($opts{'f'}) {
 				die $person->as_string() . ': not connected to the tree';
 			}
-			if($opts{'w'}) {
-				warn colored($person->as_string() . ': not connected to the tree', 'red');
-			}
+			red_warning({ person => $person, warning => 'not connected to the tree' });
 		}
 
 		print $person->as_string({
@@ -588,8 +586,8 @@ sub generate {
 				print ' married ';
 				if(scalar(@spouses) == 1) {
 					print 'to ', $spouses[0]->as_string(),
-						year(person => $person, string => $dom, must_postdate => $birth_dt);
-					print place(record => $marriage, person => $person);
+						year(person => $person, string => $dom, must_postdate => $birth_dt),
+						place(record => $marriage, person => $person);
 					$end_of_sentence = 0;
 				} else {
 					if(scalar(@spouses) == 2) {
@@ -597,8 +595,7 @@ sub generate {
 					} else {
 						print scalar(@spouses), ' times';
 					}
-					my @spouse_names = map { $_->as_string() } @spouses;
-					my $names = join(', ', @spouse_names);
+					my $names = join(', ', map { $_->as_string() } @spouses);
 					substr($names, rindex($names, ', '), 2, ' and ');
 					print ", to $names.  ";
 					# TODO: print the date and places of the marriages
@@ -621,7 +618,7 @@ sub generate {
 						die $@;
 					}
 					if($opts{'w'}) {
-						warn colored($@, 'red');
+						red_warning({ person => $person, warning => $@ });
 					}
 				}
 				print "\tBorn: $dob";
@@ -650,8 +647,8 @@ sub generate {
 						if($end_of_sentence) {
 							print $person->pronoun();
 						} else {
-							my $burial = $person->get_record('burial');
 							print ',' if($spouses[0]);
+							my $burial = $person->get_record('burial');
 							print ' and' unless($burial && (($dob || $spouses[0]) && (!$dom) && !$person->get_value('baptism date')));
 						}
 						print ' died';
@@ -689,7 +686,7 @@ sub generate {
 							die $@;
 						}
 						if($opts{'w'}) {
-							warn colored($@, 'red');
+							red_warning({ person => $person, warning => $@ });
 						}
 					}
 					print "\tDied: $dod";
@@ -700,9 +697,7 @@ sub generate {
 			if($opts{'f'}) {
 				die $person->as_string() . ': age at death too large';
 			}
-			if($opts{'w'}) {
-				warn colored($person->as_string() . ': age at death too large', 'red');
-			}
+			red_warning({ person => $person, warning => 'age at death too large' });
 		}
 		if($opts{'d'}) {
 			$dob = $person->get_value('baptism date');
@@ -720,23 +715,22 @@ sub generate {
 					print ' also';
 				}
 				if($ENV{'LANG'} =~ /^en_US/) {
-					print ' baptized ';
+					print ' baptized';
 				} else {
-					print ' baptised ';
+					print ' baptised';
 				}
 				if($baptism) {
 					my $pob = $baptism->place();
 					if($pob) {
 						if((!$dod) && $pob && $birth && $birth->place() && ($pob eq $birth->place())) {
-							print 'there';
+							print ' there';
 						} else {
-							print "at $pob";
-							validate_place(person => $person, place => $pob);
+							print place({ person => $person, place => $pob });
 						}
 					}
 					print year(string => $baptism->date(), person => $person, must_postdate => $birth_dt);
 				} else {
-					print "on $dob";
+					print " on $dob";
 				}
 				$end_of_sentence = 0;
 				$just_printed_death = 0;
@@ -788,8 +782,7 @@ sub generate {
 						   ((!$baptism) && $death && $death->place() && ($poburial eq $death->place()))) {
 							print ' there';
 						} else {
-							print " at $poburial";
-							validate_place(person => $person, place => $poburial);
+							print place({ person => $person, place => $poburial });
 						}
 						$just_printed_death = 1;
 					}
@@ -877,8 +870,7 @@ sub generate {
 					my $dob = $child->get_value('birth date');
 					if($dob) {
 						print "\t" unless($opts{'a'});
-						print "\t", $child->given_names();
-						print ' was born ';
+						print "\t", $child->given_names(), ' was born ';
 						if($dob =~ /^Abt\.?\s*(.+)/i) {
 							print "around $1";
 						} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
@@ -893,10 +885,10 @@ sub generate {
 								print 'on ', $d->strftime('%x');
 								if($birth_dt && ($d < $birth_dt)) {
 									if($opts{'f'}) {
-										die 'Born after parent had died';
+										die $person->name(), ': Born after parent had died';
 									}
 									if($opts{'w'}) {
-										warn 'Born after parent had died';
+										red_warning({ person => $person, warning => 'born after parent had died' });
 									}
 								}
 							} else {
@@ -907,7 +899,7 @@ sub generate {
 										die $person->as_string() . ": $@";
 									}
 									if($opts{'w'}) {
-										warn colored($person->as_string() . ": $@", 'red');
+										red_warning({ person => $person, warning => $@ });
 									}
 								}
 							}
@@ -915,10 +907,10 @@ sub generate {
 						print ".\n";
 					} elsif($child->get_value('baptism date')) {
 						print "\t" unless($opts{'a'});
-						print "\t", $child->given_names();
-						print ' was born c';
-						print $child->get_value('baptism date');
-						print ".\n";
+						print "\t", $child->given_names(),
+							' was born c';
+							$child->get_value('baptism date'),
+							".\n";
 					}
 				}
 			} else {
@@ -1081,7 +1073,7 @@ sub Gedcom::Individual::relationship
 			die "\n", $other->as_string(), ": unknown sex\n";
 		}
 		if($opts{'w'}) {
-			warn colored("\n" . $other->as_string() . ': unknown sex', 'red');
+			red_warning({ person => $other, warning => 'unknown sex' });
 		}
 		return;
 	}
@@ -1213,6 +1205,7 @@ sub year
 		return " c$2";
 	}
 	if($string =~ /^\d/) {
+		my $person = $params{'person'};
 		my $d;
 		eval {
 			$d = $date_parser->parse_date_value(date => $string);
@@ -1222,10 +1215,10 @@ sub year
 			my $must_postdate = $params{'must_postdate'};
 			if($must_postdate) {
 				if($opts{'f'}) {
-					die "Something is wrong" if($d < $must_postdate);
+					die $person->as_string(), ": Something is wrong with the date $string which should be after ", $must_postdate->ymd('/') if($d < $must_postdate);
 				}
 				if($opts{'w'}) {
-					warn colored('Something is wrong', 'red') if($d < $must_postdate);
+					red_warning({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->ymd('/') }) if($d < $must_postdate);
 				}
 			}
 			return ' on ', $d->strftime('%x');
@@ -1233,7 +1226,6 @@ sub year
 		if($@) {
 			# RT 107354
 			chomp $@;
-			my $person = $params{'person'};
 			if($opts{'f'}) {
 				if($person) {
 					die $person->as_string() . ": $@";
@@ -1242,11 +1234,7 @@ sub year
 				}
 			}
 			if($opts{'w'}) {
-				if($person) {
-					warn colored($person->as_string() . ": $@", 'red');
-				} else {
-					warn colored($@, 'red');
-				}
+				red_warning({ person => $person, warning => $@ });
 			}
 		}
 		return " on $string";
@@ -1265,7 +1253,7 @@ sub year
 		}
 		if($opts{'w'}) {
 			if($person) {
-				warn colored($person->as_string() . " says 'By' instead of 'Bef'", 'red');
+				red_warning({ person => $person, warning => " says 'By' instead of 'Bef'" });
 			} else {
 				warn colored("Got 'By' instead of 'Bef'", 'red');
 			}
@@ -1332,4 +1320,17 @@ sub validate_place
 	}
 	$places{$place} = 1;
 	return 1;
+}
+
+sub red_warning
+{
+	if($opts{'w'}) {
+		my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+		if($params{'person'}) {
+			warn colored($params{'person'}->as_string() . ': ' . $params{'warning'}, 'red');
+		} else {
+			warn colored($params{'warning'}, 'red');
+		}
+	}
 }
