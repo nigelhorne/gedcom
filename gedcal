@@ -1306,8 +1306,11 @@ sub validate_place
 		return $places{$place};
 	}
 
-	# US and Canada are more logical in city,county,state,country than other countries
+	# US and Canada are more logical, using city,county,state,country, than other countries
 	if($opts{'w'} && (($place !~ /,.*,.*,.*/) || ($place =~ /USA|Canada/i))) {
+		if($place =~ /(.*),\s*Independent Cities\s*(.*)/i) {
+			$place = "$1$2";
+		}
 		if(!$geocoder->geocode($place)) {
 			# Don't die because there are many
 			# false positives as locations
