@@ -571,6 +571,8 @@ sub generate {
 					print ', and';
 				} elsif(defined($first_name)) {
 					print $first_name;
+				} else {
+					print $person->pronoun();
 				}
 				my $marriage = $person->get_record('marriage') || $spouses[0]->get_record('marriage') || $person->get_record('fams marriage');
 				if($marriage) {
@@ -1253,7 +1255,7 @@ sub year
 		}
 		if($opts{'w'}) {
 			if($person) {
-				red_warning({ person => $person, warning => " says 'By' instead of 'Bef'" });
+				red_warning({ person => $person, warning => "says 'By' instead of 'Bef'" });
 			} else {
 				warn colored("Got 'By' instead of 'Bef'", 'red');
 			}
