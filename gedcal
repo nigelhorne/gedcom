@@ -503,7 +503,11 @@ sub generate {
 					print ' ' if(!$space_count);
 					print $person->pronoun();
 				}
-				print ' was the ';
+				if((!$opts{'l'}) || $person->death() || (!defined($yob)) || ($yob <= 1900)) {
+					print ' was the ';
+				} else {
+					print ' is the ';
+				}
 				if($birth_dt) {
 					my @siblings = $person->siblings();
 					if(scalar(@siblings)) {
