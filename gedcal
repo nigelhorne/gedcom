@@ -569,7 +569,7 @@ sub generate {
 					}
 				} elsif($any_output) {
 					print ', and';
-				} else {
+				} elsif(defined($first_name)) {
 					print $first_name;
 				}
 				my $marriage = $person->get_record('marriage') || $spouses[0]->get_record('marriage') || $person->get_record('fams marriage');
