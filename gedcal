@@ -20,7 +20,7 @@
 # -f: treat warnings as fatals, implies -w
 # -l: include living people
 # -v: verbose - for debugging
-# -w: print warning about invalid day
+# -w: print warning about unlikely data - a sort of lint for Gedcom files
 
 use strict;
 use warnings;
@@ -369,35 +369,45 @@ sub generate {
 					print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
 					$printed_death_year = 1;
 				}
-			} elsif($dob) {
-				if(defined($first_name)) {
-					print $first_name;
-				} else {
-					print $person->pronoun();
-				}
-
+			} else {
 				my @occupations = $person->get_value('occupation');
 				# TODO: print all occupations
 				if($occupations[0]) {
+					if(defined($first_name)) {
+						print $first_name;
+					} else {
+						print $person->pronoun();
+					}
+
 					print ' (a';
 					if($occupations[0] =~ /^[aeiou]/i) {
 						print 'n';
 					}
 					print ' ', lc($occupations[0]), ')';
+					$any_output = 1;
+					$printed_first_name = 1;
 				}
-				$any_output = 1;
-				$printed_first_name = 1;
 
 				if($me) {
 					my $relationship = $me->relationship($person);
 					if($relationship) {
 						if($relationship) {
+							if(!$printed_first_name) {
+								print $first_name;
+								$printed_first_name = 1;
+								$any_output = 1;
+							}
 							print ", your $relationship,";
 							$any_output = 1;
 							$printed_first_name = 1;
 						} elsif($spouses[0]) {
 							$relationship = $me->relationship($spouses[0]);
 							if($relationship) {
+								if(!$printed_first_name) {
+									print $first_name;
+									$printed_first_name = 1;
+									$any_output = 1;
+								}
 								print ', the';
 								print ' ', (($sex eq 'F') ? 'wife of' : 'husband of'), " your $relationship,";
 								$printed_first_name = 1;
@@ -407,10 +417,20 @@ sub generate {
 						}
 					}
 				}
-				print ' was born', year(person => $person, string => $dob);
-				$any_output = 1;
+				if($dob) {
+					if(!$printed_first_name) {
+						if(defined($first_name)) {
+							print $first_name;
+						} else {
+							print $person->pronoun();
+						}
+						$any_output = 1;
+						$printed_first_name = 1;
+					}
+					print ' was born', year(person => $person, string => $dob);
+					$printed_birth_year = 1;
+				}
 				$printed_first_name = 1;
-				$printed_birth_year = 1;
 			}
 			my $pob;
 			if($birth && $birth->place()) {
@@ -427,19 +447,18 @@ sub generate {
 				}
 			}
 			if($birth && !$printed_birth_year && ($pob || $dob)) {
-				print ' having been born';
+				# print ' having been born';
+				print ' was born';
 				if(defined($pob)) {
 					if($death) {
 						my $pod = $death->place();
 						if($pod && ($pob eq $pod)) {
 							print ' there';
 						} else {
-							print " in $pob";
-							validate_place(person => $person, place => $pob);
+							print place({ person => $person, place => $pob });
 						}
 					} else {
-						print " in $pob";
-						validate_place(person => $person, place => $pob);
+						print place({ person => $person, place => $pob });
 					}
 				}
 				if(defined($dob)) {
@@ -478,10 +497,13 @@ sub generate {
 				}
 			}
 			if($father || $mother) {
-				unless($space_count) {
-					print ' ';
+				if(!$any_output) {
+					print $first_name;
+				} else {
+					print ' ' if(!$space_count);
+					print $person->pronoun();
 				}
-				print $person->pronoun(), ' was the ';
+				print ' was the ';
 				if($birth_dt) {
 					my @siblings = $person->siblings();
 					if(scalar(@siblings)) {
@@ -564,8 +586,10 @@ sub generate {
 						} else {
 							print ' and';
 						}
-					} else {
+					} elsif(defined($first_name)) {
 						print $first_name;
+					} else {
+						print $person->pronoun();
 					}
 				} elsif($any_output) {
 					print ', and';
@@ -578,18 +602,20 @@ sub generate {
 				if($marriage) {
 					$dom = $marriage->date() || $person->get_value('marriage date') || $spouses[0]->get_value('marriage date');
 				}
-				if((!$opts{l}) || $dod || $dom || $person->get_value('burial date')) {
-					print ' was';
-				} elsif($yob && ($yob <= 1900)) {
+				if((!$opts{l}) || $dod || $dom || ($yob && ($yob <= 1900)) || $person->get_value('burial date')) {
 					print ' was';
 				} else {
 					print ' is';
 				}
 				print ' married ';
 				if(scalar(@spouses) == 1) {
-					print 'to ', $spouses[0]->as_string(),
-						year(person => $person, string => $dom, must_postdate => $birth_dt),
-						place(record => $marriage, person => $person);
+					print 'to ', $spouses[0]->as_string();
+					print year(person => $person, string => $dom, must_postdate => $birth_dt) if($dom);
+					my $pom = $person->get_value('marriage place');
+					if((!defined($pom)) && defined($marriage)) {
+						$pom = $marriage->place();
+					}
+					print place(place => $pom, person => $person) if($pom);
 					$end_of_sentence = 0;
 				} else {
 					if(scalar(@spouses) == 2) {
@@ -885,12 +911,20 @@ sub generate {
 							if($d) {
 								$d = $d->{one_date};
 								print 'on ', $d->strftime('%x');
-								if($birth_dt && ($d < $birth_dt)) {
-									if($opts{'f'}) {
-										die $person->name(), ': Born after parent had died';
+								if($opts{'w'}) {
+									if($birth_dt && ($d <= $birth_dt)) {
+										if($opts{'f'}) {
+											die $child->name(), ': Born before parent was born';
+										}
+										red_warning({ person => $child, warning => 'born before parent was born' });
 									}
-									if($opts{'w'}) {
-										red_warning({ person => $person, warning => 'born after parent had died' });
+									# Fix me, it's OK to be born a few
+									# months after the father's death
+									if($death_dt && ($d > $death_dt)) {
+										if($opts{'f'}) {
+											die $child->name(), ': Born after parent died';
+										}
+										red_warning({ person => $child, warning => 'born after parent died' });
 									}
 								}
 							} else {
@@ -898,10 +932,10 @@ sub generate {
 									# RT 107354
 									chomp $@;
 									if($opts{'f'}) {
-										die $person->as_string() . ": $@";
+										die $child->as_string() . ": $@";
 									}
 									if($opts{'w'}) {
-										red_warning({ person => $person, warning => $@ });
+										red_warning({ person => $child, warning => $@ });
 									}
 								}
 							}
@@ -979,6 +1013,16 @@ sub Gedcom::Individual::as_string
 		$rc .= ' (nee ' . normalize_name($self->surname()) . ')';
 	}
 
+	if(!defined($rc)) {
+		if($opts{'f'}) {
+			die "Can't determine name of this person";
+		}
+		if($opts{'w'}) {
+			red_warning({ warning => "Can't determine name of this person" });
+			$args{'include_years'} = 1;
+			$rc = 'Unknown person ';
+		}
+	}
 	if($args{'include_years'}) {
 		my $dob = $self->get_value('birth date');
 
@@ -1008,15 +1052,14 @@ sub Gedcom::Individual::as_string
 			}
 		}
 
-		$rc .= ' ';
+		$rc .= ' ' if($yob || $yod);
 
 		if($yob) {
 			$rc .= $yob;
 		}
 
-		$rc .= ' -';
-
 		if($yod) {
+			$rc .= ' -' if($yob);
 			$rc .= " $yod";
 		}
 	}
@@ -1217,10 +1260,10 @@ sub year
 			my $must_postdate = $params{'must_postdate'};
 			if($must_postdate) {
 				if($opts{'f'}) {
-					die $person->as_string(), ": Something is wrong with the date $string which should be after ", $must_postdate->ymd('/') if($d < $must_postdate);
+					die $person->as_string(), ": Something is wrong with the date $string which should be after ", $must_postdate->strftime('%x') if($d < $must_postdate);
 				}
 				if($opts{'w'}) {
-					red_warning({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->ymd('/') }) if($d < $must_postdate);
+					red_warning({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
 				}
 			}
 			return ' on ', $d->strftime('%x');
