@@ -12,6 +12,7 @@
 
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
+# TODO: print -d events in chronological order
 
 # -a: all days otherwise just today
 # -b: only print birthdays
@@ -599,7 +600,7 @@ sub generate {
 					print $person->pronoun();
 				} elsif(($dod && (!$aod)) || $person->get_value('baptism date')) {
 					if($any_output) {
-						if((scalar(@spouses) == 1) && !$aod) {
+						if(((scalar(@spouses) == 1) && !$aod) || $dod) {
 							print ',';
 						} else {
 							print ' and';
@@ -610,7 +611,10 @@ sub generate {
 						print $person->pronoun();
 					}
 				} elsif($any_output) {
-					print ', and';
+					print ',';
+					if(($dod && (!$aod)) || $person->get_value('baptism date')) {
+						print ' and';
+					}
 				} elsif(defined($first_name)) {
 					print $first_name;
 				} else {
@@ -643,9 +647,12 @@ sub generate {
 					}
 					my $names = join(', ', map { $_->as_string() } @spouses);
 					substr($names, rindex($names, ', '), 2, ' and ');
-					print ", to $names.  ";
+					print ", to $names";
 					# TODO: print the date and places of the marriages
-					$end_of_sentence = 1;
+					if((defined($dod)) && $aod) {
+						print ".  ";
+						$end_of_sentence = 1;
+					}
 				}
 			}
 		} elsif(defined($dob) && (!$onlydeaths) && !$onlybirthdays) {
@@ -694,8 +701,7 @@ sub generate {
 							print $person->pronoun();
 						} else {
 							print ',' if($spouses[0]);
-							my $burial = $person->get_record('burial');
-							print ' and' unless($burial && (($dob || $spouses[0]) && (!$dom) && !$person->get_value('baptism date')));
+							print ' and' if($spouses[0] || ($father && $mother));
 						}
 						print ' died';
 					} else {
@@ -746,10 +752,15 @@ sub generate {
 			red_warning({ person => $person, warning => 'age at death too large' });
 		}
 		if($opts{'d'}) {
-			$dob = $person->get_value('baptism date');
-			my $baptism;
+			my $baptism = $person->get_record('baptism');
+			if($baptism) {
+				$dob = $baptism->date();
+			}
+			if(!defined($dob)) {
+				$dob = $person->get_value('baptism date');
+			}
+			my $just_printed_baptism = 0;
 			if($dob) {
-				$baptism = $person->get_record('baptism');
 				if($dod) {
 					print '.  ' if(!$end_of_sentence);
 					print $person->pronoun();
@@ -774,12 +785,13 @@ sub generate {
 							print place({ person => $person, place => $pob });
 						}
 					}
-					print year(string => $baptism->date(), person => $person, must_postdate => $birth_dt);
+					print year(string => $dob, person => $person, must_postdate => $birth_dt);
 				} else {
 					print " on $dob";
 				}
 				$end_of_sentence = 0;
 				$just_printed_death = 0;
+				$just_printed_baptism = 1;
 			}
 			my $burial = $person->get_record('burial');
 			my $doburial;
@@ -838,10 +850,11 @@ sub generate {
 				}
 				print '. ';
 				$end_of_sentence = 1;
+				$just_printed_baptism = 0;
 			}
 			my $family = $person->fams();
 			if((defined($family)) && $family->number_of_children()) {
-				if((!$just_printed_death) && (!$baptism)) {
+				if((!$just_printed_death) && (!$just_printed_baptism)) {
 					if($end_of_sentence) {
 						print $person->pronoun();
 					} else {
