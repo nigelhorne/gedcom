@@ -1066,8 +1066,9 @@ sub Gedcom::Individual::as_string
 			$rc .= $yob;
 		}
 
+		$rc .= ' -' if($yob || $yod);
+
 		if($yod) {
-			$rc .= ' -' if($yob);
 			$rc .= " $yod";
 		}
 	}
