@@ -70,11 +70,12 @@ if($opts{'w'}) {
 
 	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache');
 
-	HTTP::Cache::Transparent::init( {
-	BasePath => $cachedir . '/http-cache-transparent',
-	# Verbose => 1,
-	NoUpdate => 60 * 60,
-	MaxAge => 15 * 24} ) || die "$0/cache: $!";
+	HTTP::Cache::Transparent::init({
+		BasePath => $cachedir . '/http-cache-transparent',
+		# Verbose => 1,
+		NoUpdate => 60 * 60 * 24,
+		MaxAge => 30 * 24
+	}) || die "$0/cache: $!";
 }
 
 my $date_parser = Genealogy::Gedcom::Date->new();
@@ -452,9 +453,17 @@ sub generate {
 			}
 			if($birth && !$printed_birth_year && ($pob || $dob)) {
 				# print ' having been born';
+				if(!$any_output) {
+					if(defined($first_name)) {
+						print $first_name;
+					} else {
+						print $person->pronoun();
+					}
+					$printed_first_name = 1;
+				}
 				print ' was born';
 				if(defined($pob)) {
-					if($death) {
+					if($death && $any_output) {
 						my $pod = $death->place();
 						if($pod && ($pob eq $pod)) {
 							print ' there';
@@ -465,6 +474,7 @@ sub generate {
 						print place({ person => $person, place => $pob });
 					}
 				}
+				$any_output = 1;
 				if(defined($dob)) {
 					print year(person => $person, string => $dob);
 				} else {
@@ -843,7 +853,7 @@ sub generate {
 				}
 				my $child_count = $family->number_of_children();
 				my $all_alive = 1;
-				if($yob && ($year > $yob + 200)) {
+				if($yob && ($year >= $yob + 150)) {
 					$all_alive = 0;
 				} else {
 					foreach my $child($family->children()) {
