@@ -393,7 +393,11 @@ sub generate {
 					if($relationship) {
 						if($relationship) {
 							if(!$printed_first_name) {
-								print $first_name;
+								if(defined($first_name)) {
+									print $first_name;
+								} else {
+									print $person->pronoun();
+								}
 								$printed_first_name = 1;
 								$any_output = 1;
 							}
