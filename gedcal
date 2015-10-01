@@ -12,7 +12,7 @@
 
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
-# TODO: print -d events in chronological order
+# TODO: print -d events in chronological order, that may also simplify the logic
 
 # -a: all days otherwise just today
 # -b: only print birthdays
@@ -753,14 +753,15 @@ sub generate {
 		}
 		if($opts{'d'}) {
 			my $baptism = $person->get_record('baptism');
+			my $dobaptism;
 			if($baptism) {
-				$dob = $baptism->date();
+				$dobaptism = $baptism->date();
 			}
-			if(!defined($dob)) {
-				$dob = $person->get_value('baptism date');
+			if(!defined($dobaptism)) {
+				$dobaptism = $person->get_value('baptism date');
 			}
 			my $just_printed_baptism = 0;
-			if($dob) {
+			if($dobaptism) {
 				if($dod) {
 					print '.  ' if(!$end_of_sentence);
 					print $person->pronoun();
@@ -785,9 +786,9 @@ sub generate {
 							print place({ person => $person, place => $pob });
 						}
 					}
-					print year(string => $dob, person => $person, must_postdate => $birth_dt);
+					print year(string => $dobaptism, person => $person, must_postdate => $birth_dt);
 				} else {
-					print " on $dob";
+					print " on $dobaptism";
 				}
 				$end_of_sentence = 0;
 				$just_printed_death = 0;
@@ -815,8 +816,8 @@ sub generate {
 				} else {
 					if((!$just_printed_death) && (!$end_of_sentence) && $baptism) {
 						print ' and ';
-					} elsif((($dob || $spouses[0]) && !$dom) ||
-					   ((!$baptism) && $death && $death->place() && $poburial && ($poburial eq $death->place()))) {
+					} elsif((($dobaptism || $spouses[0]) && (!$dom) && !$dod) ||
+					   ((!$dobaptism) && $death && $death->place() && $poburial && ($poburial eq $death->place()))) {
 						print ' and ';
 						if($just_printed_death && ((!defined($baptism)) || !defined($baptism->place()))) {
 							if($burial->date()) {
