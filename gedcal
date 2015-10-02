@@ -1016,9 +1016,29 @@ sub generate {
 				$dateofbaptism = $baptism->date();
 			}
 
+			my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
+			if((!defined($marriage)) && scalar(@spouses)) {
+				$spouses[0]->get_record('marriage');
+			}
+			my $dateofmarriage = $person->get_value('marriage date');
+			if((!$dateofmarriage) && $marriage) {
+				$dateofmarriage = $marriage->date();
+			}
+			my $placeofmarriage = $person->get_value('marriage place');
+			if((!$placeofmarriage) && $marriage) {
+				$placeofmarriage = $marriage->place();
+			}
+
 			my $pronoun = $person->pronoun();
 			my $sex = $person->sex();
 			my @spouses = $person->spouse();
+			my $family = $person->fams();
+			my $children;
+			my $numberofchildren = 0;
+			if($family) {
+				$numberofchildren = $family->number_of_children();
+				$children = $family->children();
+			}
 
 			my $relationship;
 			my $spouserelationship;
@@ -1059,8 +1079,47 @@ sub generate {
 			} elsif($aod) {
 				print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today.';
 			}
-			print "\n";
+
+			if(scalar(@spouses)) {
+				if(scalar(@spouses) == 1) {
+					if($placeofmarriage || $dateofmarriage) {
+						print " $pronoun married ";
+					} else {
+						print " $pronoun was married to ";
+					}
+					print $spouses[0]->as_string();
+					print year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
+					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
+					$end_of_sentence = 0;
+				} else {
+					print " $pronoun was married ";
+					if(scalar(@spouses) == 2) {
+						print 'twice';
+					} else {
+						print scalar(@spouses), ' times';
+					}
+					my $names = join(', ', map { $_->as_string() } @spouses);
+					substr($names, rindex($names, ', '), 2, ' and ');
+					print ", to $names";
+					# TODO: print the date and places of the marriages
+				}
+				if($numberofchildren) {
+					print ' with whom ', lcfirst($pronoun), ' had ',
+						($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
+				}
+			} elsif($numberofchildren) {
+				print " $pronoun had ",
+					($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
 			}
+			if($numberofchildren == 1) {
+				print $children->given_names();
+			} elsif($numberofchildren > 1) {
+				my $childnames = join(', ', map { $_->given_names() } $children);
+				substr($childnames, rindex($childnames, ', '), 2, ' and ');
+				print $childnames;
+			}
+			print "\n";
+		}
 		}
 	}
 }
