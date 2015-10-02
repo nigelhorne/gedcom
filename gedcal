@@ -995,6 +995,73 @@ sub generate {
 			}
 		}
 		print "\n" unless($onlybirthdays || $onlydeaths);
+
+		# Will be rewrite to be clearer
+		if(0) {
+		print $person->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+		}), "\n";
+		if($opts{'d'}) {
+			my $birth = $person->get_record('birth');
+			my $dateofbirth = $person->get_value('birth date');
+			if((!$dateofbirth) && $birth) {
+				$dateofbirth = $birth->date();
+			}
+
+			my $baptism = $person->get_record('baptism');
+			my $dateofbaptism = $person->get_value('baptism date');
+			if((!$dateofbaptism) && $baptism) {
+				$dateofbaptism = $baptism->date();
+			}
+
+			my $pronoun = $person->pronoun();
+			my $sex = $person->sex();
+			my @spouses = $person->spouse();
+
+			my $relationship;
+			my $spouserelationship;
+			my $spouse;
+			if($me) {
+				$relationship = $me->relationship($person);
+				if((!$relationship) && scalar(@spouses)) {
+					foreach my $s(@spouses) {
+						$spouserelationship = $me->relationship($s);
+						if($spouserelationship) {
+							$spouse = $s;
+							last;
+						}
+					}
+				}
+			}
+			print "\t";
+			if($relationship) {
+				print "Your $relationship ";
+				print $firstname if($firstname);
+			} elsif($spouserelationship) {
+				print "$firstname, the " if($firstname);
+				if($sex eq 'F') {
+					print 'wife';
+				} else {
+					print 'husband';
+				}
+				print " of your $spouserelationship ", $spouse->as_string(), ',';
+			} elsif($firstname) {
+				print $firstname;
+			} else {
+				print $pronoun;
+			}
+			if($aob && $aod) {
+				print " was born $aob years ago and died $dod years ago today.";
+			} elsif($aob) {
+				print " was born $aob years ago today.";
+			} elsif($aod) {
+				print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today.';
+			}
+			print "\n";
+			}
+		}
 	}
 }
 
