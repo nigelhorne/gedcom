@@ -1052,6 +1052,10 @@ sub generate {
 			if((!$dateofburial) && $burial) {
 				$dateofburial = $burial->date();
 			}
+			my $placeofburial = $person->get_value('burial place');
+			if((!$placeofburial) && $burial) {
+				$placeofburial = $burial->place();
+			}
 
 			my $pronoun = $person->pronoun();
 			my $sex = $person->sex();
@@ -1267,9 +1271,59 @@ sub generate {
 			} elsif($numberofchildren > 1) {
 				my $childnames = join(', ', map { $_->given_names() } @children);
 				substr($childnames, rindex($childnames, ', '), 2, ' and ');
-				print $childnames;
+				print $childnames, '.';
 			}
-			print ".\n";
+			if($placeofburial || $dateofburial) {
+				if($aod || ((!$dateofdeath) && !$placeofdeath)) {
+					if($dateofburial) {
+						print " $pronoun was buried",
+							year({ person => $person, place => $dateofburial });
+						if($placeofburial) {
+							place({ person => $person, place => $placeofburial });
+						}
+					} else {
+						print " $pronoun is buried",
+							place({ person => $person, place => $placeofburial });
+					}
+				} elsif($dateofdeath || $placeofdeath) {
+					print " $pronoun died";
+					if($dateofdeath) {
+						print year({ person => $person, place => $dateofdeath });
+						if($placeofdeath) {
+							place({ person => $person, place => $placeofdeath });
+						}
+					} else {
+						print place({ person => $person, place => $placeofdeath });
+					}
+					if($dateofburial) {
+						print ' and was buried';
+						if($placeofburial) {
+							if($placeofburial eq $placeofdeath) {
+								print ' there';
+							} else {
+								place({ person => $person, place => $placeofburial });
+							}
+						}
+						print year({ person => $person, place => $dateofburial });
+					} else {
+						print " and is buried",
+							place({ person => $person, place => $placeofburial });
+					}
+				}
+				print '.';
+			} elsif((!$aod) && ($placeofdeath || $dateofdeath)) {
+				print " $pronoun died";
+				if($dateofdeath) {
+					print year({ person => $person, place => $dateofdeath });
+					if($placeofdeath) {
+						place({ person => $person, place => $placeofdeath });
+					}
+				} else {
+					print place({ person => $person, place => $placeofdeath });
+				}
+				print '.';
+			}
+			print "\n";
 		}
 		}
 	}
