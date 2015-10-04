@@ -1063,10 +1063,13 @@ sub generate {
 				$numberofchildren = $family->number_of_children();
 				@children = $family->children();
 			}
+			my $father = $person->father();
+			my $mother = $person->mother();
 
 			my $relationship;
 			my $spouserelationship;
 			my $spouse;
+
 			if($me) {
 				$relationship = $me->relationship($person);
 				if((!$relationship) && scalar(@spouses)) {
@@ -1096,6 +1099,81 @@ sub generate {
 			} else {
 				print $pronoun;
 			}
+
+			if($father || $mother) {
+				print ', the ';
+
+				if($birth_dt) {
+					my @siblings = $person->siblings();
+					if(scalar(@siblings)) {
+						my $count = 1;
+						my $fail = 0;
+						foreach my $sibling(@siblings) {
+							my $dob = $sibling->get_value('birth date');
+							if($dob) {
+								my $d;
+								eval {
+									$d = $date_parser->parse_date_value(date => $dob);
+								};
+								if($d) {
+									$d = $d->{one_date};
+									$count++ if($d && ($d < $birth_dt));
+								} else {
+									$fail = 1;
+									last;
+								}
+							}
+						}
+						if($fail) {
+							print 'child';
+						} else {
+							if($count == (scalar(@siblings) + 1)) {
+								print 'last';
+							} else {
+								print ordinate($count);
+							}
+							print ' of ', scalar(@siblings) + 1, ' children';
+						}
+					} else {
+						# print ' only child of';
+						print 'child';
+					}
+				} else {
+					print 'child';
+				}
+
+				print ' of';
+
+				if($father) {
+					print ' ', $father->as_string();
+					my @occupations = $father->get_value('occupation');
+					# TODO: print all occupations
+					if($occupations[0]) {
+						print ' (a';
+						if($occupations[0] =~ /^[aeiou]/i) {
+							print 'n';
+						}
+						print ' ', lc($occupations[0]), ')';
+					}
+					if($mother) {
+						print ' and';
+					}
+				}
+				if($mother) {
+					print ' ', $mother->as_string({ give_maidenname => 0 });
+					my @occupations = $mother->get_value('occupation');
+					# TODO: print all occupations
+					if($occupations[0]) {
+						print ' (a';
+						if($occupations[0] =~ /^[aeiou]/i) {
+							print 'n';
+						}
+						print ' ', lc($occupations[0]), ')';
+					}
+				}
+				print ',';
+			}
+
 			if($aob && $aod) {
 				print " was born $aob years ago and died $dod years ago today.";
 			} elsif($aob) {
