@@ -996,7 +996,7 @@ sub generate {
 		}
 		print "\n" unless($onlybirthdays || $onlydeaths);
 
-		# Will be rewrite to be clearer
+		# Will be rewritten to be clearer
 		if(0) {
 		print $person->as_string({
 			include_years => 1,
@@ -1009,11 +1009,19 @@ sub generate {
 			if((!$dateofbirth) && $birth) {
 				$dateofbirth = $birth->date();
 			}
+			my $placeofbirth = $person->get_value('birth place');
+			if((!$placeofbirth) && $birth) {
+				$placeofbirth = $birth->place();
+			}
 
 			my $baptism = $person->get_record('baptism');
 			my $dateofbaptism = $person->get_value('baptism date');
 			if((!$dateofbaptism) && $baptism) {
 				$dateofbaptism = $baptism->date();
+			}
+			my $placeofbaptism = $person->get_value('baptism place');
+			if((!$placeofbaptism) && $baptism) {
+				$placeofbaptism = $baptism->place();
 			}
 
 			my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
@@ -1029,15 +1037,31 @@ sub generate {
 				$placeofmarriage = $marriage->place();
 			}
 
+			my $death = $person->get_record('death');
+			my $dateofdeath = $person->get_value('death date');
+			if((!$dateofdeath) && $death) {
+				$dateofdeath = $death->date();
+			}
+			my $placeofdeath = $person->get_value('death place');
+			if((!$placeofdeath) && $death) {
+				$placeofdeath = $death->place();
+			}
+
+			my $burial = $person->get_record('burial');
+			my $dateofburial = $person->get_value('burial date');
+			if((!$dateofburial) && $burial) {
+				$dateofburial = $burial->date();
+			}
+
 			my $pronoun = $person->pronoun();
 			my $sex = $person->sex();
 			my @spouses = $person->spouse();
 			my $family = $person->fams();
-			my $children;
+			my @children;
 			my $numberofchildren = 0;
 			if($family) {
 				$numberofchildren = $family->number_of_children();
-				$children = $family->children();
+				@children = $family->children();
 			}
 
 			my $relationship;
@@ -1075,24 +1099,73 @@ sub generate {
 			if($aob && $aod) {
 				print " was born $aob years ago and died $dod years ago today.";
 			} elsif($aob) {
-				print " was born $aob years ago today.";
+				print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
+				if($placeofbirth) {
+					print place({ person => $person, place => $placeofbirth });
+				}
+				print '.';
 			} elsif($aod) {
-				print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today.';
+				print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
+				if($placeofdeath) {
+					print place({ person => $person, place => $placeofdeath });
+				}
+				print '.';
+			}
+
+			my $printed_birth_information = 0;
+			if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
+				print " $pronoun";
+				if($dateofbirth || $placeofbirth) {
+					print ' was born';
+					if($placeofbirth) {
+						print place({ person => $person, place => $placeofbirth });
+					}
+					if($dateofbirth) {
+						print year({ person => $person, date => $dateofbirth });
+					}
+					if($dateofbaptism || $placeofbaptism) {
+						print ' and';
+					}
+				}
+				if($dateofbaptism || $placeofbaptism) {
+					unless($dateofbirth || $placeofbirth) {
+						print ' was ';
+					}
+					if($ENV{'LANG'} =~ /^en_US/) {
+						print 'baptized';
+					} else {
+						print 'baptised';
+					}
+					if($placeofbaptism) {
+						print place({ person => $person, place => $placeofbaptism });
+					}
+					if($dateofbaptism) {
+						print year({ person => $person, date => $dateofbaptism });
+					}
+				}
+				if(scalar(@spouses)) {
+					print ' and';
+				} else {
+					print '.';
+				}
+				$printed_birth_information = 1;
 			}
 
 			if(scalar(@spouses)) {
+				print " $pronoun" if(!$printed_birth_information);
+
 				if(scalar(@spouses) == 1) {
 					if($placeofmarriage || $dateofmarriage) {
-						print " $pronoun married ";
+						print ' married ';
 					} else {
-						print " $pronoun was married to ";
+						print ' was married to ';
 					}
 					print $spouses[0]->as_string();
 					print year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
 					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
 					$end_of_sentence = 0;
 				} else {
-					print " $pronoun was married ";
+					print ' was married ';
 					if(scalar(@spouses) == 2) {
 						print 'twice';
 					} else {
@@ -1112,13 +1185,13 @@ sub generate {
 					($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
 			}
 			if($numberofchildren == 1) {
-				print $children->given_names();
+				print $children[0]->given_names();
 			} elsif($numberofchildren > 1) {
-				my $childnames = join(', ', map { $_->given_names() } $children);
+				my $childnames = join(', ', map { $_->given_names() } @children);
 				substr($childnames, rindex($childnames, ', '), 2, ' and ');
 				print $childnames;
 			}
-			print "\n";
+			print ".\n";
 		}
 		}
 	}
@@ -1399,8 +1472,15 @@ sub year
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $string = $params{'string'};
-	return unless($string);
+	my $string = $params{'string'} || $params{'date'};
+
+	if(!defined($string)) {
+		$string = $params{'record'};
+		return unless($string);
+
+		$string = $string->date();
+		return unless($string);
+	}
 
 	if($string =~ /^\d{4}$/) {
 		return " in $string";
