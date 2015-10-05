@@ -1330,7 +1330,7 @@ sub generate {
 					}
 					print $spouses[0]->as_string();
 					if($numberofchildren) {
-						print ' with whom ', lcfirst($pronoun), ' had ';
+						print ', with whom ', lcfirst($pronoun), ' had ';
 						if($numberofchildren == 1) {
 							if($all_children_are_alive) {
 								print '1 surviving child, ';
@@ -1355,7 +1355,6 @@ sub generate {
 					print ',' if($dateofmarriage || $placeofmarriage);
 					print year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
 					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
-					$end_of_sentence = 0;
 				} else {
 					print ' was married ';
 					if(scalar(@spouses) == 2) {
@@ -1368,7 +1367,7 @@ sub generate {
 					print ", to $names";
 					# TODO: print the date and places of the marriages
 					if($numberofchildren) {
-						print ' with whom ', lcfirst($pronoun), ' had ';
+						print ', with whom ', lcfirst($pronoun), ' had ';
 						if($numberofchildren == 1) {
 							if($all_children_are_alive) {
 								print '1 surviving child, ';
@@ -1390,6 +1389,7 @@ sub generate {
 						}
 					}
 				}
+				$end_of_sentence = 0;
 			} elsif($numberofchildren) {
 				print " $pronoun had ",
 					($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
@@ -1400,11 +1400,11 @@ sub generate {
 					substr($childnames, rindex($childnames, ', '), 2, ' and ');
 					print $childnames;
 				}
+				$end_of_sentence = 0;
 			}
-			print '.' if(scalar(@spouses) || $numberofchildren);
-
 			if($placeofburial || $dateofburial) {
 				if($aod || ((!$dateofdeath) && !$placeofdeath)) {
+					print '.' if(scalar(@spouses) || $numberofchildren);
 					if($dateofburial) {
 						print "  $pronoun was buried",
 							year({ person => $person, place => $dateofburial });
@@ -1416,7 +1416,7 @@ sub generate {
 							place({ person => $person, place => $placeofburial });
 					}
 				} elsif($dateofdeath || $placeofdeath) {
-					print "  $pronoun died";
+					print ".  $pronoun died";
 					if($dateofdeath) {
 						print year({ person => $person, date => $dateofdeath });
 						if($placeofdeath) {
@@ -1439,26 +1439,32 @@ sub generate {
 						print " and is buried",
 							place({ person => $person, place => $placeofburial });
 					}
+					$end_of_sentence = 0;
 				}
-				print '.';
 			} elsif((!$aod) && ($placeofdeath || $dateofdeath)) {
-				print " $pronoun died";
+				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage)) {
+					print ', which is also where ', lcfirst($pronoun);
+				} else {
+					print '.' if(!$end_of_sentence);
+					print "  $pronoun";
+				}
+				print ' died';
 				if($dateofdeath) {
-					print year({ person => $person, date => $dateofdeath });
-					if($placeofdeath) {
+					print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+					if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage))) {
 						print place({ person => $person, place => $placeofdeath });
 					}
-				} else {
+				} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 					print place({ person => $person, place => $placeofdeath });
 				}
-				print '.';
+				$end_of_sentence = 0;
 			}
+			print '.' if(!$end_of_sentence);
 			print "\n";
 
 			foreach my $child(@children) {
 				my $dob = $child->get_value('birth date');
 				if($dob) {
-					print "\t" unless($opts{'a'});
 					print "\t", $child->given_names(), ' was born ';
 					if($dob =~ /^Abt\.?\s*(.+)/i) {
 						print "around $1";
@@ -1757,9 +1763,7 @@ sub Gedcom::Individual::relationship
 	my @ancestors2 = $other->ancestors();
 	return unless(@ancestors2);
 
-	my $p1level = 0;
 	foreach my $person1(@ancestors1) {
-		my $p2level = 0;
 		foreach my $person2(@ancestors2) {
 			# print $person1->as_string(), '->', $person2->as_string(), "\n";
 			# G::C is noisy
