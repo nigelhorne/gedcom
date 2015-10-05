@@ -998,7 +998,6 @@ sub generate {
 		print "\n" unless($onlybirthdays || $onlydeaths);
 		}
 
-		# Will be rewritten to be clearer
 		print $person->as_string({
 			include_years => 1,
 			nee => 1,
@@ -1112,8 +1111,6 @@ sub generate {
 				}
 			}
 
-			my $printed_first_name = 0;
-
 			print "\t";
 			# TODO: print all occupations
 			if($occupations[0]) {
@@ -1123,29 +1120,9 @@ sub generate {
 				}
 				print ' ', lc($occupations[0]);
 			}
-			if($relationship) {
-				if($occupations[0]) {
-					print ', y';
-				} else {
-					print 'Y';
-				}
-				print "our $relationship ";
-				print $firstname if($firstname);
-				$printed_first_name = 1;
-			} elsif($spouserelationship) {
-				if($sex eq 'F') {
-					print 'The wife';
-				} else {
-					print 'The husband';
-				}
-				print " of your $spouserelationship ", $spouse->as_string(),
-					", $firstname";
-				$printed_first_name = 1;
-			}
-
 			my $print_sibling_count = 0;
 			if($father || $mother) {
-				if($relationship || scalar(@occupations) || $spouserelationship) {
+				if(scalar(@occupations)) {
 					print ', the ';
 				} else {
 					print 'The ';
@@ -1218,22 +1195,29 @@ sub generate {
 						print ' ', lc($occupations[0]), ')';
 					}
 				}
-				if($aob || $aod) {
-					if($relationship || scalar(@occupations) || $spouserelationship) {
-						print ',';
-					} elsif(!$printed_first_name) {
-						print ", $firstname";
-					}
-				} else {
-					print '.' unless($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism);
+				print ', ';
+			}
+
+			if($relationship) {
+				if($occupations[0]) {
+					print ', ';
 				}
-			} elsif((!$relationship) && (!scalar(@occupations))) {
-				if($firstname) {
-					print $firstname;
+				print "your $relationship ";
+			} elsif($spouserelationship) {
+				if($sex eq 'F') {
+					print 'The wife';
 				} else {
-					print $pronoun;
+					print 'The husband';
 				}
-				$printed_first_name = 1;
+				print " of your $spouserelationship ",
+					$spouse->as_string(),
+					', ';
+			}
+
+			if($firstname) {
+				print $firstname;
+			} else {
+				print $pronoun;
 			}
 
 			my $end_of_sentence = 1;
@@ -1258,7 +1242,7 @@ sub generate {
 			if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
 				print "  $pronoun" if($aob || $aod);
 				if($dateofbirth || $placeofbirth) {
-					print ',' if($print_sibling_count && (!$aob) && (!$aod));
+					print ',' if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod));
 
 					print ' was born';
 					if($placeofbirth) {
