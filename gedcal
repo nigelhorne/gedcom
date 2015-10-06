@@ -1195,14 +1195,16 @@ sub generate {
 						print ' ', lc($occupations[0]), ')';
 					}
 				}
-				print ', ';
+				print ', ' unless($relationship);
 			}
 
 			if($relationship) {
-				if($occupations[0]) {
-					print ', ';
+				if($father || $mother || $occupations[0]) {
+					print ', y';
+				} else {
+					print 'Y';
 				}
-				print "your $relationship ";
+				print "our $relationship ";
 			} elsif($spouserelationship) {
 				if($sex eq 'F') {
 					print 'The wife';
@@ -1352,7 +1354,7 @@ sub generate {
 							print $childnames;
 						}
 					}
-					print ',' if($dateofmarriage || $placeofmarriage);
+					print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
 					print year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
 					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
 				} else {
@@ -1367,7 +1369,8 @@ sub generate {
 					print ", to $names";
 					# TODO: print the date and places of the marriages
 					if($numberofchildren) {
-						print ', with whom ', lcfirst($pronoun), ' had ';
+						print ', with whom ', lcfirst($pronoun), ' ';
+						print $all_children_are_alive ? 'has ' : 'had ';
 						if($numberofchildren == 1) {
 							if($all_children_are_alive) {
 								print '1 surviving child, ';
@@ -1415,6 +1418,7 @@ sub generate {
 						print "  $pronoun is buried",
 							place({ person => $person, place => $placeofburial });
 					}
+					$end_of_sentence = 0;
 				} elsif($dateofdeath || $placeofdeath) {
 					print ".  $pronoun died";
 					if($dateofdeath) {
