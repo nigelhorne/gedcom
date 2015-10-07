@@ -1422,7 +1422,7 @@ sub generate {
 				} elsif($dateofdeath || $placeofdeath) {
 					print ".  $pronoun died";
 					if($dateofdeath) {
-						print year({ person => $person, date => $dateofdeath });
+						print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 						if($placeofdeath) {
 							print place({ person => $person, place => $placeofdeath });
 						}
@@ -1448,6 +1448,8 @@ sub generate {
 			} elsif((!$aod) && ($placeofdeath || $dateofdeath)) {
 				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage)) {
 					print ', which is also where ', lcfirst($pronoun);
+				} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
+					print ' and';
 				} else {
 					print '.' if(!$end_of_sentence);
 					print "  $pronoun";
@@ -1469,49 +1471,34 @@ sub generate {
 			foreach my $child(@children) {
 				my $dob = $child->get_value('birth date');
 				if($dob) {
-					print "\t", $child->given_names(), ' was born ';
-					if($dob =~ /^Abt\.?\s*(.+)/i) {
-						print "around $1";
-					} elsif(($dob =~ /^\d{4}$/) || ($dob !~ /^\d/)) {
-						print "in $dob";
-					} else {
+					print "\t", $child->given_names(),
+						' was born',
+						year({ person => $child, date => $dob });
+					if($opts{'w'} && ($birth_dt || $death_dt)) {
 						my $d;
 						eval {
 							$d = $date_parser->parse_date_value(date => $dob);
 						};
 						if($d) {
 							$d = $d->{one_date};
-							print 'on ', $d->strftime('%x');
-							if($opts{'w'}) {
-								if($birth_dt && ($d <= $birth_dt)) {
-									if($opts{'f'}) {
-										die $child->name(), ': Born before parent was born';
-									}
-									red_warning({ person => $child, warning => 'born before parent was born' });
-								}
-								# Fix me, it's OK to be born a few
-								# months after the father's death
-								if($death_dt && ($d > $death_dt)) {
-									if($opts{'f'}) {
-										die $child->name(), ': Born after parent died';
-									}
-									red_warning({ person => $child, warning => 'born after parent died' });
-								}
-							}
-						} else {
-							if($@) {
+							if($birth_dt && ($d <= $birth_dt)) {
 								if($opts{'f'}) {
-									die $child->as_string() . ": $@";
+									die $child->name(), ': Born before parent was born';
 								}
-								if($opts{'w'}) {
-									red_warning({ person => $child, warning => $@ });
+								red_warning({ person => $child, warning => 'born before parent was born' });
+							}
+							# FIXME: it's OK to be born a few
+							# months after the father's death
+							if($death_dt && ($d > $death_dt)) {
+								if($opts{'f'}) {
+									die $child->name(), ': Born after parent died';
 								}
+								red_warning({ person => $child, warning => 'born after parent died' });
 							}
 						}
 					}
 					print ".\n";
 				} elsif($child->get_value('baptism date')) {
-					print "\t" unless($opts{'a'});
 					print "\t", $child->given_names(),
 						' was born c',
 						$child->get_value('baptism date'),
