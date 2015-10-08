@@ -1463,7 +1463,7 @@ sub generate {
 				}
 				print ' died';
 				if($dateofdeath) {
-					if($placeofbirth && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/)) {
+					if($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/)) {
 						print " in $1",
 							year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					} else {
