@@ -1332,7 +1332,14 @@ sub generate {
 					}
 					print $spouses[0]->as_string();
 					if($numberofchildren) {
-						print ', with whom ', lcfirst($pronoun), ' had ';
+						print ', with whom ', lcfirst($pronoun);
+						if($all_children_are_alive) {
+							print ' has ';
+						} elsif((!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
+							print ' had ';
+						} else {
+							print $dod ? ' had ' : ' has ';
+						}
 						if($numberofchildren == 1) {
 							if($all_children_are_alive) {
 								print '1 surviving child, ';
@@ -1474,7 +1481,7 @@ sub generate {
 					print "\t", $child->given_names(),
 						' was born',
 						year({ person => $child, date => $dob });
-					if($opts{'w'} && ($birth_dt || $death_dt)) {
+					if($opts{'w'} && ($birth_dt || $death_dt) && ($dob =~ /^\d/)) {
 						my $d;
 						eval {
 							$d = $date_parser->parse_date_value(date => $dob);
