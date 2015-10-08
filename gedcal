@@ -1463,9 +1463,14 @@ sub generate {
 				}
 				print ' died';
 				if($dateofdeath) {
-					print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage))) {
-						print place({ person => $person, place => $placeofdeath });
+					if($placeofbirth && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/)) {
+						print " in $1",
+							year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+					} else {
+						print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+						if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage))) {
+							print place({ person => $person, place => $placeofdeath });
+						}
 					}
 				} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 					print place({ person => $person, place => $placeofdeath });
