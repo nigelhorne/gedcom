@@ -11,14 +11,15 @@ matches for family members that are still alive.
 
 Try adding this to your crontab:
 
-    23 5 * * * gedcal -dl gedcom-file.ged
+    3 5 * * * gedcal -dl gedcom-file.ged
 
 or
 
-    23 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
+    3 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
 
 Gedcal also includes rudimentary santity checking of your Gedcom file.  You can
-enable this mode with -w, which will print warnings of anything it finds.
+enable this mode with -w, which will print warnings of anything it finds.  It's
+a sort of lint for gedcom files.
 
 For example:
 
