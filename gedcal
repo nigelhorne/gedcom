@@ -1439,7 +1439,7 @@ sub generate {
 					if($dateofburial) {
 						print ' and was buried';
 						if($placeofburial) {
-							if($placeofburial eq $placeofdeath) {
+							if($placeofdeath && ($placeofburial eq $placeofdeath)) {
 								print ' there';
 							} else {
 								print place({ person => $person, place => $placeofburial });
