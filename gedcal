@@ -37,6 +37,7 @@ use Term::ANSIColor;
 use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
+use DateTime::Duration;
 
 my %opts;
 
@@ -82,6 +83,7 @@ if($opts{'w'}) {
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $geocoder = Geo::Coder::OSM->new();
 my $nameparser = Lingua::EN::NameParse->new();
+my $ninemonths = DateTime::Duration->new(months => 9);
 
 my $year = (localtime)[5];
 $year += 1900 if($year < 1900);
@@ -1499,13 +1501,22 @@ sub generate {
 								}
 								red_warning({ person => $child, warning => 'born before parent was born' });
 							}
-							# FIXME: it's OK to be born a few
-							# months after the father's death
-							if($death_dt && ($d > $death_dt)) {
-								if($opts{'f'}) {
-									die $child->name(), ': Born after parent died';
+							if($sex eq 'F') {
+								if($death_dt && ($d > $death_dt)) {
+									if($opts{'f'}) {
+										die $child->name(), ': Born after mother died';
+									}
+									red_warning({ person => $child, warning => 'born after mother died' });
 								}
-								red_warning({ person => $child, warning => 'born after parent died' });
+							} elsif($death_dt && ($d > ($death_dt + $ninemonths))) {
+								# Allow the child to be
+								# born up to 9 months
+								# after the death of the
+								# father
+								if($opts{'f'}) {
+									die $child->name(), ': Born more than 9 months after father died';
+								}
+								red_warning({ person => $child, warning => 'born more than 9 months after father died' });
 							}
 						}
 					}
@@ -1905,6 +1916,9 @@ sub year
 	}
 	if($string =~ /^bef.? (\d{4})/i) {
 		return " before $1";
+	}
+	if($string =~ /^by.? (\d{4})/i) {
+		return " by $1";
 	}
 	if($string =~ /^By (\d{4})/i) {
 		my $person = $params{'person'};
