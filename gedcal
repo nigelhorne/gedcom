@@ -1416,7 +1416,7 @@ sub generate {
 			}
 			if($placeofburial || $dateofburial) {
 				if($aod || ((!$dateofdeath) && !$placeofdeath)) {
-					print '.' if(scalar(@spouses) || $numberofchildren);
+					print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
 					if($dateofburial) {
 						print "  $pronoun was buried",
 							year({ person => $person, place => $dateofburial });
@@ -1429,7 +1429,8 @@ sub generate {
 					}
 					$end_of_sentence = 0;
 				} elsif($dateofdeath || $placeofdeath) {
-					print ".  $pronoun died";
+					print '.' if(!$end_of_sentence);
+					print "  $pronoun died";
 					if($dateofdeath) {
 						print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 						if($placeofdeath) {
