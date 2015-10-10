@@ -1253,10 +1253,18 @@ sub generate {
 						print place({ person => $person, place => $placeofbirth });
 					}
 					if($dateofbirth) {
-						print year({ person => $person, date => $dateofbirth });
+						print year({
+							person => $person,
+							date => $dateofbirth,
+							must_predate => $death_dt
+						});
 					}
 					if($dateofbaptism || $placeofbaptism) {
-						print ' and';
+						if(scalar(@spouses)) {
+							print ', was';
+						} else {
+							print ' and';
+						}
 					}
 					$end_of_sentence = 0;
 				}
@@ -1271,10 +1279,19 @@ sub generate {
 						print 'baptised';
 					}
 					if($placeofbaptism) {
-						print place({ person => $person, place => $placeofbaptism });
+						if($aod && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+							print ' there';
+						} else {
+							print place({ person => $person, place => $placeofbaptism });
+						}
 					}
 					if($dateofbaptism) {
-						print year({ person => $person, date => $dateofbaptism });
+						print year({
+							person => $person,
+							date => $dateofbaptism,
+							must_postdate => $birth_dt,
+							must_predate => $death_dt
+						});
 					}
 					$end_of_sentence = 0;
 				}
@@ -1895,6 +1912,15 @@ sub year
 				}
 				if($opts{'w'}) {
 					red_warning({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
+				}
+			}
+			my $must_predate = $params{'must_predate'};
+			if($must_predate) {
+				if($opts{'f'}) {
+					die $person->as_string(), ": Something is wrong with the date $string which should be before ", $must_predate->strftime('%x') if($d > $must_predate);
+				}
+				if($opts{'w'}) {
+					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 				}
 			}
 			return ' on ', $d->strftime('%x');
