@@ -1065,6 +1065,7 @@ sub Gedcom::Individual::relationship
 				# e.g. 2, 1 is uncle
 				my %male_relationships = (
 					1 << 8 | 1 => 'brother',
+					1 << 8 | 2 => 'nephew',
 					2 << 8 | 1 => 'uncle',
 					3 << 8 | 1 => 'great-uncle',
 					4 << 8 | 1 => 'great-great-uncle',
@@ -1079,6 +1080,7 @@ sub Gedcom::Individual::relationship
 				);
 				my %female_relationships = (
 					1 << 8 | 1 => 'sister',
+					1 << 8 | 2 => 'niece',
 					2 << 8 | 1 => 'aunt',
 					3 << 8 | 1 => 'great-aunt',
 					4 << 8 | 1 => 'great-great-aunt',
