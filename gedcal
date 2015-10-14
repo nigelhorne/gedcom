@@ -214,7 +214,7 @@ sub generate {
 		my $aod;
 
 		if($dob && ($dob !~ /^\d{4}$/)) {
-			my @btime = strptime($dob . ' 12:00');
+			my @btime = strptime("$dob 12:00");
 			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
 				$print = 1;
 				if(!$opts{a}) {
@@ -228,7 +228,7 @@ sub generate {
 		next if($onlybirthdays && !defined($aob));
 
 		if($dod && ($dod !~ /^\d{4}$/)) {
-			my @dtime = strptime($dod . ' 12:00');
+			my @dtime = strptime("$dod 12:00");
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
 				$print = 1;
 				if(!$opts{a}) {
