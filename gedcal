@@ -243,7 +243,13 @@ sub generate {
 
 		next unless($print or ($day == -1));
 
-		if($opts{'w'} && (!$person->fams()) && (!$person->siblings()) && (!$person->mother()) && (!$person->father()) && (!$person->spouse())) {
+		my @siblings = $person->siblings();
+		my $mother = $person->mother();
+		my $father = $person->father();
+		my @spouses = $person->spouse();
+		my $family = $person->fams();
+
+		if($opts{'w'} && (!$family) && (scalar(@siblings) == 0) && (!$mother) && (!$father) && (scalar(@spouses) == 0)) {
 			if($opts{'f'}) {
 				die $person->as_string() . ': not connected to the tree';
 			}
@@ -305,7 +311,6 @@ sub generate {
 			}
 
 			my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
-			my @spouses = $person->spouse();
 			if((!defined($marriage)) && scalar(@spouses)) {
 				$spouses[0]->get_record('marriage');
 			}
@@ -337,20 +342,28 @@ sub generate {
 			my $sex = $person->sex();
 			my @occupations = $person->get_value('occupation');
 
-			my @siblings = $person->siblings();
-			my $family = $person->fams();
 			my @children;
 			my $numberofchildren = 0;
 			if($family) {
 				$numberofchildren = $family->number_of_children();
 				@children = $family->children();
 			}
-			my $father = $person->father();
-			my $mother = $person->mother();
 
 			my $relationship;
 			my $spouserelationship;
 			my $spouse;
+
+			if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
+				foreach my $sibling(@siblings) {
+					my $siblingbirth = $sibling->get_value('birth date');
+					if($siblingbirth && ($sibling->name() eq $person->name())) {
+						if($opts{'f'}) {
+							die $person->name(), ': Possible duplicate person';
+						}
+						red_warning({ person => $sibling, warning => 'possible duplicate person' });
+					}
+				}
+			}
 
 			if($me) {
 				$relationship = $me->relationship($person);
