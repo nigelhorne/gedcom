@@ -356,7 +356,7 @@ sub generate {
 			if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
 				foreach my $sibling(@siblings) {
 					my $siblingbirth = $sibling->get_value('birth date');
-					if($siblingbirth && ($sibling->name() eq $person->name())) {
+					if($siblingbirth && ($siblingbirth eq $dateofbirth) && ($sibling->name() eq $person->name())) {
 						if($opts{'f'}) {
 							die $person->name(), ': Possible duplicate person';
 						}
