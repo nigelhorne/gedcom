@@ -570,6 +570,38 @@ sub generate {
 					print '.';
 					$end_of_sentence = 1;
 				}
+			} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
+				print "  $pronoun was ";
+
+				if($ENV{'LANG'} =~ /^en_US/) {
+					print 'baptized';
+				} else {
+					print 'baptised';
+				}
+				if($placeofbaptism) {
+					if($placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+						print ' in ',
+							($sex eq 'M') ? 'his' : 'her',
+							" home town of $placeofbirth";
+					} else {
+						print place({ person => $person, place => $placeofbaptism });
+					}
+				}
+				if($dateofbaptism) {
+					print year({
+						person => $person,
+						date => $dateofbaptism,
+						must_postdate => $birth_dt,
+						must_predate => $death_dt
+					});
+				}
+				if(scalar(@spouses)) {
+					print ' and';
+					$end_of_sentence = 0;
+				} else {
+					print '.';
+					$end_of_sentence = 1;
+				}
 			}
 
 			my $all_children_are_alive = 1;
