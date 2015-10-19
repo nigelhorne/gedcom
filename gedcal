@@ -700,8 +700,30 @@ sub generate {
 					print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
 					if($dateofburial) {
 						print "  $pronoun was buried",
-							year({ person => $person, place => $dateofburial });
+							year({ person => $person, date => $dateofburial });
 						if($placeofburial) {
+							if($placeofbirth && ($placeofburial eq $placeofbirth)) {
+								print ' in ',
+									($sex eq 'M') ? 'his' : 'her',
+									' home town of ';
+								my $city = $placeofburial;
+								if($city =~ /^(.+?),/) {
+									print $1;
+								} else {
+									print place({ person => $person, place => $placeofburial });
+								}
+							} else {
+								print place({ person => $person, place => $placeofburial });
+							}
+						}
+					} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
+						print "  $pronoun was buried in ",
+							($sex eq 'M') ? 'his' : 'her',
+							' home town of ';
+						my $city = $placeofburial;
+						if($city =~ /^(.+?),/) {
+							print $1;
+						} else {
 							print place({ person => $person, place => $placeofburial });
 						}
 					} else {
