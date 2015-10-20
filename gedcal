@@ -515,7 +515,11 @@ sub generate {
 
 					print ' was born';
 					if($placeofbirth) {
-						print place({ person => $person, place => $placeofbirth });
+						if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath)) {
+							print ' there';
+						} else {
+							print place({ person => $person, place => $placeofbirth });
+						}
 					}
 					if($dateofbirth) {
 						print ' ', year({
