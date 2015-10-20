@@ -312,7 +312,7 @@ sub generate {
 
 			my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
 			if((!defined($marriage)) && scalar(@spouses)) {
-				$spouses[0]->get_record('marriage');
+				$marriage = $spouses[0]->get_record('marriage');
 			}
 			my $dateofmarriage = $person->get_value('marriage date');
 			if((!$dateofmarriage) && $marriage) {
@@ -341,6 +341,7 @@ sub generate {
 			my $pronoun = $person->pronoun();
 			my $sex = $person->sex();
 			my @occupations = $person->get_value('occupation');
+			my @residences = $person->residence();
 
 			my @children;
 			my $numberofchildren = 0;
@@ -490,7 +491,7 @@ sub generate {
 
 			my $end_of_sentence = 1;
 			if($aob && $aod) {
-				print " was born $aob years ago and died $dod years ago today.";
+				print " was born $aob years and died $aod years ago today.";
 			} elsif($aob) {
 				print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
 				if($placeofbirth) {
@@ -517,7 +518,7 @@ sub generate {
 						print place({ person => $person, place => $placeofbirth });
 					}
 					if($dateofbirth) {
-						print year({
+						print ' ', year({
 							person => $person,
 							date => $dateofbirth,
 							must_predate => $death_dt
@@ -550,7 +551,7 @@ sub generate {
 						}
 					}
 					if($dateofbaptism) {
-						print year({
+						print ' ', year({
 							person => $person,
 							date => $dateofbaptism,
 							must_postdate => $birth_dt,
@@ -581,14 +582,14 @@ sub generate {
 				if($placeofbaptism) {
 					if($placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 						print ' in ',
-							($sex eq 'M') ? 'his' : 'her',
+							$person->possessive(),
 							" home town of $placeofbirth";
 					} else {
 						print place({ person => $person, place => $placeofbaptism });
 					}
 				}
 				if($dateofbaptism) {
-					print year({
+					print ' ', year({
 						person => $person,
 						date => $dateofbaptism,
 						must_postdate => $birth_dt,
@@ -677,7 +678,7 @@ sub generate {
 						}
 					}
 					print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
-					print year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
+					print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
 					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
 				} else {
 					print ' was married ';
@@ -727,16 +728,55 @@ sub generate {
 				}
 				$end_of_sentence = 0;
 			}
+
+			if(scalar(@residences)) {
+				print '.' unless($end_of_sentence);
+
+				print '  During ',
+					lc($person->possessive()),
+					' life ', lcfirst($pronoun), ' lived';
+				my $count = 0;
+				# FIXME, handle duplicate locations better
+				# TODO: sort in calendar order
+				my @residencelist;
+
+				foreach my $residence(@residences) {
+					if(ref($residence) eq 'Gedcom::Record') {
+						unshift @residencelist, $residence;
+					}
+				}
+
+				foreach my $residence(@residencelist) {
+					if(ref($residence) eq 'Gedcom::Record') {
+						print place({ person => $person, record => $residence });
+						my $date = $residence->date();
+						if($date) {
+							print ' (',
+								year({ person => $person, date => $date }),
+								')';
+						}
+						$count++;
+						if($count < (scalar(@residencelist) - 1)) {
+							print ';';
+						} elsif($count == (scalar(@residencelist) - 1)) {
+							print '; and';
+						}
+					}
+				}
+				print '.';
+				$end_of_sentence = 1;
+			}
+
 			if($placeofburial || $dateofburial) {
 				if($aod || ((!$dateofdeath) && !$placeofdeath)) {
 					print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
 					if($dateofburial) {
-						print "  $pronoun was buried",
+						print "  $pronoun was buried ",
 							year({ person => $person, date => $dateofburial });
 						if($placeofburial) {
 							if($placeofbirth && ($placeofburial eq $placeofbirth)) {
 								print ' in ',
-									($sex eq 'M') ? 'his' : 'her',
+									lcfirst($person->possessive()),
 									' home town of ';
 								my $city = $placeofburial;
 								if($city =~ /^(.+?),/) {
@@ -750,7 +790,7 @@ sub generate {
 						}
 					} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 						print "  $pronoun was buried in ",
-							($sex eq 'M') ? 'his' : 'her',
+							lcfirst($person->possessive()),
 							' home town of ';
 						my $city = $placeofburial;
 						if($city =~ /^(.+?),/) {
@@ -767,7 +807,7 @@ sub generate {
 					print '.' if(!$end_of_sentence);
 					print "  $pronoun died";
 					if($dateofdeath) {
-						print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+						print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 						if($placeofdeath) {
 							print place({ person => $person, place => $placeofdeath });
 						}
@@ -783,7 +823,7 @@ sub generate {
 								print place({ person => $person, place => $placeofburial });
 							}
 						}
-						print year({ person => $person, date => $dateofburial });
+						print ' ', year({ person => $person, date => $dateofburial });
 					} else {
 						print " and is buried",
 							place({ person => $person, place => $placeofburial });
@@ -802,10 +842,10 @@ sub generate {
 				print ' died';
 				if($dateofdeath) {
 					if($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/)) {
-						print " in $1",
+						print " in $1 ",
 							year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					} else {
-						print year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+						print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 						if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage))) {
 							print place({ person => $person, place => $placeofdeath });
 						}
@@ -822,7 +862,7 @@ sub generate {
 				my $dob = $child->get_value('birth date');
 				if($dob) {
 					print "\t", $child->given_names(),
-						' was born',
+						' was born ',
 						year({ person => $child, date => $dob });
 					if($opts{'w'} && ($birth_dt || $death_dt) && ($dob =~ /^\d/)) {
 						my $d;
@@ -1062,6 +1102,19 @@ sub Gedcom::Individual::pronoun
 	return 'They';
 }
 
+sub Gedcom::Individual::possessive
+{
+	my $self = shift;
+
+	my $rc = {
+		'He' => 'His',
+		'She' => 'Her',
+		'They' => 'Their',
+	};
+
+	return $rc->{$self->pronoun()};
+}
+
 # FIXME: currently only finds ancestors
 # TODO: find in-laws
 # See http://www.myrelative.com/html/relationship.html for inspiration
@@ -1143,6 +1196,7 @@ sub Gedcom::Individual::relationship
 					4 << 8 | 2 => 'first cousin twice-removed',
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
+					6 << 8 | 5 => 'fourth cousin once-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
 				);
 				my %female_relationships = (
@@ -1158,13 +1212,14 @@ sub Gedcom::Individual::relationship
 					4 << 8 | 2 => 'first cousin twice-removed',
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
+					6 << 8 | 5 => 'fourth cousin once-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
 				);
 
 				my $rc = ($sex eq 'M') ?
 					$male_relationships{($steps1 << 8) | $steps2} :
 					$female_relationships{($steps1 << 8) | $steps2};
-				# print "$steps1, $steps2\n" unless($rc);
+				print "$steps1, $steps2\n" unless($rc);
 				return $rc;
 			}
 		}
@@ -1212,10 +1267,10 @@ sub year
 	}
 
 	if($string =~ /^\d{4}$/) {
-		return " in $string";
+		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
-		return " c$2";
+		return "c$2";
 	}
 	if($string =~ /^\d/) {
 		my $person = $params{'person'};
@@ -1243,7 +1298,7 @@ sub year
 					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 				}
 			}
-			return ' on ', $d->strftime('%x');
+			return 'on ', $d->strftime('%x');
 		}
 		if($@) {
 			# RT 107354
@@ -1259,13 +1314,13 @@ sub year
 				red_warning({ person => $person, warning => $@ });
 			}
 		}
-		return " on $string";
+		return "on $string";
 	}
 	if($string =~ /^bef.? (\d{4})/i) {
-		return " before $1";
+		return "before $1";
 	}
 	if($string =~ /^by.? (\d{4})/i) {
-		return " by $1";
+		return "by $1";
 	}
 	if($string =~ /^By (\d{4})/i) {
 		my $person = $params{'person'};
@@ -1283,10 +1338,10 @@ sub year
 				warn colored("Got 'By' instead of 'Bef'", 'red');
 			}
 		}
-		return " before $1";
+		return "before $1";
 	}
 
-	return " in $string";
+	return "in $string";
 }
 
 sub place
