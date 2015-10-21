@@ -561,6 +561,12 @@ sub generate {
 							must_postdate => $birth_dt,
 							must_predate => $death_dt
 						});
+						print_sibling_baptism({
+							person => $person,
+							siblings => \@siblings,
+							date => $dateofbaptism,
+							birthdate => $dateofbirth,
+						});
 					}
 					$end_of_sentence = 0;
 				}
@@ -598,6 +604,12 @@ sub generate {
 						date => $dateofbaptism,
 						must_postdate => $birth_dt,
 						must_predate => $death_dt
+					});
+					print_sibling_baptism({
+						person => $person,
+						siblings => \@siblings,
+						date => $dateofbaptism,
+						birthdate => $dateofbirth,
 					});
 				}
 				if(scalar(@spouses)) {
@@ -1404,6 +1416,31 @@ sub validate_place
 	}
 	$places{$place} = 1;
 	return 1;
+}
+
+sub print_sibling_baptism
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $params{'person'};
+	my $siblings = $params{'siblings'};
+	my $date = $params{'date'};
+	my $birthdate = $params{'birthdate'};
+
+	foreach my $sibling(@{$siblings}) {
+		my $dateofsiblingbaptism = $sibling->get_value('baptism date');
+		my $dateofsiblingbirth = $sibling->get_value('birth date');
+		if($dateofsiblingbaptism && ($dateofsiblingbaptism eq $date)) {
+			print ', the same day as ',
+				lcfirst($person->possessive()),
+				' ';
+			if($dateofsiblingbirth && $birthdate && ($dateofsiblingbirth eq $birthdate)) {
+				print 'twin ';
+			}
+			print $sibling->sex() eq 'M' ? 'brother ' : 'sister ',
+				$sibling->given_names();
+		}
+	}
 }
 
 sub red_warning
