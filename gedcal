@@ -591,9 +591,13 @@ sub generate {
 				}
 				if($placeofbaptism) {
 					if($placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-						print ' in ',
-							$person->possessive(),
-							" home town of $placeofbirth";
+						if($aod) {
+							print ' in ',
+								lcfirst($person->possessive()),
+								' home town';
+						} else {
+							print ' there';
+						}
 					} else {
 						print place({ person => $person, place => $placeofbaptism });
 					}
@@ -745,6 +749,7 @@ sub generate {
 				$end_of_sentence = 0;
 			}
 
+			my $printed_residence;
 			if(scalar(@residences)) {
 				print '.' unless($end_of_sentence);
 
@@ -781,6 +786,7 @@ sub generate {
 				}
 				print '.';
 				$end_of_sentence = 1;
+				$printed_residence = 1;
 			}
 
 			if($placeofburial || $dateofburial) {
@@ -847,7 +853,7 @@ sub generate {
 					$end_of_sentence = 0;
 				}
 			} elsif((!$aod) && ($placeofdeath || $dateofdeath)) {
-				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage)) {
+				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					print ', which is also where ', lcfirst($pronoun);
 				} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 					print ' and';
@@ -857,12 +863,12 @@ sub generate {
 				}
 				print ' died';
 				if($dateofdeath) {
-					if($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/)) {
+					if($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 						print " in $1 ",
 							year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					} else {
 						print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-						if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage))) {
+						if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage) || $printed_residence)) {
 							print place({ person => $person, place => $placeofdeath });
 						}
 					}
