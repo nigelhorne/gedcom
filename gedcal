@@ -839,16 +839,12 @@ sub generate {
 					if($dateofburial) {
 						print ' and was buried';
 						if($placeofburial) {
-							if($placeofdeath && ($placeofburial eq $placeofdeath)) {
-								print ' there';
-							} else {
-								print place({ person => $person, place => $placeofburial });
-							}
+							print place({ person => $person, place => $placeofburial, there => $placeofdeath });
 						}
 						print ' ', year({ person => $person, date => $dateofburial });
 					} else {
-						print " and is buried",
-							place({ person => $person, place => $placeofburial });
+						print ' and is buried',
+							place({ person => $person, place => $placeofburial, there => $placeofdeath });
 					}
 					$end_of_sentence = 0;
 				}
@@ -1377,6 +1373,12 @@ sub place
 
 		$place = $place->place();
 		return unless($place);
+	}
+
+	my $there = $params{'there'};
+
+	if($there && ($place eq $there)) {
+		return ' there';
 	}
 
 	validate_place({ person => $params{'person'}, place => $place });
