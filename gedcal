@@ -697,9 +697,14 @@ sub generate {
 							print $childnames;
 						}
 					}
-					print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
-					print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
-					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
+					if($placeofmarriage && $placeofbaptism and ($placeofmarriage eq $placeofbaptism) && $dateofmarriage) {
+						print ' there ',
+							year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt);
+					} else {
+						print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
+						print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
+						print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
+					}
 				} else {
 					print ' was married ';
 					if(scalar(@spouses) == 2) {
