@@ -857,7 +857,11 @@ sub generate {
 				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					print ', which is also where ', lcfirst($pronoun);
 				} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
-					print ' and';
+					if($end_of_sentence) {
+						print "  $pronoun";
+					} else {
+						print ' and';
+					}
 				} else {
 					print '.' if(!$end_of_sentence);
 					print "  $pronoun";
