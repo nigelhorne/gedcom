@@ -756,12 +756,6 @@ sub generate {
 
 			my $printed_residence;
 			if(scalar(@residences)) {
-				print '.' unless($end_of_sentence);
-
-				print '  During ',
-					lc($person->possessive()),
-					' life ', lcfirst($pronoun), ' lived';
-				my $count = 0;
 				# FIXME, handle duplicate locations better
 				# TODO: sort in calendar order
 				my @residencelist;
@@ -772,26 +766,33 @@ sub generate {
 					}
 				}
 
+				my $count = 0;
 				foreach my $residence(@residencelist) {
-					if(ref($residence) eq 'Gedcom::Record') {
-						print place({ person => $person, record => $residence });
-						my $date = $residence->date();
-						if($date) {
-							print ' (',
-								year({ person => $person, date => $date }),
-								')';
-						}
-						$count++;
-						if($count < (scalar(@residencelist) - 1)) {
-							print ';';
-						} elsif($count == (scalar(@residencelist) - 1)) {
-							print '; and';
-						}
+					if($count == 0) {
+						print '.' unless($end_of_sentence);
+						print '  During ',
+							lc($person->possessive()),
+							' life ', lcfirst($pronoun), ' lived';
 					}
+					print place({ person => $person, record => $residence });
+					my $date = $residence->date();
+					if($date) {
+						print ' (',
+							year({ person => $person, date => $date }),
+							')';
+					}
+					$count++;
+					if($count < (scalar(@residencelist) - 1)) {
+						print ';';
+					} elsif($count == (scalar(@residencelist) - 1)) {
+						print '; and';
+					}
+					$printed_residence = 1;
 				}
-				print '.';
-				$end_of_sentence = 1;
-				$printed_residence = 1;
+				if($printed_residence) {
+					print '.';
+					$end_of_sentence = 1;
+				}
 			}
 
 			if($placeofburial || $dateofburial) {
