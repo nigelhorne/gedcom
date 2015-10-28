@@ -12,7 +12,7 @@
 
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
-# TODO: print -d events in chronological order, that may also simplify the logic
+# TODO: add option to print in generations order rather than date order.
 
 # -a: all days otherwise just today
 # -b: only print birthdays
@@ -38,18 +38,18 @@ use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
 use DateTime::Duration;
+no lib '.';
 
 my %opts;
-
 getopts('abdDfh:lwv', \%opts);
 die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -w ] filename\n" unless($ARGV[0]);
-
-my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 my $me;
 my %warned;
 my %printed;
 my %places;
+
+my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 
 if($opts{h}) {
 	$me = $ged->get_individual($opts{h});
@@ -70,14 +70,14 @@ if($opts{'w'}) {
 	require HTTP::Cache::Transparent;
 	HTTP::Cache::Transparent->import();
 
-	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache');
+	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
 
 	HTTP::Cache::Transparent::init({
-		BasePath => $cachedir . '/http-cache-transparent',
+		BasePath => $cachedir,
 		# Verbose => 1,
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
-	}) || die "$0/cache: $!";
+	}) || die "$0: $cachedir: $!";
 }
 
 my $date_parser = Genealogy::Gedcom::Date->new();
@@ -697,12 +697,14 @@ sub generate {
 							print $childnames;
 						}
 					}
-					if($placeofmarriage && $placeofbaptism and ($placeofmarriage eq $placeofbaptism) && $dateofmarriage) {
+					if($placeofmarriage && $dateofmarriage &&
+					   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
+					    ($aod && $placeofbirth && ($placeofmarriage eq $placeofbirth)))) {
 						print ' there ',
-							year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt);
+							year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt);
 					} else {
 						print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
-						print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt) if($dateofmarriage);
+						print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt) if($dateofmarriage);
 						print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
 					}
 				} else {
@@ -762,7 +764,9 @@ sub generate {
 
 				foreach my $residence(@residences) {
 					if(ref($residence) eq 'Gedcom::Record') {
-						unshift @residencelist, $residence;
+						if((!$placeofbirth) || ($residence->place() ne $placeofbirth)) {
+							unshift @residencelist, $residence;
+						}
 					}
 				}
 
