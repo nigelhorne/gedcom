@@ -153,12 +153,9 @@ sub generate {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		next if($me && ($person eq $me));
 
-		my $xref = $person->{'xref'};
-
-		if(!$printed{$xref}) {
+		if(!$printed{$person->{'xref'}}) {
 			$params{'person'} = $person;
 			print_person(\%params);
-			$printed{$xref} = 1;
 		}
 	}
 }
@@ -1018,6 +1015,7 @@ sub print_person
 			print "\n";
 		}
 	}
+	$printed{$person->{'xref'}} = 1;
 }
 
 sub Gedcom::Individual::as_string
