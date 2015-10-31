@@ -88,23 +88,28 @@ my $ninemonths = DateTime::Duration->new(months => 9);
 my $year = (localtime)[5];
 $year += 1900 if($year < 1900);
 
+my @everyone;
+unless($opts{'p'}) {
+	@everyone = $ged->individuals();
+}
+
 if($opts{a}) {
 	die '-b and -a should not be given together' if($opts{'b'});
 	die '-D and -a should not be given together' if($opts{'D'});
 
 	foreach my $month(0..11) {
 		foreach my $day(1..29) {
-			generate(day => $day, month => $month);
+			generate(day => $day, month => $month, everyone => \@everyone);
 		}
 		if($month == 1) {
 			next;
 		}
-		generate(day => 30, month => $month);
+		generate(day => 30, month => $month, everyone => \@everyone);
 		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
-			generate(day => 31, month => $month);
+			generate(day => 31, month => $month, everyone => \@everyone);
 		}
 	}
-	generate(day => -1, month => -1);
+	generate(day => -1, month => -1, everyone => \@everyone);
 } elsif($opts{'b'}) {
 	die '-b and -d should not be given together' if($opts{'d'});
 	die '-b and -a should not be given together' if($opts{'a'});
@@ -112,23 +117,16 @@ if($opts{a}) {
 	if($opts{'D'}) {
 		print "Today's birthdays:\n";
 	}
-	generate(day => $day, month => $month, onlybirthdays => 1, onlydeaths => 0);
+	generate(day => $day, month => $month, onlybirthdays => 1, onlydeaths => 0, everyone => \@everyone);
 	if($opts{'D'}) {
 		print "Today's anniversaries of deaths:\n";
-		generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1);
+		generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1, everyone => \@everyone);
 	}
 } elsif($opts{'D'}) {
 	die '-D and -d should not be given together' if($opts{'d'});
 	die '-D and -a should not be given together' if($opts{'a'});
 	my($day, $month) = (localtime)[3,4];
-	if($opts{'b'}) {
-		print "Today's anniversaries of deaths:\n";
-	}
-	generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1);
-	if($opts{'b'}) {
-		print "Today's birthdays:\n";
-		generate(day => $day, month => $month, onlybirthdays => 1, onlydeaths => 0);
-	}
+	generate(day => $day, month => $month, onlybirthdays => 0, onlydeaths => 1, everyone => \@everyone);
 } elsif($opts{'p'}) {
 	die '-p and -D should not be given together' if($opts{'D'});
 	die '-p and -b should not be given together' if($opts{'b'});
@@ -143,13 +141,13 @@ if($opts{a}) {
 	}
 } else {
 	my($day, $month) = (localtime)[3,4];
-	generate(day => $day, month => $month);
+	generate(day => $day, month => $month, everyone => \@everyone);
 }
 
 sub generate {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	foreach my $person($ged->individuals()) {
+	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		next if($me && ($person eq $me));
 
@@ -190,7 +188,7 @@ sub print_person
 
 	return if($onlybirthdays && !defined($dob));
 
-	my $dod = $person->get_value('death date') || $person->get_value('burial date');
+	my $dod = $person->get_value('death date');
 
 	return if($onlydeaths && !defined($dod));
 
