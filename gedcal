@@ -45,6 +45,7 @@ getopts('abdDfh:lp:wv', \%opts);
 die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $me;
+my @myancestors;
 my %warned;
 my %printed;
 my %places;
@@ -164,22 +165,7 @@ sub print_person
 
 	# Gather the information on this person
 	my $person = $params{'person'};
-	my $name = $person->name();
-
-	$name =~ s/\///g;
-	$nameparser->parse($name);
-	my %name_components = $nameparser->components();
-	my $firstname = $name_components{'given_name_1'};
-	my $lastname = $name_components{'surname_1'};
-
-	my $dob;
-	eval {
-		$dob = $person->get_value('birth date');
-	};
-	if($@) {
-		warn "Can't parse record for $firstname $lastname";
-		return;
-	}
+	my $dob = $person->get_value('birth date');
 
 	my $onlybirthdays = $params{'onlybirthdays'};
 	my $onlydeaths = $params{'onlydeaths'};
@@ -279,6 +265,13 @@ sub print_person
 		nee => 1,
 		middle_names => 1,
 	}), "\n";
+
+	my $name = $person->name();
+	$name =~ s/\///g;
+	$nameparser->parse($name);
+	my %name_components = $nameparser->components();
+	my $firstname = $name_components{'given_name_1'};
+	my $lastname = $name_components{'surname_1'};
 
 	my ($birth_dt, $death_dt);
 	my $birth = $person->get_record('birth');
@@ -1173,8 +1166,10 @@ sub Gedcom::Individual::relationship
 	my $self = shift;
 	my $other = shift;
 
-	my @ancestors1 = $self->ancestors();
-	return unless @ancestors1;
+	unless(@myancestors) {
+		@myancestors = $self->ancestors();
+	}
+	return unless @myancestors;
 
 	my $sex = $other->get_value('sex');
 	if((!defined($sex)) || ($sex !~ /[MF]/)) {
@@ -1187,7 +1182,7 @@ sub Gedcom::Individual::relationship
 		return;
 	}
 
-	foreach my $person1(@ancestors1) {
+	foreach my $person1(@myancestors) {
 		if($person1 eq $other) {
 			# Direct ancestor
 			my $steps = stepsabove($self, $other, 0);
@@ -1216,7 +1211,7 @@ sub Gedcom::Individual::relationship
 	my @ancestors2 = $other->ancestors();
 	return unless(@ancestors2);
 
-	foreach my $person1(@ancestors1) {
+	foreach my $person1(@myancestors) {
 		foreach my $person2(@ancestors2) {
 			# print $person1->as_string(), '->', $person2->as_string(), "\n";
 			# G::C is noisy
