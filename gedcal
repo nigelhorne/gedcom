@@ -27,7 +27,7 @@
 use strict;
 use warnings;
 # use diagnostics;
- use warnings::unused;
+# use warnings::unused;
 
 use Gedcom;
 use Genealogy::Gedcom::Date;
