@@ -477,6 +477,7 @@ sub print_person
 			print ', ' unless($relationship);
 		}
 
+		my $haveprintedspousename;
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
 				print ', y';
@@ -491,8 +492,9 @@ sub print_person
 				print 'The husband';
 			}
 			print " of your $spouserelationship ",
-				$spouse->as_string(),
+				$spouse->as_string({ middle_names => 1 }),
 				', ';
+			$haveprintedspousename = 1;
 		}
 
 		if($firstname) {
@@ -678,7 +680,12 @@ sub print_person
 				} else {
 					print ' was married to ';
 				}
-				print $spouses[0]->as_string();
+				if($haveprintedspousename) {
+					print $spouses[0]->given_names();
+				} else {
+					print $spouses[0]->as_string();
+					$haveprintedspousename = 1;
+				}
 				if($numberofchildren) {
 					print ', with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
@@ -774,6 +781,8 @@ sub print_person
 			# TODO: sort in calendar order
 			my @residencelist;
 
+			# This is an attempt to handle
+			# https://github.com/pjcj/Gedcom.pm/issues/13
 			foreach my $residence(@residences) {
 				if(ref($residence) eq 'Gedcom::Record') {
 					if((!$placeofbirth) || ($residence->place() ne $placeofbirth)) {
