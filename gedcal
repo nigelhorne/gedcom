@@ -365,6 +365,7 @@ sub print_person
 		my $relationship;
 		my $spouserelationship;
 		my $spouse;
+		my %places_printed;
 
 		if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
 			foreach my $sibling(@siblings) {
@@ -515,7 +516,9 @@ sub print_person
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
 			if($placeofdeath) {
-				print place({ person => $person, place => $placeofdeath });
+				my $p = place({ person => $person, place => $placeofdeath });
+				print $p;
+				$places_printed{$p} = 1;
 			}
 			print '.';
 		} else {
@@ -724,7 +727,11 @@ sub print_person
 				} else {
 					print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
 					print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt) if($dateofmarriage);
-					print place(place => $placeofmarriage, person => $person) if($placeofmarriage);
+					if($placeofmarriage) {
+						my $p = place({ place => $placeofmarriage, person => $person, places_printed => \%places_printed });
+						print $p;
+						$places_printed{$p} = 1;
+					}
 				}
 			} else {
 				print ' was married ';
@@ -852,8 +859,8 @@ sub print_person
 						print place({ person => $person, place => $placeofburial });
 					}
 				} else {
-					print "  $pronoun is buried",
-						place({ person => $person, place => $placeofburial });
+					my $p = place({ person => $person, place => $placeofburial, places_printed => \%places_printed, there => $placeofmarriage });
+					print "  $pronoun is buried$p";
 				}
 				$end_of_sentence = 0;
 			} elsif($dateofdeath || $placeofdeath) {
@@ -1426,7 +1433,14 @@ sub place
 	if($place eq 'USA') {
 		return ' in the USA';
 	}
-	return " in $place";
+	$place = " in $place";
+
+	# Only print the town if the location has already been printed
+	my $places_printed = $params{'places_printed'};
+	if($places_printed && $places_printed->{$place} && $place =~ /^(.+?),/) {
+		return $1;
+	}
+	return $place;
 }
 
 sub validate_place
