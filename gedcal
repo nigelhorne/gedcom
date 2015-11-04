@@ -85,7 +85,7 @@ if($opts{'w'}) {
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $geocoder = Geo::Coder::OSM->new();
-my $nameparser = Lingua::EN::NameParse->new();
+my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1);
 my $ninemonths = DateTime::Duration->new(months => 9);
 
 my $year = (localtime)[5];
@@ -265,6 +265,7 @@ sub print_person
 		include_years => 1,
 		nee => 1,
 		middle_names => 1,
+		title => 1,
 	}), "\n";
 
 	my $name = $person->name();
@@ -1054,7 +1055,17 @@ sub Gedcom::Individual::as_string
 		}
 	}
 
-	my $rc = $first_name;
+	my $rc;
+	
+	if($args{'title'}) {
+		$rc = $name_components{'title_1'};
+		if($rc) {
+			$rc .= ' ';
+		}
+	}
+
+	$rc .= $first_name;
+
 	if($args{'middle_names'} && $middle_name) {
 		$rc .= " $middle_name";
 	}
