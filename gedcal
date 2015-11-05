@@ -409,6 +409,9 @@ sub print_person
 				print 'The ';
 			}
 
+# if($birth && $birth->source() && $ged->get_source($birth->source())) {
+# print ">>>>>>>>>>>>>>", $ged->get_source($birth->source())->text();
+# }
 			if($birth_dt) {
 				if(scalar(@siblings)) {
 					my $count = 1;
