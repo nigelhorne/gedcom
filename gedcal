@@ -409,8 +409,10 @@ sub print_person
 				print 'The ';
 			}
 
-# if($birth && $birth->source() && $ged->get_source($birth->source())) {
-# print ">>>>>>>>>>>>>>", $ged->get_source($birth->source())->text();
+# if($birth && $birth->source()) {
+# my $src = $birth->source();
+# $src = $ged->get_source($src) unless ref $src;
+# print ">>>>>>>>>>>>>>", $src->text();
 # }
 			if($birth_dt) {
 				if(scalar(@siblings)) {
@@ -722,7 +724,6 @@ sub print_person
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						print $childnames;
 					}
-					print ',';
 				}
 				if($placeofmarriage && $dateofmarriage &&
 				   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
