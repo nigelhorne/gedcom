@@ -719,6 +719,7 @@ sub print_person
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						print $childnames;
 					}
+					print ',';
 				}
 				if($placeofmarriage && $dateofmarriage &&
 				   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
