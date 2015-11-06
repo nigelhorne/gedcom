@@ -310,8 +310,12 @@ sub print_person
 			my $src = $death->source();
 			if($src) {
 				$src = $ged->get_source($src) unless ref($src);
-				$deathcitation = ++$citationcount;
-				$citations{$deathcitation} = $src;
+				if($birthcitation && ($citations{$birthcitation} eq $src)) {
+					$deathcitation = $birthcitation;
+				} else {
+					$deathcitation = ++$citationcount;
+					$citations{$deathcitation} = $src;
+				}
 			}
 		}
 	}
@@ -364,6 +368,23 @@ sub print_person
 		my $placeofmarriage = get_value({ person => $person, value => 'marriage place' });
 		if((!$placeofmarriage) && $marriage) {
 			$placeofmarriage = $marriage->place();
+		}
+		my $marriagecitation;
+		if($opts{'c'}) {
+			if($marriage) {
+				my $src = $marriage->source();
+				if($src) {
+					$src = $ged->get_source($src) unless ref($src);
+					if($birthcitation && ($citations{$birthcitation} eq $src)) {
+						$marriagecitation = $birthcitation;
+					} elsif($deathcitation && ($citations{$deathcitation} eq $src)) {
+						$marriagecitation = $deathcitation;
+					} else {
+						$marriagecitation = ++$citationcount;
+						$citations{$marriagecitation} = $src;
+					}
+				}
+			}
 		}
 
 		my $placeofdeath = get_value({ person => $person, value => 'death place' });
@@ -770,6 +791,7 @@ sub print_person
 						$places_printed{$p} = 1;
 					}
 				}
+				print "[$marriagecitation]" if($marriagecitation);
 			} else {
 				print ' was married ';
 				if(scalar(@spouses) == 2) {
@@ -947,8 +969,10 @@ sub print_person
 						print place({ person => $person, place => $placeofdeath });
 					}
 				}
+				print "[$deathcitation]" if($deathcitation);
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 				print place({ person => $person, place => $placeofdeath });
+				print "[$deathcitation]" if($deathcitation);
 			}
 			$end_of_sentence = 0;
 		}
