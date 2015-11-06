@@ -16,6 +16,7 @@
 
 # -a: all days otherwise just today
 # -b: only print birthdays
+# -c: Give citations on detailed listing
 # -d: give a detailed lifetime information about the person
 # -D: only print anniversaries of deaths
 # -f: treat warnings as fatals, implies -w
@@ -43,8 +44,8 @@ use Tie::Static;
 no lib '.';
 
 my %opts;
-getopts('abdDfh:lp:wv', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('abcdDfh:lp:wv', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -94,6 +95,10 @@ $year += 1900 if($year < 1900);
 my @everyone;
 unless($opts{'p'}) {
 	@everyone = $ged->individuals();
+}
+
+if($opts{'c'} && !$opts{'d'}) {
+	die '-c only makes sense with the -d option';
 }
 
 if($opts{a}) {
@@ -281,11 +286,36 @@ sub print_person
 	if((!$dateofbirth) && $birth) {
 		$dateofbirth = $birth->date();
 	}
+
 	my $death = $person->get_record('death');
 	my $dateofdeath = get_value({ person => $person, value => 'death date' });
 	if((!$dateofdeath) && $death) {
 		$dateofdeath = $death->date();
 	}
+
+	my %citations;
+	my $citationcount = 0;
+	my $birthcitation;
+	my $deathcitation;
+	if($opts{'c'}) {
+		if($birth) {
+			my $src = $birth->source();
+			if($src) {
+				$src = $ged->get_source($src) unless ref($src);
+				$birthcitation = ++$citationcount;
+				$citations{$birthcitation} = $src;
+			}
+		}
+		if($death) {
+			my $src = $death->source();
+			if($src) {
+				$src = $ged->get_source($src) unless ref($src);
+				$deathcitation = ++$citationcount;
+				$citations{$deathcitation} = $src;
+			}
+		}
+	}
+
 
 	if($dateofbirth && ($dateofbirth !~ /^\d{4}$/) && ($dateofbirth =~ /^\d/)) {
 		my $d;
@@ -409,11 +439,6 @@ sub print_person
 				print 'The ';
 			}
 
-# if($birth && $birth->source()) {
-# my $src = $birth->source();
-# $src = $ged->get_source($src) unless ref $src;
-# print ">>>>>>>>>>>>>>", $src->text();
-# }
 			if($birth_dt) {
 				if(scalar(@siblings)) {
 					my $count = 1;
@@ -512,12 +537,16 @@ sub print_person
 
 		my $end_of_sentence = 1;
 		if($aob && $aod) {
-			print " was born $aob years and died $aod years ago today.";
+			print " was born $aob years and died $aod years ago today";
+			print "[$birthcitation]" if($birthcitation);
+			print "[$deathcitation]" if($deathcitation);
+			print '.';
 		} elsif($aob) {
 			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
 			if($placeofbirth) {
 				print place({ person => $person, place => $placeofbirth });
 			}
+			print "[$birthcitation]" if($birthcitation);
 			print '.';
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
@@ -526,6 +555,7 @@ sub print_person
 				print $p;
 				$places_printed{$p} = 1;
 			}
+			print "[$deathcitation]" if($deathcitation);
 			print '.';
 		} else {
 			$end_of_sentence = 0;
@@ -551,6 +581,7 @@ sub print_person
 						must_predate => $death_dt
 					});
 				}
+				print "[$birthcitation]" if($birthcitation);
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses)) {
 						print ', was';
@@ -725,13 +756,13 @@ sub print_person
 						print $childnames;
 					}
 				}
+				print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
 				if($placeofmarriage && $dateofmarriage &&
 				   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
 				    ($aod && $placeofbirth && ($placeofmarriage eq $placeofbirth)))) {
 					print ' there ',
 						year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt);
 				} else {
-					print ',' if(($dateofmarriage || $placeofmarriage) && $numberofchildren);
 					print ' ', year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt) if($dateofmarriage);
 					if($placeofmarriage) {
 						my $p = place({ place => $placeofmarriage, person => $person, places_printed => \%places_printed });
@@ -968,6 +999,12 @@ sub print_person
 					' was born c',
 					get_value({ person => $child, value => 'baptism date' }),
 					".\n";
+			}
+		}
+		if($opts{'c'}) {
+			foreach my $citation(1..$citationcount) {
+				print "[$citation]: ", $citations{$citation}->title(), "\n";
+				# TODO - print NOTE
 			}
 		}
 		print '-' x 80, "\n";
