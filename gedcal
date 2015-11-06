@@ -732,7 +732,8 @@ sub print_person
 				}
 			}
 		}
-		if(scalar(@spouses)) {
+		if(scalar(@spouses) &&
+		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			print "  $pronoun" if($end_of_sentence);
 
 			if(scalar(@spouses) == 1) {
@@ -748,7 +749,7 @@ sub print_person
 					$haveprintedspousename = 1;
 				}
 				if($numberofchildren) {
-					print ', with whom ', lcfirst($pronoun);
+					print ' with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 						print ' had ';
 					} elsif((!$dateofdeath) && (!$dateofburial) && ($spouses[0]) && !$spouses[0]->death()) {
@@ -829,7 +830,7 @@ sub print_person
 			}
 			$end_of_sentence = 0;
 		} elsif($numberofchildren) {
-			print " $pronoun had ",
+			print "  $pronoun had ",
 				($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
 			if($numberofchildren == 1) {
 				print $children[0]->given_names();
