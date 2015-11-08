@@ -858,8 +858,13 @@ sub print_person
 			# https://github.com/pjcj/Gedcom.pm/issues/13
 			foreach my $residence(@residences) {
 				if(ref($residence) eq 'Gedcom::Record') {
-					if((!$placeofbirth) || ($residence->place() ne $placeofbirth)) {
-						unshift @residencelist, $residence;
+					my $place = $residence->place();
+					if(defined($place)) {
+						if((!$placeofbirth) || ($place ne $placeofbirth)) {
+							unshift @residencelist, $residence;
+						}
+					} else {
+						red_warning({ person => $person, warning => 'Residence record containts no location' });
 					}
 				}
 			}
