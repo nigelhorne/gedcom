@@ -626,7 +626,9 @@ sub print_person
 					if($aod && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 						print ' there';
 					} else {
-						print place({ person => $person, place => $placeofbaptism });
+						my $p = place({ person => $person, place => $placeofbaptism });
+						print $p;
+						$places_printed{$p} = 1;
 					}
 				}
 				if($dateofbaptism) {
@@ -674,7 +676,9 @@ sub print_person
 						print ' there';
 					}
 				} else {
-					print place({ person => $person, place => $placeofbaptism });
+					my $p = place({ person => $person, place => $placeofbaptism });
+					print $p;
+					$places_printed{$p} = 1;
 				}
 			}
 			if($dateofbaptism) {
@@ -905,7 +909,7 @@ sub print_person
 								print place({ person => $person, place => $placeofburial });
 							}
 						} else {
-							print place({ person => $person, place => $placeofburial });
+							print place({ person => $person, place => $placeofburial, there => $placeofdeath, places_printed => \%places_printed, must_postdate => $birth_dt });
 						}
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
@@ -937,7 +941,7 @@ sub print_person
 				if($dateofburial) {
 					print ' and was buried';
 					if($placeofburial) {
-						print place({ person => $person, place => $placeofburial, there => $placeofdeath });
+						print place({ person => $person, place => $placeofburial, there => $placeofdeath, places_printed => \%places_printed, must_postdate => $birth_dt });
 					}
 					print ' ', year({ person => $person, date => $dateofburial });
 				} else {
