@@ -67,6 +67,8 @@ if($opts{'f'}) {
 }
 
 if($opts{'w'}) {
+	die '-w option needs -d option' unless($opts{'d'});
+
 	# Cache calls to openstreetmap
 	require File::Spec;
 	File::Spec->import();
@@ -1135,7 +1137,11 @@ sub Gedcom::Individual::as_string
 		}
 	}
 
-	$rc .= $first_name;
+	if($first_name) {
+		$rc .= $first_name;
+	} else {
+		$rc .= $self->given_names();
+	}
 
 	if($args{'middle_names'} && $middle_name) {
 		$rc .= " $middle_name";
