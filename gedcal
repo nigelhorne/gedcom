@@ -864,7 +864,7 @@ sub print_person
 							unshift @residencelist, $residence;
 						}
 					} else {
-						red_warning({ person => $person, warning => 'Residence record containts no location' });
+						red_warning({ person => $person, warning => 'Residence record contains no location' });
 					}
 				}
 			}
