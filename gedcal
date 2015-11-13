@@ -567,7 +567,9 @@ sub print_person
 		} elsif($aob) {
 			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
 			if($placeofbirth) {
-				print place({ person => $person, place => $placeofbirth });
+				my $p = place({ person => $person, place => $placeofbirth });
+				print $p;
+				$places_printed{$p} = 1;
 			}
 			print "[$birthcitation]" if($birthcitation);
 			print '.';
@@ -860,7 +862,8 @@ sub print_person
 				if(ref($residence) eq 'Gedcom::Record') {
 					my $place = $residence->place();
 					if(defined($place)) {
-						if((!$placeofbirth) || ($place ne $placeofbirth)) {
+						if(((!$placeofbirth) || ($place ne $placeofbirth)) &&
+						   ((!$placeofmarriage) || ($place ne $placeofmarriage))) {
 							unshift @residencelist, $residence;
 						}
 					} else {
