@@ -13,6 +13,8 @@
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
 # TODO: add option to print in generations order rather than date order.
+# TODO: make the colurisation of warnings optional
+# TODO: write a post-processor to sort errors by type
 
 # -a: all days otherwise just today
 # -b: only print birthdays
