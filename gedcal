@@ -33,7 +33,7 @@ use warnings;
 # use warnings::unused;
 
 use Gedcom;
-use Genealogy::Gedcom::Date;
+use Genealogy::Gedcom::Date;	# V1 only, gedcal is NOT V2 compatible
 use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::OSM;
@@ -871,7 +871,7 @@ sub print_person
 							my $src = $residence->source();
 							if($src) {
 								$src = $ged->get_source($src) unless ref($src);
-								if($src eq $citations{$birthcitation}) {
+								if($birthcitation && ($src eq $citations{$birthcitation})) {
 									$residencecitations{$residence} = $birthcitation;
 								} else {
 									my $r = ++$citationcount;
@@ -1649,6 +1649,10 @@ sub red_warning
 		} else {
 			warn colored($params{'warning'}, 'red');
 		}
+		# my $i = 0;
+		# while((my @call_details = (caller($i++)))) {
+			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' in function ' . $call_details[3], 'red'), "\n";
+		# }
 	}
 }
 
