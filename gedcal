@@ -851,6 +851,7 @@ sub print_person
 		}
 
 		my $printed_residence;
+		my %residencecitations;
 		if(scalar(@residences)) {
 			# FIXME, handle duplicate locations better
 			# TODO: sort in calendar order
@@ -864,7 +865,18 @@ sub print_person
 					if(defined($place)) {
 						if(((!$placeofbirth) || ($place ne $placeofbirth)) &&
 						   ((!$placeofmarriage) || ($place ne $placeofmarriage))) {
-							unshift @residencelist, $residence;
+							push @residencelist, $residence;
+							my $src = $residence->source();
+							if($src) {
+								$src = $ged->get_source($src) unless ref($src);
+								if($src eq $citations{$birthcitation}) {
+									$residencecitations{$residence} = $birthcitation;
+								} else {
+									my $r = ++$citationcount;
+									$residencecitations{$residence} = $r;
+									$citations{$r} = $src;
+								}
+							}
 						}
 					} else {
 						red_warning({ person => $person, warning => 'Residence record contains no location' });
@@ -879,6 +891,9 @@ sub print_person
 					print '  During ',
 						lc($person->possessive()),
 						' life ', lcfirst($pronoun), ' lived';
+				} elsif($residencelist[$count - 1]->place() eq $residence->place()) {
+					$count++;
+					next;
 				}
 				print place({ person => $person, record => $residence });
 				my $date = $residence->date();
@@ -886,6 +901,19 @@ sub print_person
 					print ' (',
 						year({ person => $person, date => $date }),
 						')';
+				}
+				if($residencecitations{$residence}) {
+					print '[', $residencecitations{$residence}, ']';
+				}
+				if($residence->place()) {
+					if(($count <= (scalar(@residencelist) - 1)) && ($residencecitations{$residence})) {
+						my $peek = $residencelist[$count + 1];
+						if($peek && $peek->place() && ($peek->place() eq $residence->place())) {
+							if($residencecitations{$peek}) {
+								print '[', $residencecitations{$peek}, ']';
+							}
+						}
+					}
 				}
 				$count++;
 				if($count < (scalar(@residencelist) - 1)) {
