@@ -13,7 +13,7 @@
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
 # TODO: add option to print in generations order rather than date order.
-# TODO: make the colurisation of warnings optional
+# TODO: make the colourisation of warnings optional
 # TODO: write a post-processor to sort errors by type
 
 # -a: all days otherwise just today
@@ -33,7 +33,7 @@ use warnings;
 # use warnings::unused;
 
 use Gedcom;
-use Genealogy::Gedcom::Date;	# V1 only, gedcal is NOT V2 compatible
+use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::OSM;
@@ -42,6 +42,7 @@ use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
 use DateTime::Duration;
+use DateTime::Format::Natural;
 use Tie::Static;
 no lib '.';
 
@@ -89,6 +90,7 @@ if($opts{'w'}) {
 }
 
 my $date_parser = Genealogy::Gedcom::Date->new();
+my $dfn = DateTime::Format::Natural->new();
 my $geocoder = Geo::Coder::OSM->new();
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1);
 my $ninemonths = DateTime::Duration->new(months => 9);
@@ -328,19 +330,25 @@ sub print_person
 	if($dateofbirth && ($dateofbirth !~ /^\d{4}$/) && ($dateofbirth =~ /^\d/)) {
 		my $d;
 		eval {
-			$d = $date_parser->parse_date_value(date => $dateofbirth);
+			$d = $date_parser->parse(date => $dateofbirth);
 		};
 		if($d) {
-			$birth_dt = $d->{one_date};
+			$d = @{$d}[0];
+			if($d) {
+				$birth_dt = $dfn->parse_datetime($d->{'canonical'});
+			}
 		}
 	}
 	if($dateofdeath && ($dateofdeath !~ /^\d{4}$/) && ($dateofdeath =~ /^\d/)) {
 		my $d;
 		eval {
-			$d = $date_parser->parse_date_value(date => $dateofdeath);
+			$d = $date_parser->parse(date => $dateofdeath);
 		};
 		if($d) {
-			$death_dt = $d->{one_date};
+			$d = @{$d}[0];
+			if($d) {
+				$death_dt = $dfn->parse_datetime($d->{'canonical'});
+			}
 		}
 	}
 	if($opts{'d'}) {
@@ -473,10 +481,13 @@ sub print_person
 						if($dob) {
 							my $d;
 							eval {
-								$d = $date_parser->parse_date_value(date => $dob);
+								$d = $date_parser->parse(date => $dob);
 							};
 							if($d) {
-								$d = $d->{one_date};
+								$d = @{$d}[0];
+							}
+							if($d) {
+								$d = $dfn->parse_datetime($d->{'canonical'});
 								$count++ if($d && ($d < $birth_dt));
 							} else {
 								$print_sibling_count = 0;
@@ -732,11 +743,17 @@ sub print_person
 					if($dob =~ /^\d/) {
 						my $d;
 						eval {
-							$d = $date_parser->parse_date_value(date => $dob);
+							$d = $date_parser->parse(date => $dob);
 						};
-						if($d && ($d->{one_date}->strftime('%Y') < ($year - 120))) {
-							$all_children_are_alive = 0;
-							last;
+						if($d) {
+							$d = @{$d}[0];
+						}
+						if($d) {
+							$d = $dfn->parse_datetime($d->{'canonical'});
+							if($d->strftime('%Y') < ($year - 120)) {
+								$all_children_are_alive = 0;
+								last;
+							}
 						}
 					}
 				}
@@ -1033,10 +1050,13 @@ sub print_person
 				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob =~ /^\d/)) {
 					my $d;
 					eval {
-						$d = $date_parser->parse_date_value(date => $dob);
+						$d = $date_parser->parse(date => $dob);
 					};
 					if($d) {
-						$d = $d->{one_date};
+						$d = @{$d}[0];
+					}
+					if($d) {
+						$d = $dfn->parse_datetime($d->{'canonical'});
 						if($birth_dt && ($d <= $birth_dt)) {
 							if($opts{'f'}) {
 								die $child->name(), ': Born before parent was born';
@@ -1092,11 +1112,12 @@ sub print_person
 			my $d;
 			if(($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
 				eval {
-					$d = $date_parser->parse_date_value(date => $dob);
+					$d = $date_parser->parse(date => $dob);
 				};
 			}
 			if($d) {
-				$birth_dt = $d->{one_date};
+				$d = @{$d}[0];
+				$birth_dt = $dfn->parse_datetime($d->{'canonical'});
 				print "\tBorn: ", $birth_dt->strftime('%x');
 			} else {
 				if($@) {
@@ -1115,11 +1136,12 @@ sub print_person
 			my $d;
 			if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
 				eval {
-					$d = $date_parser->parse_date_value(date => $dod);
+					$d = $date_parser->parse(date => $dod);
 				};
 			}
 			if($d) {
-				$death_dt = $d->{one_date};
+				$d = @{$d}[0];
+				$death_dt = $dfn->parse_datetime($d->{'canonical'});
 				print "\tDied: ", $death_dt->strftime('%x');
 			} else {
 				if($@) {
@@ -1464,10 +1486,13 @@ sub year
 		my $person = $params{'person'};
 		my $d;
 		eval {
-			$d = $date_parser->parse_date_value(date => $string);
+			$d = $date_parser->parse(date => $string);
 		};
 		if($d) {
-			$d = $d->{one_date};
+			$d = @{$d}[0];
+		}
+		if($d) {
+			$d = $dfn->parse_datetime($d->{'canonical'});
 			my $must_postdate = $params{'must_postdate'};
 			if($must_postdate) {
 				if($opts{'f'}) {
