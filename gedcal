@@ -995,6 +995,11 @@ sub print_person
 				} else {
 					print place({ person => $person, place => $placeofdeath });
 				}
+				my $d = get_value({ person => $person, value => 'death' });
+				if($d) {
+					$d =~ tr/\r//;
+					print " ($d)";
+				}
 				if($dateofburial) {
 					print ' and was buried';
 					if($placeofburial) {
@@ -1035,6 +1040,11 @@ sub print_person
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 				print place({ person => $person, place => $placeofdeath });
 				print "[$deathcitation]" if($deathcitation);
+			}
+			my $d = get_value({ person => $person, value => 'death' });
+			if($d) {
+				$d =~ tr/\r//;
+				print " ($d)";
 			}
 			$end_of_sentence = 0;
 		}
