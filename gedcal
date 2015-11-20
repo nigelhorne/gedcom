@@ -301,26 +301,26 @@ sub print_person
 
 	my %citations;
 	my $citationcount = 0;
-	my $birthcitation;
-	my $deathcitation;
+	my @birthcitations;
+	my @deathcitations;
 	if($opts{'c'}) {
 		if($birth) {
-			my $src = $birth->source();
-			if($src) {
+			my @s = $birth->source();
+			foreach my $src(@s) {
 				$src = $ged->get_source($src) unless ref($src);
-				$birthcitation = ++$citationcount;
-				$citations{$birthcitation} = $src;
+				push @birthcitations, ++$citationcount;
+				$citations{$citationcount} = $src;
 			}
 		}
 		if($death) {
-			my $src = $death->source();
-			if($src) {
+			my @s = $death->source();
+			foreach my $src(@s) {
 				$src = $ged->get_source($src) unless ref($src);
-				if($birthcitation && ($citations{$birthcitation} eq $src)) {
-					$deathcitation = $birthcitation;
+				if($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
+					push @deathcitations, $birthcitations[0];
 				} else {
-					$deathcitation = ++$citationcount;
-					$citations{$deathcitation} = $src;
+					push @deathcitations, ++$citationcount;
+					$citations{$citationcount} = $src;
 				}
 			}
 		}
@@ -387,10 +387,10 @@ sub print_person
 				my $src = $marriage->source();
 				if($src) {
 					$src = $ged->get_source($src) unless ref($src);
-					if($birthcitation && ($citations{$birthcitation} eq $src)) {
-						$marriagecitation = $birthcitation;
-					} elsif($deathcitation && ($citations{$deathcitation} eq $src)) {
-						$marriagecitation = $deathcitation;
+					if($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
+						$marriagecitation = $birthcitations[0];
+					} elsif($deathcitations[0] && ($citations{$deathcitations[0]} eq $src)) {
+						$marriagecitation = $deathcitations[0];
 					} else {
 						$marriagecitation = ++$citationcount;
 						$citations{$marriagecitation} = $src;
@@ -574,8 +574,8 @@ sub print_person
 		my $end_of_sentence = 1;
 		if($aob && $aod) {
 			print " was born $aob years and died $aod years ago today";
-			print "[$birthcitation]" if($birthcitation);
-			print "[$deathcitation]" if($deathcitation);
+			print "[$_]" foreach(@birthcitations);
+			print "[$_]" foreach(@deathcitations);
 			print '.';
 		} elsif($aob) {
 			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
@@ -584,7 +584,7 @@ sub print_person
 				print $p;
 				$places_printed{$p} = 1;
 			}
-			print "[$birthcitation]" if($birthcitation);
+			print "[$_]" foreach(@birthcitations);
 			print '.';
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
@@ -593,7 +593,7 @@ sub print_person
 				print $p;
 				$places_printed{$p} = 1;
 			}
-			print "[$deathcitation]" if($deathcitation);
+			print "[$_]" foreach(@deathcitations);
 			print '.';
 		} else {
 			$end_of_sentence = 0;
@@ -619,7 +619,7 @@ sub print_person
 						must_predate => $death_dt
 					});
 				}
-				print "[$birthcitation]" if($birthcitation);
+				print "[$_]" foreach(@birthcitations);
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses)) {
 						print ', was';
@@ -888,8 +888,8 @@ sub print_person
 							my $src = $residence->source();
 							if($src) {
 								$src = $ged->get_source($src) unless ref($src);
-								if($birthcitation && ($src eq $citations{$birthcitation})) {
-									$residencecitations{$residence} = $birthcitation;
+								if($birthcitations[0] && ($src eq $citations{$birthcitations[0]})) {
+									$residencecitations{$residence} = $birthcitations[0];
 								} else {
 									my $r = ++$citationcount;
 									$residencecitations{$residence} = $r;
@@ -1036,10 +1036,10 @@ sub print_person
 						print place({ person => $person, place => $placeofdeath });
 					}
 				}
-				print "[$deathcitation]" if($deathcitation);
+				print "[$_]" foreach(@deathcitations);
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 				print place({ person => $person, place => $placeofdeath });
-				print "[$deathcitation]" if($deathcitation);
+				print "[$_]" foreach(@deathcitations);
 			}
 			my $d = get_value({ person => $person, value => 'death' });
 			if($d) {
