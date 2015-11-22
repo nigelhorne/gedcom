@@ -316,16 +316,21 @@ sub print_person
 			my @s = $death->source();
 			foreach my $src(@s) {
 				$src = $ged->get_source($src) unless ref($src);
-				if($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
-					push @deathcitations, $birthcitations[0];
-				} else {
+				my $seen;
+				foreach my $bc(@birthcitations) {
+					if($src eq $citations{$bc}) {
+						push @deathcitations, $bc;
+						$seen++;
+						last;
+					}
+				}
+				if(!$seen) {
 					push @deathcitations, ++$citationcount;
 					$citations{$citationcount} = $src;
 				}
 			}
 		}
 	}
-
 
 	if($dateofbirth && ($dateofbirth !~ /^\d{4}$/) && ($dateofbirth =~ /^\d/)) {
 		my $d;
@@ -381,7 +386,24 @@ sub print_person
 		if((!$placeofmarriage) && $marriage) {
 			$placeofmarriage = $marriage->place();
 		}
+
+		my $placeofdeath = get_value({ person => $person, value => 'death place' });
+		if((!$placeofdeath) && $death) {
+			$placeofdeath = $death->place();
+		}
+
+		my $burial = $person->get_record('burial');
+		my $dateofburial = get_value({ person => $person, value => 'burial date' });
+		if((!$dateofburial) && $burial) {
+			$dateofburial = $burial->date();
+		}
+		my $placeofburial = get_value({ person => $person, value => 'burial place' });
+		if((!$placeofburial) && $burial) {
+			$placeofburial = $burial->place();
+		}
+
 		my $marriagecitation;
+		my @burialcitations;
 		if($opts{'c'}) {
 			if($marriage) {
 				my $src = $marriage->source();
@@ -397,21 +419,28 @@ sub print_person
 					}
 				}
 			}
-		}
-
-		my $placeofdeath = get_value({ person => $person, value => 'death place' });
-		if((!$placeofdeath) && $death) {
-			$placeofdeath = $death->place();
-		}
-
-		my $burial = $person->get_record('burial');
-		my $dateofburial = get_value({ person => $person, value => 'burial date' });
-		if((!$dateofburial) && $burial) {
-			$dateofburial = $burial->date();
-		}
-		my $placeofburial = get_value({ person => $person, value => 'burial place' });
-		if((!$placeofburial) && $burial) {
-			$placeofburial = $burial->place();
+			if($burial) {
+				my @s = $burial->source();
+				foreach my $src(@s) {
+					$src = $ged->get_source($src) unless ref($src);
+					my $seen;
+					foreach my $dc(@deathcitations) {
+						if($src eq $citations{$dc}) {
+							push @burialcitations, $dc;
+							$seen++;
+							last;
+						}
+					}
+					if(!$seen) {
+						if($marriagecitation && ($citations{$marriagecitation} eq $src)) {
+							push @burialcitations, $marriagecitation;
+						} else {
+							push @burialcitations, ++$citationcount;
+							$citations{$citationcount} = $src;
+						}
+					}
+				}
+			}
 		}
 
 		my $pronoun = $person->pronoun();
@@ -995,6 +1024,8 @@ sub print_person
 				} else {
 					print place({ person => $person, place => $placeofdeath });
 				}
+				print "[$_]" foreach(@deathcitations);
+				# Print notes about the death, if any
 				my $d = get_value({ person => $person, value => 'death' });
 				if($d) {
 					$d =~ tr/\r//;
@@ -1012,6 +1043,7 @@ sub print_person
 				}
 				$end_of_sentence = 0;
 			}
+			print "[$_]" foreach(@burialcitations);
 		} elsif((!$aod) && ($placeofdeath || $dateofdeath)) {
 			if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 				print ', which is also where ', lcfirst($pronoun);
@@ -1036,11 +1068,10 @@ sub print_person
 						print place({ person => $person, place => $placeofdeath });
 					}
 				}
-				print "[$_]" foreach(@deathcitations);
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 				print place({ person => $person, place => $placeofdeath });
-				print "[$_]" foreach(@deathcitations);
 			}
+			print "[$_]" foreach(@deathcitations);
 			my $d = get_value({ person => $person, value => 'death' });
 			if($d) {
 				$d =~ tr/\r//;
