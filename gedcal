@@ -917,12 +917,19 @@ sub print_person
 							my $src = $residence->source();
 							if($src) {
 								$src = $ged->get_source($src) unless ref($src);
-								if($birthcitations[0] && ($src eq $citations{$birthcitations[0]})) {
-									$residencecitations{$residence} = $birthcitations[0];
-								} else {
-									my $r = ++$citationcount;
-									$residencecitations{$residence} = $r;
-									$citations{$r} = $src;
+								foreach my $c(@birthcitations) {
+									if($src eq $citations{$c}) {
+										$residencecitations{$residence} = $c;
+										last;
+									}
+								}
+								unless($residencecitations{$residence}) {
+									if($deathcitations[0] && ($src eq $citations{$deathcitations[0]})) {
+										$residencecitations{$residence} = $deathcitations[0];
+									} else {
+										$residencecitations{$residence} = ++$citationcount;
+										$citations{$citationcount} = $src;
+									}
 								}
 							}
 						}
