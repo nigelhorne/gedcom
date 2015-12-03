@@ -1226,7 +1226,10 @@ sub Gedcom::Individual::as_string
 		$surname .= ' ' . $name_components{'surname_2'};
 	}
 	if($name_components{'non_matching'}) {
-		$surname .= ' ' . $name_components{'non_matching'};
+		if($surname) {
+			$surname .= ' ';
+		}
+		$surname .= $name_components{'non_matching'};
 	}
 	my $suffix = $name_components{'suffix'};
 
