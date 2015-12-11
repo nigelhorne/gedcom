@@ -24,3 +24,7 @@ a sort of lint for gedcom files.
 For example:
 
     gedcal -dawl gedcom-file.ged > /dev/null
+
+You can create a month-to-a-page calendar:
+
+    gedcal -dlHh 'Your Full Name' gedcom-file.ged > calendar.html
