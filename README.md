@@ -27,4 +27,4 @@ For example:
 
 You can create a month-to-a-page calendar:
 
-    gedcal -dlHh 'Your Full Name' gedcom-file.ged > calendar.html
+    gedcal -dlh gedcom-file.ged > calendar.html
