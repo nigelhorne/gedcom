@@ -21,6 +21,8 @@
 # -c: Give citations on detailed listing
 # -d: give a detailed lifetime information about the person
 # -D: only print anniversaries of deaths
+# -H: Print an HTML calendar of this month
+# -h: set the home person
 # -f: treat warnings as fatals, implies -w
 # -l: include living people
 # -p: print the biography of the given person
@@ -47,8 +49,8 @@ use Tie::Static;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:lp:wv', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('abcdDfh:Hlp:wv', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -107,7 +109,75 @@ if($opts{'c'} && !$opts{'d'}) {
 	die '-c only makes sense with the -d option';
 }
 
-if($opts{a}) {
+if($opts{'H'}) {
+	die '-H only makes sense with the -d option' unless($opts{'d'});
+	die '-H doesn\'t support citations' if($opts{'c'});
+
+	require HTML::Table;
+
+	my $dtl = DateTime::Locale->load($ENV{'LANG'});
+
+	my @dow = @{$dtl->day_format_wide()};
+	if($dtl->first_day_of_week() eq 7) {
+		# e.g. US
+		unshift @dow, pop @dow;
+	}
+	my $table = HTML::Table->new(-border => 1, -padding => 10, -head => \@dow);
+	print '<html><body><font size="2">',
+		'<style>table { empty-cells: show; }</style>';
+
+	foreach my $day(0..6) {
+		# $table->setCell(1, $day + 1, $days[$day]);
+		$table->setColWidth($day, '14.29%');
+		$table->setColVAlign($day, 'top');
+	}
+
+	# FIXME: will print extra row on non leap year Febs where thst 1st starts a week
+	foreach my $row(2..6) {
+		foreach my $column(1..7) {
+			$table->setCell($row, $column, '&nbsp;');
+		}
+	}
+	my $month = (localtime)[4]; # 0..11
+
+	my $dt = DateTime->today();
+	$dt = DateTime->last_day_of_month(month => $month + 1, year => $dt->year());
+	$dt->subtract(months => 1);
+	$dt->add(days => 1);
+	my $column = $dt->day_of_week();
+	if($dtl->first_day_of_week() eq 7) {
+		$column++;
+		if($column == 8) {
+			$column = 1;
+		}
+	}
+	my $row = 2;
+	while($dt->month() == $month + 1) {
+		$table->setCellVAlign($row, $column, 'top');
+		$table->setCell($row, $column, '<font size="1">' . $dt->day());
+		if($column == 7) {
+			$row++;
+			$column = 1;
+		} else {
+			$column++;
+		}
+		$dt->add(days => 1);
+	}
+
+	print "<center><h1>", @{$dtl->month_format_wide()}[$month], "</h1><center>";
+
+	foreach my $day(1..29) {
+		generate(day => $day, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+	}
+	if($month != 1) {
+		generate(day => 30, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
+			generate(day => 31, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+		}
+	}
+	$table->print();
+	print '</font></body></html>';
+} elsif($opts{a}) {
 	die '-b and -a should not be given together' if($opts{'b'});
 	die '-D and -a should not be given together' if($opts{'D'});
 
@@ -272,12 +342,62 @@ sub print_person
 		red_warning({ person => $person, warning => 'not connected to the tree' });
 	}
 
-	print $person->as_string({
-		include_years => 1,
-		nee => 1,
-		middle_names => 1,
-		title => 1,
-	}), "\n";
+	my $dt = DateTime->today();
+	$dt = DateTime->new(month => $month + 1, day => $day, year => $dt->year());
+
+	if($opts{'H'}) {
+		my $row = $dt->week_of_month() + 1;
+		my $column = $dt->day_of_week();
+		my $dtl = $params{'dtl'};
+
+		if($dtl->first_day_of_week() eq 7) {
+			$column++;
+			if($column == 8) {
+				$column = 1;
+				$row++;
+			}
+		}
+		my $table = $params{'table'};
+
+		my $str = $table->getCell($row, $column);
+		if($str =~ $person->as_string()) {
+			$printed{$person->{'xref'}} = 1;
+			return;
+		}
+		$str .= '<br>' . $person->as_string();
+		if($aob) {
+			my $dob = get_value({ person => $person, value => 'birth date' });
+			my $d = $date_parser->parse(date => $dob);
+			$d = @{$d}[0];
+			if($d) {
+				$d = $dfn->parse_datetime($d->{'canonical'});
+				$str .= ' b' . $d->strftime('%Y');
+			} else {
+				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
+			}
+		} elsif($aod) {
+			my $dod = get_value({ person => $person, value => 'death date' });
+			my $d = $date_parser->parse(date => $dob);
+			$d = @{$d}[0];
+			if($d) {
+				$d = $dfn->parse_datetime($d->{'canonical'});
+				$str .= ' d' . $d->strftime('%Y');
+			} else {
+				red_warning({ person => $person, warning => "Can't parse date of death '$dod'" });
+			}
+		}
+
+		$table->setCell($row, $column, $str);
+		$printed{$person->{'xref'}} = 1;
+		return;
+	} else {
+		print $person->as_string({
+			include_years => 1,
+			nee => 1,
+			middle_names => 1,
+			title => 1,
+		}), "\n";
+	}
 
 	my $name = $person->name();
 	$name =~ s/\///g;
@@ -357,7 +477,7 @@ sub print_person
 		}
 	}
 	if($opts{'d'}) {
-		print "\t";
+		print "\t" unless($opts{'H'});
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 		if((!$placeofbirth) && $birth) {
@@ -1246,7 +1366,7 @@ sub Gedcom::Individual::as_string
 	}
 
 	my $rc;
-	
+
 	if($args{'title'}) {
 		$rc = $name_components{'title_1'};
 		if($rc) {
