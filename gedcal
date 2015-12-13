@@ -1070,7 +1070,9 @@ sub print_person
 					$count++;
 					next;
 				}
-				print place({ person => $person, record => $residence });
+				# if($residence ne $residencelist[$count - 1]) {
+					print place({ person => $person, record => $residence });
+				# }
 				my $date = $residence->date();
 				if($date) {
 					print ' (',
