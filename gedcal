@@ -1022,7 +1022,6 @@ sub print_person
 		my %residencecitations;
 		if(scalar(@residences)) {
 			# FIXME, handle duplicate locations better
-			# TODO: sort in calendar order
 			my @residencelist;
 
 			# This is an attempt to handle
@@ -1030,26 +1029,25 @@ sub print_person
 			foreach my $residence(@residences) {
 				if(ref($residence) eq 'Gedcom::Record') {
 					my $place = $residence->place();
-					if(defined($place)) {
-						if(((!$placeofbirth) || ($place ne $placeofbirth)) &&
-						   ((!$placeofmarriage) || ($place ne $placeofmarriage))) {
-							push @residencelist, $residence;
-							my $src = $residence->source();
-							if($src) {
-								$src = $ged->get_source($src) unless ref($src);
-								foreach my $c(@birthcitations) {
-									if($src eq $citations{$c}) {
-										$residencecitations{$residence} = $c;
-										last;
-									}
+					if(defined($place) &&
+					  ((!$placeofbirth) || ($place ne $placeofbirth)) &&
+					  ((!$placeofmarriage) || ($place ne $placeofmarriage))) {
+						push @residencelist, $residence;
+						my $src = $residence->source();
+						if($src) {
+							$src = $ged->get_source($src) unless ref($src);
+							foreach my $c(@birthcitations) {
+								if($src eq $citations{$c}) {
+									$residencecitations{$residence} = $c;
+									last;
 								}
-								unless($residencecitations{$residence}) {
-									if($deathcitations[0] && ($src eq $citations{$deathcitations[0]})) {
-										$residencecitations{$residence} = $deathcitations[0];
-									} else {
-										$residencecitations{$residence} = ++$citationcount;
-										$citations{$citationcount} = $src;
-									}
+							}
+							unless($residencecitations{$residence}) {
+								if($deathcitations[0] && ($src eq $citations{$deathcitations[0]})) {
+									$residencecitations{$residence} = $deathcitations[0];
+								} else {
+									$residencecitations{$residence} = ++$citationcount;
+									$citations{$citationcount} = $src;
 								}
 							}
 						}
@@ -1059,6 +1057,9 @@ sub print_person
 				}
 			}
 
+			# FIXME: This messes citations
+			@residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() <=> $b->place() } @residencelist;
+
 			my $count = 0;
 			foreach my $residence(@residencelist) {
 				if($count == 0) {
@@ -1066,29 +1067,24 @@ sub print_person
 					print '  During ',
 						lc($person->possessive()),
 						' life ', lcfirst($pronoun), ' lived';
-				} elsif($residencelist[$count - 1]->place() eq $residence->place()) {
-					$count++;
-					next;
 				}
-				# if($residence ne $residencelist[$count - 1]) {
+				if(($count == 0) && ($residencelist[$count - 1]->place() ne $residence->place())) {
 					print place({ person => $person, record => $residence });
-				# }
+				}
 				my $date = $residence->date();
 				if($date) {
-					print ' (',
-						year({ person => $person, date => $date }),
-						')';
+					print ' ', year({ person => $person, date => $date });
 				}
 				if($residencecitations{$residence}) {
 					print '[', $residencecitations{$residence}, ']';
 				}
-				if($residence->place()) {
-					if(($count <= (scalar(@residencelist) - 1)) && ($residencecitations{$residence})) {
-						my $peek = $residencelist[$count + 1];
-						if($peek && $peek->place() && ($peek->place() eq $residence->place())) {
-							if($residencecitations{$peek}) {
-								print '[', $residencecitations{$peek}, ']';
-							}
+				if($residence->place() &&
+				  ($count <= (scalar(@residencelist) - 1)) &&
+				  ($residencecitations{$residence})) {
+					my $peek = $residencelist[$count + 1];
+					if($peek && $peek->place() && ($peek->place() eq $residence->place())) {
+						if($residencecitations{$peek}) {
+							print '[', $residencecitations{$peek}, ']';
 						}
 					}
 				}
