@@ -1058,7 +1058,8 @@ sub print_person
 			}
 
 			# FIXME: This messes citations
-			@residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() <=> $b->place() } @residencelist;
+			# TODO: See RT110333
+			@residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() cmp $b->place() } @residencelist;
 
 			my $count = 0;
 			foreach my $residence(@residencelist) {
