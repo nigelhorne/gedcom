@@ -1051,7 +1051,7 @@ sub print_person
 								}
 							}
 						}
-					} else {
+					} elsif(!defined($place)) {
 						red_warning({ person => $person, warning => 'Residence record contains no location' });
 					}
 				}
@@ -1059,7 +1059,7 @@ sub print_person
 
 			# FIXME: This messes citations
 			# TODO: See RT110333
-			@residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() cmp $b->place() } @residencelist;
+			# @residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() cmp $b->place() } @residencelist;
 
 			my $count = 0;
 			foreach my $residence(@residencelist) {
@@ -1850,10 +1850,10 @@ sub red_warning
 		} else {
 			warn colored($params{'warning'}, 'red');
 		}
-		# my $i = 0;
-		# while((my @call_details = (caller($i++)))) {
-			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' in function ' . $call_details[3], 'red'), "\n";
-		# }
+		my $i = 0;
+		while((my @call_details = (caller($i++)))) {
+			print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[0] . ':', $call_details[3], 'red'), "\n";
+		}
 	}
 }
 
