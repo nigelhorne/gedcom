@@ -593,10 +593,10 @@ sub print_person
 		}
 
 		if($me) {
-			$relationship = $me->relationship($person);
+			$relationship = $me->relationship($person, $father, $mother);
 			if((!$relationship) && scalar(@spouses)) {
 				foreach my $s(@spouses) {
-					$spouserelationship = $me->relationship($s);
+					$spouserelationship = $me->relationship($s, $father, $mother);
 					if($spouserelationship) {
 						$spouse = $s;
 						last;
@@ -691,33 +691,30 @@ sub print_person
 					print ' ', lc($occupations[0]), ')';
 				}
 			}
-			print ', ' unless($relationship);
+		}
+
+		if($firstname) {
+			if($father || $mother || $occupations[0]) {
+				print ', ';
+			}
+			print $firstname;
+		} else {
+			print $pronoun;
 		}
 
 		my $haveprintedspousename;
 		if($relationship) {
-			if($father || $mother || $occupations[0]) {
-				print ', y';
-			} else {
-				print 'Y';
-			}
-			print "our $relationship ";
+			print ", your $relationship,";
 		} elsif($spouserelationship) {
 			if($sex eq 'F') {
-				print 'The wife';
+				print ', the wife';
 			} else {
-				print 'The husband';
+				print ', the husband';
 			}
 			print " of your $spouserelationship ",
 				$spouse->as_string({ middle_names => 1 }),
-				', ';
+				',';
 			$haveprintedspousename = 1;
-		}
-
-		if($firstname) {
-			print $firstname;
-		} else {
-			print $pronoun;
 		}
 
 		my $end_of_sentence = 1;
@@ -1506,6 +1503,8 @@ sub Gedcom::Individual::relationship
 {
 	my $self = shift;
 	my $other = shift;
+	my $father = shift;
+	my $mother = shift;
 
 	unless(@myancestors) {
 		@myancestors = $self->ancestors();
@@ -1584,6 +1583,7 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 4 => 'second cousin once-removed',
 					6 << 8 | 5 => 'fourth cousin once-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
+					7 << 8 | 5 => 'fourth cousin twice-removed',
 				);
 				my %female_relationships = (
 					1 << 8 | 1 => 'sister',
@@ -1600,12 +1600,21 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 4 => 'second cousin once-removed',
 					6 << 8 | 5 => 'fourth cousin once-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
+					7 << 8 | 5 => 'fourth cousin twice-removed',
 				);
 
 				my $rc = ($sex eq 'M') ?
 					$male_relationships{($steps1 << 8) | $steps2} :
 					$female_relationships{($steps1 << 8) | $steps2};
 				# print "$steps1, $steps2\n" unless($rc);
+				if(defined($rc) && ($rc =~ /cousin/)) {
+					if($father && stepsabove($father, $person2, 0)) {
+						$rc .= ' on your father\'s side';
+					} elsif($mother && stepsabove($mother, $person2, 0)) {
+						$rc .= ' on your mother\'s side';
+					}
+				}
+
 				return $rc;
 			}
 		}
