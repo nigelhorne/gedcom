@@ -182,12 +182,18 @@ if($opts{'H'}) {
 	die '-D and -a should not be given together' if($opts{'D'});
 
 	foreach my $month(0..11) {
-		foreach my $day(1..29) {
+		foreach my $day(1..28) {
 			generate(day => $day, month => $month, everyone => \@everyone);
 		}
 		if($month == 1) {
+			if(($month % 100) == 0) {
+				next if($month % 400);
+			}
+			next if($month % 4);
+			generate(day => 29, month => $month, everyone => \@everyone);
 			next;
 		}
+		generate(day => 29, month => $month, everyone => \@everyone);
 		generate(day => 30, month => $month, everyone => \@everyone);
 		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
 			generate(day => 31, month => $month, everyone => \@everyone);
@@ -342,10 +348,10 @@ sub print_person
 		red_warning({ person => $person, warning => 'not connected to the tree' });
 	}
 
-	my $dt = DateTime->today();
-	$dt = DateTime->new(month => $month + 1, day => $day, year => $dt->year());
-
 	if($opts{'H'}) {
+		my $dt = DateTime->today();
+		$dt = DateTime->new(month => $month + 1, day => $day, year => $dt->year());
+
 		my $row = $dt->week_of_month() + 1;
 		my $column = $dt->day_of_week();
 		my $dtl = $params{'dtl'};
@@ -1859,10 +1865,10 @@ sub red_warning
 		} else {
 			warn colored($params{'warning'}, 'red');
 		}
-		my $i = 0;
-		while((my @call_details = (caller($i++)))) {
-			print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[0] . ':', $call_details[3], 'red'), "\n";
-		}
+		# my $i = 0;
+		# while((my @call_details = (caller($i++)))) {
+			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[0] . ':' . $call_details[3], 'red'), "\n";
+		# }
 	}
 }
 
