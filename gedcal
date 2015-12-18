@@ -49,8 +49,8 @@ use Tie::Static;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:Hlp:wv', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('abcdDfh:Hm:lp:wv', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -108,9 +108,14 @@ unless($opts{'p'}) {
 if($opts{'c'} && !$opts{'d'}) {
 	die '-c only makes sense with the -d option';
 }
+if($opts{'m'} && !$opts{'H'}) {
+	die '-m only makes sense with the -H option';
+}
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
+	die '-a doesn\'t make sense with the -H option' if($opts{'a'});
+	die '-h doesn\'t make sense with the -H option' if($opts{'h'});
 	die '-H doesn\'t support citations' if($opts{'c'});
 
 	require HTML::Table;
@@ -138,7 +143,16 @@ if($opts{'H'}) {
 			$table->setCell($row, $column, '&nbsp;');
 		}
 	}
-	my $month = (localtime)[4]; # 0..11
+	my $month;
+	if($opts{'m'}) {
+		$month = $opts{'m'};
+		if(($month =~ /\D/) || ($month < 1) || ($month > 12)) {
+			die "$0: invalid month number $month";
+		}
+		$month--;
+	} else {
+		$month = (localtime)[4]; # 0..11
+	}
 
 	my $dt = DateTime->today();
 	$dt = DateTime->last_day_of_month(month => $month + 1, year => $dt->year());
@@ -366,7 +380,7 @@ sub print_person
 		my $table = $params{'table'};
 
 		my $str = $table->getCell($row, $column);
-		if($str =~ $person->as_string()) {
+		if(index($str, $person->as_string()) != -1) {
 			$printed{$person->{'xref'}} = 1;
 			return;
 		}
@@ -483,7 +497,7 @@ sub print_person
 		}
 	}
 	if($opts{'d'}) {
-		print "\t" unless($opts{'H'});
+		print "\t";
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 		if((!$placeofbirth) && $birth) {
