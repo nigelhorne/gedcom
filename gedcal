@@ -131,18 +131,6 @@ if($opts{'H'}) {
 	print '<html><body><font size="2">',
 		'<style>table { empty-cells: show; }</style>';
 
-	foreach my $day(0..6) {
-		# $table->setCell(1, $day + 1, $days[$day]);
-		$table->setColWidth($day, '14.29%');
-		$table->setColVAlign($day, 'top');
-	}
-
-	# FIXME: will print extra row on non leap year Febs where thst 1st starts a week
-	foreach my $row(2..6) {
-		foreach my $column(1..7) {
-			$table->setCell($row, $column, '&nbsp;');
-		}
-	}
 	my $month;
 	if($opts{'m'}) {
 		$month = $opts{'m'};
@@ -154,6 +142,12 @@ if($opts{'H'}) {
 		$month = (localtime)[4]; # 0..11
 	}
 
+	foreach my $day(0..6) {
+		# $table->setCell(1, $day + 1, $days[$day]);
+		$table->setColWidth($day, '14.29%');
+		$table->setColVAlign($day, 'top');
+	}
+
 	my $dt = DateTime->today();
 	$dt = DateTime->last_day_of_month(month => $month + 1, year => $dt->year());
 	$dt->subtract(months => 1);
@@ -163,6 +157,22 @@ if($opts{'H'}) {
 		$column++;
 		if($column == 8) {
 			$column = 1;
+		}
+	}
+
+	# All months have 5 rows, except non leap year Februaries where Feb 1st lies
+	# on the first day of the week, e.g. Feb 2015 in the US where weeks start on
+	# Sundays
+	my $rows;
+	if(($month == 1) && (!$dt->is_leap_year()) && ($column == 1)) {
+		$rows = 5;
+	} else {
+		$rows = 6;
+	}
+
+	foreach my $row(2..$rows) {
+		foreach my $column(1..7) {
+			$table->setCell($row, $column, '&nbsp;');
 		}
 	}
 	my $row = 2;
@@ -178,7 +188,7 @@ if($opts{'H'}) {
 		$dt->add(days => 1);
 	}
 
-	print "<center><h1>", @{$dtl->month_format_wide()}[$month], "</h1><center>";
+	print "<center><h1>", @{$dtl->month_format_wide()}[$month], " $year</h1><center>";
 
 	foreach my $day(1..29) {
 		generate(day => $day, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
