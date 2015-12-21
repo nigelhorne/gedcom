@@ -21,13 +21,15 @@
 # -c: Give citations on detailed listing
 # -d: give a detailed lifetime information about the person
 # -D: only print anniversaries of deaths
+# -f: treat warnings as fatals, implies -w
 # -H: Print an HTML calendar of this month
 # -h: set the home person
-# -f: treat warnings as fatals, implies -w
+# -m: month for -H calendar
 # -l: include living people
 # -p: print the biography of the given person
 # -v: verbose - for debugging
 # -w: print warning about unlikely data - a sort of lint for Gedcom files
+# -y: year for -H calendar
 
 use strict;
 use warnings;
@@ -49,8 +51,8 @@ use Tie::Static;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:Hm:lp:wv', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
+getopts('abcdDfh:Hm:lp:wvy:', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -97,9 +99,6 @@ my $geocoder = Geo::Coder::OSM->new();
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1);
 my $ninemonths = DateTime::Duration->new(months => 9);
 
-my $year = (localtime)[5];
-$year += 1900 if($year < 1900);
-
 my @everyone;
 unless($opts{'p'}) {
 	@everyone = $ged->individuals();
@@ -110,6 +109,9 @@ if($opts{'c'} && !$opts{'d'}) {
 }
 if($opts{'m'} && !$opts{'H'}) {
 	die '-m only makes sense with the -H option';
+}
+if($opts{'y'} && !$opts{'H'}) {
+	die '-y only makes sense with the -H option';
 }
 
 if($opts{'H'}) {
@@ -131,6 +133,12 @@ if($opts{'H'}) {
 	print '<html><body><font size="2">',
 		'<style>table { empty-cells: show; }</style>';
 
+	foreach my $day(0..6) {
+		# $table->setCell(1, $day + 1, $days[$day]);
+		$table->setColWidth($day, '14.29%');
+		$table->setColVAlign($day, 'top');
+	}
+
 	my $month;
 	if($opts{'m'}) {
 		$month = $opts{'m'};
@@ -142,14 +150,18 @@ if($opts{'H'}) {
 		$month = (localtime)[4]; # 0..11
 	}
 
-	foreach my $day(0..6) {
-		# $table->setCell(1, $day + 1, $days[$day]);
-		$table->setColWidth($day, '14.29%');
-		$table->setColVAlign($day, 'top');
+	my $dt = DateTime->today();
+	my $year;
+	if($opts{'y'}) {
+		$year = $opts{'y'};
+		if($year !~ /\d{3,4}/) {
+			die "$0: invalid year number $month";
+		}
+	} else {
+		$year = $dt->year();
 	}
 
-	my $dt = DateTime->today();
-	$dt = DateTime->last_day_of_month(month => $month + 1, year => $dt->year());
+	$dt = DateTime->last_day_of_month(month => $month + 1, year => $year);
 	$dt->subtract(months => 1);
 	$dt->add(days => 1);
 	my $column = $dt->day_of_week();
@@ -160,43 +172,38 @@ if($opts{'H'}) {
 		}
 	}
 
-	# All months have 5 rows, except non leap year Februaries where Feb 1st lies
-	# on the first day of the week, e.g. Feb 2015 in the US where weeks start on
-	# Sundays
-	my $rows;
-	if(($month == 1) && (!$dt->is_leap_year()) && ($column == 1)) {
-		$rows = 5;
-	} else {
-		$rows = 6;
+	foreach my $column(1..7) {
+		$table->setCell(2, $column, '&nbsp;');
 	}
 
-	foreach my $row(2..$rows) {
-		foreach my $column(1..7) {
-			$table->setCell($row, $column, '&nbsp;');
-		}
-	}
 	my $row = 2;
 	while($dt->month() == $month + 1) {
 		$table->setCellVAlign($row, $column, 'top');
 		$table->setCell($row, $column, '<font size="1">' . $dt->day());
+		$dt->add(days => 1);
+		if($dt->month() > $month + 1) {
+			last;
+		}
 		if($column == 7) {
 			$row++;
+			foreach my $column(1..7) {
+				$table->setCell($row, $column, '&nbsp;');
+			}
 			$column = 1;
 		} else {
 			$column++;
 		}
-		$dt->add(days => 1);
 	}
 
 	print "<center><h1>", @{$dtl->month_format_wide()}[$month], " $year</h1><center>";
 
 	foreach my $day(1..29) {
-		generate(day => $day, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+		generate(day => $day, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 	}
 	if($month != 1) {
-		generate(day => 30, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+		generate(day => 30, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
-			generate(day => 31, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
+			generate(day => 31, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 		}
 	}
 	$table->print();
@@ -372,11 +379,19 @@ sub print_person
 		red_warning({ person => $person, warning => 'not connected to the tree' });
 	}
 
-	if($opts{'H'}) {
-		my $dt = DateTime->today();
-		$dt = DateTime->new(month => $month + 1, day => $day, year => $dt->year());
+	my $year = $params{'year'} || (localtime)[5];
+	$year += 1900 if($year < 1900);
 
-		my $row = $dt->week_of_month() + 1;
+	if($opts{'H'}) {
+		my $start_of_month = DateTime->new(month => $month + 1, day => 1, year => $year);
+		my $dt = DateTime->new(month => $month + 1, day => $day, year => $year);
+
+		my $row = $dt->weekday_of_month();
+		my $first_day_of_month = $start_of_month->day_of_week();
+		if(($first_day_of_month < 7) && ($dt->day_of_week() < $first_day_of_month)) {
+			$row++;
+		}
+		$row++;
 		my $column = $dt->day_of_week();
 		my $dtl = $params{'dtl'};
 
@@ -384,11 +399,14 @@ sub print_person
 			$column++;
 			if($column == 8) {
 				$column = 1;
-				$row++;
+				$row++ unless($first_day_of_month == 7);
 			}
 		}
+		die "BUG: row cannot be 8 or greater" if($row >= 8);
+
 		my $table = $params{'table'};
 
+		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
 		if(index($str, $person->as_string()) != -1) {
 			$printed{$person->{'xref'}} = 1;
@@ -898,6 +916,7 @@ sub print_person
 		}
 
 		my $all_children_are_alive = 1;
+
 		if($yob && ($year >= $yob + 150)) {
 			$all_children_are_alive = 0;
 		} else {
