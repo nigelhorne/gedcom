@@ -129,7 +129,7 @@ if($opts{'H'}) {
 		# e.g. US
 		unshift @dow, pop @dow;
 	}
-	my $table = HTML::Table->new(-border => 1, -padding => 10, -head => \@dow);
+	my $table = HTML::Table->new(-border => 1, -padding => 5, -head => \@dow);
 	print '<html><body><font size="2">',
 		'<style>table { empty-cells: show; }</style>';
 
@@ -195,7 +195,7 @@ if($opts{'H'}) {
 		}
 	}
 
-	print "<center><h1>", @{$dtl->month_format_wide()}[$month], " $year</h1><center>";
+	print "<center><h2>", @{$dtl->month_format_wide()}[$month], " $year</h2><center>";
 
 	foreach my $day(1..29) {
 		generate(day => $day, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
