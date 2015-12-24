@@ -118,6 +118,7 @@ if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
 	die '-a doesn\'t make sense with the -H option' if($opts{'a'});
 	die '-h doesn\'t make sense with the -H option' if($opts{'h'});
+	die '-p doesn\'t make sense with the -H option' if($opts{'p'});
 	die '-H doesn\'t support citations' if($opts{'c'});
 
 	require HTML::Table;
@@ -423,7 +424,8 @@ sub print_person
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
 			}
-		} elsif($aod) {
+		}
+		if($aod) {
 			my $dod = get_value({ person => $person, value => 'death date' });
 			my $d = $date_parser->parse(date => $dod);
 			if($d && @{$d}) {
@@ -438,14 +440,13 @@ sub print_person
 		$table->setCell($row, $column, $str);
 		$printed{$person->{'xref'}} = 1;
 		return;
-	} else {
-		print $person->as_string({
-			include_years => 1,
-			nee => 1,
-			middle_names => 1,
-			title => 1,
-		}), "\n";
 	}
+	print $person->as_string({
+		include_years => 1,
+		nee => 1,
+		middle_names => 1,
+		title => 1,
+	}), "\n";
 
 	my $name = $person->name();
 	$name =~ s/\///g;
