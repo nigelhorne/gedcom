@@ -453,7 +453,6 @@ sub print_person
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'};
-	my $lastname = $name_components{'surname_1'};
 
 	my ($birth_dt, $death_dt);
 	my $birth = $person->get_record('birth');
@@ -1318,6 +1317,7 @@ sub print_person
 			$dod = $person->get_value('death date');
 		};
 		if($@) {
+			my $lastname = $name_components{'surname_1'};
 			warn "Can't parse record for $firstname $lastname";
 			return;
 		}
