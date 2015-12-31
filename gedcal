@@ -971,7 +971,7 @@ sub print_person
 					$haveprintedspousename = 1;
 				}
 				if($numberofchildren) {
-					print ' with whom ', lcfirst($pronoun);
+					print ', with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 						print ' had ';
 					} elsif((!$dateofdeath) && (!$dateofburial) && ($spouses[0]) && !$spouses[0]->death()) {
