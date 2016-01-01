@@ -739,38 +739,56 @@ sub print_person
 					print ' ', lc($occupations[0]), ')';
 				}
 			}
-		}
-
-		if($firstname) {
-			if($father || $mother || $occupations[0]) {
-				print ', ';
-			}
-			print $firstname;
-		} else {
-			print $pronoun;
+			print ', ';
 		}
 
 		my $haveprintedspousename;
 		if($relationship) {
-			print ", your $relationship,";
-		} elsif($spouserelationship) {
-			if($sex eq 'F') {
-				print ', the wife';
+			if($father || $mother || $occupations[0]) {
+				print ', ' unless($father || $mother);
+				print 'your';
 			} else {
-				print ', the husband';
+				print 'Your';
+			}
+			print " $relationship ";
+		} elsif($spouserelationship) {
+			if($father || $mother || $occupations[0]) {
+				print ', ' unless($father || $mother);
+				if($firstname) {
+					print $firstname;
+				} else {
+					print $pronoun;
+				}
+				print ', the ';
+			} else {
+				print 'The ';
+			}
+			if($sex eq 'F') {
+				print 'wife';
+			} else {
+				print 'husband';
 			}
 			print " of your $spouserelationship ",
 				$spouse->as_string({ middle_names => 1 }),
-				',';
+				', ';
 			$haveprintedspousename = 1;
 		}
 
-		my $end_of_sentence = 1;
+		if(!$spouserelationship) {
+			if($firstname) {
+				print $firstname;
+			} else {
+				print $pronoun;
+			}
+		}
+
+		my $end_of_sentence = 0;
 		if($aob && $aod) {
 			print " was born $aob years and died $aod years ago today";
 			print "[$_]" foreach(@birthcitations);
 			print "[$_]" foreach(@deathcitations);
 			print '.';
+			$end_of_sentence = 1;
 		} elsif($aob) {
 			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
 			if($placeofbirth) {
@@ -780,6 +798,7 @@ sub print_person
 			}
 			print "[$_]" foreach(@birthcitations);
 			print '.';
+			$end_of_sentence = 1;
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
 			if($placeofdeath) {
@@ -789,8 +808,7 @@ sub print_person
 			}
 			print "[$_]" foreach(@deathcitations);
 			print '.';
-		} else {
-			$end_of_sentence = 0;
+			$end_of_sentence = 1;
 		}
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
