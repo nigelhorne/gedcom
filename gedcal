@@ -417,7 +417,7 @@ sub print_person
 		if($aob) {
 			my $dob = get_value({ person => $person, value => 'birth date' });
 			my $d = $date_parser->parse(date => $dob);
-			if($d && @{$d}) {
+			if($d && (ref($d) eq 'ARRAY')) {
 				$d = @{$d}[0];
 				$d = $dfn->parse_datetime($d->{'canonical'});
 				$str .= ' b' . $d->strftime('%Y');
@@ -428,7 +428,7 @@ sub print_person
 		if($aod) {
 			my $dod = get_value({ person => $person, value => 'death date' });
 			my $d = $date_parser->parse(date => $dod);
-			if($d && @{$d}) {
+			if($d && (ref($d) eq 'ARRAY')) {
 				$d = @{$d}[0];
 				$d = $dfn->parse_datetime($d->{'canonical'});
 				$str .= ' d' . $d->strftime('%Y');
