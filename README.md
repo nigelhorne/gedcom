@@ -25,7 +25,7 @@ For example:
 
     gedcal -dawl gedcom-file.ged > /dev/null
 
-You can create a month-to-a-page calendar:
+You can create a month-to-a-page calendar of your ancestors:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
