@@ -372,7 +372,8 @@ sub print_person
 	my $father = $person->father();
 	my @spouses = $person->spouse();
 
-	# FIXME: Properly chart which spouse a child comes from
+	# TODO: Properly chart which spouse a child comes from
+	# FIXME: This current algorithm misses children from all the marriages
 	my $family;
 	foreach my $f($person->fams()) {
 		if($f->number_of_children()) {
