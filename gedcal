@@ -286,6 +286,7 @@ sub print_person
 
 	# Gather the information on this person
 	my $person = $params{'person'};
+
 	my $dob = get_value({ person => $person, value => 'birth date' });
 
 	my $onlybirthdays = $params{'onlybirthdays'};
@@ -366,6 +367,13 @@ sub print_person
 	return if($onlydeaths && !defined($aod));
 
 	return unless($print || ($day == -1) || $opts{'p'});
+
+	if($opts{'w'} && !$person->validate_semantics()) {
+		if($opts{'f'}) {
+			die $person->as_string, ': failed consistency check';
+		}
+		red_warning({ person => $person, warning => 'failed consistency check' });
+	}
 
 	my @siblings = $person->siblings();
 	my $mother = $person->mother();
