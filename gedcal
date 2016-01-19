@@ -1193,8 +1193,7 @@ sub print_person
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
 				print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
 				if($dateofburial) {
-					print "  $pronoun was buried ",
-						year({ person => $person, date => $dateofburial });
+					print "  $pronoun was buried";
 					if($placeofburial) {
 						if($placeofbirth && ($placeofburial eq $placeofbirth)) {
 							print ' in ',
@@ -1210,6 +1209,7 @@ sub print_person
 							print place({ person => $person, place => $placeofburial, there => $placeofdeath, places_printed => \%places_printed, must_postdate => $birth_dt });
 						}
 					}
+					print ' ', year({ person => $person, date => $dateofburial });
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					print "  $pronoun was buried in ",
 						lcfirst($person->possessive()),
