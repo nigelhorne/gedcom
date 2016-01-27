@@ -851,6 +851,34 @@ sub print_person
 					});
 				}
 				print "[$_]" foreach(@birthcitations);
+				if($opts{'w'} &&
+				  ($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{4}$/)))) {
+					# TODO: Add more checking
+					my $yod;
+					if($death_dt) {
+						$yod = $death_dt->year();
+					} elsif($dateofdeath =~ /^(\d{4})$/) {
+						$yod = $1;
+					} else {
+						die "BUG: Impossible case";
+					}
+					foreach my $bc(@birthcitations) {
+						my $citation = $citations{$bc};
+						my $title = $citation->title();
+						if($title =~ /^(\d{4})\s/) {
+							if($1 > $yod) {
+								if($opts{'f'}) {
+									die $person->as_string(),
+										": Year of citation of $title is after the death year of $yod"
+								}
+								red_warning({
+									person => $person,
+									warning => "Year of citation of $title is after the death year of $yod"
+								});
+							}
+						}
+					}
+				}
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses)) {
 						print ', was';
