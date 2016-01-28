@@ -1329,6 +1329,12 @@ sub print_person
 		print '.' if(!$end_of_sentence);
 		print "\n";
 
+		if($person->get_value('note')) {
+			print "\t";
+			my @notes = $person->get_value('note');
+			print join("\n\t", @notes);
+		}
+
 		foreach my $child(@children) {
 			my $dob = get_value({ person => $child, value => 'birth date' });
 			if($dob) {
