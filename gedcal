@@ -212,6 +212,7 @@ if($opts{'H'}) {
 } elsif($opts{a}) {
 	die '-b and -a should not be given together' if($opts{'b'});
 	die '-D and -a should not be given together' if($opts{'D'});
+	die '-p and -a should not be given together' if($opts{'p'});
 
 	foreach my $month(0..11) {
 		foreach my $day(1..28) {
@@ -252,7 +253,6 @@ if($opts{'H'}) {
 } elsif($opts{'p'}) {
 	die '-p and -D should not be given together' if($opts{'D'});
 	die '-p and -b should not be given together' if($opts{'b'});
-	die '-p and -a should not be given together' if($opts{'a'});
 
 	my $person = $ged->get_individual($opts{p});
 	if($person) {
@@ -490,7 +490,7 @@ sub print_person
 	my @deathcitations;
 	if($opts{'c'}) {
 		if($birth) {
-			my @s = $birth->source();
+			my @s = sort { $ged->get_source($a)->title() cmp $ged->get_source($b)->title() } $birth->source();
 			foreach my $src(@s) {
 				$src = $ged->get_source($src) unless ref($src);
 				push @birthcitations, ++$citationcount;
@@ -1180,7 +1180,7 @@ sub print_person
 
 			# FIXME: This messes citations
 			# TODO: See RT110333
-			# @residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->place() cmp $b->place() } @residencelist;
+			# @residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->title() cmp $b->title() } @residencelist;
 
 			my $count = 0;
 			foreach my $residence(@residencelist) {
@@ -2042,7 +2042,7 @@ sub must_predate
 	my $d1 = $dfn->parse_datetime($date);
 	my $d2 = $dfn->parse_datetime($predate);
 
-	if($d1 > $d2) {
+	if($d1->year() > $d2->year()) {
 		if($opts{'f'}) {
 			die $person->as_string(), ": Something is wrong with the date $date which should be before $predate";
 		}
