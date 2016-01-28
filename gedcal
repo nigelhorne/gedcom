@@ -778,7 +778,7 @@ sub print_person
 				}
 				print ', the ';
 			} else {
-				print "$firstname ", 
+				print "$firstname ",
 					$name_components{'surname_1'},
 					', the ';
 			}
@@ -914,6 +914,13 @@ sub print_person
 						must_postdate => $birth_dt,
 						must_predate => $death_dt
 					});
+					if(!$death_dt) {
+						must_predate({
+							person => $person,
+							date => $dateofbaptism,
+							predate => $dateofdeath
+						});
+					}
 					print_sibling_baptism({
 						person => $person,
 						siblings => \@siblings,
@@ -2018,4 +2025,30 @@ sub get_value
 	my $rc = $person->get_value($value);
 	$values{$xref}{$value} = $rc;
 	return $rc;
+}
+
+sub must_predate
+{
+	return unless($opts{'w'});
+
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $params{'person'};
+	my $date = $params{'date'};
+	my $predate = $params{'predate'};
+
+	return unless($params{'predate'} && $params{'date'});
+
+	my $d1 = $dfn->parse_datetime($date);
+	my $d2 = $dfn->parse_datetime($predate);
+
+	if($d1 > $d2) {
+		if($opts{'f'}) {
+			die $person->as_string(), ": Something is wrong with the date $date which should be before $predate";
+		}
+		red_warning({
+			person => $person,
+			warning => "something is wrong with the date $date which should be before $predate"
+		});
+	}
 }
