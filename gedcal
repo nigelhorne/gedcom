@@ -897,7 +897,7 @@ sub print_person
 					}
 				}
 				if($dateofbaptism || $placeofbaptism) {
-					if(scalar(@spouses)) {
+					if(scalar(@spouses) && !($opts{'a'} || $opts{'p'})) {
 						print ', was';
 					} else {
 						print ' and';
@@ -916,7 +916,7 @@ sub print_person
 					print 'baptised';
 				}
 				if($placeofbaptism) {
-					if($aod && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+					if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 						print ' there';
 					} else {
 						my $p = place({ person => $person, place => $placeofbaptism });
