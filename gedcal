@@ -316,8 +316,6 @@ sub print_person
 			warn $person->name(), ": invalid date of birth $dob\n";
 			$warned{$person} = 1;
 		}
-	} else {
-		$yob = $dob;
 	}
 
 	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
@@ -897,7 +895,7 @@ sub print_person
 					}
 				}
 				if($dateofbaptism || $placeofbaptism) {
-					if(scalar(@spouses)) {
+					if(scalar(@spouses) && !($opts{'a'} || $opts{'p'})) {
 						print ', was';
 					} else {
 						print ' and';
@@ -916,7 +914,7 @@ sub print_person
 					print 'baptised';
 				}
 				if($placeofbaptism) {
-					if($aod && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+					if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 						print ' there';
 					} else {
 						my $p = place({ person => $person, place => $placeofbaptism });
@@ -944,6 +942,34 @@ sub print_person
 						date => $dateofbaptism,
 						birthdate => $dateofbirth,
 					});
+					if($mother && $opts{'w'}) {
+						if($dateofbaptism =~ /.*?(\d{3,4})/) {
+							my $yobaptism = $1;
+							my $motherdob = get_value({ person => $mother, value => 'birth date' });
+							if($motherdob) {
+								my $d = $date_parser->parse(date => $motherdob);
+								if($d && (ref($d) eq 'ARRAY')) {
+									$d = @{$d}[0];
+									$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
+									if($d > ($yobaptism - 13)) {
+										if($opts{'f'}) {
+											die "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)";
+										}
+										red_warning({
+											person => $person,
+											warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
+										});
+									}
+								}
+							}
+						} else {
+							if($opts{'f'}) {
+								die $person->name(), ": invalid date of baptism $dateofbaptism\n";
+							}
+							warn $person->name(), ": invalid date of baptism $dateofbaptism\n";
+							$warned{$person} = 1;
+						}
+					}
 				}
 				$end_of_sentence = 0;
 			}
@@ -1145,7 +1171,10 @@ sub print_person
 			}
 			$end_of_sentence = 0;
 		} elsif($numberofchildren) {
-			print "  $pronoun had ",
+			if($end_of_sentence) {
+				print "  $pronoun";
+			}
+			print ' had ',
 				($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
 			if($numberofchildren == 1) {
 				print $children[0]->given_names();
@@ -1741,6 +1770,7 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
 					4 << 8 | 2 => 'first cousin twice-removed',
+					5 << 8 | 2 => 'first cousin three-times-removed',
 					5 << 8 | 3 => 'second cousin twice-removed',
 					6 << 8 | 3 => 'second cousin three-times-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
@@ -1761,6 +1791,7 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 4 => 'second cousin once-removed',
 					4 << 8 | 1 => 'great-great-aunt',
 					4 << 8 | 2 => 'first cousin twice-removed',
+					5 << 8 | 2 => 'first cousin three-times-removed',
 					5 << 8 | 3 => 'second cousin twice-removed',
 					6 << 8 | 3 => 'second cousin three-times-removed',
 					6 << 8 | 4 => 'third cousin twice-removed',
@@ -1832,7 +1863,7 @@ sub year
 		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
-		return "c$2";
+		return "c. $2";
 	}
 	if($string =~ /^\d/) {
 		my $person = $params{'person'};
