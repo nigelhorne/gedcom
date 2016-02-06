@@ -2025,10 +2025,12 @@ sub red_warning
 	if($opts{'w'}) {
 		my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
+		die "What do you want to say?" unless($params{'warning'});
+
 		if($params{'person'}) {
 			warn colored($params{'person'}->as_string() . ': ' . $params{'warning'}, 'red');
 		} else {
-			warn colored($params{'warning'}, 'red');
+			warn colored(lcfirst($params{'warning'}), 'red');
 		}
 		# my $i = 0;
 		# while((my @call_details = (caller($i++)))) {
