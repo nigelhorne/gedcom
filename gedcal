@@ -316,8 +316,6 @@ sub print_person
 			warn $person->name(), ": invalid date of birth $dob\n";
 			$warned{$person} = 1;
 		}
-	} else {
-		$yob = $dob;
 	}
 
 	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
@@ -944,6 +942,34 @@ sub print_person
 						date => $dateofbaptism,
 						birthdate => $dateofbirth,
 					});
+					if($mother && $opts{'w'}) {
+						if($dateofbaptism =~ /.*?(\d{3,4})/) {
+							my $yobaptism = $1;
+							my $motherdob = get_value({ person => $mother, value => 'birth date' });
+							if($motherdob) {
+								my $d = $date_parser->parse(date => $motherdob);
+								if($d && (ref($d) eq 'ARRAY')) {
+									$d = @{$d}[0];
+									$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
+									if($d > ($yobaptism - 13)) {
+										if($opts{'f'}) {
+											die "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)";
+										}
+										red_warning({
+											person => $person,
+											warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
+										});
+									}
+								}
+							}
+						} else {
+							if($opts{'f'}) {
+								die $person->name(), ": invalid date of baptism $dateofbaptism\n";
+							}
+							warn $person->name(), ": invalid date of baptism $dateofbaptism\n";
+							$warned{$person} = 1;
+						}
+					}
 				}
 				$end_of_sentence = 0;
 			}
