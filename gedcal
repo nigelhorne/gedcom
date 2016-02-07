@@ -52,7 +52,7 @@ no lib '.';
 
 my %opts;
 getopts('abcdDfh:Hm:lp:wvy:', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename\n" unless($ARGV[0]);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -61,6 +61,10 @@ my %printed;
 my %places;
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
+my $ged2;
+if($ARGV[1]) {
+	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
+}
 
 if($opts{h}) {
 	$me = $ged->get_individual($opts{h});
@@ -456,6 +460,14 @@ sub print_person
 		$printed{$person->{'xref'}} = 1;
 		return;
 	}
+	my $person2;
+	if($ged2) {
+		$person2 = $ged2->get_individual($person->as_string());
+		if(!defined($person2)) {
+			die $person->as_string();
+		}
+	}
+
 	print $person->as_string({
 		include_years => 1,
 		nee => 1,
