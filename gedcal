@@ -1536,10 +1536,17 @@ sub Gedcom::Individual::as_string
 		$surname .= ' ' . $name_components{'surname_2'};
 	}
 	if($name_components{'non_matching'}) {
-		if($surname) {
-			$surname .= ' ';
+		if($name =~ /(\w{2,})\s(\w{2,})\s(\w)\s(\w{2,})/) {
+			# Name parser doesn't parse names like this very well
+			$first_name = $1;
+			$middle_name = "$2 $3";
+			$surname = $4;
+		} else {
+			if($surname) {
+				$surname .= ' ';
+			}
+			$surname .= $name_components{'non_matching'};
 		}
-		$surname .= $name_components{'non_matching'};
 	} elsif(!defined($surname)) {
 		$surname = $self->surname();
 	}
