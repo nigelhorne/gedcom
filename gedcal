@@ -463,8 +463,16 @@ sub print_person
 	my $person2;
 	if($ged2) {
 		$person2 = $ged2->get_individual($person->as_string());
-		if(!defined($person2)) {
-			die $person->as_string();
+		if($opts{'w'}) {
+			if(!defined($person2)) {
+				if($opts{'f'}) {
+					die $person->as_string() . ": not found in $ARGV[1]";
+				}
+				red_warning({
+					person => $person,
+					warning => "not found in $ARGV[1]"
+				})
+			}
 		}
 	}
 
