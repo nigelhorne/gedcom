@@ -813,9 +813,7 @@ sub print_person
 				}
 				print ', the ';
 			} else {
-				print "$firstname ",
-					$name_components{'surname_1'},
-					', the ';
+				print $person->as_string(), ', the ';
 			}
 			if($sex eq 'F') {
 				print 'wife';
@@ -1543,8 +1541,9 @@ sub Gedcom::Individual::as_string
 	if($name_components{'surname_2'}) {
 		$surname .= ' ' . $name_components{'surname_2'};
 	}
+
 	if($name_components{'non_matching'}) {
-		if($name =~ /(\w{2,})\s(\w{2,})\s(\w)\s(\w{2,})/) {
+		if($name =~ /(\w{2,})\s(\w)\s(\w)\s(\w{2,})/) {
 			# Name parser doesn't parse names like this very well
 			$first_name = $1;
 			$middle_name = "$2 $3";
