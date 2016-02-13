@@ -1099,6 +1099,8 @@ sub print_person
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
 					print ' married ';
+				} elsif(was_alive(person => $person) && was_alive(person => $spouses[0])) {
+					print ' is married to ';
 				} else {
 					print ' was married to ';
 				}
@@ -2208,4 +2210,47 @@ sub must_predate
 			warning => "something is wrong with the date $date which should be before $predate"
 		});
 	}
+}
+
+sub was_alive
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $params{'person'};
+
+	if($person->get_record('death') || get_value({ person => $person, value => 'death date' })) {
+		return 0;
+	}
+	if($person->get_record('burial')) {
+		return 0;
+	}
+	my $dob = get_value({ person => $person, value => 'birth date' });
+
+	if(!defined($dob)) {
+		return 0;	# Err on the side of caution
+				# TODO: Look at children's lifespan for a clue
+	}
+
+	my $year = $params{'year'} || (localtime)[5];
+	$year += 1900 if($year < 1900);
+
+	if(($dob =~ /^\d{4}$/) && ($dob < ($year - 100))) {
+		return 0;
+	}
+	if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/)) {
+		my $d;
+		eval {
+			$d = $date_parser->parse(date => $dob);
+		};
+		if($d) {
+			$d = @{$d}[0];
+		}
+		if($d) {
+			$d = $dfn->parse_datetime($d->{'canonical'});
+			if($d->strftime('%Y') < ($year - 120)) {
+				return 0;
+			}
+		}
+	}
+	return 1;
 }
