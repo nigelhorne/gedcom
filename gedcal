@@ -712,6 +712,9 @@ sub print_person
 				print 'n';
 			}
 			print ' ', lc($occupations[0]);
+			if(!($father || $mother)) {
+				print ', ';
+			}
 		}
 		my $print_sibling_count = 0;
 		if($father || $mother) {
@@ -968,15 +971,17 @@ sub print_person
 								my $d = $date_parser->parse(date => $motherdob);
 								if($d && (ref($d) eq 'ARRAY')) {
 									$d = @{$d}[0];
-									$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
-									if($d > ($yobaptism - 13)) {
-										if($opts{'f'}) {
-											die "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)";
+									if(defined($d)) {
+										$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
+										if($d > ($yobaptism - 13)) {
+											if($opts{'f'}) {
+												die "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)";
+											}
+											red_warning({
+												person => $person,
+												warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
+											});
 										}
-										red_warning({
-											person => $person,
-											warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
-										});
 									}
 								}
 							}
@@ -1401,6 +1406,8 @@ sub print_person
 
 		my @events = $person->event();
 		if((scalar(@events) == 2) &&
+		   (ref($events[0]) eq 'Gedcom::Record') &&
+		   (ref($events[1]) eq 'Gedcom::Record') &&
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
 		    	# Simple case - one journey made
@@ -1439,11 +1446,22 @@ sub print_person
 				$yoa = year({ person => $person, record => $arrival });
 			}
 
-			print ' travelled from ',
+			if($ENV{'LANG'} =~ /^en_US/) {
+				print ' traveled';
+			} else {
+				print ' travelled';
+			}
+
+			print ' from ',
 				$departure->place(),
 				' to ',
-				$arrival->place(),
-				", departing $dod and arriving $doa.";
+				$arrival->place();
+
+			if(defined($dod)) {
+				print ", departing $dod and";
+			}
+
+			print " arriving $doa.";
 			$end_of_sentence = 1;
 		}
 		print "\n";
