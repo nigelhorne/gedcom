@@ -712,7 +712,7 @@ sub print_person
 				print 'n';
 			}
 			print ' ', lc($occupations[0]);
-			if(!($father || $mother)) {
+			if(!($father || $mother || $spouserelationship)) {
 				print ', ';
 			}
 		}
