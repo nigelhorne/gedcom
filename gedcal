@@ -839,7 +839,11 @@ sub print_person
 
 		my $end_of_sentence = 0;
 		if($aob && $aod) {
-			print " was born $aob years and died $aod years ago today";
+			if($aob == $aod) {
+				print " was born and died $aod years ago today";
+			} else {
+				print " was born $aob years and died $aod years ago today";
+			}
 			print "[$_]" foreach(@birthcitations);
 			print "[$_]" foreach(@deathcitations);
 			print '.';
