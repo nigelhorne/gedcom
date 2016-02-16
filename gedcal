@@ -1528,9 +1528,33 @@ sub print_person
 			}
 		}
 		if($opts{'c'}) {
+			my %years;
 			foreach my $citation(1..$citationcount) {
-				print "[$citation]: ", $citations{$citation}->title(), "\n";
-				# TODO - print NOTE
+				my $title = $citations{$citation}->title();
+				print "[$citation]: $title";
+
+				my $note = $citations{$citation}->note();
+				if($note && ($note !~ /^This information comes from/)) {
+					print " ($note)";
+				}
+				print "\n";
+
+				if(($title =~ /census/i) && ($title =~ /(\d{4})/)) {
+					$years{$1} = $title;
+				}
+			}
+			if($opts{'w'}) {
+				foreach my $year(sort keys(%years)) {
+					if($years{$year + 20} && !$years{$year + 10}) {
+						if($opts{'f'}) {
+							die 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20};
+						}
+						red_warning({
+							person => $person,
+							warning => 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20}
+						});
+					}
+				}
 			}
 		}
 		print '-' x 80, "\n";
