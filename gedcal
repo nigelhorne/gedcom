@@ -258,10 +258,13 @@ if($opts{'H'}) {
 	die '-p and -D should not be given together' if($opts{'D'});
 	die '-p and -b should not be given together' if($opts{'b'});
 
-	my $person = $ged->get_individual($opts{p});
-	if($person) {
+	my @people = $ged->get_individual($opts{p});
+	if(@people) {
 		my($day, $month) = (localtime)[3,4];
-		print_person(person => $person, day => $day, month => $month);
+
+		foreach my $person(@people) {
+			print_person(person => $person, day => $day, month => $month);
+		}
 	} else {
 		die "$0: Can't find '$opts{p}' in $ARGV[0]";
 	}
@@ -1261,6 +1264,7 @@ sub print_person
 			my $count = 0;
 			foreach my $residence(@residencelist) {
 				if($count == 0) {
+					next if($placeofbirth && ($residence eq $placeofbirth));
 					print '.' unless($end_of_sentence);
 					print '  During ',
 						lc($person->possessive()),
@@ -1389,7 +1393,7 @@ sub print_person
 				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
-					print "in $1 ",
+					print " in $1 ",
 						year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} else {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
