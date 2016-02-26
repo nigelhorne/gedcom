@@ -1479,9 +1479,8 @@ sub print_person
 		print "\n";
 
 		if($person->get_value('note')) {
-			print "\t";
 			my @notes = $person->get_value('note');
-			print join("\n\t", @notes);
+			print "\t", join("\n\t", @notes), "\n";
 		}
 
 		foreach my $child(@children) {
