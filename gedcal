@@ -1177,9 +1177,26 @@ sub print_person
 				} else {
 					print scalar(@spouses), ' times';
 				}
-				my $names = join(', ', map { $_->as_string() } @spouses);
+				my $names;
+				foreach my $spouse(@spouses) {
+					$names .= ', ' if($names);
+					$names .= $spouse->as_string();
+					my $dateofmarriage = get_value({ person => $spouse, value => 'marriage date' });
+					if(!defined($dateofmarriage)) {
+						my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
+						if($marriage) {
+							$dateofmarriage = $marriage->date();
+						}
+					}
+					if($dateofmarriage) {
+						$names .= ' (' .
+							year({ string => $dateofmarriage }) .
+							')';
+					}
+				}
 				substr($names, rindex($names, ', '), 2, ' and ');
 				print ", to $names";
+
 				print "[$marriagecitation]" if($marriagecitation);
 				# TODO: print the date and places of the marriages
 				if($numberofchildren) {
