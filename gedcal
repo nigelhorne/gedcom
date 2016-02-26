@@ -863,6 +863,11 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
+			my $d = get_value({ person => $person, value => 'death' });
+			if($d) {
+				$d =~ tr/\r//;
+				print " ($d)";
+			}
 			if($placeofdeath) {
 				my $p = place({ person => $person, place => $placeofdeath });
 				print $p;
@@ -1644,7 +1649,6 @@ sub Gedcom::Individual::as_string
 	if($name_components{'surname_2'}) {
 		$surname .= ' ' . $name_components{'surname_2'};
 	}
-
 	if($name_components{'non_matching'}) {
 		if($name =~ /(\w{2,})\s(\w)\s(\w)\s(\w{2,})/) {
 			# Name parser doesn't parse names like this very well
@@ -1655,7 +1659,11 @@ sub Gedcom::Individual::as_string
 			if($surname) {
 				$surname .= ' ';
 			}
-			$surname .= $name_components{'non_matching'};
+			my $rest = $name_components{'non_matching'};
+			if($rest =~ /(.+) $/) {
+				$rest = $1;
+			}
+			$surname .= $rest;
 		}
 	} elsif(!defined($surname)) {
 		$surname = $self->surname();
