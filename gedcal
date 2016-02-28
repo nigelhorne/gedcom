@@ -1527,7 +1527,7 @@ sub print_person
 				print ".\n";
 			} elsif(get_value({ person => $child, value => 'baptism date' })) {
 				print "\t", $child->given_names(),
-					' was born c',
+					' was born c. ',
 					get_value({ person => $child, value => 'baptism date' }),
 					".\n";
 			}
