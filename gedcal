@@ -983,7 +983,7 @@ sub print_person
 								my $d = $date_parser->parse(date => $motherdob);
 								if($d && (ref($d) eq 'ARRAY')) {
 									$d = @{$d}[0];
-									if(defined($d)) {
+									if(defined($d) && !$d->{'flag'}) {
 										$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
 										if($d > ($yobaptism - 13)) {
 											if($opts{'f'}) {
@@ -1511,7 +1511,7 @@ sub print_person
 				print "\t", $child->given_names(),
 					' was born ',
 					year({ person => $child, date => $dob });
-				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob =~ /^\d/)) {
+				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
 					my $d;
 					eval {
 						$d = $date_parser->parse(date => $dob);
@@ -1527,13 +1527,11 @@ sub print_person
 							}
 							red_warning({ person => $child, warning => 'born before parent was born' });
 						}
-						if($sex eq 'F') {
-							if($death_dt && ($d > $death_dt)) {
-								if($opts{'f'}) {
-									die $child->name(), ': Born after mother died';
-								}
-								red_warning({ person => $child, warning => 'born after mother died' });
+						if($death_dt && ($d > $death_dt)) {
+							if($opts{'f'}) {
+								die $child->name(), ': Born after mother died';
 							}
+							red_warning({ person => $child, warning => 'born after mother died' });
 						} elsif($death_dt && ($d > ($death_dt + $ninemonths))) {
 							# Allow the child to be
 							# born up to 9 months
