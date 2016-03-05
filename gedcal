@@ -1456,8 +1456,8 @@ sub print_person
 		   (ref($events[1]) eq 'Gedcom::Record') &&
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
-		    	# Simple case - one journey made
-		    	print '  ';
+			# Simple case - one journey made
+			print '  ';
 
 			my $arrival = ($events[0]->type() eq 'Arrival') ? $events[0] : $events[1];
 			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
@@ -2115,10 +2115,9 @@ sub place
 		$place = $params{'record'};
 		return unless($place);
 
+		$address = $place->address();
 		$place = $place->place();
 		return unless($place);
-
-		$address = $place->address();
 	}
 
 	my $there = $params{'there'};
