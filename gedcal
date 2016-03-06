@@ -48,6 +48,9 @@ use Lingua::EN::Numbers::Ordinate;
 use DateTime::Duration;
 use DateTime::Format::Natural;
 use Tie::Static;
+use LWP::Simple;
+use URI;
+use URI::Find::Schemeless;
 no lib '.';
 
 my %opts;
@@ -1565,6 +1568,21 @@ sub print_person
 			}
 		}
 		if($opts{'c'}) {
+			my $ufinder = URI::Find::Schemeless->new(sub {
+				my($uri, $orig_uri) = @_;
+
+				if($opts{'w'}) {
+					my $u = URI->new($orig_uri);
+					if($u && (ref($u) ne 'URI::_generic') && !head($orig_uri)) {
+						if($opts{'f'}) {
+							die $person->as_string, ": $orig_uri: not found";
+						}
+						red_warning({ person => $person, warning => "$orig_uri: not found" });
+					}
+				}
+				return $orig_uri;
+			});
+
 			my %years;
 			foreach my $citation(1..$citationcount) {
 				my $title = $citations{$citation}->title();
@@ -1572,6 +1590,9 @@ sub print_person
 
 				my $note = $citations{$citation}->note();
 				if($note && ($note !~ /^This information comes from/)) {
+					if($opts{'w'}) {
+						$ufinder->find(\$note);
+					}
 					print " ($note)";
 				}
 				print "\n";
