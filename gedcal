@@ -1586,6 +1586,16 @@ sub print_person
 			my %years;
 			foreach my $citation(1..$citationcount) {
 				my $title = $citations{$citation}->title();
+				if(!defined($title)) {
+					if($opts{'f'}) {
+						die $person->as_string, "[$citation]: no citation title";
+					}
+					red_warning({
+						person => $person,
+						warning => "[$citation]: no citation title"
+					});
+					next;
+				}
 				print "[$citation]: $title";
 
 				my $note = $citations{$citation}->note();
