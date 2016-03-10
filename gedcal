@@ -675,11 +675,10 @@ sub print_person
 		my @residences = $person->residence();
 
 		my @children;
-		my $numberofchildren = 0;
-		if($family) {
-			$numberofchildren = $family->number_of_children();
-			@children = $family->children();
+		foreach my $f($person->fams()) {
+			@children = (@children, $f->children());
 		}
+		my $numberofchildren = scalar(@children);
 
 		my $relationship;
 		my $spouserelationship;
@@ -1145,9 +1144,9 @@ sub print_person
 						}
 					} else {
 						if($all_children_are_alive) {
-							print "$numberofchildren surviving children, ";
+							print "$numberofchildren surviving children: ";
 						} else {
-							print "$numberofchildren children, ";
+							print "$numberofchildren children: ";
 						}
 					}
 					if($numberofchildren == 1) {
@@ -1191,7 +1190,19 @@ sub print_person
 							$dateofmarriage = $marriage->date();
 						}
 					}
-					if($dateofmarriage) {
+					my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
+					if(!defined($placeofmarriage)) {
+						my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
+						if($marriage) {
+							$placeofmarriage = $marriage->place();
+						}
+					}
+					if($dateofmarriage && $placeofmarriage) {
+						$names .= ' (' .
+							year({ string => $dateofmarriage }) .
+							place({ person => $spouse, place => $placeofmarriage }) .
+							')';
+					} elsif($dateofmarriage) {
 						$names .= ' (' .
 							year({ string => $dateofmarriage }) .
 							')';
@@ -1214,15 +1225,13 @@ sub print_person
 						print $children[0]->given_names();
 					} else {
 						if($all_children_are_alive) {
-							print "$numberofchildren surviving children, ";
+							print "$numberofchildren surviving children: ";
 						} else {
-							print "$numberofchildren children, ";
+							print "$numberofchildren children: ";
 						}
-						if($numberofchildren > 1) {
-							my $childnames = join(', ', map { $_->given_names() } @children);
-							substr($childnames, rindex($childnames, ', '), 2, ' and ');
-							print $childnames;
-						}
+						my $childnames = join(', ', map { $_->given_names() } @children);
+						substr($childnames, rindex($childnames, ', '), 2, ' and ');
+						print $childnames;
 					}
 				}
 			}
@@ -1235,7 +1244,7 @@ sub print_person
 				($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
 			if($numberofchildren == 1) {
 				print $children[0]->given_names();
-			} elsif($numberofchildren > 1) {
+			} else {
 				my $childnames = join(', ', map { $_->given_names() } @children);
 				substr($childnames, rindex($childnames, ', '), 2, ' and ');
 				print $childnames;
