@@ -1435,7 +1435,7 @@ sub print_person
 			if($person->marb()) {
 				# die 'foo';
 			}
-			if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
+			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 				print ', which is also where ', lcfirst($pronoun);
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				if($end_of_sentence) {
@@ -1451,7 +1451,7 @@ sub print_person
 			if($dateofdeath) {
 				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
+				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					print " in $1 ",
 						year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} else {
