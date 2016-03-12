@@ -635,7 +635,15 @@ sub print_person
 				my $src = $marriage->source();
 				if($src) {
 					$src = $ged->get_source($src) unless ref($src);
-					if($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
+					if(!defined($src)) {
+						if($opts{'w'}) {
+							my $src = $marriage->source();
+							if($opts{'f'}) {
+								die $person->as_string(), ": marriage citation can't find source $src";
+							}
+							red_warning({ person => $person, warning => "marriage citation can't find source $src" });
+						}
+					} elsif($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
 						$marriagecitation = $birthcitations[0];
 					} elsif($deathcitations[0] && ($citations{$deathcitations[0]} eq $src)) {
 						$marriagecitation = $deathcitations[0];
@@ -649,6 +657,16 @@ sub print_person
 				my @s = $burial->source();
 				foreach my $src(@s) {
 					$src = $ged->get_source($src) unless ref($src);
+					if(!defined($src)) {
+						if($opts{'w'}) {
+							my $src = $burial->source();
+							if($opts{'f'}) {
+								die $person->as_string(), ": burial citation can't find source";
+							}
+							red_warning({ person => $person, warning => "burial citation can't find source" });
+						}
+						next;
+					}
 					my $seen;
 					foreach my $dc(@deathcitations) {
 						if($src eq $citations{$dc}) {
@@ -1609,6 +1627,18 @@ sub print_person
 
 			my %years;
 			foreach my $citation(1..$citationcount) {
+				if(!$citations{$citation}) {
+					if($opts{'f'}) {
+						die $person->as_string(), "[$citation]: empty citation";
+					}
+					if($opts{'w'}) {
+						red_warning({
+							person => $person,
+							warning => "[$citation]: empty citation"
+						});
+					}
+					next;
+				}
 				my $title = $citations{$citation}->title();
 				if(!defined($title)) {
 					if($opts{'f'}) {
@@ -2156,6 +2186,7 @@ sub year
 		return "before $1";
 	}
 
+	$string = ucfirst(lc($string));
 	return "in $string";
 }
 
@@ -2367,7 +2398,7 @@ sub was_alive
 	if(($dob =~ /^\d{4}$/) && ($dob < ($year - 100))) {
 		return 0;
 	}
-	if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/)) {
+	if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
 		my $d;
 		eval {
 			$d = $date_parser->parse(date => $dob);
