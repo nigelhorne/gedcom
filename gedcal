@@ -26,6 +26,7 @@
 # -h: set the home person
 # -m: month for -H calendar
 # -l: include living people
+# -L: include ged2html hyperlinks with -H
 # -p: print the biography of the given person
 # -v: verbose - for debugging
 # -w: print warning about unlikely data - a sort of lint for Gedcom files
@@ -54,8 +55,8 @@ use URI::Find::Schemeless;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:Hm:lp:wvy:', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('abcdDfh:Hm:lLp:wvy:', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -119,6 +120,9 @@ if($opts{'m'} && !$opts{'H'}) {
 }
 if($opts{'y'} && !$opts{'H'}) {
 	die '-y only makes sense with the -H option';
+}
+if($opts{'L'} && !$opts{'H'}) {
+	die '-L only makes sense with the -H option';
 }
 
 if($opts{'H'}) {
@@ -438,7 +442,14 @@ sub print_person
 			$printed{$person->{'xref'}} = 1;
 			return;
 		}
-		$str .= '<br>' . $person->as_string();
+		$str .= '<br>';
+		if($opts{'L'}) {
+			$str .= '<a href="/' . mkfilename(person => $person) . '">' .
+				$person->as_string() .
+				'</a>';
+		} else {
+			$str .= $person->as_string();
+		}
 		if($aob) {
 			my $dob = get_value({ person => $person, value => 'birth date' });
 			my $d = $date_parser->parse(date => $dob);
@@ -2416,4 +2427,19 @@ sub was_alive
 		}
 	}
 	return 1;
+}
+
+sub mkfilename
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $params{'person'};
+
+	my $rc = $person->as_string(include_years => 1);
+	$rc =~ tr/ /-/s;
+	$rc =~ s/--/-/g;
+	$rc =~ s/--/-/g;
+	$rc =~ s/-$//;
+
+	return "$rc.html";
 }
