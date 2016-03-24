@@ -9,6 +9,8 @@ and who died on this day.
 Although primarily a tool for genealogy, the -l flag tells gedcal to print
 matches for family members that are still alive.
 
+The -d flag will give you a short biography of each person.
+
 Try adding this to your crontab:
 
     3 5 * * * gedcal -dl gedcom-file.ged
@@ -31,3 +33,21 @@ You can create a month-to-a-page calendar of your ancestors:
     do
         gedcal -dwlHm $i -y 2016 gedcom-file.ged > $i.html
     done
+
+The options are:
+
+    -a: all days otherwise just today
+    -b: only print birthdays
+    -c: Give citations on detailed listing
+    -d: show the detailed lifetime information about the person
+    -D: only print anniversaries of deaths
+    -f: treat warnings as fatals, implies -w
+    -H: Print an HTML calendar of this month
+    -h: set the home person - useful for calculating relationships with -d
+    -m: month for -H calendar
+    -l: include living people
+    -L: include ged2html hyperlinks with -H
+    -p: print the biography of the given person
+    -v: verbose - for debugging
+    -w: print warning about inconsistent data - a sort of lint for Gedcom files
+    -y: year for -H calendar

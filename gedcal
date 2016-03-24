@@ -16,22 +16,6 @@
 # TODO: make the colourisation of warnings optional
 # TODO: write a post-processor to sort errors by type
 
-# -a: all days otherwise just today
-# -b: only print birthdays
-# -c: Give citations on detailed listing
-# -d: give a detailed lifetime information about the person
-# -D: only print anniversaries of deaths
-# -f: treat warnings as fatals, implies -w
-# -H: Print an HTML calendar of this month
-# -h: set the home person
-# -m: month for -H calendar
-# -l: include living people
-# -L: include ged2html hyperlinks with -H
-# -p: print the biography of the given person
-# -v: verbose - for debugging
-# -w: print warning about unlikely data - a sort of lint for Gedcom files
-# -y: year for -H calendar
-
 use strict;
 use warnings;
 # use diagnostics;
@@ -2164,9 +2148,8 @@ sub year
 			if($opts{'f'}) {
 				if($person) {
 					die $person->as_string() . ": $@";
-				} else {
-					die $@;
 				}
+				die $@;
 			}
 			if($opts{'w'}) {
 				red_warning({ person => $person, warning => $@ });
@@ -2185,9 +2168,8 @@ sub year
 		if($opts{'f'}) {
 			if($person) {
 				die $person->as_string() . " says 'By' instead of 'Bef'";
-			} else {
-				die "Got 'By' instead of 'Bef'";
 			}
+			die "Got 'By' instead of 'Bef'";
 		}
 		if($opts{'w'}) {
 			if($person) {
