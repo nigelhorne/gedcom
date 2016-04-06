@@ -1372,6 +1372,75 @@ sub print_person
 			}
 		}
 
+		my @events = $person->event();
+		if((scalar(@events) == 2) &&
+		   (ref($events[0]) eq 'Gedcom::Record') &&
+		   (ref($events[1]) eq 'Gedcom::Record') &&
+		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
+		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
+			# Simple case - one journey made
+			print '. ' if(!$end_of_sentence);
+			print ' ';
+
+			my $arrival = ($events[0]->type() eq 'Arrival') ? $events[0] : $events[1];
+			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
+			my $yod;
+			my $yoa;
+			my $dod = $departure->date();
+			my $doa = $arrival->date();
+			if($doa && $dod && ($doa =~ /(\d{4})/)) {
+				$yoa = $1;
+				$doa =~ s/\s?\d{4}//;
+				if($dod =~ /(\d{4})/) {
+					$yod = $1;
+					$dod =~ s/\s?\d{4}//;
+					if($dod =~ /^\d/) {
+						$dod = "on $dod";
+					} else {
+						$dod = "during $dod";
+					}
+					if($doa =~ /^\d/) {
+						$doa = "on $doa";
+					} else {
+						$doa = "during $doa";
+					}
+				}
+			}
+			if($departure || !$doa) {
+				if($yod && $yoa && ($yod == $yoa)) {
+					print "During $yod ", lc($person->pronoun());
+				} else {
+					print $person->pronoun();
+
+					$yod = year({ person => $person, record => $departure });
+					$yoa = year({ person => $person, record => $arrival });
+				}
+
+				if($ENV{'LANG'} =~ /^en_US/) {
+					print ' traveled';
+				} else {
+					print ' travelled';
+				}
+
+				print ' from ',
+					$departure->place(),
+					' to ',
+					$arrival->place();
+
+				if(defined($dod)) {
+					print ", departing $dod and";
+				}
+
+				print " arriving $doa.";
+			} else {
+				print ucfirst(year({ person => $person, record => $arrival })),
+					' ', lcfirst($person->pronoun()),
+					' arrived',
+					place({ person => $person, record => $arrival }), '.';
+			}
+			$end_of_sentence = 1;
+		}
+
 		if($placeofburial || $dateofburial) {
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
 				print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
@@ -1494,66 +1563,6 @@ sub print_person
 		}
 		print '.' if(!$end_of_sentence);
 
-		my @events = $person->event();
-		if((scalar(@events) == 2) &&
-		   (ref($events[0]) eq 'Gedcom::Record') &&
-		   (ref($events[1]) eq 'Gedcom::Record') &&
-		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
-		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
-			# Simple case - one journey made
-			print '  ';
-
-			my $arrival = ($events[0]->type() eq 'Arrival') ? $events[0] : $events[1];
-			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
-			my $yod;
-			my $yoa;
-			my $dod = $departure->date();
-			my $doa = $arrival->date();
-			if($doa && $dod && ($doa =~ /(\d{4})/)) {
-				$yoa = $1;
-				$doa =~ s/\s?\d{4}//;
-				if($dod =~ /(\d{4})/) {
-					$yod = $1;
-					$dod =~ s/\s?\d{4}//;
-					if($dod =~ /^\d/) {
-						$dod = "on $dod";
-					} else {
-						$dod = "during $dod";
-					}
-					if($doa =~ /^\d/) {
-						$doa = "on $doa";
-					} else {
-						$doa = "during $doa";
-					}
-				}
-			}
-			if($yod && $yoa && ($yod == $yoa)) {
-				print "During $yod ", lc($person->pronoun());
-			} else {
-				print $person->pronoun();
-
-				$yod = year({ person => $person, record => $departure });
-				$yoa = year({ person => $person, record => $arrival });
-			}
-
-			if($ENV{'LANG'} =~ /^en_US/) {
-				print ' traveled';
-			} else {
-				print ' travelled';
-			}
-
-			print ' from ',
-				$departure->place(),
-				' to ',
-				$arrival->place();
-
-			if(defined($dod)) {
-				print ", departing $dod and";
-			}
-
-			print " arriving $doa.";
-			$end_of_sentence = 1;
-		}
 		print "\n";
 
 		if($person->get_value('note')) {
@@ -2140,7 +2149,7 @@ sub year
 					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 				}
 			}
-			return 'on ', $d->strftime('%x');
+			return 'on ' . $d->strftime('%x');
 		}
 		if($@) {
 			# RT 107354
@@ -2217,6 +2226,8 @@ sub place
 	}
 	if($address) {
 		$place = " at $address, $place";
+	} elsif($params{'nopreposition'}) {
+		$place = " $place";
 	} else {
 		$place = " in $place";
 	}
