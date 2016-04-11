@@ -1056,7 +1056,7 @@ sub print_person
 						print ' there';
 					}
 				} else {
-					my $p = place({ person => $person, place => $placeofbaptism });
+					my $p = place({ person => $person, place => $placeofbaptism, address => $baptism->address() });
 					print $p;
 					$places_printed{$p} = 1;
 				}
