@@ -428,7 +428,7 @@ sub print_person
 		}
 		$str .= '<br>';
 		if($opts{'L'}) {
-			$str .= '<a href="/' . mkfilename(person => $person) . '">' .
+			$str .= '<a href="/' . make_filename_from_person(person => $person) . '">' .
 				$person->as_string() .
 				'</a>';
 		} else {
@@ -2441,7 +2441,7 @@ sub was_alive
 	return 1;
 }
 
-sub mkfilename
+sub make_filename_from_person
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
@@ -2449,8 +2449,8 @@ sub mkfilename
 
 	my $rc = $person->as_string(include_years => 1);
 	$rc =~ tr/ /-/s;
-	$rc =~ s/--/-/g;
-	$rc =~ s/--/-/g;
+	$rc =~ s/--+/-/g;
+	# $rc =~ s/--/-/g;
 	$rc =~ s/-$//;
 
 	return "$rc.html";
