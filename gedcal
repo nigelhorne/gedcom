@@ -1664,12 +1664,18 @@ sub print_person
 				}
 				print "[$citation]: $title";
 
-				my $note = $citations{$citation}->note();
-				if($note && ($note !~ /^This information comes from/)) {
-					if($opts{'w'}) {
-						$ufinder->find(\$note);
+				my @notes = $citations{$citation}->note();
+				foreach my $note(@notes) {
+					if(ref($note) eq 'Gedcom::Record') {
+						$note = $note->note();
 					}
-					print " ($note)";
+
+					if($note && ($note !~ /^This information comes from/)) {
+						if($opts{'w'}) {
+							$ufinder->find(\$note);
+						}
+						print " ($note)";
+					}
 				}
 				print "\n";
 
