@@ -898,6 +898,7 @@ sub print_person
 			my $d = get_value({ person => $person, value => 'death' });
 			if($d) {
 				$d =~ tr/\r//;
+				$d =~ tr/\n/ /;
 				print " ($d)";
 			}
 			if($placeofdeath) {
@@ -1580,6 +1581,17 @@ sub print_person
 		}
 		print '.' if(!$end_of_sentence);
 
+		my @deathnotes = get_value({ person => $person, value => 'death note' });
+		if(scalar(@deathnotes)) {
+			foreach my $deathnote(@deathnotes) {
+				if($deathnote) {
+					$deathnote =~ tr/\r//;
+					$deathnote =~ tr/\n/ /;
+					$deathnote =~ s/\s\s+/ /g;
+					print "\n\t$deathnote";
+				}
+			}
+		}
 		print "\n";
 
 		if($person->get_value('note')) {
