@@ -1581,10 +1581,25 @@ sub print_person
 		}
 		print '.' if(!$end_of_sentence);
 
-		my @deathnotes = get_value({ person => $person, value => 'death note' });
+		# my @deathnotes = get_value({ person => $person, value => 'death note' });
+		# my @deathnotes = $person, value => 'death note' });
+		my @deathnotes = $death->get_record('note');
 		if(scalar(@deathnotes)) {
 			foreach my $deathnote(@deathnotes) {
 				if($deathnote) {
+					if(ref($deathnote) eq 'Gedcom::Record') {
+						if($deathnote->cont()) {
+							my $n = $deathnote->value();
+							my @c = $deathnote->cont();
+							my $c = shift @c;
+							while($c = shift @c) {
+								$n .= " $c";
+							}
+							$deathnote = $n;
+						} else {
+							$deathnote = $deathnote->value();
+						}
+					}
 					$deathnote =~ tr/\r//;
 					$deathnote =~ tr/\n/ /;
 					$deathnote =~ s/\s\s+/ /g;
