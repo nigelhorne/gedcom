@@ -1438,8 +1438,8 @@ sub print_person
 				} else {
 					print $person->pronoun();
 
-					$yod = year({ person => $person, record => $departure });
-					$yoa = year({ person => $person, record => $arrival });
+					# $yod = year({ person => $person, record => $departure });
+					# $yoa = year({ person => $person, record => $arrival });
 				}
 
 				if($ENV{'LANG'} =~ /^en_US/) {
@@ -1464,6 +1464,28 @@ sub print_person
 					' arrived',
 					place({ person => $person, record => $arrival }), '.';
 			}
+			$end_of_sentence = 1;
+		} elsif((scalar(@events) == 1)) {
+			print '. ' if(!$end_of_sentence);
+
+			my $event = $person->event();
+			if((ref($event) eq 'Gedcom::Record') &&
+			   ($event->type() eq 'Arrival')) {
+				print ' ', $person->pronoun(), ' arrived',
+					place({ person => $person, record => $events[0] }),
+					' ',
+					year({ person => $person, record => $events[0] });
+				my $notes = notes({ record => $event });
+				if($notes) {
+					$notes = lcfirst($notes);
+					print " ($notes)";
+				}
+			} else {
+				print $event;
+
+			}
+			print '. ';
+
 			$end_of_sentence = 1;
 		}
 
@@ -1521,7 +1543,7 @@ sub print_person
 				if($dateofdeath) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					if($placeofdeath) {
-						print place({ person => $person, place => $placeofdeath });
+						print place({ person => $person, place => $placeofdeath, places_printed => \%places_printed });
 					}
 				} else {
 					print place({ person => $person, place => $placeofdeath });
@@ -1590,32 +1612,11 @@ sub print_person
 		print '.' if(!$end_of_sentence);
 
 		if(defined($death)) {
-			# my @deathnotes = get_value({ person => $person, value => 'death note' });
-			# my @deathnotes = $person, value => 'death note' });
-			my @deathnotes = $death->get_record('note');
-			if(scalar(@deathnotes)) {
-				foreach my $deathnote(@deathnotes) {
-					if($deathnote) {
-						if(ref($deathnote) eq 'Gedcom::Record') {
-							if($deathnote->cont()) {
-								my $n = $deathnote->value();
-								my @c = $deathnote->cont();
-								my $c = shift @c;
-								while($c = shift @c) {
-									$n .= " $c";
-								}
-								$deathnote = $n;
-							} else {
-								$deathnote = $deathnote->value();
-							}
-						}
-						$deathnote =~ tr/\r//;
-						$deathnote =~ tr/\n/ /;
-						$deathnote =~ s/\s\s+/ /g;
-						print "\n\t$deathnote";
-					}
-				}
+			my $notes = notes({ record => $death });
+			if($notes) {
+				print " $notes.";
 			}
+
 		}
 		print "\n";
 
@@ -2313,6 +2314,45 @@ sub place
 		}
 	}
 	return $place;
+}
+
+sub notes
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $record = $params{'record'};
+
+	# my @deathnotes = get_value({ person => $person, value => 'death note' });
+	# my @deathnotes = $person, value => 'death note' });
+	my @notes = $record->get_record('note');
+	my $rc;
+	if(scalar(@notes)) {
+		foreach my $note(@notes) {
+			if($note) {
+				if(ref($note) eq 'Gedcom::Record') {
+					if($note->cont()) {
+						my $n = $note->value();
+						my @c = $note->cont();
+						my $c = shift @c;
+						while($c = shift @c) {
+							$n .= ".  $c";
+						}
+						$note = $n;
+					} else {
+						$note = $note->value();
+					}
+				}
+				$note =~ s/\r//g;
+				$note =~ tr/\n/ /;
+				$note =~ s/\.$//;
+				$rc .= $note;
+			}
+		}
+	}
+	if($rc) {
+		$rc =~ s/\s\s+/ /g;
+	}
+	return $rc;
 }
 
 sub validate_place
