@@ -334,7 +334,7 @@ sub print_person
 	my $day = $params{'day'};
 	my $month = $params{'month'};
 
-	if($dob && ($dob !~ /^\d{4}$/)) {
+	if($dob && ($dob !~ /^\d{3,4}$/)) {
 		my @btime = strptime("$dob 12:00");
 		if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
 			$print = 1;
@@ -348,7 +348,7 @@ sub print_person
 	}
 	return if($onlybirthdays && !defined($aob));
 
-	if($dod && ($dod !~ /^\d{4}$/)) {
+	if($dod && ($dod !~ /^\d{3,4}$/)) {
 		my @dtime = strptime("$dod 12:00");
 		if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
 			$print = 1;
@@ -490,7 +490,7 @@ sub print_person
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'};
 
-	my ($birth_dt, $death_dt);
+	my ($birth_dt, $marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
 	my $dateofbirth = get_value({ person => $person, value => 'birth date' });
 	if((!$dateofbirth) && $birth) {
@@ -553,7 +553,16 @@ sub print_person
 		}
 	}
 
-	if($dateofbirth && ($dateofbirth !~ /^\d{4}$/) && ($dateofbirth =~ /^\d/)) {
+	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
+	if((!defined($marriage)) && scalar(@spouses)) {
+		$marriage = $spouses[0]->get_record('marriage');
+	}
+	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
+	if((!$dateofmarriage) && $marriage) {
+		$dateofmarriage = $marriage->date();
+	}
+
+	if($dateofbirth && ($dateofbirth !~ /^\d{3,4}$/) && ($dateofbirth =~ /^\d/) && ($dateofbirth !~ /[a-z]$/i)) {
 		my $d;
 		eval {
 			$d = $date_parser->parse(date => $dateofbirth);
@@ -565,7 +574,19 @@ sub print_person
 			}
 		}
 	}
-	if($dateofdeath && ($dateofdeath !~ /^\d{4}$/) && ($dateofdeath =~ /^\d/)) {
+	if($dateofmarriage && ($dateofmarriage !~ /^\d{3,4}$/) && ($dateofmarriage =~ /^\d/) && ($dateofmarriage !~ /[a-z]$/i)) {
+		my $d;
+		eval {
+			$d = $date_parser->parse(date => $dateofmarriage);
+		};
+		if($d) {
+			$d = @{$d}[0];
+			if($d) {
+				$marriage_dt = $dfn->parse_datetime($d->{'canonical'});
+			}
+		}
+	}
+	if($dateofdeath && ($dateofdeath !~ /^\d{3,4}$/) && ($dateofdeath =~ /^\d/)) {
 		my $d;
 		eval {
 			$d = $date_parser->parse(date => $dateofdeath);
@@ -577,6 +598,7 @@ sub print_person
 			}
 		}
 	}
+
 	if($opts{'d'}) {
 		print "\t";
 
@@ -595,14 +617,6 @@ sub print_person
 			$placeofbaptism = $baptism->place();
 		}
 
-		my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
-		if((!defined($marriage)) && scalar(@spouses)) {
-			$marriage = $spouses[0]->get_record('marriage');
-		}
-		my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
-		if((!$dateofmarriage) && $marriage) {
-			$dateofmarriage = $marriage->date();
-		}
 		my $placeofmarriage = get_value({ person => $person, value => 'marriage place' });
 		if((!$placeofmarriage) && $marriage) {
 			$placeofmarriage = $marriage->place();
@@ -933,12 +947,12 @@ sub print_person
 				}
 				print "[$_]" foreach(@birthcitations);
 				if($opts{'w'} &&
-				  ($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{4}$/)))) {
+				  ($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{3,4}$/)))) {
 					# TODO: Add more checking
 					my $yod;
 					if($death_dt) {
 						$yod = $death_dt->year();
-					} elsif($dateofdeath =~ /^(\d{4})$/) {
+					} elsif($dateofdeath =~ /^(\d{3,4})$/) {
 						$yod = $1;
 					} else {
 						die "BUG: Impossible case";
@@ -946,7 +960,7 @@ sub print_person
 					foreach my $bc(@birthcitations) {
 						my $citation = $citations{$bc};
 						my $title = $citation->title();
-						if($title =~ /^(\d{4})\s/) {
+						if($title =~ /^(\d{3,4})\s/) {
 							if($1 > $yod) {
 								if($opts{'f'}) {
 									die $person->as_string(),
@@ -1122,7 +1136,7 @@ sub print_person
 				}
 				my $dob = get_value({ person => $child, value => 'birth date' });
 				if($dob) {
-					if(($dob =~ /^\d{4}$/) && ($dob < ($year - 100))) {
+					if(($dob =~ /^\d{3,4}$/) && ($dob < ($year - 100))) {
 						$all_children_are_alive = 0;
 						last;
 					}
@@ -1414,12 +1428,12 @@ sub print_person
 			my $yoa;
 			my $dod = $departure->date();
 			my $doa = $arrival->date();
-			if($doa && $dod && ($doa =~ /(\d{4})/)) {
+			if($doa && $dod && ($doa =~ /(\d{3,4})/)) {
 				$yoa = $1;
-				$doa =~ s/\s?\d{4}//;
-				if($dod =~ /(\d{4})/) {
+				$doa =~ s/\s?\d{3,4}//;
+				if($dod =~ /(\d{3,4})/) {
 					$yod = $1;
-					$dod =~ s/\s?\d{4}//;
+					$dod =~ s/\s?\d{3,4}//;
 					if($dod =~ /^\d/) {
 						$dod = "on $dod";
 					} else {
@@ -1631,7 +1645,7 @@ sub print_person
 				print "\t", $child->given_names(),
 					' was born ',
 					year({ person => $child, date => $dob });
-				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
+				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/)) {
 					my $d;
 					eval {
 						$d = $date_parser->parse(date => $dob);
@@ -1730,7 +1744,7 @@ sub print_person
 				}
 				print "\n";
 
-				if(($title =~ /census/i) && ($title =~ /(\d{4})/)) {
+				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
 					$years{$1} = $title;
 				}
 			}
@@ -1763,7 +1777,7 @@ sub print_person
 
 		if(defined($dob) && (!$onlydeaths) && !$onlybirthdays) {
 			my $d;
-			if(($dob !~ /^\d{4}$/) && ($dob =~ /^\d/)) {
+			if(($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/)) {
 				eval {
 					$d = $date_parser->parse(date => $dob);
 				};
@@ -1787,7 +1801,7 @@ sub print_person
 		}
 		if(defined($dod) && (!$onlydeaths) && !$onlybirthdays) {
 			my $d;
-			if(($dod !~ /^\d{4}$/) && ($dod =~ /^\d/)) {
+			if(($dod !~ /^\d{3,4}$/) && ($dod =~ /^\d/)) {
 				eval {
 					$d = $date_parser->parse(date => $dod);
 				};
@@ -2175,7 +2189,7 @@ sub year
 		return unless($string);
 	}
 
-	if($string =~ /^\d{4}$/) {
+	if($string =~ /^\d{3,4}$/) {
 		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
@@ -2227,13 +2241,13 @@ sub year
 		}
 		return "on $string";
 	}
-	if($string =~ /^bef.? (\d{4})/i) {
+	if($string =~ /^bef.? (\d{3,4})/i) {
 		return "before $1";
 	}
-	if($string =~ /^by.? (\d{4})/i) {
+	if($string =~ /^by.? (\d{3,4})/i) {
 		return "by $1";
 	}
-	if($string =~ /^By (\d{4})/i) {
+	if($string =~ /^By (\d{3,4})/i) {
 		my $person = $params{'person'};
 		if($opts{'f'}) {
 			if($person) {
@@ -2518,7 +2532,7 @@ sub was_alive
 	my $year = $params{'year'} || (localtime)[5];
 	$year += 1900 if($year < 1900);
 
-	if(($dob =~ /^\d{4}$/) && ($dob < ($year - 100))) {
+	if(($dob =~ /^\d{3,4}$/) && ($dob < ($year - 100))) {
 		return 0;
 	}
 	if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
