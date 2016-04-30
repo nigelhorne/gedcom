@@ -2277,7 +2277,9 @@ sub place
 		return ' there';
 	}
 
-	validate_place({ person => $params{'person'}, place => $place });
+	if($params{'person'}) {
+		validate_place({ person => $params{'person'}, place => $place });
+	}
 
 	if($place =~ /^\d/) {
 		return " at $place";
