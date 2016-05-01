@@ -1634,9 +1634,10 @@ sub print_person
 		}
 		print "\n";
 
-		if($person->get_value('note')) {
-			my @notes = $person->get_value('note');
-			print "\t", join("\n\t", @notes), "\n";
+		my $notes = notes({ record => $person, paragraph => 1 });
+		if($notes) {
+			# print "\t", join("\n\t", @notes), "\n";
+			print $notes;
 		}
 
 		foreach my $child(@children) {
@@ -2337,6 +2338,7 @@ sub notes
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $record = $params{'record'};
+	my $paragraph = $params{'paragraph'};
 
 	# my @deathnotes = get_value({ person => $person, value => 'death note' });
 	# my @deathnotes = $person, value => 'death note' });
@@ -2361,7 +2363,10 @@ sub notes
 				$note =~ s/\r//g;
 				$note =~ tr/\n/ /;
 				$note =~ s/\.$//;
-				$rc .= $note;
+				$rc .= "\t$note";
+				if($paragraph) {
+					$rc .= "\n";
+				}
 			}
 		}
 	}
