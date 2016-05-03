@@ -36,6 +36,7 @@ use Tie::Static;
 use LWP::Simple;
 use URI;
 use URI::Find::Schemeless;
+use Sort::Key::DateTime;
 no lib '.';
 
 my %opts;
@@ -1361,8 +1362,18 @@ sub print_person
 
 			# FIXME: This messes citations
 			# TODO: See RT110333
-			# @residencelist = sort { $a->date() && $b->date() ? $a->date() <=> $b->date() : $a->title() cmp $b->title() } @residencelist;
 
+			# Sort residences chronologically
+			my $all_residences_have_date = 1;
+			foreach my $residence(@residencelist) {
+				if(!$residence->date()) {
+					$all_residences_have_date = 0;
+					last;
+				}
+			}
+			if($all_residences_have_date) {
+				@residencelist = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @residencelist;
+			}
 			my $count = 0;
 			foreach my $residence(@residencelist) {
 				if($count == 0) {
@@ -1483,24 +1494,28 @@ sub print_person
 			print '. ' if(!$end_of_sentence);
 
 			my $event = $person->event();
-			if((ref($event) eq 'Gedcom::Record') &&
-			   ($event->type() eq 'Arrival')) {
-				print ' ', $person->pronoun(), ' arrived',
-					place({ person => $person, record => $events[0] }),
-					' ',
-					year({ person => $person, record => $events[0] });
-				my $notes = notes({ record => $event });
-				if($notes) {
+			if(ref($event) eq 'Gedcom::Record') {
+				if($event->type() eq 'Arrival') {
+					print ' ', $person->pronoun(), ' arrived',
+						place({ person => $person, record => $events[0] }),
+						' ',
+						year({ person => $person, record => $events[0] });
+					my $notes = notes({ record => $event });
+					if($notes) {
+						$notes = lcfirst($notes);
+						print " ($notes)";
+					}
+					print '. ';
+					$end_of_sentence = 1;
+				} elsif(my $notes = notes({ record => $event })) {
 					$notes = lcfirst($notes);
-					print " ($notes)";
+					print " ($notes). ";
+					$end_of_sentence = 1;
 				}
 			} else {
-				print $event;
-
+				print "$event. ";
+				$end_of_sentence = 1;
 			}
-			print '. ';
-
-			$end_of_sentence = 1;
 		}
 
 		if($placeofburial || $dateofburial) {
@@ -1633,9 +1648,9 @@ sub print_person
 		print '.' if(!$end_of_sentence);
 
 		if(defined($death)) {
-			my $notes = notes({ record => $death });
+			my $notes = notes({ record => $death, paragraph => 1 });
 			if($notes) {
-				print " $notes.";
+				print "\n$notes.";
 			}
 
 		}
@@ -1669,12 +1684,12 @@ sub print_person
 							}
 							red_warning({ person => $child, warning => 'born before parent was born' });
 						}
-						if($death_dt && ($d > $death_dt)) {
+						if(($sex eq 'F') && $death_dt && ($d > $death_dt)) {
 							if($opts{'f'}) {
 								die $child->name(), ': Born after mother died';
 							}
 							red_warning({ person => $child, warning => 'born after mother died' });
-						} elsif($death_dt && ($d > ($death_dt + $ninemonths))) {
+						} elsif(($sex eq 'M') && $death_dt && ($d > ($death_dt + $ninemonths))) {
 							# Allow the child to be
 							# born up to 9 months
 							# after the death of the
@@ -2370,9 +2385,10 @@ sub notes
 				$note =~ s/\r//g;
 				$note =~ tr/\n/ /;
 				$note =~ s/\.$//;
-				$rc .= "\t$note";
 				if($paragraph) {
-					$rc .= "\n";
+					$rc .= "\t$note.\n";
+				} else {
+					$rc .= $note;
 				}
 			}
 		}
