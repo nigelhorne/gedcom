@@ -1367,6 +1367,10 @@ sub print_person
 			my $all_residences_have_date = 1;
 			foreach my $residence(@residencelist) {
 				if(!$residence->date()) {
+					if($opts{'f'}) {
+						die $person->name(), ': Contains a residence without a date';
+					}
+					red_warning({ person => $person, warning => 'Contains a residence without a date' });
 					$all_residences_have_date = 0;
 					last;
 				}
