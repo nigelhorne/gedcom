@@ -1332,6 +1332,9 @@ sub print_person
 			foreach my $residence(@residences) {
 				if(ref($residence) eq 'Gedcom::Record') {
 					my $place = $residence->place();
+					if(my $address = $residence->address()) {
+						$place = "$address, $place";
+					}
 					if(defined($place) &&
 					  ((!$placeofbirth) || ($place ne $placeofbirth)) &&
 					  ((!$placeofmarriage) || ($place ne $placeofmarriage))) {
@@ -1366,7 +1369,7 @@ sub print_person
 			# Sort residences chronologically
 			my $all_residences_have_date = 1;
 			foreach my $residence(@residencelist) {
-				if(!$residence->date()) {
+				if((!$residence->date()) || !$date_parser->parse(date => $residence->date())) {
 					if($opts{'f'}) {
 						die $person->name(), ': Contains a residence without a date';
 					}
@@ -1380,14 +1383,16 @@ sub print_person
 			}
 			my $count = 0;
 			foreach my $residence(@residencelist) {
-				if($count == 0) {
-					next if($placeofbirth && ($residence eq $placeofbirth));
-					print '.' unless($end_of_sentence);
-					print '  During ',
-						lc($person->possessive()),
-						' life ', lcfirst($pronoun), ' lived';
-				}
-				if(($count == 0) || ($residencelist[$count - 1]->place() ne $residence->place())) {
+				# FIXME: skips if the place is the same, but the address is different
+				# if(($count == 0) || ($residencelist[$count - 1]->place() ne $residence->place())) {
+				if(($count == 0) || (!places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] }))) {
+					if($count == 0) {
+						next if($placeofbirth && ($residence->place() eq $placeofbirth));
+						print '.' unless($end_of_sentence);
+						print '  During ',
+							lc($person->possessive()),
+							' life ', lcfirst($pronoun), ' lived';
+					}
 					my $p = place({
 						person => $person,
 						record => $residence,
@@ -1517,7 +1522,11 @@ sub print_person
 					$end_of_sentence = 1;
 				}
 			} else {
-				print "$event. ";
+				if($end_of_sentence) {
+					print '  ', ucfirst($event), '. ';
+				} else {
+					print "$event. ";
+				}
 				$end_of_sentence = 1;
 			}
 		}
@@ -1576,7 +1585,7 @@ sub print_person
 				if($dateofdeath) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					if($placeofdeath) {
-						print place({ person => $person, place => $placeofdeath, places_printed => \%places_printed });
+						print place({ person => $person, record => $placeofdeath, places_printed => \%places_printed });
 					}
 				} else {
 					print place({ person => $person, place => $placeofdeath });
@@ -1635,7 +1644,7 @@ sub print_person
 				} else {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage) || $printed_residence)) {
-						print place({ person => $person, place => $placeofdeath, places_printed => \%places_printed });
+						print place({ person => $person, record => $death, places_printed => \%places_printed });
 					}
 				}
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
@@ -2328,6 +2337,7 @@ sub place
 	if($place eq 'USA') {
 		return ' in the USA';
 	}
+
 	if($address) {
 		$place = " at $address, $place";
 	} elsif($params{'nopreposition'}) {
@@ -2338,24 +2348,30 @@ sub place
 
 	# Only print the town if the location has already been printed
 	my $places_printed = $params{'places_printed'};
-	if($places_printed && $places_printed->{$place} && $place =~ /^(.+?),/) {
-		return $1;
-	}
 	if($places_printed) {
 		if($places_printed->{$place} && $place =~ /^(.+?),/) {
 			return $1;
 		}
-		if($place =~ /(.+?),(.+?),(.+?),(.+)$/) {
+		if($place =~ /(.+),(.+?),(.+?),(.+?)$/) {
 			my $str = "$2,$3,$4";
 			if($places_printed->{" in$str"}) {
+				return "$1,$2";
+			}
+			if($places_printed->{" at$str"}) {
 				return "$1,$2";
 			}
 			$str = "$3,$4";
 			if($places_printed->{" in$str"}) {
 				return "$1,$2,$3";
 			}
+			if($places_printed->{" at$str"}) {
+				return "$1,$2,$3";
+			}
+			$places_printed->{" in$str"} = 1;
+			$places_printed->{" in$2,$3,$4"} = 1;
 		}
 	}
+	$places_printed->{$place} = 1;
 	return $place;
 }
 
@@ -2439,6 +2455,33 @@ sub validate_place
 	}
 	$places{$place} = 1;
 	return 1;
+}
+
+sub places_are_the_same
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $p1 = $params{'first'};
+	my $p2 = $params{'second'};
+
+	die 'first is not optional' unless $p1;
+	die 'second is not optional' unless $p2;
+
+	my $place1 = $p1->place();
+	my $place2 = $p1->place();
+
+	if(my $person = $params{'person'}) {
+		validate_place({ person => $params{'person'}, place => $place1 });
+		validate_place({ person => $params{'person'}, place => $place2 });
+	}
+
+	if(my $address = $p1->address()) {
+		$place1 = "$address, $place1";
+	}
+	if(my $address = $p2->address()) {
+		$place2 = "$address, $place2";
+	}
+	return $place1 eq $place2;
 }
 
 sub print_sibling_baptism
