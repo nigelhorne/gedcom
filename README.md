@@ -17,7 +17,7 @@ Try adding this to your crontab:
 
 or
 
-    3 5 * * * gedcal -dh 'Your Full Name' gedcom-file.ged
+    20 5 * * * gedcal -dht 'Your Full Name' gedcom-file.ged
 
 Gedcal also includes rudimentary santity checking of your Gedcom file.  You can
 enable this mode with -w, which will print warnings of anything it finds.  It's
@@ -48,6 +48,7 @@ The options are:
     -l: include living people
     -L: include gedsite hyperlinks with -H
     -p: print the biography of the given person
+    -t: print tomorrow's information, don't use with -a
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -y: year for -H calendar

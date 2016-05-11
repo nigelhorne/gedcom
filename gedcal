@@ -40,8 +40,8 @@ use Sort::Key::DateTime;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:Hm:lLp:wvy:', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('abcdDfh:Hm:lLp:twvy:', \%opts);
+die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -260,9 +260,12 @@ if($opts{'H'}) {
 	} else {
 		die "$0: Can't find '$opts{p}' in $ARGV[0]";
 	}
-} else {
+} elsif(!$opts{'t'}) {
 	my($day, $month) = (localtime)[3,4];
 	generate(day => $day, month => $month, everyone => \@everyone);
+} else {
+	my $dt = DateTime->now()->add(days => 1);
+	generate(day => $dt->day(), month => $dt->month() - 1, everyone => \@everyone);
 }
 
 sub generate {
@@ -317,13 +320,13 @@ sub print_person
 		}
 	}
 
-	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
-		# Assuming living if we don't have a date of death and
-		# they were born after 1900
+	unless($dob || $dod || $opts{'a'} || $opts{'p'}) {
 		return;
 	}
 
-	unless($dob || $dod || $opts{'a'} || $opts{'p'}) {
+	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
+		# Assuming living if we don't have a date of death and
+		# they were born after 1900
 		return;
 	}
 
@@ -890,16 +893,18 @@ sub print_person
 		my $end_of_sentence = 0;
 		if($aob && $aod) {
 			if($aob == $aod) {
-				print " was born and died $aod years ago today";
+				print " was born and died $aod years ago ";
 			} else {
-				print " was born $aob years and died $aod years ago today";
+				print " was born $aob years and died $aod years ago ";
 			}
+			print ($opts{'t'} ? 'tomorrow' : 'today');
 			print "[$_]" foreach(@birthcitations);
 			print "[$_]" foreach(@deathcitations);
 			print '.';
 			$end_of_sentence = 1;
 		} elsif($aob) {
-			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago today';
+			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago ',
+				$opts{'t'} ? 'tomorrow' : 'today';
 			if($placeofbirth) {
 				my $p = place({ person => $person, place => $placeofbirth });
 				print $p;
@@ -909,7 +914,8 @@ sub print_person
 			print '.';
 			$end_of_sentence = 1;
 		} elsif($aod) {
-			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago today';
+			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago ',
+				$opts{'t'} ? 'tomorrow' : 'today';
 			my $d = get_value({ person => $person, value => 'death' });
 			if($d) {
 				$d =~ tr/\r//;
