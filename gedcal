@@ -1778,6 +1778,15 @@ sub print_person
 					next;
 				}
 				print "[$citation]: $title";
+				# if(defined(my $publication = $citations{$citation}->publication())) {
+					# print " $publication";
+					# if(defined(my $continuation = $citations{$citation}->cont())) {
+						# print $continuation;
+					# }
+				# }
+				if(defined(my $page = $citations{$citation}->page())) {
+					print " $page";
+				}
 
 				my @notes = $citations{$citation}->note();
 				foreach my $note(@notes) {
