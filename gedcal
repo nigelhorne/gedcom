@@ -264,8 +264,14 @@ if($opts{'H'}) {
 	my($day, $month) = (localtime)[3,4];
 	generate(day => $day, month => $month, everyone => \@everyone);
 } else {
-	my $dt = DateTime->now()->add(days => 1);
-	generate(day => $dt->day() - 1, month => $dt->month() - 1, everyone => \@everyone);
+	my %args = ();
+	if(defined($ENV{'TZ'})) {
+		$args{'time_tone'} = $ENV{'TZ'};
+	} else {
+		$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
+	}
+	my $dt = DateTime->now(%args)->add(days => 1);
+	generate(day => $dt->day(), month => $dt->month() - 1, everyone => \@everyone);
 }
 
 sub generate {
