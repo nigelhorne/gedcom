@@ -1684,8 +1684,7 @@ sub print_person
 		}
 		print "\n";
 
-		my $notes = notes({ record => $person, paragraph => 1 });
-		if($notes) {
+		if(my $notes = notes({ record => $person, paragraph => 1 })) {
 			# print "\t", join("\n\t", @notes), "\n";
 			print $notes;
 		}
@@ -2429,7 +2428,11 @@ sub notes
 						my @c = $note->cont();
 						my $c = shift @c;
 						while($c = shift @c) {
-							$n .= ".  $c";
+							if((!ref($c)) && length($c)) {
+								$c =~ s/\s\s+/ /g;
+								$c =~ s/\.$//;
+								$n .= ".  $c";
+							}
 						}
 						$note = $n;
 					} else {
@@ -2448,7 +2451,7 @@ sub notes
 		}
 	}
 	if($rc) {
-		$rc =~ s/\s\s+/ /g;
+		$rc =~ s/ $//;
 	}
 	return $rc;
 }
