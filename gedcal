@@ -1707,19 +1707,16 @@ sub print_person
 		}
 		print '.' if(!$end_of_sentence);
 
-		if(defined($death)) {
-			my $notes = notes({ record => $death, paragraph => 1 });
-			if($notes) {
-				print "\n$notes.";
-			}
-
+		if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
+			print "\n$notes";
 		}
-		print "\n";
 
-		if(my $notes = notes({ record => $person, paragraph => 1 })) {
+		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			# print "\t", join("\n\t", @notes), "\n";
-			print $notes;
+			print "\n$notes";
 		}
+
+		print "\n";
 
 		foreach my $child(@children) {
 			my $dob = get_value({ person => $child, value => 'birth date' });
@@ -2457,13 +2454,24 @@ sub notes
 				if(ref($note) eq 'Gedcom::Record') {
 					if($note->cont()) {
 						my $n = $note->value();
-						my @c = $note->cont();
-						my $c = shift @c;
-						while($c = shift @c) {
+						$n =~ s/\r//g;
+						$n =~ s/\.$//;
+						foreach my $c($note->cont()) {
 							if((!ref($c)) && length($c)) {
 								$c =~ s/\s\s+/ /g;
 								$c =~ s/\.$//;
 								$n .= ".  $c";
+							}
+						}
+						$note = $n;
+					} elsif($note->conc()) {
+						my $n = $note->value();
+						$n =~ s/\r//g;
+						$n =~ s/\.$//;
+						foreach my $c($note->conc()) {
+							if((!ref($c)) && length($c)) {
+								$c =~ s/\s\s+/ /g;
+								$n .= $c;
 							}
 						}
 						$note = $n;
@@ -2475,9 +2483,12 @@ sub notes
 				$note =~ tr/\n/ /;
 				$note =~ s/\.$//;
 				if($paragraph) {
-					$rc .= "\t$note.\n";
+					if($rc) {
+						$rc .= "\n";
+					}
+					$rc .= "\t$note.";
 				} else {
-					$rc .= $note;
+					$rc .= "$note.";
 				}
 			}
 		}
