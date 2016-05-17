@@ -1292,28 +1292,60 @@ sub print_person
 				}
 				# substr($names, rindex($names, ', '), 2, ' and ');
 				print ", to $names";
-
 				print "[$marriagecitation]" if($marriagecitation);
-				# TODO: print the date and places of the marriages
+
+				# Determine if all the children are from one marriage, since that's
+				# easier to print.
+				# FIXME:  handle where offspring are from more than one marriage
+				my %childrenbyspouse;
 				if($numberofchildren) {
+					foreach my $family ($person->fams()) {
+						if($family->number_of_children()) {
+							my $spouse = ($sex eq 'M') ? $family->wife() : $family->husband();
+							foreach my $child($person->children()) {
+								foreach my $spouseschild($spouse->children()) {
+									if($spouseschild eq $child) {
+										$childrenbyspouse{$spouse}++;
+										last;
+									}
+								}
+							}
+						}
+					}
+					my $parentofall;
+					foreach my $spouse(@spouses) {
+						if($parentofall && $childrenbyspouse{$spouse}) {
+							$parentofall = undef;
+							last;
+						}
+						if($childrenbyspouse{$spouse}) {
+							$parentofall = $spouse;
+						}
+					}
 					print ".  $pronoun ",
 						$all_children_are_alive ? 'has ' : 'had ';
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
-							print '1 surviving child, ';
+							print '1 surviving child';
 						} else {
-							print '1 child, ';
+							print '1 child';
 						}
-						print $children[0]->given_names();
+						if($parentofall) {
+							print ' with ', $parentofall->as_string();
+						}
+						print ', ', $children[0]->given_names();
 					} else {
 						if($all_children_are_alive) {
-							print "$numberofchildren surviving children: ";
+							print "$numberofchildren surviving children";
 						} else {
-							print "$numberofchildren children: ";
+							print "$numberofchildren children";
+						}
+						if($parentofall) {
+							print ', all with ', $parentofall->as_string();
 						}
 						my $childnames = join(', ', map { $_->given_names() } @children);
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
-						print $childnames;
+						print ": $childnames";
 					}
 				}
 			}
