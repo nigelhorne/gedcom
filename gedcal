@@ -1590,7 +1590,6 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif(scalar(@events) == 1) {
 			print '.' if(!$end_of_sentence);
-			$end_of_sentence = 1;
 
 			my $event = $person->event();
 			if(ref($event) eq 'Gedcom::Record') {
@@ -1604,15 +1603,12 @@ sub print_person
 						print " ($notes)";
 					}
 					print '. ';
-					$end_of_sentence = 1;
 				} elsif(my $notes = notes({ record => $event })) {
 					$notes = lcfirst($notes);
 					print " $notes. ";
-					$end_of_sentence = 1;
 				}
 			} else {
 				print '  ', ucfirst($event), '.';
-				$end_of_sentence = 1;
 			}
 		} else {
 			foreach my $event(@events) {
