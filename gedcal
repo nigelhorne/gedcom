@@ -1362,7 +1362,11 @@ sub print_person
 							print "$numberofchildren children";
 						}
 						if($parentofall) {
-							print ', all with ', $parentofall->as_string();
+							if($numberofchildren == 2) {
+								print ', both with ', $parentofall->as_string();
+							} else {
+								print ', all with ', $parentofall->as_string();
+							}
 						}
 						my $childnames = join(', ', map { $_->given_names() } @children);
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
