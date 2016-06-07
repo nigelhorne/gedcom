@@ -938,7 +938,7 @@ sub print_person
 				print " ($d)";
 			}
 			if($placeofdeath) {
-				my $p = place({ person => $person, place => $placeofdeath });
+				my $p = place({ person => $person, record => $death });
 				print $p;
 				$places_printed{$p} = 1;
 			}
