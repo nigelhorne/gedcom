@@ -1905,6 +1905,7 @@ sub print_person
 					}
 				}
 				if($citationnotes{$citation}) {
+					$citationnotes{$citation} =~ s/\.$//;
 					print " ($citationnotes{$citation})";
 				}
 				print "\n";
