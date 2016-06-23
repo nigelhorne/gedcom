@@ -1634,6 +1634,7 @@ sub print_person
 			} else {
 				print '  ', ucfirst($event), '.';
 			}
+			$end_of_sentence = 1;
 		} else {
 			foreach my $event(@events) {
 				if((ref($event) eq 'Gedcom::Record') &&
