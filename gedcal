@@ -1636,21 +1636,26 @@ sub print_person
 			}
 			$end_of_sentence = 1;
 		} else {
+			my $mentioned_military;
 			foreach my $event(@events) {
 				if((ref($event) eq 'Gedcom::Record') &&
 				   ($event->type() eq 'Military service')) {
-					print '.' if(!$end_of_sentence);
-					print "  $pronoun served in the miltary";
+					if(!$mentioned_military) {
+						print '.' if(!$end_of_sentence);
+						print "  $pronoun served in the miltary";
+						$mentioned_military = 1;
+					}
 
 					if(my $notes = notes(record => $event)) {
 						$notes = lcfirst($notes);
 						$notes =~ s/\.$//;
 						print " ($notes)";
 					}
-					print '.';
-					$end_of_sentence = 1;
+					$end_of_sentence = 0;
 				}
 			}
+			print '.' if(!$end_of_sentence);
+			$end_of_sentence = 1;
 		}
 
 		if($placeofburial || $dateofburial) {
