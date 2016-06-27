@@ -84,6 +84,9 @@ if($opts{'w'}) {
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
 	}) || die "$0: $cachedir: $!";
+
+	require WWW::Scrape::FindaGrave;
+	WWW::Scrape::FindaGrave->import();
 }
 
 my $date_parser = Genealogy::Gedcom::Date->new();
@@ -500,6 +503,7 @@ sub print_person
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'};
+	my $lastname = $name_components{'surname_1'};
 
 	my ($birth_dt, $marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
@@ -1862,6 +1866,7 @@ sub print_person
 			});
 
 			my %years;
+			my $findagrave;
 			foreach my $citation(1..$citationcount) {
 				if(!$citations{$citation}) {
 					if($opts{'f'}) {
@@ -1919,6 +1924,9 @@ sub print_person
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
 					$years{$1} = $title;
 				}
+				if($title =~ /find a grave/i) {
+					$findagrave = 1;
+				}
 			}
 			if($opts{'w'}) {
 				foreach my $event(@events) {
@@ -1938,6 +1946,37 @@ sub print_person
 						});
 					}
 				}
+				if($yod && !$findagrave) {
+					my %opts = ( date_of_death => $yod );
+					if($firstname) {
+						$opts{'firstname'} = $firstname;
+					}
+					if($lastname) {
+						$opts{'lastname'} = $lastname;
+					}
+					if($placeofburial) {
+						if($placeofburial =~ /.+,\s+(\w+)/) {
+							$opts{'country'} = $1;
+						}
+					} elsif($placeofdeath) {
+						if($placeofdeath =~ /.+,\s+(\w+)/) {
+							$opts{'country'} = $1;
+						}
+					}
+					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
+						$opts{'country'} = 'The United States';
+					}
+					my $f = WWW::Scrape::FindaGrave->new(\%opts);
+					while(my $url = $f->get_next_entry()) {
+						if($opts{'f'}) {
+							die $person->as_string(), ": possible Find a Grave link $url";
+						}
+						red_warning({
+							person => $person,
+							warning => "possible Find a Grave link $url"
+						});
+					}
+				}
 			}
 		}
 		print '-' x 80, "\n";
@@ -1948,7 +1987,6 @@ sub print_person
 			$dod = $person->get_value('death date');
 		};
 		if($@) {
-			my $lastname = $name_components{'surname_1'};
 			warn "Can't parse record for $firstname $lastname";
 			return;
 		}
