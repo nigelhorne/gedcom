@@ -1642,7 +1642,9 @@ sub print_person
 		} else {
 			my $mentioned_military;
 			foreach my $event(@events) {
-				if((ref($event) eq 'Gedcom::Record') &&
+				if(!ref($event)) {
+					red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
+				} elsif((ref($event) eq 'Gedcom::Record') &&
 				   ($event->type() eq 'Military service')) {
 					if(!$mentioned_military) {
 						print '.' if(!$end_of_sentence);
@@ -1656,6 +1658,8 @@ sub print_person
 						print " ($notes)";
 					}
 					$end_of_sentence = 0;
+				} else {
+					red_warning({ person => $person, warning => 'Unhandled event type: ' . ref($event) });
 				}
 			}
 			print '.' if(!$end_of_sentence);
