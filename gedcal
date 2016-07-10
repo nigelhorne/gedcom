@@ -1985,11 +1985,26 @@ sub print_person
 						});
 					}
 				}
-				if($yod && $firstname && $lastname && !$findagrave) {
+				my $surname = $lastname;
+				if(defined($sex) && ($sex eq 'F')) {
+					if(my $husband = $person->husband()) {
+						$surname = $husband->surname();
+					} elsif(my $spouse = $person->spouse()) {
+						if($opts{'f'}) {
+							die 'married, but no husband relationship';
+						}
+						if($opts{'w'}) {
+							red_warning({ person => $person, warning => 'married, but no husband relationship' });
+						} else {
+							$surname = $spouse->surname();
+						}
+					}
+				}
+				if($yod && $firstname && $surname && !$findagrave) {
 					my %opts = (
 						date_of_death => $yod,
 						firstname => $firstname,
-						lastname => $lastname
+						lastname => $surname
 					);
 					if($placeofburial) {
 						if($placeofburial =~ /.+,\s+(\w+)/) {
