@@ -37,6 +37,7 @@ use LWP::Simple;
 use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
+use Text::Names;
 no lib '.';
 
 my %opts;
@@ -722,6 +723,15 @@ sub print_person
 
 		my $pronoun = $person->pronoun();
 		my $sex = $person->sex();
+		if($opts{'w'}) {
+			my $guess = Text::Names::guessGender($firstname);
+			if($sex && $guess && ($sex ne $guess)) {
+				if($opts{'f'}) {
+					die $person->name(), ': Check the gender of the record';
+				}
+				red_warning({ person => $person, warning => 'Check the gender of the record' });
+			}
+		}
 		my @occupations = $person->get_value('occupation');
 
 		my @children;
@@ -738,7 +748,8 @@ sub print_person
 		if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
 			foreach my $sibling(@siblings) {
 				my $siblingbirth = get_value({ person => $sibling, value => 'birth date' });
-				if($siblingbirth && ($siblingbirth eq $dateofbirth) && ($sibling->name() eq $person->name())) {
+				if($siblingbirth && ($siblingbirth eq $dateofbirth) &&
+				  (($sibling->name() eq $person->name()) || Text::Names::samePerson($sibling->name(), $person->name()))) {
 					if($opts{'f'}) {
 						die $person->name(), ': Possible duplicate person';
 					}
@@ -1974,14 +1985,12 @@ sub print_person
 						});
 					}
 				}
-				if($yod && !$findagrave) {
-					my %opts = ( date_of_death => $yod );
-					if($firstname) {
-						$opts{'firstname'} = $firstname;
-					}
-					if($lastname) {
-						$opts{'lastname'} = $lastname;
-					}
+				if($yod && $firstname && $lastname && !$findagrave) {
+					my %opts = (
+						date_of_death => $yod,
+						firstname => $firstname,
+						lastname => $lastname
+					);
 					if($placeofburial) {
 						if($placeofburial =~ /.+,\s+(\w+)/) {
 							$opts{'country'} = $1;
