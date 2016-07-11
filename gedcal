@@ -1406,7 +1406,7 @@ sub print_person
 			$end_of_sentence = 0;
 		}
 
-		my $printed_residence;
+		my $printed_residence = 0;
 		my %residencecitations;
 		my %citationnotes;
 		my @residences = $person->residence();
