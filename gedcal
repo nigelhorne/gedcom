@@ -950,6 +950,7 @@ sub print_person
 			if($d) {
 				$d =~ tr/\r//;
 				$d =~ tr/\n/ /;
+				$d =~ s/\.$//;
 				print " ($d)";
 			}
 			if($placeofdeath) {
