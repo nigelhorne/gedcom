@@ -1822,9 +1822,10 @@ sub print_person
 				print place({ person => $person, place => $placeofdeath });
 			}
 			print "[$_]" foreach(@deathcitations);
-			my $d = get_value({ person => $person, value => 'death' });
-			if($d) {
+			# Print notes about the death, if any
+			if(defined($death) && (my $d = get_value({ person => $person, value => 'death' }))) {
 				$d =~ tr/\r//;
+				$d =~ s/\.$//;
 				print " ($d)";
 			}
 			$end_of_sentence = 0;
