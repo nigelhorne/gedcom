@@ -984,30 +984,59 @@ sub print_person
 					});
 				}
 				print "[$_]" foreach(@birthcitations);
-				if($opts{'w'} &&
-				  ($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{3,4}$/)))) {
-					# TODO: Add more checking
-					my $yod;
-					if($death_dt) {
-						$yod = $death_dt->year();
-					} elsif($dateofdeath =~ /^(\d{3,4})$/) {
-						$yod = $1;
-					} else {
-						die "BUG: Impossible case";
-					}
-					foreach my $bc(@birthcitations) {
-						my $citation = $citations{$bc};
-						my $title = $citation->title();
-						if($title =~ /^(\d{3,4})\s/) {
-							if($1 > $yod) {
+				if($opts{'w'}) {
+					if($mother && (my $mumdateofbirth = get_value({ person => $mother, value => 'birth date' }))) {
+						if($mumdateofbirth =~ /.*?(\d{3,4})/) {
+							$mumdateofbirth = $1;
+							if(($mumdateofbirth - $yob) <= 13) {
 								if($opts{'f'}) {
-									die $person->as_string(),
-										": Year of citation of $title is after the death year of $yod"
+									die "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)";
 								}
 								red_warning({
 									person => $person,
-									warning => "Year of citation of $title is after the death year of $yod"
+									warning => "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)"
 								});
+							}
+						}
+					}
+					if($father && (my $daddateofbirth = get_value({ person => $father, value => 'birth date' }))) {
+						if($daddateofbirth =~ /.*?(\d{3,4})/) {
+							$daddateofbirth = $1;
+							if(($daddateofbirth - $yob) <= 13) {
+								if($opts{'f'}) {
+									die "something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)";
+								}
+								red_warning({
+									person => $person,
+									warning => "something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)"
+								});
+							}
+						}
+					}
+					if($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{3,4}$/))) {
+						# TODO: Add more checking
+						my $yod;
+						if($death_dt) {
+							$yod = $death_dt->year();
+						} elsif($dateofdeath =~ /^(\d{3,4})$/) {
+							$yod = $1;
+						} else {
+							die "BUG: Impossible case";
+						}
+						foreach my $bc(@birthcitations) {
+							my $citation = $citations{$bc};
+							my $title = $citation->title();
+							if($title =~ /^(\d{3,4})\s/) {
+								if($1 > $yod) {
+									if($opts{'f'}) {
+										die $person->as_string(),
+											": Year of citation of $title is after the death year of $yod"
+									}
+									red_warning({
+										person => $person,
+										warning => "Year of citation of $title is after the death year of $yod"
+									});
+								}
 							}
 						}
 					}
