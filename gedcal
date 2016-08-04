@@ -39,6 +39,7 @@ use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
 use Text::Names;
+use Memoize;
 no lib '.';
 
 my %opts;
@@ -115,6 +116,9 @@ if($opts{'y'} && !$opts{'H'}) {
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
 }
+
+memoize('Gedcom::Individual::as_string');
+memoize('stepsabove');
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
