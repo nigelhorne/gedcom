@@ -213,8 +213,9 @@ if($opts{'H'}) {
 			generate(day => 31, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 		}
 	}
+	print '<center>';
 	$table->print();
-	print '</font></body></html>';
+	print '</center></font></body></html>';
 } elsif($opts{a}) {
 	die '-b and -a should not be given together' if($opts{'b'});
 	die '-D and -a should not be given together' if($opts{'D'});
@@ -871,7 +872,7 @@ sub print_person
 					}
 					if($print_sibling_count) {
 						if((scalar(@siblings)) && ($count == (scalar(@siblings) + 1))) {
-							print 'last';
+							print ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
 						} else {
 							print ordinate($count);
 						}
