@@ -1788,14 +1788,17 @@ sub print_person
 								print place({ person => $person, place => $placeofburial });
 							}
 						} else {
-							print place({
+							my $opts = {
 								person => $person,
 								place => $placeofburial,
 								there => $placeofdeath,
 								places_printed => \%places_printed,
-								must_postdate => $birth_dt,
-								address => get_value({ person => $person, value => 'burial address' })
-							});
+								must_postdate => $birth_dt
+							};
+							if(my $address = $burial->address()) {
+								$opts->{'address'} = $address;
+							}
+							print place($opts);
 						}
 					}
 					print ' ', year({ person => $person, date => $dateofburial });
@@ -2642,7 +2645,13 @@ sub place
 	my $there = $params{'there'};
 
 	if($there && ($place eq $there)) {
-		return ' there';
+		if($address) {
+			if($place =~ /^(.+?),.+,/) {
+				return " at $address, $1";
+			}
+		} else {
+			return ' there';
+		}
 	}
 
 	if($params{'person'}) {
