@@ -1740,7 +1740,7 @@ sub print_person
 						$notes = lcfirst($notes);
 						print " ($notes)";
 					}
-					print '. ';
+					print '.';
 				} elsif(($event->type() !~ /^Census U[KS] (\d{4})$/) &&
 					(my $notes = notes(record => $event))) {
 					$notes = ucfirst($notes);
