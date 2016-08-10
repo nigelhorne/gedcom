@@ -11,23 +11,24 @@ matches for family members that are still alive.
 
 The -d flag will give you a short biography of each person.
 
-Try adding this to your crontab:
+Try adding this to your crontab, it will give you a daily e-mail of your relative's
+birthdays and the anniversaries of their death along with information about their life.
 
     3 5 * * * gedcal -dl gedcom-file.ged
 
 or
 
-    20 5 * * * gedcal -dht 'Your Full Name' gedcom-file.ged
+    20 5 * * * gedcal -dth 'Your Full Name' gedcom-file.ged
 
 Gedcal also includes rudimentary santity checking of your Gedcom file.  You can
 enable this mode with -w, which will print warnings of anything it finds.  It's
-a sort of lint for gedcom files.
+a sort of lint for Gedcom files.
 
 For example:
 
     gedcal -dawl gedcom-file.ged > /dev/null
 
-You can create a month-to-a-page calendar of your ancestors:
+You can create a month-to-a-page genealogical calendar of your ancestors:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
