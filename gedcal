@@ -1747,6 +1747,7 @@ sub print_person
 					print " $notes. ";
 				}
 			} else {
+				red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
 				print '  ', ucfirst($event), '.';
 			}
 			$end_of_sentence = 1;
