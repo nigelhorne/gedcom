@@ -1728,29 +1728,37 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif(scalar(@events) == 1) {
 			print '.' if(!$end_of_sentence);
+			$end_of_sentence = 1;
 
 			my $event = $person->event();
+			if(!ref($event)) {
+				my $e = $person->tag_record('EVEN');
+				if(ref($e) eq 'Gedcom::Record') {
+					$event = $e;
+				} else {
+					red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
+					print ' ', ucfirst($event), '.';
+				}
+			}
 			if(ref($event) eq 'Gedcom::Record') {
 				if($event->type() eq 'Arrival') {
-					print '  ', $person->pronoun(), ' arrived',
+					print ' ', $person->pronoun(), ' arrived',
 						place({ person => $person, record => $events[0] }),
 						' ',
 						year({ person => $person, record => $events[0] });
-					if(my $notes = notes({ record => $event })) {
-						$notes = lcfirst($notes);
-						print " ($notes)";
-					}
-					print '.';
+                                        if(my $notes = notes({ record => $event })) {
+                                                $notes = lcfirst($notes);
+                                                print " ($notes)";
+                                        }
+                                        print '.';
 				} elsif(($event->type() !~ /^Census U[KS] (\d{4})$/) &&
 					(my $notes = notes(record => $event))) {
 					$notes = ucfirst($notes);
-					print " $notes. ";
+					print " ($notes)";
+				} else {
+					red_warning({ person => $person, warning => 'Unhandled event type: ' . $event->type() });
 				}
-			} else {
-				red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
-				print '  ', ucfirst($event), '.';
 			}
-			$end_of_sentence = 1;
 		} else {
 			my $mentioned_military;
 			foreach my $event(@events) {
