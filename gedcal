@@ -1777,6 +1777,9 @@ sub print_person
 						if(!$mentioned_military) {
 							print '.' if(!$end_of_sentence);
 							print "  $pronoun served in the military";
+							if(my $place = place({ person => $person, record => $event })) {
+								print $place;
+							}
 							if(my $date = year(record => $event)) {
 								print " $date";
 							}
