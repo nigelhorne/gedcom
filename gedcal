@@ -1750,6 +1750,22 @@ sub print_person
                                                 print " ($notes)";
                                         }
                                         print '.';
+				} elsif($event->type() eq 'Military service') {
+					print '.' if(!$end_of_sentence);
+					print " $pronoun served in the military";
+					if(my $place = place({ person => $person, record => $event })) {
+						print $place;
+					}
+					if(my $date = year(record => $event)) {
+						print " $date";
+					}
+
+					if(my $notes = notes(record => $event)) {
+						$notes = lcfirst($notes);
+						$notes =~ s/\.$//;
+						print " ($notes)";
+					}
+					$end_of_sentence = 0;
 				} elsif($event->type() !~ /^Census U[KS] (\d{4})$/) {
 					red_warning({ person => $person, warning => 'Unhandled event type: ' . $event->type() });
 					if(my $notes = notes(record => $event)) {
@@ -2924,7 +2940,7 @@ sub red_warning
 		}
 		# my $i = 0;
 		# while((my @call_details = (caller($i++)))) {
-			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[0] . ':' . $call_details[3], 'red'), "\n";
+			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[3], 'red'), "\n";
 		# }
 	}
 }
