@@ -1932,9 +1932,9 @@ sub print_person
 		}
 		print '.' if(!$end_of_sentence);
 
-		if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
-			print "\n$notes";
-		}
+		# if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
+			# print "\n$notes";
+		# }
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			# print "\t", join("\n\t", @notes), "\n";
