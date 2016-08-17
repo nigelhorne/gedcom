@@ -1750,12 +1750,12 @@ sub print_person
                                                 print " ($notes)";
                                         }
                                         print '.';
-				} elsif(($event->type() !~ /^Census U[KS] (\d{4})$/) &&
-					(my $notes = notes(record => $event))) {
-					$notes = ucfirst($notes);
-					print " ($notes)";
-				} else {
+				} elsif($event->type() !~ /^Census U[KS] (\d{4})$/) {
 					red_warning({ person => $person, warning => 'Unhandled event type: ' . $event->type() });
+					if(my $notes = notes(record => $event)) {
+						$notes = ucfirst($notes);
+						print " ($notes)";
+					}
 				}
 			}
 		} else {
