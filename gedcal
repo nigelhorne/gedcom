@@ -31,6 +31,7 @@ use Term::ANSIColor;
 use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
+use Lingua::EN::ABC;
 use DateTime::Duration;
 use DateTime::Format::Natural;
 use Tie::Static;
@@ -2828,6 +2829,14 @@ sub notes
 	}
 	if($rc) {
 		$rc =~ s/ $//;
+
+		if(defined($ENV{'LANG'})) {
+			if($ENV{'LANG'} =~ /^en_US/) {
+				return Lingua::EN::ABC::b2a($rc);
+			} elsif($ENV{'LANG'} =~ /^en_GB/) {
+				return Lingua::EN::ABC::a2b($rc);
+			}
+		}
 	}
 	return $rc;
 }
