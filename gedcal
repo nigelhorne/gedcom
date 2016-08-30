@@ -1506,13 +1506,13 @@ sub print_person
 			}
 			if((ref($event) eq 'Gedcom::Record') &&
 			   ($event->type() =~ /^Census U[KS] (\d{4})$/)) {
-			   	my $newresidence = 0;
-			   	foreach my $residence(@residences) {
+				my $newresidence = 0;
+				foreach my $residence(@residences) {
 					if((ref($residence) eq 'Gedcom::Record') &&
 					  $residence->date() &&
 					  $event->date() &&
 					  $residence->date() eq $event->date()) {
-					  	$newresidence = 1;
+						$newresidence = 1;
 						last;
 					}
 				}
