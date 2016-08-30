@@ -1795,6 +1795,7 @@ sub print_person
 		} else {
 			my $mentioned_military;
 			my $index = 0;
+			my $previous;
 			foreach my $event(@events) {
 				$index++;
 				if(!ref($event)) {
@@ -1826,6 +1827,54 @@ sub print_person
 							print " ($notes)";
 						}
 						$end_of_sentence = 0;
+					} elsif($event->type() eq 'Arrival') {
+						if($events[$index] && ($events[$index]->type() eq 'Arrival') && $event->date()) {
+							if($events[$index]->date()) {
+								$previous = $event;
+								next;
+							}
+						}
+						if($previous) {
+							my $date1 = year({ record => $previous });
+							my $date2 = year({ record => $event });
+							my $year1;
+							my $year2;
+							if($date1 =~ /(.*)\s?(\d{4})$/) {
+								$date1 = $1;
+								$year1 = $2;
+								$date1 =~ s/,\s//;
+							}
+							if($date2 =~ /(.*)\s?(\d{4})$/) {
+								$date2 = $1;
+								$year2 = $2;
+								$date2 =~ s/,\s//;
+							}
+							print '.  ' if(!$end_of_sentence);
+							if(defined($year1) && defined($year2) && ($year1 == $year2)) {
+								print "During $year1 ", lcfirst($pronoun), ' arrived',
+									place({ person => $person, record => $previous, nopreposition => 1 }),
+									" $date1 and",
+									place({ person => $person, record => $event, nopreposition => 1 }),
+									" $date2.";
+							} else {
+								print ucfirst(year({ person => $person, record => $previous })),
+									' ', lcfirst($person->pronoun()),
+									' arrived',
+									place({ person => $person, record => $previous }),
+									' and ',
+									year({ person => $person, record => $event }),
+									' ', lcfirst($person->pronoun()),
+									' arrived',
+									place({ person => $person, record => $event }), '.';
+							}
+							$previous = undef;
+						} else {
+							print ucfirst(year({ person => $person, record => $event })),
+								' ', lcfirst($person->pronoun()),
+								' arrived',
+								place({ person => $person, record => $event }), '.';
+						}
+						$end_of_sentence = 1;
 					} elsif($event->type() !~ /^Census U[KS] (\d{4})$/) {
 						red_warning({ person => $person, warning => 'Unhandled event type: ' . $event->type() });
 					}
@@ -1835,7 +1884,7 @@ sub print_person
 
 		if($placeofburial || $dateofburial) {
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
-				print '.' if((!$end_of_sentence) && (scalar(@spouses) || $numberofchildren));
+				print '.' if(!$end_of_sentence);
 				if($dateofburial) {
 					print "  $pronoun was buried";
 					if($placeofburial) {
