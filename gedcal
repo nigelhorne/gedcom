@@ -1304,6 +1304,13 @@ sub print_person
 						print ' (';
 						$parentheses = 1;
 					}
+					if(my $soccupation = $spouses[0]->occupation()) {
+						print 'a';
+						if($soccupation =~ /^[aeiou]/i) {
+							print 'n';
+						}
+						print ' ', lc($soccupation), ', ';
+					}
 					print 'with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 						print ' had ';
