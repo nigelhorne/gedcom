@@ -1299,11 +1299,6 @@ sub print_person
 				} else {
 					print $spouses[0]->as_string();
 					$haveprintedspousename = 1;
-					my @spouse_occupations = $spouses[0]->get_value('occupation');
-					if($spouse_occupations[0]) {
-						print ' (a ', lc($spouse_occupations[0]);
-						$parentheses = 1;
-					}
 				}
 				if($numberofchildren) {
 					if($parentheses || ((!$placeofmarriage) && (!$dateofmarriage))) {
@@ -1346,6 +1341,12 @@ sub print_person
 						my $childnames = join(', ', map { $_->given_names() } @children);
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						print $childnames;
+					}
+				} else {
+					my @spouse_occupations = $spouses[0]->get_value('occupation');
+					if($spouse_occupations[0]) {
+						print ' (a ', lc($spouse_occupations[0]);
+						$parentheses = 1;
 					}
 				}
 				if($parentheses) {
