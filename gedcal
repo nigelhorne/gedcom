@@ -1986,7 +1986,7 @@ sub print_person
 					print $p;
 					$places_printed{$p} = 1;
 				}
-				print "[$_]" foreach(@deathcitations);
+				print "[$_]" foreach(sort @deathcitations);
 				# Print notes about the death, if any
 				my $d = get_value({ person => $person, value => 'death' });
 				if($d) {
