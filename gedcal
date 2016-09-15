@@ -32,6 +32,7 @@ use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
 use Lingua::EN::ABC;
+# use Lingua::EN::AddressParse;
 use DateTime::Duration;
 use DateTime::Format::Natural;
 use Tie::Static;
@@ -2839,6 +2840,16 @@ sub place
 	}
 
 	if($address) {
+		# my $ap;
+		# if(($place =~ /USA$/) || ($place =~ /United States$/)) {
+			# $ap = Lingua::EN::AddressParse->new(country => 'US', auto_clean => 1, force_case => 1);
+		# } elsif($place =~ /England$/) {
+			# $ap = Lingua::EN::AddressParse->new(country => 'GB', auto_clean => 1, force_case => 1);
+		# }
+		# if($ap) {
+			# my $error = $ap->parse("$address, $place");
+			# print $ap->report();
+		# }
 		$place = " at $address, $place";
 	} elsif($params{'nopreposition'}) {
 		$place = " $place";
