@@ -20,4 +20,4 @@ install:
 
 script:
   - perl -MO=Lint ./gedcal
-  - perl -c -Mwarnings::unused ./ged2site
+  - perl -c -Mwarnings::unused ./gedcal
