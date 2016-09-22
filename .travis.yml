@@ -16,7 +16,7 @@ perl:
   - "5.12"
 
 install:
-  - cpanm --skip-satisfied -n -q Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Term::ANSIColor Lingua::EN::NameParse Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Tie::Static DateTime::Format::Natural B::Lint LWP::Simple URI URI::Find::Schemeless Sort::Key::DateTime Text::Names autodie IPC::System::Simple Memoize Lingua::EN::ABC warnings::unused
+  - cpanm --skip-satisfied -n -q Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Term::ANSIColor Lingua::EN::NameParse Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Tie::Static DateTime::Format::Natural B::Lint LWP::Simple URI URI::Find::Schemeless Sort::Key::DateTime Text::Names autodie IPC::System::Simple Memoize Lingua::EN::ABC warnings::unused Geo::Coder::Canada
 
 script:
   - perl -MO=Lint ./gedcal
