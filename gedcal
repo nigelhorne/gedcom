@@ -2044,7 +2044,12 @@ sub print_person
 				# die 'foo';
 			}
 			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
-				print ', which is also where ', lcfirst($pronoun);
+				if($end_of_sentence) {
+					print 'That';
+				} else {
+					print ', which';
+				}
+				print ' is also where ', lcfirst($pronoun);
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				if($end_of_sentence) {
 					print "  $pronoun";
@@ -2485,10 +2490,10 @@ sub Gedcom::Individual::as_string
 		$rc .= ' ' if($yob || $yod);
 
 		if($yob) {
-			$rc .= $yob;
+			$rc .= "$yob ";
 		}
 
-		$rc .= ' -' if($yob || $yod);
+		$rc .= '-' if($yob || $yod);
 
 		if($yod) {
 			return "$rc $yod";
@@ -3046,7 +3051,7 @@ sub validate_place
 				# may no longer exist
 				my $person = $params{'person'};
 				if($person) {
-					warn colored($person->as_string({ include_dates => 1 }) . ": unknown location $place", 'red');
+					warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place", 'red');
 				} else {
 					warn colored("Unknown location $place", 'red');
 				}
