@@ -2388,7 +2388,6 @@ sub Gedcom::Individual::as_string
 	} elsif(!defined($surname)) {
 		$surname = $self->surname();
 	}
-	my $suffix = $name_components{'suffix'};
 
 	my $has_maiden_name;
 	if($args{'nee'}) {
@@ -2439,7 +2438,7 @@ sub Gedcom::Individual::as_string
 			$rc .= ' ';
 		}
 		$rc .= normalize_name($surname);
-		if($suffix) {
+		if(my $suffix = $name_components{'suffix'}) {
 			$rc .= " $suffix";
 		}
 	}
