@@ -996,7 +996,7 @@ sub print_person
 			print ($opts{'t'} ? 'tomorrow' : 'today');
 			print "[$_]" foreach(@birthcitations);
 			print "[$_]" foreach(@deathcitations);
-			print '.';
+			print '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
 			print " was born $aob ", ($aob == 1) ? 'year' : 'years', ' ago ',
@@ -1007,7 +1007,7 @@ sub print_person
 				$places_printed{$p} = 1;
 			}
 			print "[$_]" foreach(@birthcitations);
-			print '.';
+			print '. ';
 			$end_of_sentence = 1;
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago ',
@@ -1023,12 +1023,12 @@ sub print_person
 				print place({ person => $person, record => $death, places_printed => \%places_printed });
 			}
 			print "[$_]" foreach(@deathcitations);
-			print '.';
+			print '. ';
 			$end_of_sentence = 1;
 		}
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			print "  $pronoun" if($aob || $aod);
+			print " $pronoun" if($aob || $aod);
 			if($dateofbirth || $placeofbirth) {
 				print ',' if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
 
@@ -1190,15 +1190,15 @@ sub print_person
 				if($aod || $aob) {
 					print ' and';
 				} else {
-					print '.';
+					print '. ';
 					$end_of_sentence = 1;
 				}
 			} else {
-				print '.';
+				print '. ';
 				$end_of_sentence = 1;
 			}
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
-			print "  $pronoun was ";
+			print " $pronoun was ";
 
 			if($ENV{'LANG'} =~ /^en_US/) {
 				print 'baptized';
@@ -1247,7 +1247,7 @@ sub print_person
 				print ' and';
 				$end_of_sentence = 0;
 			} else {
-				print '.';
+				print '. ';
 				$end_of_sentence = 1;
 			}
 		}
@@ -1293,7 +1293,7 @@ sub print_person
 		}
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
-			print "  $pronoun" if($end_of_sentence);
+			print " $pronoun" if($end_of_sentence);
 
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
@@ -1494,7 +1494,7 @@ sub print_person
 			$end_of_sentence = 0;
 		} elsif($numberofchildren) {
 			if($end_of_sentence) {
-				print "  $pronoun";
+				print " $pronoun";
 			}
 			print ' had ',
 				($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
@@ -1649,8 +1649,8 @@ sub print_person
 						next;
 					}
 					if(!$have_printed) {
-						print '.' unless($end_of_sentence);
-						print '  During ',
+						print '. ' unless($end_of_sentence);
+						print ' During ',
 							lc($person->possessive()),
 							' life ', lcfirst($pronoun), ' lived';
 						$have_printed = 1;
@@ -1796,6 +1796,7 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif(scalar(@events) == 1) {
 			print '. ' if(!$end_of_sentence);
+			$end_of_sentence = 1;
 
 			my $event = $person->event();
 			if(!ref($event)) {
@@ -1805,24 +1806,23 @@ sub print_person
 				} else {
 					red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
 					print ' ', ucfirst($event), '. ';
-					$end_of_sentence = 1;
 				}
 			}
 			if(ref($event) eq 'Gedcom::Record') {
-				if($event->type() eq 'Arrival') {
+				my $type = $event->type();
+				if($type eq 'Arrival') {
 					print ' ', $person->pronoun(), ' arrived',
 						place({ person => $person, record => $events[0] }),
 						' ',
 						year({ person => $person, record => $events[0] });
-                                        if(my $notes = notes({ record => $event })) {
-                                                $notes = lcfirst($notes);
-                                                print " ($notes)";
-                                        }
-                                        print '. ';
-					$end_of_sentence = 1;
-				} elsif($event->type() eq 'Military service') {
-					print '.' if(!$end_of_sentence);
-					print "  $pronoun served in the military";
+					if(my $notes = notes({ record => $event })) {
+						$notes = lcfirst($notes);
+						print " ($notes)";
+					}
+					print '. ';
+				} elsif($type eq 'Military service') {
+					print '. ' if(!$end_of_sentence);
+					print " $pronoun served in the military";
 					if(my $place = place({ person => $person, record => $event })) {
 						print $place;
 					}
@@ -1836,11 +1836,12 @@ sub print_person
 						print " ($notes)";
 					}
 					$end_of_sentence = 0;
-				} elsif($event->type() !~ /^Census U[KS] (\d{4})$/) {
-					red_warning({ person => $person, warning => 'Unhandled event type: ' . $event->type() });
+				} elsif(($type !~ /^Census U[KS] (\d{4})$/) && ($type ne 'Race')) {
+					red_warning({ person => $person, warning => "Unhandled event type: $type" });
 					if(my $notes = notes(record => $event)) {
 						$notes = ucfirst($notes);
 						print " ($notes)";
+						$end_of_sentence = 0;
 					}
 				}
 			}
@@ -1856,14 +1857,14 @@ sub print_person
 						$event = $e;
 					} else {
 						red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
-						print ' ', ucfirst($event), '.';
+						print ' ', ucfirst($event), '. ';
 					}
 				}
 				if(ref($event) eq 'Gedcom::Record') {
 					if($event->type() eq 'Military service') {
 						if(!$mentioned_military) {
-							print '.' if(!$end_of_sentence);
-							print "  $pronoun served in the military";
+							print '. ' if(!$end_of_sentence);
+							print " $pronoun served in the military";
 							if(my $place = place({ person => $person, record => $event })) {
 								print $place;
 							}
@@ -2086,7 +2087,7 @@ sub print_person
 			}
 			$end_of_sentence = 0;
 		}
-		print '.' if(!$end_of_sentence);
+		print '. ' if(!$end_of_sentence);
 
 		# if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
 			# print "\n$notes";
