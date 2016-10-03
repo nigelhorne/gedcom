@@ -5,14 +5,15 @@ Print today's family anniversaries.
 
 Given your family tree as a gedcom, gedcal will tell you whose birthday it is
 and who died on this day.
-
-Although primarily a tool for genealogy, the -l flag tells gedcal to print
-matches for family members that are still alive.
+Although primarily a tool for genealogy,
+the -l flag tells gedcal to print matches for family members that are still
+alive.
 
 The -d flag will give you a short biography of each person.
 
-Try adding this to your crontab, it will give you a daily e-mail of your relative's
-birthdays and the anniversaries of their death along with information about their life.
+Try adding this to your crontab,
+it will give you a daily e-mail of your relative's birthdays and the
+anniversaries of their death along with information about their life.
 
     3 5 * * * gedcal -dl gedcom-file.ged
 
