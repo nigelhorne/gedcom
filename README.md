@@ -48,7 +48,7 @@ The options are:
     -h: set the home person - useful for calculating relationships with -d
     -m: month for -H calendar
     -l: include living people
-    -L: include gedsite hyperlinks with -H
+    -L: include ged2site hyperlinks with -H
     -p: print the biography of the given person
     -t: print tomorrow's information, don't use with -a
     -v: verbose - for debugging
