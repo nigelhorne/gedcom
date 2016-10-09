@@ -1668,7 +1668,7 @@ sub print_person
 							' life ', lcfirst($pronoun), ' lived';
 						$have_printed = 1;
 					}
-					if(places_are_the_same({ person => $person, first => $birth, second => $residence})) {
+					if($birth && places_are_the_same({ person => $person, first => $birth, second => $residence})) {
 						print ' at ', $person->pronoun() eq 'She' ? 'her' : 'his', ' birthplace';
 					} else {
 						my $p = place({
