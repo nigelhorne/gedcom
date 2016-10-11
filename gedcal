@@ -1736,7 +1736,10 @@ sub print_person
 				if($count < (scalar(@residencelist) - 1)) {
 					print ';';
 				} elsif($count == (scalar(@residencelist) - 1)) {
-					print '; and';
+					if($count > 1) {
+						print ';';
+					}
+					print ' and';
 				}
 				$printed_residence = 1;
 			}
