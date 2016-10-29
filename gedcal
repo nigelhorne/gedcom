@@ -401,7 +401,6 @@ sub print_person
 	my @spouses = $person->spouse();
 
 	# TODO: Properly chart which spouse a child comes from
-	# FIXME: This current algorithm misses children from all the marriages
 	my $family;
 	foreach my $f($person->fams()) {
 		if($f->number_of_children()) {
@@ -1473,7 +1472,7 @@ sub print_person
 						}
 					}
 					print ".  $pronoun ",
-						$all_children_are_alive ? 'has ' : 'had ';
+						($all_children_are_alive ? 'has ' : 'had ');
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
 							print '1 surviving child';
@@ -1482,6 +1481,8 @@ sub print_person
 						}
 						if($parentofall) {
 							print ' with ', $parentofall->as_string();
+						} else {
+							die "BUG: parentofall not set when only one child";
 						}
 						print ', ', $children[0]->given_names();
 					} else {
@@ -1490,14 +1491,19 @@ sub print_person
 						} else {
 							print "$numberofchildren children";
 						}
+						my $childnames;
 						if($parentofall) {
 							if($numberofchildren == 2) {
 								print ', both with ', $parentofall->as_string();
 							} else {
 								print ', all with ', $parentofall->as_string();
 							}
+							$childnames = join(', ', map { $_->given_names() } @children);
+						} elsif($sex eq 'M') {
+							$childnames = join(', ', map { $_->given_names() . ' (with ' . $_->mother()->given_names() . ')' } @children);
+						} else {
+							$childnames = join(', ', map { $_->given_names() . ' (with ' . $_->father()->given_names() . ')' } @children);
 						}
-						my $childnames = join(', ', map { $_->given_names() } @children);
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						print ": $childnames";
 					}
