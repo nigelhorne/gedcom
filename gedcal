@@ -2010,8 +2010,7 @@ sub print_person
 						}
 					}
 					print ' ', year({ person => $person, date => $dateofburial });
-					my $b = get_value({ person => $person, value => 'burial note' });
-					if($b) {
+					if(my $b = notes({ record => $burial, paragraph => 0 })) {
 						$b =~ tr/\r//;
 						print " ($b)";
 					}
