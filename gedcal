@@ -729,8 +729,13 @@ sub print_person
 			}
 		}
 
+		# use Data::Fetch;
+		# my $f = Data::Fetch->new();
+		# $f->prime(object => $person, message => 'sex');  
 		my $pronoun = $person->pronoun();
 		my $sex = $person->sex();
+		# my $sex = $f->get(object => $person, message => 'sex');  
+		print "$sex\n";
 		if($opts{'w'}) {
 			my $guess = Text::Names::guessGender($firstname);
 			if($sex && $guess && ($sex ne $guess)) {
