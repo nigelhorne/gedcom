@@ -36,14 +36,13 @@ use Lingua::EN::ABC;
 # use Lingua::EN::AddressParse;
 use DateTime::Duration;
 use DateTime::Format::Natural;
-use Tie::Static;
 use LWP::Simple;
 use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
 use Text::Names;
 use Memoize;
-# use Data::Fetch;
+use Data::Fetch;
 no lib '.';
 
 my %opts;
@@ -102,6 +101,7 @@ my $geocoder = Geo::Coder::OSM->new();
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 my $ninemonths = DateTime::Duration->new(months => 9);
 my $sixteenyears = DateTime::Duration->new(years => 16);
+my $fetcher = Data::Fetch->new();
 
 my @everyone;
 unless($opts{'p'}) {
@@ -636,6 +636,8 @@ sub print_person
 	if($opts{'d'}) {
 		print "\t";
 
+		$fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');  
+
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 		if((!$placeofbirth) && $birth) {
 			$placeofbirth = $birth->place();
@@ -730,11 +732,9 @@ sub print_person
 			}
 		}
 
-		# my $f = Data::Fetch->new();
-		# $f->prime(object => $person, message => 'sex');  
-		my $pronoun = $person->pronoun();
-		# my $sex = $f->get(object => $person, message => 'sex');  
-		my $sex = $person->sex();
+		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');  
+		my $sex = $fetcher->get(object => $person, message => 'sex');  
+
 		if($opts{'w'}) {
 			my $guess = Text::Names::guessGender($firstname);
 			if($sex && $guess && ($sex ne $guess)) {
@@ -3225,39 +3225,32 @@ sub get_value
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $person = $params{'person'};
-	my $value = $params{'value'};
+	my $args = {
+		object => $params{'person'},
+		message => 'get_value',
+		arg => $params{'value'}
+	};
 
-	my $xref = $person->{'xref'};
-	tie (my %values, 'Tie::Static');
-
-	if(defined($values{$xref}{$value})) {
-		return $values{$xref}{$value};
-	}
-
-	my $rc = $person->get_value($value);
-	$values{$xref}{$value} = $rc;
-	return $rc;
+	# Doesn't use the prefetching feature, but will automatically cache which is nice
+	my $f = Data::Fetch->new();
+	$f->prime($args);
+	return $f->get($args);
 }
 
 sub get_source
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $gedcom = $params{'gedcom'};
-	my $person = $params{'person'};
-	my $source = $params{'source'};
+	my $args = {
+		object => $params{'gedcom'},
+		message => 'get_source',
+		arg => $params{'source'}
+	};
 
-	my $xref = $person->{'xref'};
-	tie (my %sources, 'Tie::Static');
-
-	if(defined($sources{$xref}{$source})) {
-		return $sources{$xref}{$source};
-	}
-
-	my $rc = $gedcom->get_source($source);
-	$sources{$xref}{$source} = $rc;
-	return $rc;
+	# Doesn't use the prefetching feature, but will automatically cache which is nice
+	my $f = Data::Fetch->new();
+	$f->prime($args);
+	return $f->get($args);
 }
 
 sub must_predate
