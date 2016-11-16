@@ -638,7 +638,7 @@ sub print_person
 	if($opts{'d'}) {
 		print "\t";
 
-		$fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');  
+		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');  
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 		if((!$placeofbirth) && $birth) {
@@ -3234,8 +3234,7 @@ sub get_value
 	};
 
 	# Doesn't use the prefetching feature, but will automatically cache which is nice
-	# my $f = Data::Fetch->new();
-	$fetcher->prime($args);
+	# $fetcher->prime($args);
 	return $fetcher->get($args);
 }
 
@@ -3250,8 +3249,7 @@ sub get_source
 	};
 
 	# Doesn't use the prefetching feature, but will automatically cache which is nice
-	# my $f = Data::Fetch->new();
-	$fetcher->prime($args);
+	# $fetcher->prime($args);
 	return $fetcher->get($args);
 }
 
