@@ -2073,7 +2073,7 @@ sub print_person
 				} else {
 					print ' and is buried', place($opts);
 				}
-				if(my $b = get_value({ person => $person, value => 'burial note' })) {
+				if(my $b = notes({ record => $burial, paragraph => 0 })) {
 					$b =~ tr/\r//;
 					print " ($b)";
 				}
