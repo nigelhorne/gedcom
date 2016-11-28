@@ -638,7 +638,7 @@ sub print_person
 	if($opts{'d'}) {
 		print "\t";
 
-		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');  
+		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 		if((!$placeofbirth) && $birth) {
@@ -734,8 +734,8 @@ sub print_person
 			}
 		}
 
-		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');  
-		my $sex = $fetcher->get(object => $person, message => 'sex');  
+		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');
+		my $sex = $fetcher->get(object => $person, message => 'sex');
 
 		if($opts{'w'}) {
 			my $guess = Text::Names::guessGender($firstname);
