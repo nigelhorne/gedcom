@@ -1032,6 +1032,11 @@ sub print_person
 				print place({ person => $person, record => $death, places_printed => \%places_printed });
 			}
 			print "[$_]" foreach(@deathcitations);
+			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
+				$notes =~ s/\.$//;
+				$notes = lcfirst($notes);
+				print " ($notes)";
+			}
 			print '. ';
 			$end_of_sentence = 1;
 		}
@@ -2056,8 +2061,7 @@ sub print_person
 				}
 				print "[$_]" foreach(sort @deathcitations);
 				# Print notes about the death, if any
-				my $d = get_value({ person => $person, value => 'death' });
-				if($d) {
+				if(my $d = notes({ person => $person, record => $death })) {
 					$d =~ tr/\r//;
 					print " ($d)";
 				}
@@ -2128,7 +2132,7 @@ sub print_person
 			}
 			print "[$_]" foreach(@deathcitations);
 			# Print notes about the death, if any
-			if(defined($death) && (my $d = get_value({ person => $person, value => 'death' }))) {
+			if(defined($death) && (my $d = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$d =~ tr/\r//;
 				$d =~ s/\.$//;
 				print " ($d)";
