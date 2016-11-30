@@ -1975,11 +1975,18 @@ sub print_person
 									place({ person => $person, record => $event }), '. ';
 							}
 							$previous = undef;
-						} else {
-							print ucfirst(year({ person => $person, record => $event })),
-								' ', lcfirst($person->pronoun()),
-								' arrived',
-								place({ person => $person, record => $event }), '. ';
+						} elsif(my $place = place({ person => $person, record => $event })) {
+							if(my $year = year({ person => $person, record => $event })) {
+								print "$year ", lcfirst($person->pronoun()), " arrived $place.";
+							} elsif($opts{'f'}) {
+								die $person->as_string(), "Can't determine $type date";
+							} elsif($opts{'w'}) {
+								red_warning({ person => $person, warning => "Can't determine $type date" });
+							}
+						} elsif($opts{'f'}) {
+							die $person->as_string(), "Can't determine $type location";
+						} elsif($opts{'w'}) {
+							red_warning({ person => $person, warning => "Can't determine $type location" });
 						}
 						$end_of_sentence = 1;
 					} elsif(($type !~ /^Census U[KS] (\d{4})$/) && ($type ne 'Race')) {
@@ -2116,7 +2123,9 @@ sub print_person
 			}
 			print ' died';
 			if($dateofdeath) {
-				if($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
+				if($dateofbirth && ($dateofdeath eq $dateofbirth)) {
+					print ' on the same day';
+				} elsif($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					print " in $1 ",
@@ -2124,7 +2133,16 @@ sub print_person
 				} else {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage) || $printed_residence)) {
-						print place({ person => $person, record => $death, places_printed => \%places_printed });
+						if(my $place = place({ person => $person, record => $death, places_printed => \%places_printed })) {
+							print $place;
+						} elsif($opts{'f'}) {
+							die $person->as_string(), "Place of death ($placeofdeath) can't be parsed";
+						} elsif($opts{'w'}) {
+							red_warning({
+								person => $person,
+								warning => "Place of death ($placeofdeath) can't be parsed"
+							});
+						}
 					}
 				}
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
@@ -2288,11 +2306,11 @@ sub print_person
 				foreach my $year(sort keys(%years)) {
 					if($years{$year + 20} && !$years{$year + 10}) {
 						if($opts{'f'}) {
-							die 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20};
+							die 'Census citation missing between ', $years{$year}, ' and ', $years{$year + 20};
 						}
 						red_warning({
 							person => $person,
-							warning => 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20}
+							warning => 'Census citation missing between ', $years{$year}, ' and ' . $years{$year + 20}
 						});
 					}
 				}
