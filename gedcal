@@ -2310,7 +2310,7 @@ sub print_person
 						}
 						red_warning({
 							person => $person,
-							warning => 'Census citation missing between ', $years{$year}, ' and ' . $years{$year + 20}
+							warning => 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20}
 						});
 					}
 				}
