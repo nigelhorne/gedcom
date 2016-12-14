@@ -1031,7 +1031,7 @@ sub print_person
 			if($placeofdeath) {
 				print place({ person => $person, record => $death, places_printed => \%places_printed });
 			}
-			print "[$_]" foreach(@deathcitations);
+			print "[$_]" foreach(sort @deathcitations);
 			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$notes =~ s/\.$//;
 				$notes = lcfirst($notes);
