@@ -1873,6 +1873,22 @@ sub print_person
 						print " ($notes)";
 					}
 					print '. ';
+				} elsif($type eq 'Departure') {
+					print ' ', $person->pronoun();
+					if($ENV{'LANG'} =~ /^en_US/) {
+						print ' traveled';
+					} else {
+						print ' travelled';
+					}
+					my $place = place({ person => $person, record => $events[0] });
+					$place =~ s/^\sin/ from/;
+					print "$place ",
+						year({ person => $person, record => $events[0] });
+					if(my $notes = notes({ record => $event })) {
+						$notes = lcfirst($notes);
+						print " ($notes)";
+					}
+					print '. ';
 				} elsif($type eq 'Military service') {
 					print '. ' if(!$end_of_sentence);
 					print " $pronoun served in the military";
@@ -1890,7 +1906,7 @@ sub print_person
 					}
 					$end_of_sentence = 0;
 				} elsif(($type !~ /^Census U[KS] (\d{4})$/) && ($type ne 'Race') && ($type ne 'Register UK 1939')) {
-					red_warning({ person => $person, warning => "Unhandled event type: $type" });
+					red_warning({ person => $person, warning => ">>>>>>>Unhandled event type: $type" });
 					if(my $notes = notes(record => $event)) {
 						$notes = ucfirst($notes);
 						print " ($notes)";
