@@ -1339,7 +1339,7 @@ sub print_person
 						if($soccupation =~ /^[aeiou]/i) {
 							print 'n';
 						}
-						print ' ', lc($soccupation), ', ';
+						print ' ', lc($soccupation), ' ';
 					}
 					print 'with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
@@ -2842,6 +2842,13 @@ sub year
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
 		return "c. $2";
+	}
+	if($string =~ /^bet (.+) and (.+)/i) {
+		my $from = year({ %params, string => $1 });
+		my $to = year({ %params, string => $2 });
+		$from =~ s/^(in|on|c.) //;
+		$to =~ s/^(in|on|c.) //;
+		return "from $from to $to";
 	}
 	if($string =~ /^\d/) {
 		my $person = $params{'person'};
