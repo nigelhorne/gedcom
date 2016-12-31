@@ -1712,7 +1712,7 @@ sub print_person
 					}
 				}
 				# Citation residence notes print later
-				if((!$opts{'c'}) && (my $notes = notes({ record => $residence }))) {
+				if((!($opts{'c'} && $residence->source())) && (my $notes = notes({ record => $residence }))) {
 					$notes =~ s/\.$//;
 					$notes = lcfirst($notes);
 					print " ($notes)";
