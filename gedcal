@@ -208,10 +208,20 @@ if($opts{'H'}) {
 
 	print "<center><h2>", @{$dtl->month_format_wide()}[$month], " $year</h2></center>";
 
-	foreach my $day(1..29) {
+	foreach my $day(1..28) {
 		generate(day => $day, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 	}
-	if($month != 1) {
+	if($month == 1) {
+		# February
+		if(($year % 100) == 0) {
+			if(($year % 400) == 0) {
+				generate(day => 29, month => $month, everyone => \@everyone);
+			}
+		} elsif(($year % 4) == 0) {
+			generate(day => 29, month => $month, everyone => \@everyone);
+		}
+	} else {
+		generate(day => 29, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 		generate(day => 30, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
 			generate(day => 31, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
@@ -230,10 +240,11 @@ if($opts{'H'}) {
 			generate(day => $day, month => $month, everyone => \@everyone);
 		}
 		if($month == 1) {
-			if(($month % 100) == 0) {
-				next if($month % 400);
+			my $year = DateTime->today()->year();
+			next if($year % 4);
+			if(($year % 100) == 0) {
+				next unless($year % 400);
 			}
-			next if($month % 4);
 			generate(day => 29, month => $month, everyone => \@everyone);
 			next;
 		}
