@@ -2766,6 +2766,7 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 3 => 'second cousin',
 					3 << 8 | 4 => 'second cousin once-removed',
 					4 << 8 | 2 => 'first cousin twice-removed',
+					4 << 8 | 3 => 'second cousin once-removed',
 					5 << 8 | 2 => 'first cousin three-times-removed',
 					5 << 8 | 3 => 'second cousin twice-removed',
 					6 << 8 | 3 => 'second cousin three-times-removed',
@@ -2791,6 +2792,7 @@ sub Gedcom::Individual::relationship
 					3 << 8 | 4 => 'second cousin once-removed',
 					4 << 8 | 1 => 'great-great-aunt',
 					4 << 8 | 2 => 'first cousin twice-removed',
+					4 << 8 | 3 => 'second cousin once-removed',
 					5 << 8 | 2 => 'first cousin three-times-removed',
 					5 << 8 | 3 => 'second cousin twice-removed',
 					6 << 8 | 3 => 'second cousin three-times-removed',
@@ -2815,7 +2817,7 @@ sub Gedcom::Individual::relationship
 						$rc .= ' on your mother\'s side';
 					}
 				}
-				# print "$steps1, $steps2\n" if(!defined($rc));
+				print "$steps1, $steps2\n" if(!defined($rc));
 
 				return $rc;
 			}
