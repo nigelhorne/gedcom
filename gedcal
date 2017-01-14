@@ -561,11 +561,11 @@ sub print_person
 			my $previous;
 			foreach my $src(@s) {
 				$src = get_source({ gedcom => $ged, person => $person, source => $src}) unless ref($src);
-				if(defined($src) && $src->title()) {
-					if($previous && ($src->title() eq $previous)) {
+				if(defined($src) && (my $title = $src->title())) {
+					if($previous && ($title eq $previous)) {
 						next;
 					}
-					$previous = $src->title();
+					$previous = $title;
 					push @birthcitations, ++$citationcount;
 					$citations{$citationcount} = $src;
 				}
@@ -721,9 +721,9 @@ sub print_person
 		my @burialcitations;
 		if($opts{'c'}) {
 			if($marriage) {
-				my $src = $marriage->source();
-				if($src) {
+				if(my $src = $marriage->source()) {
 					$src = $ged->get_source($src) unless ref($src);
+					# FIXME:  Only looks for matches in the first citations
 					if(!defined($src)) {
 						if($opts{'w'}) {
 							my $src = $marriage->source();
@@ -732,8 +732,8 @@ sub print_person
 							}
 							red_warning({ person => $person, warning => "marriage citation can't find source $src" });
 						}
-					} elsif($birthcitations[0] && (grep($src, @birthcitations))) {
-						$marriagecitation = grep($src, @birthcitations);
+					} elsif($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
+						$marriagecitation = $birthcitations[0];
 					} elsif($deathcitations[0] && ($citations{$deathcitations[0]} eq $src)) {
 						$marriagecitation = $deathcitations[0];
 					} else {
