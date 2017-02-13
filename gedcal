@@ -836,14 +836,21 @@ sub print_person
 			shift @occupations;
 		}
 
+		my $same_occupation_as_father;
+
 		if($occupations[0]) {
-			print 'A';
-			if($occupations[0] =~ /^[aeiou]/i) {
-				print 'n';
-			}
-			print ' ', lc($occupations[0]);
-			if(!($father || $mother || $spouserelationship)) {
-				print ', ';
+			if($father->occupation() && ($occupations[0] eq $father->occupation())) {
+				$same_occupation_as_father = $occupations[0];
+				@occupations = ();
+			} else {
+				print 'A';
+				if($occupations[0] =~ /^[aeiou]/i) {
+					print 'n';
+				}
+				print ' ', lc($occupations[0]);
+				if(!($father || $mother || $spouserelationship)) {
+					print ', ';
+				}
 			}
 		} elsif(scalar(@occupations)) {
 			if($opts{'w'}) {
@@ -957,21 +964,23 @@ sub print_person
 
 			if($father) {
 				print ' ', $father->as_string();
-				my @occupations = $father->get_value('occupation');
-				# TODO: print all occupations
-				if($occupations[0]) {
-					print ' (a';
-					if($occupations[0] =~ /^[aeiou]/i) {
-						print 'n';
-					}
-					if(defined($ENV{'LANG'})) {
-						if($ENV{'LANG'} =~ /^en_US/) {
-							print ' ', Lingua::EN::ABC::b2a(lc($occupations[0])), ')';
-						} elsif($ENV{'LANG'} =~ /^en_GB/) {
-							print ' ', Lingua::EN::ABC::a2b(lc($occupations[0])), ')';
+				if(!$same_occupation_as_father) {
+					my @occupations = $father->get_value('occupation');
+					# TODO: print all occupations
+					if($occupations[0]) {
+						print ' (a';
+						if($occupations[0] =~ /^[aeiou]/i) {
+							print 'n';
 						}
-					} else {
-						print ' ', lc($occupations[0]), ')';
+						if(defined($ENV{'LANG'})) {
+							if($ENV{'LANG'} =~ /^en_US/) {
+								print ' ', Lingua::EN::ABC::b2a(lc($occupations[0])), ')';
+							} elsif($ENV{'LANG'} =~ /^en_GB/) {
+								print ' ', Lingua::EN::ABC::a2b(lc($occupations[0])), ')';
+							}
+						} else {
+							print ' ', lc($occupations[0]), ')';
+						}
 					}
 				}
 				if($mother) {
@@ -1579,6 +1588,17 @@ sub print_person
 			$end_of_sentence = 0;
 		}
 
+		if($same_occupation_as_father) {
+			print '. ' if(!$end_of_sentence);
+			print ' Like is father, ', lcfirst($pronoun),
+				(was_alive(person => $person) ? ' is a' : ' was a');
+			if($same_occupation_as_father =~ /^[aeiou]/i) {
+				print 'n';
+			}
+			print ' ', lc($same_occupation_as_father), '. ';
+			$end_of_sentence = 1;
+		}
+
 		my $printed_residence = 0;
 		my %citationnotes;
 		my @residences = $person->residence();
@@ -1623,6 +1643,7 @@ sub print_person
 				push @residences, $event if($newresidence);
 			}
 		}
+
 		if(scalar(@residences)) {
 			# FIXME, handle duplicate locations better
 			my @residencelist;
