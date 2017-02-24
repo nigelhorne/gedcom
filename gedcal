@@ -831,7 +831,6 @@ sub print_person
 			}
 		}
 
-		# TODO: print all occupations
 		while($occupations[0] && (lc($occupations[0]) =~ /^school/i)) {
 			shift @occupations;
 		}
@@ -847,7 +846,9 @@ sub print_person
 				if($occupations[0] =~ /^[aeiou]/i) {
 					print 'n';
 				}
-				print ' ', lc($occupations[0]);
+				my $occupations = join(', ', @occupations);
+				substr($occupations, rindex($occupations, ', '), 2, ' and ');
+				print ' ', lc($occupations);
 				if(!($father || $mother || $spouserelationship)) {
 					print ', ';
 				}
