@@ -2080,7 +2080,12 @@ sub print_person
 							$previous = undef;
 						} elsif(my $place = place({ person => $person, record => $event })) {
 							if(my $year = year({ person => $person, record => $event })) {
-								print "$year ", lcfirst($person->pronoun()), " arrived $place.";
+								if($end_of_sentence) {
+									print ' ', ucfirst($year);
+								} else {
+									print $year;
+								}
+								print ' ', lcfirst($person->pronoun()), " arrived$place. ";
 							} elsif($opts{'f'}) {
 								die $person->as_string(), "Can't determine $type date";
 							} elsif($opts{'w'}) {
