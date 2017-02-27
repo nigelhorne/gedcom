@@ -843,7 +843,7 @@ sub print_person
 			}
 		}
 
-		while($occupations[0] && (lc($occupations[0]) =~ /^school/i)) {
+		while($occupations[0] && (lc($occupations[0]) =~ /^scho(ol|lar)/i)) {
 			shift @occupations;
 		}
 
