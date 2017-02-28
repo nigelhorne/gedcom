@@ -33,6 +33,7 @@ use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
 use Lingua::EN::Numbers::Ordinate;
 use Lingua::EN::ABC;
+use Lingua::EN::Inflect;
 # use Lingua::EN::AddressParse;
 use DateTime::Duration;
 use DateTime::Format::Natural;
@@ -1434,9 +1435,10 @@ sub print_person
 					if($numberofchildren == 1) {
 						print $children[0]->given_names();
 					} elsif($numberofchildren > 1) {
-						my $childnames = join(', ', map { $_->given_names() } @children);
-						substr($childnames, rindex($childnames, ', '), 2, ' and ');
-						print $childnames;
+						# my $childnames = join(', ', map { $_->given_names() } @children);
+						# substr($childnames, rindex($childnames, ', '), 2, ' and ');
+						# print $childnames;
+						print Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @children), {final_sep => ''});
 					}
 				} else {
 					my @spouse_occupations = $spouses[0]->get_value('occupation');
