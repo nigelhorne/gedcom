@@ -929,8 +929,7 @@ sub print_person
 					my $count = 1;
 					$print_sibling_count = 1;
 					foreach my $sibling(@siblings) {
-						my $dob = get_value({ person => $sibling, value => 'birth date' });
-						if($dob) {
+						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
 							my $d;
 							eval {
 								$d = $date_parser->parse(date => $dob);
@@ -956,13 +955,15 @@ sub print_person
 								}
 								$count++ if($d && ($d < $birth_dt));
 							} else {
-								$print_sibling_count = 0;
+								$all_siblings_have_dob = 0;
 								last;
 							}
 						}
 					}
-					if($print_sibling_count) {
-						if((scalar(@siblings)) && ($count == (scalar(@siblings) + 1))) {
+					if($all_siblings_have_dob) {
+						if(scalar(@siblings) && ($count == (scalar(@siblings) + 1))) {
+							print ((scalar(@siblings) > 1) ? 'eldest' : 'elder');
+						} elsif(scalar(@siblings) && ($count == 1)) {
 							print ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
 						} else {
 							print ordinate($count);
