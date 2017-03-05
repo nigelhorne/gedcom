@@ -1964,8 +1964,23 @@ sub print_person
 						place({ person => $person, record => $events[0] }),
 						' ',
 						year({ person => $person, record => $events[0] });
+					if(my $spouse = $person->spouse()) {
+						foreach my $sevent($spouse->event()) {
+							if(ref($sevent) eq 'Gedcom::Record') {
+								if(($sevent->type() eq 'Arrival') &&
+								   ($event->date() eq $sevent->date()) &&
+								   ($event->place() eq $sevent->place())) {
+									print ' with ',
+										lcfirst($person->possessive()), ' ',
+										($sex eq 'M') ? 'wife' : 'husband',
+										' ', $spouse->given_names();
+								}
+							}
+						}
+					}
 					if(my $notes = notes({ record => $event })) {
 						$notes = lcfirst($notes);
+						$notes =~ s/\.$//;
 						print " ($notes)";
 					}
 					print '. ';
