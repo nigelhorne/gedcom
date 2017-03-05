@@ -1817,7 +1817,6 @@ sub print_person
 					if(scalar(@residencelist) > 1) {
 						my $this_date = year({ person => $person, date => $rdate });
 						if($prev_date && ($prev_date eq $this_date)) {
-							die "$prev_date / $this_date";
 							if($opts{'f'}) {
 								die $person->name(), "Two residence records for $rdate";
 							}
