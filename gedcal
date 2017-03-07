@@ -1037,7 +1037,13 @@ sub print_person
 		my $haveprintedspousename;
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
-				print ', ' unless($father || $mother);
+				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
+					print ', ' unless($father || $mother);
+				} elsif(was_alive(person => $person)) {
+					print $person->as_string, ' is ';
+				} else {
+					print $person->as_string, ' was ';
+				}
 				print 'your';
 			} else {
 				print 'Your';
@@ -1053,7 +1059,14 @@ sub print_person
 				}
 				print ', the ';
 			} else {
-				print $person->as_string(), ', the ';
+				print $person->as_string();
+				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
+					print ', the ';
+				} elsif(was_alive(person => $person)) {
+					print ' is the ';
+				} else {
+					print ' was the ';
+				}
 			}
 			if($sex eq 'F') {
 				print 'wife';
@@ -1061,8 +1074,10 @@ sub print_person
 				print 'husband';
 			}
 			print " of your $spouserelationship ",
-				$spouse->as_string({ middle_names => 1, title => 1 }),
-				',';
+				$spouse->as_string({ middle_names => 1, title => 1 });
+			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
+				print ',';
+			}
 			$haveprintedspousename = 1;
 		}
 
@@ -1418,11 +1433,19 @@ sub print_person
 						$parentheses = 1;
 					}
 					if(my $soccupation = $spouses[0]->occupation()) {
-						print 'a';
-						if($soccupation =~ /^[aeiou]/i) {
-							print 'n';
+						if(ref($soccupation) eq 'Gedcom::Record') {
+							my @items = $soccupation->items();
+							$soccupation = $items[0]->value();
 						}
-						print ' ', lc($soccupation), ' ';
+						if($soccupation =~ /^self-employed$/i) {
+							print 'self-employed ';
+						} else {
+							print 'a';
+							if($soccupation =~ /^[aeiou]/i) {
+								print 'n';
+							}
+							print ' ', lc($soccupation), ' ';
+						}
 					}
 					print 'with whom ', lcfirst($pronoun);
 					if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
