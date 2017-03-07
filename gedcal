@@ -780,7 +780,7 @@ sub print_person
 		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');
 		my $sex = $fetcher->get(object => $person, message => 'sex');
 
-		if($opts{'w'}) {
+		if($opts{'w'} && $firstname) {
 			my $guess = Text::Names::guessGender($firstname);
 			if($sex && $guess && ($sex ne $guess)) {
 				if($opts{'f'}) {
@@ -896,29 +896,34 @@ sub print_person
 					# If possible, sort siblings by date of birth
 					my $all_siblings_have_dob = 1;
 					foreach my $sibling(@siblings) {
-						my $dob = get_value({ person => $sibling, value => 'birth date' });
-						if((!$dob) || ($dob =~ /[\/\-]/) || !$date_parser->parse(date => $dob)) {
-							$all_siblings_have_dob = 0;
-							last;
-						}
-						my $d;
-						eval {
-							$d = $date_parser->parse(date => $dob);
-						};
-						if($d) {
-							$d = @{$d}[0];
-						}
-						if($@ || !defined($d)) {
-							if($opts{'f'}) {
-								die $sibling->as_string(),
-									" has an invalid date of birth: $dob";
+						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
+							if(($dob !~ /^\d/) || ($dob =~ /[a-z]$/i) ||
+							   ($dob =~ /[\/\-]/) || !$date_parser->parse(date => $dob)) {
+								$all_siblings_have_dob = 0;
+								last;
 							}
-							if($opts{'w'}) {
-								red_warning({
-									person => $sibling,
-									warning => "has an invalid date of birth: $dob"
-								});
+							my $d;
+							eval {
+								$d = $date_parser->parse(date => $dob);
+							};
+							if($d) {
+								$d = @{$d}[0];
 							}
+							if($@ || !defined($d)) {
+								if($opts{'f'}) {
+									die $sibling->as_string(),
+										" has an invalid date of birth: $dob";
+								}
+								if($opts{'w'}) {
+									red_warning({
+										person => $sibling,
+										warning => "has an invalid date of birth: $dob"
+									});
+								}
+								$all_siblings_have_dob = 0;
+								last;
+							}
+						} else {
 							$all_siblings_have_dob = 0;
 							last;
 						}
@@ -930,34 +935,41 @@ sub print_person
 					$print_sibling_count = 1;
 					foreach my $sibling(@siblings) {
 						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
-							my $d;
-							eval {
-								$d = $date_parser->parse(date => $dob);
-							};
-							if($d) {
-								$d = @{$d}[0];
-							}
-							if($d) {
-								$d = $dfn->parse_datetime($d->{'canonical'});
-								if($opts{'w'} &&
-								  ($dob =~ /^\d/) && ($dob !~ /[a-z]$/i) &&
-								  ($d < $birth_dt) &&
-								  ($d > ($birth_dt - $ninemonths))) {
-									if($opts{'f'}) {
-										die $sibling->as_string(),
-											' was born less than 9 months before ',
-											$person->as_string();
-									}
-									red_warning({
-										person => $sibling,
-										warning => 'Born less than 9 months before ' . $person->as_string()
-									});
+							if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
+								my $d;
+								eval {
+									$d = $date_parser->parse(date => $dob);
+								};
+								if($d) {
+									$d = @{$d}[0];
 								}
-								$count++ if($d && ($d < $birth_dt));
+								if($d) {
+									$d = $dfn->parse_datetime($d->{'canonical'});
+									if($opts{'w'} &&
+									  ($d < $birth_dt) &&
+									  ($d > ($birth_dt - $ninemonths))) {
+										if($opts{'f'}) {
+											die $sibling->as_string(),
+												' was born less than 9 months before ',
+												$person->as_string();
+										}
+										red_warning({
+											person => $sibling,
+											warning => 'Born less than 9 months before ' . $person->as_string()
+										});
+									}
+									$count++ if($d && ($d < $birth_dt));
+								} else {
+									$all_siblings_have_dob = 0;
+									last;
+								}
 							} else {
 								$all_siblings_have_dob = 0;
 								last;
 							}
+						} else {
+							$all_siblings_have_dob = 0;
+							last;
 						}
 					}
 					if($all_siblings_have_dob) {
@@ -1357,7 +1369,7 @@ sub print_person
 						$all_children_are_alive = 0;
 						last;
 					}
-					if($dob =~ /^\d/) {
+					if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
 						my $d;
 						eval {
 							$d = $date_parser->parse(date => $dob);
@@ -1691,7 +1703,9 @@ sub print_person
 				if(ref($residence) eq 'Gedcom::Record') {
 					my $place = $residence->place();
 					if(my $address = $residence->address()) {
-						if($place) {
+						if(ref($address) eq 'Gedcom::Record') {
+							$place = getaddress($address);
+						} elsif($place) {
 							$place = "$address, $place";
 						} elsif($opts{'f'}) {
 							die $person->string(), ": address set to $address but place is empty";
@@ -1739,7 +1753,7 @@ sub print_person
 								}
 							}
 						}
-					} elsif(!defined($place)) {
+					} else {
 						red_warning({ person => $person, warning => 'Residence record contains no location' });
 					}
 				}
@@ -2313,7 +2327,9 @@ sub print_person
 				print "\t", $child->given_names(),
 					' was born ',
 					year({ person => $child, date => $dob });
-				if($opts{'w'} && ($birth_dt || $death_dt) && ($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/)) {
+				if($opts{'w'} && ($birth_dt || $death_dt) &&
+				   ($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/) &&
+				   ($dob !~ /[a-z]$/i)) {
 					my $d;
 					eval {
 						$d = $date_parser->parse(date => $dob);
@@ -2631,7 +2647,7 @@ sub Gedcom::Individual::as_string
 
 	my $rc;
 
-	if($args{'title'}) {
+	if($args{'title'} && $name_components{'title_1'}) {
 		$rc .= $name_components{'title_1'};
 		if($rc) {
 			$rc .= ' ';
@@ -2974,7 +2990,7 @@ sub year
 		$to =~ s/^(in|on|c.) //;
 		return "from $from to $to";
 	}
-	if($string =~ /^\d/) {
+	if(($string =~ /^\d/) && ($string !~ /[a-z]$/i)) {
 		my $person = $params{'person'};
 		my $d;
 		eval {
@@ -3045,7 +3061,7 @@ sub year
 	}
 
 	$string = ucfirst(lc($string));
-	return "in $string";
+	return ($string =~ /\d$/) ? "in $string" : "on $string";
 }
 
 sub place
@@ -3060,9 +3076,16 @@ sub place
 		return unless($place);
 
 		$address = $place->address();
-
-		$place = $place->place();
+		if(ref($address) eq 'Gedcom::Record') {
+			$place = getaddress($address);
+			$address = undef;
+		} else {
+			$place = $place->place();
+		}
 		return unless($place);
+	} elsif(ref($address) eq 'Gedcom::Record') {
+		$place = getaddress($address);
+		$address = undef;
 	}
 
 	# Google maps (and possibly others) sometimes works better with full names
@@ -3169,6 +3192,30 @@ sub place
 		$places_printed->{$place} = 1;
 	}
 	return $place;
+}
+
+sub getaddress {
+	my $address = shift;
+
+	my $rc;
+
+	if(my $city = $address->city()) {
+		$rc = $city;
+	}
+	if(my $state = $address->state()) {
+		if($rc) {
+			$rc .= ', ';
+		}
+		$rc .= $state;
+	}
+	if(my $country = $address->country()) {
+		if($rc) {
+			$rc .= ', ';
+		}
+		$rc .= $country;
+	}
+
+	return $rc;
 }
 
 sub notes
