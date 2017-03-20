@@ -1789,7 +1789,7 @@ sub print_person
 			my $all_residences_have_date = 1;
 			foreach my $residence(@residencelist) {
 				my $date = $residence->date();
-				if((!$date) || !defined($date_parser->parse(date => $date))) {
+				if(!$date) {
 					if($opts{'f'}) {
 						die $person->name(), ': Contains a residence without a date';
 					}
@@ -1798,6 +1798,14 @@ sub print_person
 					last;
 				}
 				$date = $date_parser->parse(date => $date);
+				if(!defined($date)) {
+					if($opts{'f'}) {
+						die $person->name(), ": Can't parse date '$date'";
+					}
+					red_warning({ person => $person, warning => "Can't parse date '$date'" });
+					$all_residences_have_date = 0;
+					last;
+				}
 				if(scalar(@{$date}) == 0) {
 					# e.g. "Apr/May/Jun 2016"
 					$all_residences_have_date = 0;
@@ -1813,7 +1821,7 @@ sub print_person
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
-					if($birth && $dob && $rdate &&($rdate eq $dob) &&
+					if($birth && $dob && $rdate && ($rdate eq $dob) &&
 					   places_are_the_same({ person => $person, first => $birth, second => $residence})) {
 						# This residence record is for the place of birth, which is
 						# printed elsewhere
