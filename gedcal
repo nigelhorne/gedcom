@@ -1446,6 +1446,8 @@ sub print_person
 					} else {
 						print $dateofdeath || $dateofburial ? ' had ' : ' has ';
 					}
+					# FIXME: currently lists all children even if some where not with this
+					# spouse
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
 							print '1 surviving child, ';
@@ -1834,7 +1836,7 @@ sub print_person
 							print ' ', ucfirst(year({ person => $person, date => $rdate })),
 								' ', lcfirst($pronoun), ' was living';
 						} else {
-							print ' During ',
+							print "\n\tDuring ",
 								lc($person->possessive()),
 								' life ', lcfirst($pronoun), ' lived';
 						}
@@ -1897,12 +1899,44 @@ sub print_person
 					}
 					if($spdeath_dt && (my $rdate_dt = date_to_datetime($rdate))) {
 						if($rdate_dt > $spdeath_dt) {
-							# TODO: add test of living with a child
-							print ' following the death of ',
-								$person->pronoun() eq 'She' ? 'her' : 'his',
-								($sex eq 'M') ? ' wife ' : ' husband ',
-								year(date => get_value({ person => $spouses[0], value => 'death date' }));
-							$spdeath_dt = undef;
+							# Living with a child following death of spouse?
+							CHILD: foreach my $child(@children) {
+								my @cevents = $child->event();
+								my $index = 0;
+								EVENT: foreach my $event(@cevents) {
+									$index++;
+									if(!ref($event)) {
+										my $e = $child->tag_record('EVEN', $index);
+										if(ref($e) eq 'Gedcom::Record') {
+											$event = $e;
+										} else {
+											# red_warning({ person => $child, warning => "Event record is just description ($event), infomation has been lost" });
+											next EVENT;
+										}
+									}
+									my $type = $event->type();
+
+									if(($type !~ /^Census U[KS] (\d{4})$/) && ($type ne 'Register UK 1939')) {
+										next EVENT;
+									}
+									if((ref($event) eq 'Gedcom::Record') &&
+									   $event->date() && ($event->date() eq $rdate) &&
+									   places_are_the_same({ first => $residence, second => $event })) {
+										print ' when ', lcfirst($person->pronoun()),
+											' was living with ',
+											lcfirst($person->possessive()),
+											($child->sex() eq 'F') ? ' daughter ' : ' son ',
+											$child->given_names(),
+											' following the death of ',
+											$person->pronoun() eq 'She' ? 'her' : 'his',
+											($sex eq 'M') ? ' wife ' : ' husband ',
+											year(date => get_value({ person => $spouses[0], value => 'death date' }));
+										$spdeath_dt = undef;
+										last CHILD;
+									}
+									
+								}
+							}
 						}
 					}
 				}
@@ -2255,8 +2289,8 @@ sub print_person
 				}
 				$end_of_sentence = 0;
 			} elsif($dateofdeath || $placeofdeath) {
-				print '. ' if(!$end_of_sentence);
-				print " $pronoun died";
+				print '.' if(!$end_of_sentence);
+				print "\n\t$pronoun died";
 				if($dateofdeath) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				}
@@ -2288,6 +2322,9 @@ sub print_person
 						print place($opts);
 					}
 					print ' ', year({ person => $person, date => $dateofburial });
+				} elsif(($placeofburial eq $placeofdeath) &&
+				   $burial->address() && (!$death->address())) {
+					print ' and is buried there at ', $burial->address();
 				} else {
 					print ' and is buried', place($opts);
 				}
@@ -2317,8 +2354,8 @@ sub print_person
 					print ' and';
 				}
 			} else {
-				print '. ' if(!$end_of_sentence);
-				print " $pronoun";
+				print '.' if(!$end_of_sentence);
+				print "\n\t$pronoun";
 			}
 			print ' died';
 			if($dateofdeath) {
@@ -2370,9 +2407,8 @@ sub print_person
 		print "\n";
 
 		foreach my $child(@children) {
-			my $dob = get_value({ person => $child, value => 'birth date' });
-			if($dob) {
-				print "\t", $child->given_names(),
+			if(my $dob = get_value({ person => $child, value => 'birth date' })) {
+				print "\n\t", $child->given_names(),
 					' was born ',
 					year({ person => $child, date => $dob });
 				if($opts{'w'} && ($birth_dt || $death_dt) &&
@@ -2410,14 +2446,17 @@ sub print_person
 						}
 					}
 				}
-				print ".\n";
+				print '.';
 			} elsif(get_value({ person => $child, value => 'baptism date' })) {
 				print "\t", $child->given_names(),
 					' was born c. ',
 					get_value({ person => $child, value => 'baptism date' }),
-					".\n";
+					'.';
 			}
 		}
+
+		print "\n" if(scalar(@children));
+
 		if($opts{'c'}) {
 			my $ufinder = URI::Find::Schemeless->new(sub {
 				my($uri, $orig_uri) = @_;
@@ -2460,7 +2499,7 @@ sub print_person
 					});
 					next;
 				}
-				print "[$citation]: $title";
+				print "\n\t[$citation]: $title";
 				# if(defined(my $publication = $citations{$citation}->publication())) {
 					# print " $publication";
 					# if(defined(my $continuation = $citations{$citation}->cont())) {
@@ -2488,7 +2527,6 @@ sub print_person
 					$citationnotes{$citation} =~ s/\.$//;
 					print " ($citationnotes{$citation})";
 				}
-				print "\n";
 
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
 					$years{$1} = $title;
@@ -2497,6 +2535,8 @@ sub print_person
 					$findagrave = 1;
 				}
 			}
+			print "\n" if($citationcount);
+
 			if($opts{'w'}) {
 				foreach my $event(@events) {
 					if((ref($event) eq 'Gedcom::Record') &&
