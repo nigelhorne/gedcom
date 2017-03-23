@@ -629,44 +629,26 @@ sub print_person
 			}
 		}
 	}
+
+	$birth_dt = date_to_datetime(date => $dateofbirth);
+
 	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	if((!$dateofmarriage) && $marriage) {
 		$dateofmarriage = $marriage->date();
 	}
+	$marriage_dt = date_to_datetime(date => $dateofmarriage);
 
-	if($dateofbirth && ($dateofbirth !~ /^\d{3,4}$/) && ($dateofbirth =~ /^\d/) && ($dateofbirth !~ /[a-z]$/i)) {
-		my $d;
-		eval {
-			$d = $date_parser->parse(date => $dateofbirth);
-		};
-		if($d) {
-			$d = @{$d}[0];
-			if($d) {
-				$birth_dt = $dfn->parse_datetime($d->{'canonical'});
-			}
+	if($birth_dt && $marriage_dt && $opts{'w'} && ($marriage_dt < ($birth_dt + $sixteenyears))) {
+		if($opts{'f'}) {
+			die $person->as_string(),
+				': married when less than 16 years old';
 		}
+		red_warning({
+			person => $person,
+			warning => 'married when less than 16 years old'
+		});
 	}
-	if($dateofmarriage && ($dateofmarriage !~ /^\d{3,4}$/) && ($dateofmarriage =~ /^\d/) && ($dateofmarriage !~ /[a-z]$/i)) {
-		my $d;
-		eval {
-			$d = $date_parser->parse(date => $dateofmarriage);
-		};
-		if($d) {
-			if($d = @{$d}[0]) {
-				$marriage_dt = $dfn->parse_datetime($d->{'canonical'});
-				if($birth_dt && $opts{'w'} && ($marriage_dt < ($birth_dt + $sixteenyears))) {
-					if($opts{'f'}) {
-						die $person->as_string(),
-							': married when less than 16 years old';
-					}
-					red_warning({
-						person => $person,
-						warning => 'married when less than 16 years old'
-					});
-				}
-			}
-		}
-	}
+
 	$death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'}) {
@@ -889,7 +871,7 @@ sub print_person
 					foreach my $sibling(@siblings) {
 						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
 							if(($dob !~ /^\d/) || ($dob =~ /[a-z]$/i) ||
-							   ($dob =~ /[\/\-]/) || !$date_parser->parse(date => $dob)) {
+							   ($dob =~ /[\/\-]/) || !date_parser_cached(date => $dob)) {
 								$all_siblings_have_dob = 0;
 								last;
 							}
@@ -3036,18 +3018,18 @@ sub stepsabove
 	if($person eq $target) {
 		return $count;
 	}
-	my @father = $person->father();
-	my $father = $father[0];
-	my @mother = $person->mother();
-	my $mother = $mother[0];
 
-	if($father) {
+	my @father = $person->father();
+	if(my $father = $father[0]) {
 		my $rc = stepsabove($father, $target, $count + 1);
 		return $rc if($rc != -1);
 	}
-	if($mother) {
+
+	my @mother = $person->mother();
+	if(my $mother = $mother[0]) {
 		return stepsabove($mother, $target, $count + 1);
 	}
+
 	return -1;
 }
 
