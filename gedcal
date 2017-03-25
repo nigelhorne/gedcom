@@ -2309,7 +2309,7 @@ sub print_person
 						print place($opts);
 					}
 					print ' ', year({ person => $person, date => $dateofburial });
-				} elsif(($placeofburial eq $placeofdeath) &&
+				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && (!$death->address())) {
 					print ' and is buried there at ', $burial->address();
 				} else {
