@@ -1112,6 +1112,8 @@ sub print_person
 			$end_of_sentence = 1;
 		}
 
+		my @residences = $person->residence();
+
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
 			print " $pronoun" if($aob || $aod);
 			if($dateofbirth || $placeofbirth) {
@@ -1329,7 +1331,11 @@ sub print_person
 				});
 			}
 			if(scalar(@spouses)) {
-				print ' and';
+				if(scalar(@residences)) {
+					print ' and';
+				} else {
+					print ',';
+				}
 				$end_of_sentence = 0;
 			} else {
 				print '. ';
@@ -1632,7 +1638,6 @@ sub print_person
 
 		my $printed_residence = 0;
 		my %citationnotes;
-		my @residences = $person->residence();
 
 		# FMP stores Censuses as events
 		my $index = 0;
