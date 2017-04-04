@@ -978,6 +978,9 @@ sub print_person
 				print ' ', $father->as_string();
 				if(!$same_occupation_as_father) {
 					my @occupations = $father->get_value('occupation');
+					while($occupations[0] && (lc($occupations[0]) =~ /^scho(ol|lar)/i)) {
+						shift @occupations;
+					}
 					# TODO: print all occupations
 					if($occupations[0]) {
 						print ' (a';
