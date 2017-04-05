@@ -2300,6 +2300,8 @@ sub print_person
 				# Print notes about the death, if any
 				if(my $d = notes({ person => $person, record => $death })) {
 					$d =~ tr/\r//;
+					$d =~ tr/\n/ /;
+					$d =~ s/\.$//;
 					print " ($d)";
 				}
 				my $opts = {
