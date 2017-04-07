@@ -94,6 +94,10 @@ if($opts{'w'}) {
 
 	require WWW::Scrape::FindaGrave;
 	WWW::Scrape::FindaGrave->import();
+
+	if(!$ged->validate() && $opts{'f'}) {
+		die "$ARGV[0] is not a valid gedcom file";
+	}
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
@@ -1591,7 +1595,7 @@ sub print_person
 						if($parentofall) {
 							print ' with ', $parentofall->as_string();
 						} else {
-							die "BUG: parentofall not set when only one child";
+							die $person->string() . ': BUG: parentofall not set when only one child';
 						}
 						print ', ', $children[0]->given_names();
 					} else {
