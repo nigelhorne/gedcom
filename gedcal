@@ -840,14 +840,18 @@ sub print_person
 				@occupations = ();
 			} else {
 				print 'A';
+				if($occupations[0] =~ /^works on (.+)/i) {
+					$occupations[0] = "$1 worker";
+				}
 				if($occupations[0] =~ /^[aeiou]/i) {
 					print 'n';
 				}
 				print ' ';
 				if($occupations[1]) {
-					my $alloccupations = join(', ', @occupations);
-					substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
-					print lc($alloccupations);
+					# my $alloccupations = join(', ', @occupations);
+					# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
+					# print lc($alloccupations);
+					print lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
 				} else {
 					print lc($occupations[0]);
 				}
