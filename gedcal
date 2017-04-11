@@ -1838,7 +1838,7 @@ sub print_person
 					if(!$have_printed) {
 						print '. ' unless($end_of_sentence);
 						if((scalar(@residencelist) == 1) && $rdate) {
-							print ' ', ucfirst(year({ person => $person, date => $rdate })),
+							print ' ', ucfirst(year({ person => $person, date => $rdate, circa => 'About' })),
 								' ', lcfirst($pronoun), ' was living';
 						} else {
 							print "\n\tDuring ",
@@ -3082,6 +3082,9 @@ sub year
 		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
+		if($params{'circa'}) {
+			return $params{'circa'} . " $2";
+		}
 		return "c. $2";
 	}
 	if($string =~ /^bet (.+) and (.+)/i) {
