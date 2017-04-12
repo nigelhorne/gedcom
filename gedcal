@@ -1110,13 +1110,6 @@ sub print_person
 		} elsif($aod) {
 			print " died $aod ", ($aod == 1) ? 'year' : 'years', ' ago ',
 				$opts{'t'} ? 'tomorrow' : 'today';
-			my $d = get_value({ person => $person, value => 'death' });
-			if($d) {
-				$d =~ tr/\r//;
-				$d =~ tr/\n/ /;
-				$d =~ s/\.$//;
-				print " ($d)";
-			}
 			if($placeofdeath) {
 				print place({ person => $person, record => $death, places_printed => \%places_printed });
 			}
@@ -3328,13 +3321,13 @@ sub notes
 
 	my $record = $params{'record'};
 	my $paragraph = $params{'paragraph'};
+	my @notes = $record->get_record('note');
 
 	# my @deathnotes = get_value({ person => $person, value => 'death note' });
 	# my @deathnotes = $person, value => 'death note' });
 	my $rc = $record->get_value();
-	$rc .= '.' if($rc);
+	$rc .= '.' if($rc && !scalar(@notes));
 
-	my @notes = $record->get_record('note');
 	foreach my $note(@notes) {
 		if($note) {
 			if(ref($note) eq 'Gedcom::Record') {
