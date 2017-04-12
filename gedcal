@@ -2830,6 +2830,14 @@ sub Gedcom::Individual::as_string
 		}
 	}
 
+	if((!defined($rc)) && $opts{'w'}) {
+		if($opts{'f'}) {
+			die "\nCan't determine the name for record " . $self->{'xref'};
+		}
+		red_warning({ "Can't determine the name for record " . $self->{'xref'} });
+		return '';
+	}
+
 	return $rc;
 }
 
@@ -3498,7 +3506,7 @@ sub print_sibling_baptism
 	my $date = $params{'date'};
 	my $birthdate = $params{'birthdate'};
 
-	return if(scalar(@{$siblings}) == 0);
+	return '' if(scalar(@{$siblings}) == 0);
 
 	my @onsameday;
 	foreach my $sibling(@{$siblings}) {
