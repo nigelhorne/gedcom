@@ -1225,6 +1225,9 @@ sub print_person
 				if($placeofbaptism) {
 					if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 						print ' there';
+						if(my $address = $baptism->address()) {
+							print " at $address";
+						}
 					} else {
 						my $p = place({ person => $person, place => $placeofbaptism });
 						print $p;
@@ -1311,6 +1314,9 @@ sub print_person
 							' home town';
 					} else {
 						print ' there';
+						if(my $address = $baptism->address()) {
+							print " at $address";
+						}
 					}
 				} else {
 					my $opts = {
