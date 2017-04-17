@@ -1399,6 +1399,8 @@ sub print_person
 				}
 			}
 		}
+		my @childrenunknownparent;
+		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			print " $pronoun" if($end_of_sentence);
@@ -1422,7 +1424,7 @@ sub print_person
 					$haveprintedspousename = 1;
 				}
 				if($numberofchildren) {
-					if($parentheses || ((!$placeofmarriage) && (!$dateofmarriage))) {
+					if($parentheses || ((!$placeofmarriage) && !$dateofmarriage)) {
 						print ', ';
 					} else {
 						print ' (';
@@ -1451,9 +1453,30 @@ sub print_person
 					} else {
 						print $dateofdeath || $dateofburial ? ' had ' : ' has ';
 					}
-					# FIXME: currently lists all children even if some where not with this
-					# spouse
-					if($numberofchildren == 1) {
+
+					my @childrenofthisspouse;
+					my $numberofchildrenwiththisspouse = $numberofchildren;
+					my $spouse = $spouses[0];
+					foreach my $child(@children) {
+						if($sex eq 'F') {
+							my $father = $child->father();
+							if((!defined($father)) || ($father ne $spouse)) {
+								push @childrenunknownparent, $child;
+								$numberofchildrenwiththisspouse--;
+							} else {
+								push @childrenofthisspouse, $child;
+							}
+						} else {
+							my $mother = $child->mother();
+							if((!defined($mother)) || ($mother ne $spouse)) {
+								push @childrenunknownparent, $child;
+								$numberofchildrenwiththisspouse--;
+							} else {
+								push @childrenofthisspouse, $child;
+							}
+						}
+					}
+					if($numberofchildrenwiththisspouse == 1) {
 						if($all_children_are_alive) {
 							print '1 surviving child, ';
 						} else {
@@ -1461,18 +1484,18 @@ sub print_person
 						}
 					} else {
 						if($all_children_are_alive) {
-							print "$numberofchildren surviving children: ";
+							print "$numberofchildrenwiththisspouse surviving children: ";
 						} else {
-							print "$numberofchildren children: ";
+							print "$numberofchildrenwiththisspouse children: ";
 						}
 					}
-					if($numberofchildren == 1) {
+					if($numberofchildrenwiththisspouse == 1) {
 						print $children[0]->given_names();
-					} elsif($numberofchildren > 1) {
+					} elsif($numberofchildrenwiththisspouse > 1) {
 						# my $childnames = join(', ', map { $_->given_names() } @children);
 						# substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						# print $childnames;
-						print Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @children), {final_sep => ''});
+						print Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => ''});
 					}
 				} else {
 					my @spouse_occupations = $spouses[0]->get_value('occupation');
@@ -1639,6 +1662,25 @@ sub print_person
 				substr($childnames, rindex($childnames, ', '), 2, ' and ');
 				print $childnames;
 			}
+			$end_of_sentence = 0;
+		}
+
+		if(scalar(@childrenunknownparent)) {
+			print '.  ' if(!$end_of_sentence);
+			print "$pronoun ";
+			if(scalar(@children) > scalar(@childrenunknownparent)) {
+				print 'also ';
+			}
+			print 'had ', scalar(@childrenunknownparent), ' ';
+			if(scalar(@childrenunknownparent) == 1) {
+				print 'child, ';
+			} else {
+				print 'children, ';
+			}
+			print Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenunknownparent), {final_sep => ''}),
+				', whose ',
+				($sex eq 'F') ? 'father' : 'mother',
+				' is unknown';
 			$end_of_sentence = 0;
 		}
 
