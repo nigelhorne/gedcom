@@ -1986,22 +1986,26 @@ sub print_person
 						}
 					}
 				}
-				if($residencecitations{$residence}) {
-					print '[', $residencecitations{$residence}, ']';
-				}
-				if($residence->place() &&
-				  (!$rdate) &&
-				  ($count <= (scalar(@residencelist) - 1)) &&
-				  ($residencecitations{$residence})) {
-					my $peek = $residencelist[$count + 1];
-					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-						if($residencecitations{$peek}) {
-							print '[', $residencecitations{$peek}, ']';
+				if($opts{'c'}) {
+					if($residencecitations{$residence}) {
+						print '[', $residencecitations{$residence}, ']';
+					}
+					if($residence->place() &&
+					  (!$rdate) &&
+					  ($count <= (scalar(@residencelist) - 1)) &&
+					  ($residencecitations{$residence})) {
+						my $peek = $residencelist[$count + 1];
+						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+							if($residencecitations{$peek}) {
+								print '[', $residencecitations{$peek}, ']';
+							}
 						}
 					}
 				}
 				$count++;
-				if($count < scalar(@residencelist)) {
+				if(($count == 1) && (scalar(@residencelist) == 2)) {
+					print ' and';
+				} elsif($count < scalar(@residencelist)) {
 					my $peek = $residencelist[$count];
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 						# FIXME: and and and
