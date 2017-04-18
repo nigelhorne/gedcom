@@ -58,16 +58,16 @@ The options are:
 Bugs
 ====
 
-
-There will be numerous strange handling of Gedcoms since it's not that tightly observed by
-websites.
-If you see lumpy English text in the output, or just plain mistakes, please e-mail me.
+There will be numerous strange handling of Gedcoms since it's not that tightly
+observed by websites.
+If you see lumpy English text in the output, or just plain mistakes,
+please e-mail me or add a bug report to github.com/nigelhorne/gedcom.
 
 Acknowledgements
 ================
 
-So many CPAN modules that if I list them all I'll miss one, but special mention
-	goes to the Gedcom module.
+So many Perl CPAN modules that if I list them all I'll miss one, but special
+	mention goes to the Gedcom module.
 
 # LICENSE AND COPYRIGHT
 
@@ -75,4 +75,5 @@ Copyright 2015-2017 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)
-must apply in writing for a licence for use from Nigel Horne at `<njh at nigelhorne.com>`.
+must apply in writing for a licence for use from Nigel Horne at
+`<njh at nigelhorne.com>`.
