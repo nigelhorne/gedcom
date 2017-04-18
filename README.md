@@ -54,3 +54,25 @@ The options are:
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -y: year for -H calendar
+
+Bugs
+====
+
+
+There will be numerous strange handling of Gedcoms since it's not that tightly observed by
+websites.
+If you see lumpy English text in the output, or just plain mistakes, please e-mail me.
+
+Acknowledgements
+================
+
+So many CPAN modules that if I list them all I'll miss one, but special mention
+	goes to the Gedcom module.
+
+# LICENSE AND COPYRIGHT
+
+Copyright 2015-2017 Nigel Horne.
+
+This program is released under the following licence: GPL for personal use on a single computer.
+All other users (including Commercial, Charity, Educational, Government)
+must apply in writing for a licence for use from Nigel Horne at `<njh at nigelhorne.com>`.
