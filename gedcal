@@ -479,22 +479,14 @@ sub print_person
 			$str .= $person->as_string();
 		}
 		if($aob) {
-			my $dob = get_value({ person => $person, value => 'birth date' });
-			my $d = $date_parser->parse(date => $dob);
-			if($d && (ref($d) eq 'ARRAY')) {
-				$d = @{$d}[0];
-				$d = $dfn->parse_datetime($d->{'canonical'});
+			if(my $d = date_to_datetime(date => get_value({ person => $person, value => 'birth date' }))) {
 				$str .= ' b' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
 			}
 		}
 		if($aod) {
-			my $dod = get_value({ person => $person, value => 'death date' });
-			my $d = $date_parser->parse(date => $dod);
-			if($d && (ref($d) eq 'ARRAY')) {
-				$d = @{$d}[0];
-				$d = $dfn->parse_datetime($d->{'canonical'});
+			if(my $d = date_to_datetime(date => get_value({ person => $person, value => 'death date' }))) {
 				$str .= ' d' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of death '$dod'" });
@@ -3776,7 +3768,7 @@ sub date_parser_cached
 	eval {
 		$d = $date_parser->parse(date => $date);
 	};
-	if($d) {
+	if($d && (ref($d) eq 'ARRAY')) {
 		$d = @{$d}[0];
 		$all_dates{$date} = $d;
 		return $d;
