@@ -47,8 +47,8 @@ use Data::Fetch;
 no lib '.';
 
 my %opts;
-getopts('abcdDfh:Hm:lLp:twvy:', \%opts);
-die "Usage: $0 [ -a ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('aAbcdDfh:Hm:lLp:twvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -95,9 +95,9 @@ if($opts{'w'}) {
 	require WWW::Scrape::FindaGrave;
 	WWW::Scrape::FindaGrave->import();
 
-	if(!$ged->validate() && $opts{'f'}) {
-		die "$ARGV[0] is not a valid gedcom file";
-	}
+	# if(!$ged->validate() && $opts{'f'}) {
+		# die "$ARGV[0] is not a valid gedcom file";
+	# }
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
@@ -126,6 +126,9 @@ if($opts{'y'} && !$opts{'H'}) {
 }
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
+}
+if($opts{'A'}) {
+	$opts{'a'} = 1;
 }
 
 memoize('Gedcom::Individual::as_string');
@@ -242,26 +245,74 @@ if($opts{'H'}) {
 	die '-D and -a should not be given together' if($opts{'D'});
 	die '-p and -a should not be given together' if($opts{'p'});
 
-	foreach my $month(0..11) {
-		foreach my $day(1..28) {
-			generate(day => $day, month => $month, everyone => \@everyone);
-		}
-		if($month == 1) {
-			my $year = DateTime->today()->year();
-			next if($year % 4);
-			if(($year % 100) == 0) {
-				next unless($year % 400);
+	if($opts{'A'}) {
+		$fetcher = Data::Fetch->new();
+		@everyone = sort {
+			my $aname = $a->surname();
+			# my $sex = get_value({ person => $a, value => 'sex' });
+			# if(defined($sex) && ($sex eq 'F')) {
+				# if(my $husband = $a->husband()) {
+					# $aname = $husband->surname();
+				# } elsif(my $spouse = $a->spouse()) {
+					# $aname = $spouse->surname();
+				# }
+			# }
+
+			if(defined($aname)) {
+				$aname = normalize_name($aname);
+			} else {
+				$aname = 'ZZZZZ';
+			}
+
+			my $bname = $b->surname();
+			# $sex = get_value({ person => $b, value => 'sex' });
+			# if(defined($sex) && ($sex eq 'F')) {
+				# if(my $husband = $b->husband()) {
+					# $bname = $husband->surname();
+				# } elsif(my $spouse = $b->spouse()) {
+					# $bname = $spouse->surname();
+				# }
+			# }
+
+			if(defined($bname)) {
+				$bname = normalize_name($bname);
+			} else {
+				$bname = 'ZZZZZ';
+			}
+
+			if($aname eq $bname) {
+				# $aname = $a_name_components{'given_name_1'} || 'ZZZZZ';
+				# $bname = $b_name_components{'given_name_1'} || 'ZZZZZ';
+				$aname = $a->given_names() || 'ZZZZZ';
+				$bname = $b->given_names() || 'ZZZZZ';
+			}
+
+			$aname cmp $bname
+		} @everyone;
+
+		generate(everyone => \@everyone);
+	} else {
+		foreach my $month(0..11) {
+			foreach my $day(1..28) {
+				generate(day => $day, month => $month, everyone => \@everyone);
+			}
+			if($month == 1) {
+				my $year = DateTime->today()->year();
+				next if($year % 4);
+				if(($year % 100) == 0) {
+					next unless($year % 400);
+				}
+				generate(day => 29, month => $month, everyone => \@everyone);
+				next;
 			}
 			generate(day => 29, month => $month, everyone => \@everyone);
-			next;
+			generate(day => 30, month => $month, everyone => \@everyone);
+			if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
+				generate(day => 31, month => $month, everyone => \@everyone);
+			}
 		}
-		generate(day => 29, month => $month, everyone => \@everyone);
-		generate(day => 30, month => $month, everyone => \@everyone);
-		if(($month == 0) || ($month == 2) || ($month == 4) || ($month == 6) || ($month == 7) || ($month == 9) || ($month == 11)) {
-			generate(day => 31, month => $month, everyone => \@everyone);
-		}
+		generate(day => -1, month => -1, everyone => \@everyone);
 	}
-	generate(day => -1, month => -1, everyone => \@everyone);
 } elsif($opts{'b'}) {
 	die '-b and -d should not be given together' if($opts{'d'});
 	die '-b and -a should not be given together' if($opts{'a'});
@@ -379,35 +430,37 @@ sub print_person
 	my $day = $params{'day'};
 	my $month = $params{'month'};
 
-	if($dob && ($dob !~ /^\d{3,4}$/)) {
-		my @btime = strptime("$dob 12:00");
-		if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
-			$print = 1;
-			if(!$opts{a}) {
-				$aob = (localtime)[5] - $btime[5];
-				if($aob <= 0) {
-					$aob += 1900;
+	if($day) {
+		if($dob && ($dob !~ /^\d{3,4}$/)) {
+			my @btime = strptime("$dob 12:00");
+			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
+				$print = 1;
+				if(!$opts{a}) {
+					$aob = (localtime)[5] - $btime[5];
+					if($aob <= 0) {
+						$aob += 1900;
+					}
 				}
 			}
 		}
-	}
-	return if($onlybirthdays && !defined($aob));
+		return if($onlybirthdays && !defined($aob));
 
-	if($dod && ($dod !~ /^\d{3,4}$/)) {
-		my @dtime = strptime("$dod 12:00");
-		if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
-			$print = 1;
-			if(!$opts{a}) {
-				$aod = (localtime)[5] - $dtime[5];
-				if($aod <= 0) {
-					$aod += 1900;
+		if($dod && ($dod !~ /^\d{3,4}$/)) {
+			my @dtime = strptime("$dod 12:00");
+			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
+				$print = 1;
+				if(!$opts{a}) {
+					$aod = (localtime)[5] - $dtime[5];
+					if($aod <= 0) {
+						$aod += 1900;
+					}
 				}
 			}
 		}
-	}
-	return if($onlydeaths && !defined($aod));
+		return if($onlydeaths && !defined($aod));
 
-	return unless($print || ($day == -1) || $opts{'p'});
+		return unless($print || ($day == -1) || $opts{'p'});
+	}
 
 	if($opts{'w'} && !$person->validate_semantics()) {
 		if($opts{'f'}) {
@@ -513,12 +566,15 @@ sub print_person
 		}
 	}
 
-	print $person->as_string({
+	my $args = {
 		include_years => 1,
-		nee => 1,
 		middle_names => 1,
 		title => 1,
-	}), "\n";
+	};
+	if(!$opts{'A'}) {
+		$args->{'nee'} = 1;
+	}
+	print $person->as_string($args), "\n";
 
 	my $name = $person->name();
 	$name =~ s/\///g;

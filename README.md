@@ -39,6 +39,7 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
 The options are:
 
     -a: all days otherwise just today
+    -A: print everyone, in alphabetical order
     -b: only print birthdays
     -c: Give citations on detailed listing
     -d: show the detailed lifetime information about the person
