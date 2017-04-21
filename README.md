@@ -43,6 +43,7 @@ The options are:
     -b: only print birthdays
     -B: create a genealogy book
     -c: Give citations on detailed listing
+    -C: Print birth dates of children
     -d: show the detailed lifetime information about the person
     -D: only print anniversaries of deaths
     -f: treat warnings as fatals, implies -w
