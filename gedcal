@@ -47,7 +47,7 @@ use Data::Fetch;
 no lib '.';
 
 my %opts;
-getopts('aAbcdDfh:Hm:lLp:twvy:', \%opts);
+getopts('aAbBcdDfh:Hm:lLp:twvy:', \%opts);
 die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -c ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
@@ -126,6 +126,9 @@ if($opts{'y'} && !$opts{'H'}) {
 }
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
+}
+if($opts{'B'}) {
+	$opts{'A'} = 1;
 }
 if($opts{'A'}) {
 	$opts{'a'} = 1;
@@ -246,6 +249,16 @@ if($opts{'H'}) {
 	die '-p and -a should not be given together' if($opts{'p'});
 
 	if($opts{'A'}) {
+		if($opts{'B'}) {
+			print '<html><head>';
+			if($opts{'h'}) {
+				print "<title>The family tree of $opts{h}</title>";
+			}
+			print '</head><body>';
+			if($opts{'h'}) {
+				print "<h1>The family tree of $opts{h}</h1>";
+			}
+		}
 		$fetcher = Data::Fetch->new();
 		@everyone = sort {
 			my $aname = $a->surname();
@@ -291,6 +304,10 @@ if($opts{'H'}) {
 		} @everyone;
 
 		generate(everyone => \@everyone);
+
+		if($opts{'B'}) {
+			print "</body></html>\n";
+		}
 	} else {
 		foreach my $month(0..11) {
 			foreach my $day(1..28) {
@@ -566,6 +583,9 @@ sub print_person
 		}
 	}
 
+	if($opts{'B'}) {
+		print '<h2>';
+	}
 	my $args = {
 		include_years => 1,
 		middle_names => 1,
@@ -574,7 +594,12 @@ sub print_person
 	if(!$opts{'A'}) {
 		$args->{'nee'} = 1;
 	}
-	print $person->as_string($args), "\n";
+	print $person->as_string($args);
+	if($opts{'B'}) {
+		print '</h2>';
+	} else {
+		print "\n";
+	}
 
 	my $name = $person->name();
 	$name =~ s/\///g;
@@ -704,7 +729,7 @@ sub print_person
 	$death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'}) {
-		print "\t";
+		print "\t" unless($opts{'B'});
 
 		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
 
@@ -1669,7 +1694,7 @@ sub print_person
 						if($parentofall) {
 							print ' with ', $parentofall->as_string();
 						} else {
-							die $person->string() . ': BUG: parentofall not set when only one child';
+							die $person->as_string() . ': BUG: parentofall not set when only one child';
 						}
 						print ', ', $children[0]->given_names();
 					} else {
@@ -1930,7 +1955,12 @@ sub print_person
 							print ' ', ucfirst(year({ person => $person, date => $rdate, circa => 'About' })),
 								' ', lcfirst($pronoun), ' was living';
 						} else {
-							print "\n\tDuring ",
+							if($opts{'B'}) {
+								print '<p>';
+							} else {
+								print "\n\t";
+							}
+							print 'During ',
 								lc($person->possessive()),
 								' life ', lcfirst($pronoun), ' lived';
 						}
@@ -2394,7 +2424,12 @@ sub print_person
 				$end_of_sentence = 0;
 			} elsif($dateofdeath || $placeofdeath) {
 				print '.' if(!$end_of_sentence);
-				print "\n\t$pronoun died";
+				if($opts{'B'}) {
+					print '<p>';
+				} else {
+					print "\n\t";
+				}
+				print "$pronoun died";
 				if($dateofdeath) {
 					print ' ', year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				}
@@ -2461,7 +2496,12 @@ sub print_person
 				}
 			} else {
 				print '.' if(!$end_of_sentence);
-				print "\n\t$pronoun";
+				if($opts{'B'}) {
+					print '<p>';
+				} else {
+					print "\n\t";
+				}
+				print $pronoun;
 			}
 			print ' died';
 			if($dateofdeath) {
@@ -2507,14 +2547,24 @@ sub print_person
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			# print "\t", join("\n\t", @notes), "\n";
-			print "\n$notes";
+			if($opts{'B'}) {
+				print '<p>';
+			} else {
+				print "\n";
+			}
+			print $notes;
 		}
 
-		print "\n";
+		print $opts{'B'} ? '<p>' : "\n";
 
 		foreach my $child(@children) {
 			if(my $dob = get_value({ person => $child, value => 'birth date' })) {
-				print "\n\t", $child->given_names(),
+				if($opts{'B'}) {
+					print '<p>';
+				} else {
+					print "\n\t";
+				}
+				print $child->given_names(),
 					' was born ',
 					year({ person => $child, date => $dob });
 				if($opts{'w'} && ($birth_dt || $death_dt) &&
@@ -2554,14 +2604,19 @@ sub print_person
 				}
 				print '.';
 			} elsif(get_value({ person => $child, value => 'baptism date' })) {
-				print "\t", $child->given_names(),
+				if($opts{'B'}) {
+					print '<p>';
+				} else {
+					print "\t";
+				}
+				print $child->given_names(),
 					' was born c. ',
 					get_value({ person => $child, value => 'baptism date' }),
 					'.';
 			}
 		}
 
-		print "\n" if(scalar(@children));
+		print $opts{'B'} ? '<p>' : "\n" if(scalar(@children));
 
 		if($opts{'c'}) {
 			my $ufinder = URI::Find::Schemeless->new(sub {
@@ -2605,7 +2660,12 @@ sub print_person
 					});
 					next;
 				}
-				print "\n\t[$citation]: $title";
+				if($opts{'B'}) {
+					print '<p>';
+				} else {
+					print "\n\t";
+				}
+				print "[$citation]: $title";
 				# if(defined(my $publication = $citations{$citation}->publication())) {
 					# print " $publication";
 					# if(defined(my $continuation = $citations{$citation}->cont())) {
@@ -2707,7 +2767,11 @@ sub print_person
 				}
 			}
 		}
-		print '-' x 80, "\n";
+		if($opts{'B'}) {
+			print '</p>';
+		} else {
+			print '-' x 80, "\n";
+		}
 	} else {
 		my ($dob, $dod);
 		eval {
@@ -3486,7 +3550,11 @@ sub notes
 			$note =~ s/\.$//;
 			if($paragraph) {
 				if($rc) {
-					$rc .= "\n";
+					if($opts{'B'}) {
+						$rc .= '<p>';
+					} else {
+						$rc .= "\n";
+					}
 				}
 				$rc .= "\t$note.";
 			} else {

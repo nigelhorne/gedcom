@@ -41,6 +41,7 @@ The options are:
     -a: all days otherwise just today
     -A: print everyone, in alphabetical order
     -b: only print birthdays
+    -B: create a genealogy book
     -c: Give citations on detailed listing
     -d: show the detailed lifetime information about the person
     -D: only print anniversaries of deaths
