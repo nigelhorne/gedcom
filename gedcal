@@ -1999,8 +1999,12 @@ sub print_person
 				} else {
 					my $peek = $residencelist[$count];
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-						# FIXME: and and and
-						print ' and';
+						$peek = $residencelist[$count + 1];
+						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+							print ',';
+						} else {
+							print ' and';
+						}
 					} elsif($count == (scalar(@residencelist) - 1)) {
 						print '; and';
 					} elsif($count < (scalar(@residencelist) - 1)) {
@@ -3237,6 +3241,13 @@ sub place
 		$address = undef;
 	}
 
+	if((!defined($address)) &&
+	   ($place !~ /USA$/) && ($place !~ /United States$/) &&
+	   ($place =~ /(.+),\s*(.+,\s*.+,\s*.+)$/)) {
+		$address = $1;
+		$place = $2;
+	}
+
 	# Google maps (and possibly others) sometimes works better with full names
 	if($address) {
 		if($address =~ /(.+)\sSt\.?$/) {
@@ -3287,9 +3298,9 @@ sub place
 	if($address) {
 		# my $ap;
 		# if(($place =~ /USA$/) || ($place =~ /United States$/)) {
-			# $ap = Lingua::EN::AddressParse->new(country => 'US', auto_clean => 1, force_case => 1);
+			# $ap = Lingua::EN::AddressParse->new(country => 'US', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
 		# } elsif($place =~ /England$/) {
-			# $ap = Lingua::EN::AddressParse->new(country => 'GB', auto_clean => 1, force_case => 1);
+			# $ap = Lingua::EN::AddressParse->new(country => 'GB', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
 		# }
 		# if($ap) {
 			# my $error = $ap->parse("$address, $place");
