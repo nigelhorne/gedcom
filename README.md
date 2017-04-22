@@ -36,6 +36,10 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcal -dwlHm $i -y 2016 gedcom-file.ged > $i.html
     done
 
+You can create a genealogy book:
+
+    gedcal -B 'family-history.pdf' -dh 'Your Full Name' gedcom-file.ged
+
 The options are:
 
     -a: all days otherwise just today
