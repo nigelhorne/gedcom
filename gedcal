@@ -110,6 +110,7 @@ my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1)
 my $ninemonths = DateTime::Duration->new(months => 9);
 my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fetcher;
+my $pdf;
 
 my @everyone;
 unless($opts{'p'}) {
@@ -129,6 +130,11 @@ if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
 }
 if($opts{'B'}) {
+	require PDF::API2;
+	PDF::API2->import();
+
+	$pdf = PDF::API2->new(-file => 'book.pdf');
+	$pdf->mediabox('Letter');
 	$opts{'A'} = 1;
 }
 if($opts{'A'}) {
@@ -251,6 +257,20 @@ if($opts{'H'}) {
 
 	if($opts{'A'}) {
 		if($opts{'B'}) {
+			if($opts{'h'}) {
+				my $page = $pdf->page();
+				my $font = $pdf->corefont('Helvetica-Bold');
+
+				my $text = $page->text();
+				$text->textstart();
+				$text->font($font, 28);
+				$text->translate(300, 500);
+				$text->text_center('The Family Tree of');
+				$text->translate(300, 425);
+				$text->text_center(normalize_name($opts{'h'}));
+				$text->textend();
+			}
+
 			print '<html><head>';
 			if($opts{'h'}) {
 				print "<title>The family tree of $opts{h}</title>";
@@ -307,6 +327,7 @@ if($opts{'H'}) {
 		generate(everyone => \@everyone);
 
 		if($opts{'B'}) {
+			$pdf->save();
 			print "</body></html>\n";
 		}
 	} else {
@@ -379,11 +400,29 @@ if($opts{'H'}) {
 sub generate {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
+	my $surname_initial;
+	if($opts{'B'}) {
+		$params{'font'} = $pdf->corefont('Helvetica-Bold');
+	}
+
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		next if($me && ($person eq $me));
 
 		if(!$printed{$person->{'xref'}}) {
+			if($opts{'B'}) {
+				my $surname = $person->surname() || 'UNKNOWN';
+				my $initial = substr $surname, 0, 1;
+				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
+					$surname_initial = $initial;
+					$params{'pdfpage'} = PDFPage->new();
+					$params{'page'} = $pdf->page();
+				} elsif($params{'pdfpage'}->pagefull()) {
+					$params{'pdfpage'} = PDFPage->new();
+					$params{'page'} = $pdf->page();
+				}
+			}
+
 			$params{'person'} = $person;
 			print_person(\%params);
 		}
@@ -584,8 +623,12 @@ sub print_person
 		}
 	}
 
+	my $text;
 	if($opts{'B'}) {
 		print '<h2>';
+		$text = $params{'page'}->text();
+		$text->textstart();
+		$text->font($params{'font'}, 20);
 	}
 	my $args = {
 		include_years => 1,
@@ -598,6 +641,9 @@ sub print_person
 	}
 	print $person->as_string($args);
 	if($opts{'B'}) {
+		$params{'pdfpage'}->newline();
+		$text->translate(10, $params{'pdfpage'}->newline());
+		$text->text($person->as_string($args));
 		print '</h2>';
 	} else {
 		print "\n";
@@ -909,37 +955,38 @@ sub print_person
 
 		my $same_occupation_as_father;
 
+		my $pdfline;
+		my $pdfcolumn;
+		if($opts{'B'}) {
+			$pdfline = $params{'pdfpage'}->newline();
+			$text->translate(10, $pdfline);
+			$text->font($params{'font'}, 10);
+		}
+		my $bio;
+
 		if($occupations[0]) {
 			if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
-				print 'A';
+				$bio = 'A';
 				if($occupations[0] =~ /^works on (.+)/i) {
 					$occupations[0] = "$1 worker";
 				}
 				if($occupations[0] =~ /^[aeiou]/i) {
-					print 'n';
+					$bio = 'An';
 				}
-				print ' ';
+				$bio .= ' ';
 				if($occupations[1]) {
 					# my $alloccupations = join(', ', @occupations);
 					# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
 					# print lc($alloccupations);
-					if($opts{'B'}) {
-						print HTML::Entities::encode(lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''})));
-					} else {
-						print lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
-					}
+					$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
 				} else {
-					if($opts{'B'}) {
-						print HTML::Entities::encode(lc($occupations[0]));
-					} else {
-						print lc($occupations[0]);
-					}
+					$bio .= lc($occupations[0]);
 				}
 				if(!($father || $mother || $spouserelationship)) {
-					print ', ';
+					$bio .= ', ';
 				}
 			}
 		} elsif(scalar(@occupations)) {
@@ -957,9 +1004,9 @@ sub print_person
 		my $print_sibling_count = 0;
 		if($father || $mother) {
 			if(scalar(@occupations)) {
-				print ' and the ';
+				$bio .= ' and the ';
 			} else {
-				print 'The ';
+				$bio = 'The ';
 			}
 
 			if($birth_dt) {
@@ -1045,28 +1092,28 @@ sub print_person
 					}
 					if($all_siblings_have_dob) {
 						if(scalar(@siblings) && ($count == (scalar(@siblings) + 1))) {
-							print ((scalar(@siblings) > 1) ? 'eldest' : 'elder');
+							$bio .= ((scalar(@siblings) > 1) ? 'eldest' : 'elder');
 						} elsif(scalar(@siblings) && ($count == 1)) {
-							print ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
+							$bio .= ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
 						} else {
-							print ordinate($count);
+							$bio .= ordinate($count);
 						}
-						print ' of ', scalar(@siblings) + 1, ' children';
+						$bio .= ' of ' . (scalar(@siblings) + 1) . ' children';
 					} else {
-						print 'child';
+						$bio .= 'child';
 					}
 				} else {
 					# print ' only child of';
-					print 'child';
+					$bio .= 'child';
 				}
 			} else {
-				print 'child';
+				$bio .= 'child';
 			}
 
-			print ' of';
+			$bio .= ' of';
 
 			if($father) {
-				print ' ', $father->as_string();
+				$bio .= ' ' . $father->as_string();
 				if(!$same_occupation_as_father) {
 					my @occupations = $father->get_value('occupation');
 					while($occupations[0] && (lc($occupations[0]) =~ /^scho(ol|lar)/i)) {
@@ -1074,103 +1121,111 @@ sub print_person
 					}
 					# TODO: print all occupations
 					if($occupations[0]) {
-						print ' (a';
+						$bio .= ' (a';
 						if($occupations[0] =~ /^[aeiou]/i) {
-							print 'n';
+							$bio .= 'n';
 						}
-						my $o;
+						$bio .= ' ';
 						if(defined($ENV{'LANG'})) {
 							if($ENV{'LANG'} =~ /^en_US/) {
-								$o = Lingua::EN::ABC::b2a(lc($occupations[0]));
+								$bio .= Lingua::EN::ABC::b2a(lc($occupations[0]));
 							} elsif($ENV{'LANG'} =~ /^en_GB/) {
-								$o = Lingua::EN::ABC::a2b(lc($occupations[0]));
+								$bio .= Lingua::EN::ABC::a2b(lc($occupations[0]));
 							}
 						} else {
-							$o = lc($occupations[0]);
+							$bio .= lc($occupations[0]);
 						}
-						if($opts{'B'}) {
-							print ' ', HTML::Entities::encode($o), ')';
-						} else {
-							print " $o)";
-						}
+						$bio .= ')';
 					}
 				}
 				if($mother) {
-					print ' and';
+					$bio .= ' and';
 				}
 			}
 			if($mother) {
-				print ' ', $mother->as_string({ give_maidenname => 0 });
+				$bio .=  ' ' . $mother->as_string({ give_maidenname => 0 });
 				my @occupations = $mother->get_value('occupation');
 				# TODO: print all occupations
 				if($occupations[0]) {
-					print ' (a';
+					$bio .= ' (a';
 					if($occupations[0] =~ /^[aeiou]/i) {
-						print 'n';
+						$bio .= 'n';
 					}
-					print ' ', lc($occupations[0]), ')';
+					$bio .= ' ' . lc($occupations[0]) . ')';
 				}
 			}
-			print ', ';
+			$bio .= ', ';
 		}
 
 		my $haveprintedspousename;
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
-					print ', ' unless($father || $mother);
+					$bio .= ', ' unless($father || $mother);
 				} elsif(was_alive(person => $person)) {
-					print $person->as_string, ' is ';
+					$bio .= $person->as_string . ' is ';
 				} else {
-					print $person->as_string, ' was ';
+					$bio .= $person->as_string . ' was ';
 				}
-				print 'your';
+				$bio .= 'your';
 			} else {
-				print 'Your';
+				$bio = 'Your';
 			}
-			print " $relationship ";
+			$bio .= " $relationship ";
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
-				print ', ' unless($father || $mother);
+				$bio .= ', ' unless($father || $mother);
 				if($firstname) {
-					print $firstname;
+					$bio .= $firstname;
 				} else {
-					print $pronoun;
+					$bio .= $pronoun;
 				}
-				print ', the ';
+				$bio .= ', the ';
 			} else {
-				print $person->as_string();
+				$bio .= $person->as_string();
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
-					print ', the ';
+					$bio .= ', the ';
 				} elsif(was_alive(person => $person)) {
-					print ' is the ';
+					$bio .= ' is the ';
 				} else {
-					print ' was the ';
+					$bio .= ' was the ';
 				}
 			}
 			if($sex eq 'F') {
-				print 'wife';
+				$bio .= 'wife';
 			} else {
-				print 'husband';
+				$bio .= 'husband';
 			}
-			print " of your $spouserelationship ",
+			$bio .= " of your $spouserelationship " .
 				$spouse->as_string({ middle_names => 1, title => 1 });
 			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
-				print ',';
+				$bio .= ',';
 			}
 			$haveprintedspousename = 1;
 		}
 
 		if(!$spouserelationship) {
 			if($firstname) {
-				print $firstname;
+				$bio .= $firstname;
 			} else {
-				print $pronoun;
+				$bio .= $pronoun;
 			}
 		}
 
 		if(my $aka = $person->as_string({ use_aka => 1 })) {
-			print " (also known as $aka)";
+			$bio .= " (also known as $aka)";
+		}
+
+		if($bio) {
+			if($opts{'B'}) {
+				print HTML::Entities::encode($bio);
+				$text->text($bio);
+				# TODO: handle sitution where we need to wordwrap
+				# Look into Text::Format
+				$pdfcolumn += length($bio);
+			} else {
+				print $bio;
+			}
 		}
 
 		my $end_of_sentence = 0;
@@ -1915,6 +1970,8 @@ sub print_person
 								}
 							}
 						}
+					} elsif(my $dor = $residence->date()) {
+						red_warning({ person => $person, warning => "Residence record for $dor contains no location" });
 					} else {
 						red_warning({ person => $person, warning => 'Residence record contains no location' });
 					}
@@ -2856,6 +2913,10 @@ sub print_person
 		}
 	}
 	$printed{$person->{'xref'}} = 1;
+
+	if($opts{'B'}) {
+		$text->textend();
+	}
 }
 
 sub Gedcom::Individual::as_string
@@ -3958,4 +4019,31 @@ sub date_to_datetime
 			return $dfn->parse_datetime($d->{'canonical'});
 		}
 	}
+}
+
+1;
+
+package PDFPage;
+
+sub new
+{
+	my $class = shift;
+
+	return bless { line => 750 }, $class;
+}
+
+sub newline
+{
+	my $self = shift;
+
+	$self->{'line'} -= 45;	# point size 10
+
+	return $self->{'line'};
+}
+
+sub pagefull
+{
+	my $self = shift;
+
+	return $self->{'line'} <= 45;
 }
