@@ -3000,6 +3000,7 @@ sub print_person
 				}
 				$file =~ s/\{0\}//g;
 				$file =~ s/\r//g;
+				my $image;
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
@@ -3007,15 +3008,18 @@ sub print_person
 					$browser->env_proxy(1);
 					my $resp = $browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
-						$bio .= " Download and insert non image $file here";
+						$bio = $file if(!defined($bio));
 						open(my $tmp, '>', '/tmp/njh.jpg');
 						print $tmp $resp->decoded_content();
 						close $tmp;
+						$image = $pdf->image_jpeg('/tmp/njh.jpg');
+					} else {
+						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: " . $resp->status_line() });
+						$bio .= $resp->status_line();
 					}
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
 				}
-				my $image;
 				if($form && ($form =~ /^JPG$/i)) {
 					if($file =~ /ancestry.com.+guid=.+&tid=/) {
 						# Ancestry's Gedcoms are broken, perhaps pointing to an old
@@ -3036,12 +3040,13 @@ sub print_person
 					my $rc;
 					if(is_success($rc = getstore($file, '/tmp/njh.jpg'))) {
 						$image = $pdf->image_jpeg('/tmp/njh.jpg');
+						$bio = $file if(!defined($bio));
 						# $image->height(32);
 						# $image->width(32);
 					} else {
 						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: $rc" });
+						$bio .= " Download and insert image $file";
 					}
-					$bio .= " Download and insert image $file";
 				}
 				if($bio) {
 					$params{'page'} = $pdf->page();
@@ -3054,12 +3059,11 @@ sub print_person
 					$text->textend();
 
 					if($image) {
-						my $gfx = $params{'page'}->gfx();
 						my $y = $params{'pdfpage'}->newline();
-						$gfx->image($image, 500 - $image->width(), $y - $image->height());
+						$image->height(32);
+						$image->width(32);
+						$params{'page'}->gfx()->image($image, 500 - $image->width(), $y - $image->height());
 					}
-
-					# print "$bio\n";
 				}
 			}
 		}
