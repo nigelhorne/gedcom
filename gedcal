@@ -39,6 +39,7 @@ use DateTime::Duration;
 use DateTime::Format::Natural;
 use Text::Wrap;
 use LWP::Simple;
+use LWP::UserAgent;
 use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
@@ -74,7 +75,7 @@ if($opts{'f'}) {
 	$opts{'w'} = 1;
 }
 
-if($opts{'w'}) {
+if($opts{'w'} || $opts{'B'}) {
 	die '-w option needs -d option' unless($opts{'d'});
 
 	# Cache calls to openstreetmap
@@ -93,12 +94,14 @@ if($opts{'w'}) {
 		MaxAge => 30 * 24
 	}) || die "$0: $cachedir: $!";
 
-	require WWW::Scrape::FindaGrave;
-	WWW::Scrape::FindaGrave->import();
+	if($opts{'w'}) {
+		require WWW::Scrape::FindaGrave;
+		WWW::Scrape::FindaGrave->import();
 
-	# if(!$ged->validate() && $opts{'f'}) {
-		# die "$ARGV[0] is not a valid gedcom file";
-	# }
+		# if(!$ged->validate() && $opts{'f'}) {
+			# die "$ARGV[0] is not a valid gedcom file";
+		# }
+	}
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
@@ -2902,7 +2905,6 @@ sub print_person
 				}
 				$bio = '';
 			}
-
 		} else {
 			print "$bio\n", '-' x 80, "\n";
 		}
@@ -2970,6 +2972,97 @@ sub print_person
 
 	if($opts{'B'}) {
 		$text->textend();
+		my $bio;
+		foreach my $o($person->obje()) {
+			my $obje;
+			if(ref($o) eq 'Gedcom::Record') {
+				$obje = $o;	# e.g. Ancestry
+			} else {
+				$obje = $ged->resolve_xref($o);	# e.g. FMP
+			}
+			next if(!defined($obje));
+			if(my $file = $obje->file()) {
+				if(ref($file) eq 'Gedcom::Record') {
+					# warn $file->tag(), "\n" if($file->tag());
+					$file = $file->{'file'};
+					next if($file eq '*');
+				}
+				my $title = $obje->title() || $obje->tag_record('TITL', 1);
+				if($title) {
+					$bio = $title;
+				}
+				my $form = $obje->form();
+				if((!$form) && $obje->items()) {
+					# Family Tree Maker does this
+					my @items = $obje->items();
+					$file = $items[0]->{'value'};
+					# TODO: Find the title
+				}
+				$file =~ s/\{0\}//g;
+				$file =~ s/\r//g;
+				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
+					$file =~ s/%2f/\//gi;
+
+					my $browser = LWP::UserAgent->new();
+					$browser->env_proxy(1);
+					my $resp = $browser->get($file);
+					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
+						$bio .= " Download and insert non image $file here";
+						open(my $tmp, '>', '/tmp/njh.jpg');
+						print $tmp $resp->decoded_content();
+						close $tmp;
+					}
+				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
+					$form = 'JPG';
+				}
+				my $image;
+				if($form && ($form =~ /^JPG$/i)) {
+					if($file =~ /ancestry.com.+guid=.+&tid=/) {
+						# Ancestry's Gedcoms are broken, perhaps pointing to an old
+						# location that they forgot to fix
+						if($file =~ /guid=([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/) {
+							# FIXME: Ancestry pictures attached from another
+							# tree aren't downloaded.  This URL will generate a
+							# 404
+							$file = "https://mediasvc.ancestry.com/v2/image/namespaces/1093/media/$1.jpg?client=Trees";
+						} else {
+							if($opts{'f'}) {
+								die "BUG: update ACOM mapping for $file";
+							}
+							red_warning({ person => $person, warning => "BUG: update ACOM mapping for $file" });
+							next;
+						}
+					}
+					my $rc;
+					if(is_success($rc = getstore($file, '/tmp/njh.jpg'))) {
+						$image = $pdf->image_jpeg('/tmp/njh.jpg');
+						# $image->height(32);
+						# $image->width(32);
+					} else {
+						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: $rc" });
+					}
+					$bio .= " Download and insert image $file";
+				}
+				if($bio) {
+					$params{'page'} = $pdf->page();
+					$params{'pdfpage'} = PDFPage->new();
+
+					$text = $params{'page'}->text();
+					$text->textstart();
+					$text->font($params{'font'}, 12);
+					pdfprint($bio, $text, $params{'pdfpage'});
+					$text->textend();
+
+					if($image) {
+						my $gfx = $params{'page'}->gfx();
+						my $y = $params{'pdfpage'}->newline();
+						$gfx->image($image, 500 - $image->width(), $y - $image->height());
+					}
+
+					# print "$bio\n";
+				}
+			}
+		}
 	}
 }
 
