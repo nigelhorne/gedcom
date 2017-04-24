@@ -3030,9 +3030,6 @@ sub print_person
 						my $height = $resize->height();
 						my $gd;
 						if(($params{'pdfpage'}->y() < $height) || ($height > 200)) {
-							$params{'page'} = $pdf->page();
-							$params{'pdfpage'} = PDFPage->new();
-
 							my $newwidth = $width * (200 / $height);
 							my $newheight;
 							if($newwidth > 600) {
