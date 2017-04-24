@@ -120,6 +120,7 @@ my $ninemonths = DateTime::Duration->new(months => 9);
 my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fetcher;
 my $pdf;
+my @tmpfiles;
 
 my @everyone;
 unless($opts{'p'}) {
@@ -340,6 +341,7 @@ if($opts{'H'}) {
 
 		if($opts{'B'}) {
 			$pdf->save();
+			unlink @tmpfiles;
 		}
 	} else {
 		foreach my $month(0..11) {
@@ -2022,7 +2024,7 @@ sub print_person
 								' ' . lcfirst($pronoun) . ' was living';
 						} else {
 							if($opts{'B'}) {
-								if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+								if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 									$text->textend();
 
 									$params{'page'} = $pdf->page();
@@ -2031,7 +2033,7 @@ sub print_person
 									$text = $params{'page'}->text();
 									$text->textstart();
 									$text->font($params{'font'}, 12);
-									pdfprint($bio, $text, $params{'pdfpage'});
+									pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 								}
 								$bio = '';
 							} else {
@@ -2504,7 +2506,7 @@ sub print_person
 				$bio .= '.' if(!$end_of_sentence);
 				if($opts{'B'}) {
 					if($bio) {
-						if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 							$text->textend();
 
 							$params{'page'} = $pdf->page();
@@ -2513,7 +2515,7 @@ sub print_person
 							$text = $params{'page'}->text();
 							$text->textstart();
 							$text->font($params{'font'}, 12);
-							pdfprint($bio, $text, $params{'pdfpage'});
+							pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 						}
 						$bio = '';
 					}
@@ -2589,7 +2591,7 @@ sub print_person
 				$bio .= '.' if(!$end_of_sentence);
 				if($opts{'B'}) {
 					if($bio) {
-						if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 							$text->textend();
 
 							$params{'page'} = $pdf->page();
@@ -2598,7 +2600,7 @@ sub print_person
 							$text = $params{'page'}->text();
 							$text->textstart();
 							$text->font($params{'font'}, 12);
-							pdfprint($bio, $text, $params{'pdfpage'});
+							pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 						}
 						$bio = '';
 					}
@@ -2653,7 +2655,7 @@ sub print_person
 			# print "\t", join("\n\t", @notes), "\n";
 			if($opts{'B'}) {
 				if($bio) {
-					if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+					if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 						$text->textend();
 
 						$params{'page'} = $pdf->page();
@@ -2662,7 +2664,7 @@ sub print_person
 						$text = $params{'page'}->text();
 						$text->textstart();
 						$text->font($params{'font'}, 12);
-						pdfprint($bio, $text, $params{'pdfpage'});
+						pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 					}
 					$bio = '';
 				} else {
@@ -2782,7 +2784,7 @@ sub print_person
 				}
 				if($opts{'B'}) {
 					if($bio) {
-						if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 							$text->textend();
 
 							$params{'page'} = $pdf->page();
@@ -2791,7 +2793,7 @@ sub print_person
 							$text = $params{'page'}->text();
 							$text->textstart();
 							$text->font($params{'font'}, 12);
-							pdfprint($bio, $text, $params{'pdfpage'});
+							pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 						}
 						$bio = '';
 					}
@@ -2902,7 +2904,7 @@ sub print_person
 		}
 		if($opts{'B'}) {
 			if($bio) {
-				if(!pdfprint($bio, $text, $params{'pdfpage'})) {
+				if(!pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'})) {
 					$text->textend();
 
 					$params{'page'} = $pdf->page();
@@ -2911,7 +2913,7 @@ sub print_person
 					$text = $params{'page'}->text();
 					$text->textstart();
 					$text->font($params{'font'}, 12);
-					pdfprint($bio, $text, $params{'pdfpage'});
+					pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'});
 				}
 				$bio = '';
 			}
@@ -3032,26 +3034,19 @@ sub print_person
 						if(($params{'pdfpage'}->y() < $height) || ($height > 200)) {
 							my $newwidth = $width * (200 / $height);
 							my $newheight;
-							if($newwidth > 600) {
-								$newheight = $height * (600 / $width);
-								$gd = $resize->resize(600, $newheight);
+							if($newwidth > 500) {
+								$newheight = $height * (500 / $width);
+								$gd = $resize->resize(500, $newheight);
 								print "adjust for height and width\n";
 							} else {
 								$gd = $resize->resize($newwidth, 200);
 								$newheight = 200;
 								print "adjust for height\n";
 							}
-							if($newheight >= $params{'pdfpage'}->y()) {
-								$params{'page'} = $pdf->page();
-								$params{'pdfpage'} = PDFPage->new();
-								print "new page\n";
-							}
-						} elsif($width > 600) {
-							my $newheight = $height * (600 / $width);
-							$gd = $resize->resize(600, $newheight);
+						} elsif($width > 500) {
+							my $newheight = $height * (500 / $width);
+							$gd = $resize->resize(500, $newheight);
 							print "adjust for width\n";
-						} else {
-							print "TODO: no adjust for $width x $height\n";
 						}
 						if($gd) {
 							unlink $filename;
@@ -3063,8 +3058,7 @@ sub print_person
 						}
 						$image = $pdf->image_jpeg($filename);
 					} elsif(!$resp->is_success()) {
-						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: " . $resp->status_line() });
-						$bio .= $resp->status_line();
+						red_warning({ person => $person, warning => "download $file failed " . $resp->status_line() });
 					}
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
@@ -3097,26 +3091,19 @@ sub print_person
 						if(($params{'pdfpage'}->y() < $height) || ($height > 200)) {
 							my $newwidth = $width * (200 / $height);
 							my $newheight;
-							if($newwidth > 600) {
-								$newheight = $height * (600 / $width);
-								$gd = $resize->resize(600, $newheight);
+							if($newwidth > 500) {
+								$newheight = $height * (500 / $width);
+								$gd = $resize->resize(500, $newheight);
 								print "adjust for height and width\n";
 							} else {
 								$gd = $resize->resize($newwidth, 200);
 								$newheight = 200;
 								print "adjust for height\n";
 							}
-							if($newheight >= $params{'pdfpage'}->y()) {
-								$params{'page'} = $pdf->page();
-								$params{'pdfpage'} = PDFPage->new();
-								print "new page\n";
-							}
-						} elsif($width > 600) {
-							my $newheight = $height * (600 / $width);
-							$gd = $resize->resize(600, $newheight);
+						} elsif($width > 500) {
+							my $newheight = $height * (500 / $width);
+							$gd = $resize->resize(500, $newheight);
 							print "adjust for width\n";
-						} else {
-							print "TODO: no adjust for $width x $height\n";
 						}
 						if($gd) {
 							unlink $filename;
@@ -3132,17 +3119,15 @@ sub print_person
 						# $image->width(32);
 					} else {
 						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: $rc" });
-						$bio .= " Download and insert image $file";
 					}
 				}
 				if($bio) {
-					$text = $params{'page'}->text();
-					$text->textstart();
-					$text->font($params{'font'}, 12);
-					pdfprint($bio, $text, $params{'pdfpage'});
-					$text->textend();
-
 					if($image) {
+						if($image->height() >= $params{'pdfpage'}->y()) {
+							$params{'page'} = $pdf->page();
+							$params{'pdfpage'} = PDFPage->new();
+							print "new page\n";
+						}
 						my $y = $params{'pdfpage'}->newline();
 						# $image->height(32);
 						# $image->width(32);
@@ -3151,9 +3136,14 @@ print "$bio: 50, $y: ", $image->width(), ' x ', $image->height(), "\n";
 						$params{'page'}->gfx()->image($image, 100, $y);
 						$params{'pdfpage'}->y($y);
 					}
+
+					$text = $params{'page'}->text();
+					$text->textstart();
+					$text->font($params{'font'}, 12);
+					pdfprint(string => $bio, text => $text, pdfpage => $params{'pdfpage'}, x => 100);
+					$text->textend();
 				}
-				# FIXME: remove all temporary files once the PDF has been created
-				# unlink $filename if(defined($filename));
+				push @tmpfiles, $filename if(defined($filename));
 			}
 		}
 	}
@@ -4256,20 +4246,22 @@ sub date_to_datetime
 
 sub pdfprint
 {
-	my $bio = shift;
-	my $text = shift;
-	my $pdfpage = shift;
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $pdfpage = $params{'pdfpage'};
 
 	return 0 if($pdfpage->pagefull());
 
-	$bio = wrap('    ', '', ($bio));
-	my $linecount = ($bio =~ /\n/g) + 1;
+	my $text = $params{'text'};
+	my $string = wrap('    ', '', ($params{'string'}));
+	my $linecount = ($string =~ /\n/g) + 1;
+	my $x = $params{'x'} || 40;
 
 	if($linecount >= $pdfpage->linesleft()) {
 		return 0;
 	}
-	foreach my $line (split(/\n/, $bio)) {
-		$text->translate(40, $pdfpage->newline());
+	foreach my $line (split(/\n/, $string)) {
+		$text->translate($x, $pdfpage->newline());
 		$text->text($line);
 	}
 	return 1;
