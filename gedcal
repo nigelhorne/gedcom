@@ -82,8 +82,14 @@ if($opts{'w'} || $opts{'B'}) {
 	require File::Spec;
 	File::Spec->import();
 
+	require File::Temp;
+	File::Temp->import();
+
 	require HTTP::Cache::Transparent;
 	HTTP::Cache::Transparent->import();
+
+	require Image::Resize;
+	Image::Resize->import();
 
 	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
 
@@ -137,7 +143,11 @@ if($opts{'B'}) {
 	PDF::API2->import();
 
 	$pdf = PDF::API2->new(-file => $opts{'B'});
-	$pdf->mediabox('Letter');
+	if(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+		$pdf->mediabox('Letter');
+	} else {
+		$pdf->mediabox('A4');
+	}
 	$opts{'A'} = 1;
 	$Text::Wrap::columns = 100;
 }
@@ -3001,6 +3011,7 @@ sub print_person
 				$file =~ s/\{0\}//g;
 				$file =~ s/\r//g;
 				my $image;
+				my $filename;
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
@@ -3009,11 +3020,52 @@ sub print_person
 					my $resp = $browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
 						$bio = $file if(!defined($bio));
-						open(my $tmp, '>', '/tmp/njh.jpg');
-						print $tmp $resp->decoded_content();
-						close $tmp;
-						$image = $pdf->image_jpeg('/tmp/njh.jpg');
-					} else {
+						my $tmp = File::Temp->new(UNLINK => 0);
+						$filename = $tmp->filename();
+						open(my $fh, '>', $tmp->filename());
+						print $fh $resp->decoded_content();
+						close $fh;
+						my $resize = Image::Resize->new($filename);
+						my $width = $resize->width();
+						my $height = $resize->height();
+						my $gd;
+						if(($params{'pdfpage'}->y() < $height) || ($height > 200)) {
+							$params{'page'} = $pdf->page();
+							$params{'pdfpage'} = PDFPage->new();
+
+							my $newwidth = $width * (200 / $height);
+							my $newheight;
+							if($newwidth > 600) {
+								$newheight = $height * (600 / $width);
+								$gd = $resize->resize(600, $newheight);
+								print "adjust for height and width\n";
+							} else {
+								$gd = $resize->resize($newwidth, 200);
+								$newheight = 200;
+								print "adjust for height\n";
+							}
+							if($newheight >= $params{'pdfpage'}->y()) {
+								$params{'page'} = $pdf->page();
+								$params{'pdfpage'} = PDFPage->new();
+								print "new page\n";
+							}
+						} elsif($width > 600) {
+							my $newheight = $height * (600 / $width);
+							$gd = $resize->resize(600, $newheight);
+							print "adjust for width\n";
+						} else {
+							print "TODO: no adjust for $width x $height\n";
+						}
+						if($gd) {
+							unlink $filename;
+							$tmp = File::Temp->new(UNLINK => 0);
+							$filename = $tmp->filename();
+							open(my $fh, '>', $filename);
+							print $fh $gd->jpeg();
+							close $fh;
+						}
+						$image = $pdf->image_jpeg($filename);
+					} elsif(!$resp->is_success()) {
 						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: " . $resp->status_line() });
 						$bio .= $resp->status_line();
 					}
@@ -3038,8 +3090,46 @@ sub print_person
 						}
 					}
 					my $rc;
-					if(is_success($rc = getstore($file, '/tmp/njh.jpg'))) {
-						$image = $pdf->image_jpeg('/tmp/njh.jpg');
+					my $tmp = File::Temp->new(UNLINK => 0);
+					$filename = $tmp->filename();
+					if(is_success($rc = getstore($file, $filename))) {
+						my $resize = Image::Resize->new($filename);
+						my $width = $resize->width();
+						my $height = $resize->height();
+						my $gd;
+						if(($params{'pdfpage'}->y() < $height) || ($height > 200)) {
+							my $newwidth = $width * (200 / $height);
+							my $newheight;
+							if($newwidth > 600) {
+								$newheight = $height * (600 / $width);
+								$gd = $resize->resize(600, $newheight);
+								print "adjust for height and width\n";
+							} else {
+								$gd = $resize->resize($newwidth, 200);
+								$newheight = 200;
+								print "adjust for height\n";
+							}
+							if($newheight >= $params{'pdfpage'}->y()) {
+								$params{'page'} = $pdf->page();
+								$params{'pdfpage'} = PDFPage->new();
+								print "new page\n";
+							}
+						} elsif($width > 600) {
+							my $newheight = $height * (600 / $width);
+							$gd = $resize->resize(600, $newheight);
+							print "adjust for width\n";
+						} else {
+							print "TODO: no adjust for $width x $height\n";
+						}
+						if($gd) {
+							unlink $filename;
+							$tmp = File::Temp->new(UNLINK => 0);
+							$filename = $tmp->filename();
+							open(my $fh, '>', $filename);
+							print $fh $gd->jpeg();
+							close $fh;
+						}
+						$image = $pdf->image_jpeg($filename);
 						$bio = $file if(!defined($bio));
 						# $image->height(32);
 						# $image->width(32);
@@ -3049,9 +3139,6 @@ sub print_person
 					}
 				}
 				if($bio) {
-					$params{'page'} = $pdf->page();
-					$params{'pdfpage'} = PDFPage->new();
-
 					$text = $params{'page'}->text();
 					$text->textstart();
 					$text->font($params{'font'}, 12);
@@ -3060,11 +3147,16 @@ sub print_person
 
 					if($image) {
 						my $y = $params{'pdfpage'}->newline();
-						$image->height(32);
-						$image->width(32);
-						$params{'page'}->gfx()->image($image, 500 - $image->width(), $y - $image->height());
+						# $image->height(32);
+						# $image->width(32);
+						$y -= $image->height();
+print "$bio: 50, $y: ", $image->width(), ' x ', $image->height(), "\n";
+						$params{'page'}->gfx()->image($image, 100, $y);
+						$params{'pdfpage'}->y($y);
 					}
 				}
+				# FIXME: remove all temporary files once the PDF has been created
+				# unlink $filename if(defined($filename));
 			}
 		}
 	}
@@ -4218,4 +4310,16 @@ sub linesleft
 	my $self = shift;
 
 	return $self->{'y'} / 40;
+}
+
+sub y
+{
+	my $self = shift;
+	my $y = shift;
+
+	if($y) {
+		$self->{'y'} = $y;
+	}
+
+	return $self->{'y'};
 }
