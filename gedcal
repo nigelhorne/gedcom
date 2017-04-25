@@ -91,6 +91,9 @@ if($opts{'w'} || $opts{'B'}) {
 
 		require Image::Resize;
 		Image::Resize->import();
+
+		require String::ProgressBar;
+		String::ProgressBar->import();
 	}
 
 	my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
@@ -124,6 +127,7 @@ my $fetcher;
 my $pdf;
 my $pdfpage;
 my @tmpfiles;
+my $pr;
 
 my @everyone;
 unless($opts{'p'}) {
@@ -142,6 +146,7 @@ if($opts{'y'} && !$opts{'H'}) {
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
 }
+
 if($opts{'B'}) {
 	require PDF::API2;
 	PDF::API2->import();
@@ -154,6 +159,9 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1;
 	$Text::Wrap::columns = 100;
+
+	my $total = scalar(@everyone);
+	$pr = String::ProgressBar->new(max => $total, length => 60);
 }
 if($opts{'A'}) {
 	$opts{'a'} = 1;
@@ -420,6 +428,7 @@ sub generate {
 	if($opts{'B'}) {
 		$params{'font'} = $pdf->corefont('Times-New-Roman');
 	}
+	my $index = 1;
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
@@ -427,12 +436,14 @@ sub generate {
 
 		if(!$printed{$person->{'xref'}}) {
 			if($opts{'B'}) {
+				$| = 1;
+				$pr->update($index++);
+				$pr->write();
+				$| = 0;
 				my $surname = $person->surname() || 'UNKNOWN';
 				my $initial = substr $surname, 0, 1;
 				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
 					$surname_initial = $initial;
-					$pdfpage = PDFPage->new();
-				} elsif($pdfpage->pagefull() || ($pdfpage->linesleft() <= 5)) {
 					$pdfpage = PDFPage->new();
 				}
 			}
@@ -440,6 +451,10 @@ sub generate {
 			$params{'person'} = $person;
 			print_person(\%params);
 		}
+	}
+
+	if($opts{'B'}) {
+		print "\n";
 	}
 }
 
@@ -637,12 +652,6 @@ sub print_person
 		}
 	}
 
-	my $text;
-	if($opts{'B'}) {
-		$text = $pdfpage->page()->text();
-		$text->textstart();
-		$text->font($params{'font'}, 20);
-	}
 	my $args = {
 		include_years => 1,
 		middle_names => 1,
@@ -652,10 +661,21 @@ sub print_person
 	if(!$opts{'A'}) {
 		$args->{'nee'} = 1;
 	}
+	my $text;
 	if($opts{'B'}) {
-		$pdfpage->newline();
+		if($pdfpage->pagefull() || ($pdfpage->linesleft() <= 5)) {
+			$pdfpage = PDFPage->new();
+		} else {
+			$pdfpage->newline();
+		}
+		$text = $pdfpage->page()->text();
+		$text->textstart();
+		$text->font($params{'font'}, 20);
+
 		$text->translate(20, $pdfpage->newline());
 		$text->text($person->as_string($args));
+
+		$text->font($params{'font'}, 12);
 	} else {
 		print $person->as_string($args), "\n";
 	}
@@ -788,8 +808,6 @@ sub print_person
 	$death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'}) {
-		print "\t" unless($opts{'B'});
-
 		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
@@ -966,10 +984,6 @@ sub print_person
 
 		my $same_occupation_as_father;
 
-		if($opts{'B'}) {
-			$text->translate(40, $pdfpage->newline());
-			$text->font($params{'font'}, 12);
-		}
 		my $bio = "\t";
 
 		if($occupations[0]) {
@@ -1237,7 +1251,7 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
-			$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years').  ' ago ' .
+			$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
 				($opts{'t'} ? 'tomorrow' : 'today');
 			if($placeofbirth) {
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed });
@@ -2664,8 +2678,6 @@ sub print_person
 						pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 					}
 					$bio = '';
-				} else {
-					print $bio;
 				}
 
 			} else {
@@ -2673,8 +2685,6 @@ sub print_person
 			}
 			$bio .= $notes;
 		}
-
-		print "\n" unless($opts{'B'});
 
 		if($opts{'C'}) {
 			foreach my $child(@children) {
@@ -2979,7 +2989,6 @@ sub print_person
 
 	if($opts{'B'}) {
 		$text->textend();
-		my $bio;
 		foreach my $o($person->obje()) {
 			my $obje;
 			if(ref($o) eq 'Gedcom::Record') {
@@ -2995,9 +3004,6 @@ sub print_person
 					next if($file eq '*');
 				}
 				my $title = $obje->title() || $obje->tag_record('TITL', 1);
-				if($title) {
-					$bio = $title;
-				}
 				my $form = $obje->form();
 				if((!$form) && $obje->items()) {
 					# Family Tree Maker does this
@@ -3016,7 +3022,7 @@ sub print_person
 					$browser->env_proxy(1);
 					my $resp = $browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
-						$bio = $file if(!defined($bio));
+						$title = $file if(!defined($title));
 						my $tmp = File::Temp->new(UNLINK => 0);
 						$filename = $tmp->filename();
 						open(my $fh, '>', $tmp->filename());
@@ -3049,9 +3055,11 @@ sub print_person
 							close $fh;
 						}
 						$image = $pdf->image_jpeg($filename);
-					} elsif(!$resp->is_success()) {
-						red_warning({ person => $person, warning => "download $file failed " . $resp->status_line() });
-						$bio = undef;
+					} else {
+						if(!$resp->is_success()) {
+							red_warning({ person => $person, warning => "download $file failed " . $resp->status_line() });
+						}
+						$title = undef;
 					}
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
@@ -3105,31 +3113,31 @@ sub print_person
 							close $fh;
 						}
 						$image = $pdf->image_jpeg($filename);
-						$bio = $file if(!defined($bio));
+						$title = $file if(!defined($title));
 						# $image->height(32);
 						# $image->width(32);
 					} else {
 						red_warning({ person => $person, warning => "download $file failed to /tmp/njh.jpg: $rc" });
-						$bio = undef;
+						$title = undef;
 					}
 				}
-				if($bio) {
+				if($title) {
 					if($image) {
-						if($image->height() >= $pdfpage->y()) {
+						if($image->height() >= ($pdfpage->y() - 60)) {
 							$pdfpage = PDFPage->new();
 						}
 						my $y = $pdfpage->newline();
-						# $image->height(32);
-						# $image->width(32);
 						$y -= $image->height();
-						$pdfpage->page()->gfx()->image($image, 100, $y);
+						my $x = 300 - ($image->width() / 2);
+						$pdfpage->page()->gfx()->image($image, $x, $y);
 						$pdfpage->y($y);
 					}
 
 					$text = $pdfpage->page()->text();
 					$text->textstart();
-					$text->font($params{'font'}, 12);
-					pdfprint(string => $bio, text => $text, pdfpage => $pdfpage, x => 150);
+					$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
+					my $x = 300 - (length($title) / 2);
+					pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1);
 					$text->textend();
 				}
 				push @tmpfiles, $filename if(defined($filename));
@@ -4248,12 +4256,16 @@ sub pdfprint
 	my $linecount = ($string =~ /\n/g) + 1;
 	my $x = $params{'x'} || 40;
 
-	if($linecount >= $pdfpage->linesleft()) {
+	if($linecount >= $pdfpage->linesleft() - 2) {
 		return 0;
 	}
 	foreach my $line (split(/\n/, $string)) {
 		$text->translate($x, $pdfpage->newline());
-		$text->text($line);
+		if($params{'centre'}) {
+			$text->text_center($line);
+		} else {
+			$text->text($line);
+		}
 	}
 	return 1;
 }
@@ -4289,7 +4301,7 @@ sub linesleft
 {
 	my $self = shift;
 
-	return $self->{'y'} / 40;
+	return ($self->{'y'} / 20) - 1;	# round fractions down
 }
 
 sub y
