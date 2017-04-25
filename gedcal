@@ -291,10 +291,24 @@ if($opts{'H'}) {
 				my $text = $page->text();
 				$text->textstart();
 				$text->font($font, 28);
-				$text->translate(300, 500);
+				$text->translate(300, 600);
 				$text->text_center('The Family Tree of');
-				$text->translate(300, 425);
+				$text->translate(300, 525);
 				$text->text_center(normalize_name($opts{'h'}));
+				my %args;
+				if(defined($ENV{'TZ'})) {
+					$args{'time_tone'} = $ENV{'TZ'};
+				} else {
+					$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
+				}
+				my $dt = DateTime->today(%args);
+				my $dtl = DateTime::Locale->load($ENV{'LANG'});
+				$text->translate(300, 450);
+				$text->text_center('Compiled on ' .
+					$dt->day() . ' ' .
+					@{$dtl->month_format_wide()}[$dt->month - 1] . ' ' .
+					$dt->year()
+				);
 				$text->textend();
 
 				# my $gfx = $page->gfx();
@@ -663,7 +677,7 @@ sub print_person
 	}
 	my $text;
 	if($opts{'B'}) {
-		if($pdfpage->pagefull() || ($pdfpage->linesleft() <= 5)) {
+		if($pdfpage->pagefull() || ($pdfpage->linesleft() <= 7)) {
 			$pdfpage = PDFPage->new();
 		} else {
 			$pdfpage->newline();
@@ -2804,7 +2818,7 @@ sub print_person
 						$bio = '';
 					}
 				} else {
-					print "\n\t";
+					$bio .= "\n\t";
 				}
 				$bio .= "[$citation]: $title";
 				# if(defined(my $publication = $citations{$citation}->publication())) {
@@ -3123,11 +3137,10 @@ sub print_person
 				}
 				if($title) {
 					if($image) {
-						if($image->height() >= ($pdfpage->y() - 60)) {
+						if($image->height() >= ($pdfpage->y() - 80)) {
 							$pdfpage = PDFPage->new();
 						}
-						my $y = $pdfpage->newline();
-						$y -= $image->height();
+						my $y = $pdfpage->newline() - $image->height();
 						my $x = 300 - ($image->width() / 2);
 						$pdfpage->page()->gfx()->image($image, $x, $y);
 						$pdfpage->y($y);
@@ -3137,7 +3150,9 @@ sub print_person
 					$text->textstart();
 					$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
 					my $x = 300 - (length($title) / 2);
-					pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1);
+					if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
+						die "Didn't make enough room for $title; y = " . $pdfpage->y();
+					}
 					$text->textend();
 				}
 				push @tmpfiles, $filename if(defined($filename));
@@ -4251,15 +4266,16 @@ sub pdfprint
 
 	return 0 if($pdfpage->pagefull());
 
-	my $text = $params{'text'};
-	my $string = wrap('    ', '', ($params{'string'}));
-	my $linecount = ($string =~ /\n/g) + 1;
-	my $x = $params{'x'} || 40;
+	my @lines = split(/\n/, wrap('    ', '', ($params{'string'})));
 
-	if($linecount >= $pdfpage->linesleft() - 2) {
+	if(scalar(@lines) >= $pdfpage->linesleft() - 1) {
 		return 0;
 	}
-	foreach my $line (split(/\n/, $string)) {
+
+	my $text = $params{'text'};
+	my $x = $params{'x'} || 40;
+
+	foreach my $line (@lines) {
 		$text->translate($x, $pdfpage->newline());
 		if($params{'centre'}) {
 			$text->text_center($line);
@@ -4287,6 +4303,14 @@ sub newline
 
 	$self->{'y'} -= 20;	# point size 12
 
+	if($self->{'y'} <= 10) {
+		my $i = 0;
+		while((my @call_details = (caller($i++)))) {
+			print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
+		}
+		die 'BUG: fallen too low vertically; y = ' . $self->{'y'};
+	}
+
 	return $self->{'y'};
 }
 
@@ -4310,6 +4334,14 @@ sub y
 	my $y = shift;
 
 	if($y) {
+		if($y <= 10) {
+			my $i = 0;
+			while((my @call_details = (caller($i++)))) {
+				print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
+			}
+			die "BUG: fallen too low vertically; y = $y";
+		}
+
 		$self->{'y'} = $y;
 	}
 
