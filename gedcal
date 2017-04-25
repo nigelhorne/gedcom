@@ -1502,7 +1502,7 @@ sub print_person
 				}
 			}
 			if($dateofbaptism) {
-				$bio .= ' ', year({
+				$bio .= ' ' . year({
 					person => $person,
 					date => $dateofbaptism,
 					must_postdate => $birth_dt,
