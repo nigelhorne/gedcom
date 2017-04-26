@@ -1459,13 +1459,8 @@ sub print_person
 				}
 				$end_of_sentence = 0;
 			}
-			if(scalar(@spouses)) {
-				if($aod || $aob) {
-					$bio .= ' and';
-				} else {
-					$bio .= '. ';
-					$end_of_sentence = 1;
-				}
+			if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0)) {
+				$bio .= ' and';
 			} else {
 				$bio .= '. ';
 				$end_of_sentence = 1;
@@ -1826,7 +1821,7 @@ sub print_person
 				$bio .= " $pronoun";
 			}
 			$bio .= ' had ' .
-				($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ";
+				(($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ");
 			if($numberofchildren == 1) {
 				$bio .= $children[0]->given_names();
 			} else {
@@ -2324,7 +2319,7 @@ sub print_person
 					}
 					$bio .= '. ';
 				} elsif($type eq 'Departure') {
-					$bio .= ' ', $person->pronoun();
+					$bio .= ' ' . $person->pronoun();
 					if($ENV{'LANG'} =~ /^en_US/) {
 						$bio .= ' traveled';
 					} else {
@@ -2514,7 +2509,7 @@ sub print_person
 							$bio .= place($opts);
 						}
 					}
-					$bio .= ' ', year({ person => $person, date => $dateofburial });
+					$bio .= ' ' . year({ person => $person, date => $dateofburial });
 					if(my $b = notes({ record => $burial, paragraph => 0 })) {
 						$b =~ tr/\r//;
 						$bio .= " ($b)";
