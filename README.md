@@ -36,9 +36,11 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcal -dwlHm $i -y 2016 gedcom-file.ged > $i.html
     done
 
-You can create a genealogy book of your family history:
+You can create a genealogy book of your family history to give to your dad on
+father's day:
 
-    gedcal -B 'family-history.pdf' -dh 'Your Full Name' gedcom-file.ged
+    # Note that this will only print people related to your father, even if you give -a
+    gedcal -B 'family-history.pdf' -dh "Your Father's Full Name" gedcom-file.ged
 
 The options are:
 

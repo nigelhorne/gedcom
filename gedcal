@@ -159,9 +159,6 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1;
 	$Text::Wrap::columns = 100;
-
-	my $total = scalar(@everyone);
-	$pr = String::ProgressBar->new(max => $total, length => 60);
 }
 if($opts{'A'}) {
 	$opts{'a'} = 1;
@@ -316,9 +313,16 @@ if($opts{'H'}) {
 				# $gfx->image($image, 100, 100);
 				# $image->height(32);
 				# $image->width(32);
+
+				@everyone = ($me);
+				@everyone = descendents($me, \@everyone);
+				@everyone = ancestors($me, \@everyone);
 			}
 		}
 		$fetcher = Data::Fetch->new();
+
+		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
+
 		@everyone = sort {
 			my $aname = $a->surname();
 			# my $sex = get_value({ person => $a, value => 'sex' });
@@ -4256,6 +4260,63 @@ sub date_to_datetime
 			return $dfn->parse_datetime($d->{'canonical'});
 		}
 	}
+}
+
+sub descendents
+{
+	my $person = shift;
+	my $l = shift;
+	my @list = @{$l};
+
+	my @children = $person->children();
+	if(scalar(@children)) {
+		foreach my $child(@children) {
+			push @list, $child;
+			my @spouses = $child->spouse();
+			if(scalar(@spouses)) {
+				push @list, @spouses;
+			}
+			@list = descendents($child, \@list);
+		}
+	}
+
+	return @list;
+}
+
+sub ancestors
+{
+	my $person = shift;
+	my $l = shift;
+	my @list = @{$l};
+
+	if(my $mother = $person->mother()) {
+		push @list, $mother;
+		@list = ancestors($mother, \@list);
+		my @siblings = $mother->siblings();
+		foreach my $sibling(@siblings) {
+			push @list, $sibling;
+			my @spouses = $sibling->spouse();
+			if(scalar(@spouses)) {
+				push @list, @spouses;
+			}
+			@list = descendents($sibling, \@list);
+		}
+	}
+	if(my $father = $person->father()) {
+		push @list, $father;
+		@list = ancestors($father, \@list);
+		my @siblings = $father->siblings();
+		foreach my $sibling(@siblings) {
+			push @list, $sibling;
+			my @spouses = $sibling->spouse();
+			if(scalar(@spouses)) {
+				push @list, @spouses;
+			}
+			@list = descendents($sibling, \@list);
+		}
+	}
+
+	return @list;
 }
 
 sub pdfprint
