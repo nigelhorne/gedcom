@@ -3896,6 +3896,11 @@ sub notes
 	}
 	if($rc) {
 		$rc =~ s/ $//;
+		$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
+		$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
+		$rc =~ s/\xe2\x80\x99/'/g;
+		$rc =~ s/[\x93\x94]/"/g;
+		$rc =~ s/[\x91\x92]/'/g;
 
 		if(defined($ENV{'LANG'})) {
 			if($ENV{'LANG'} =~ /^en_US/) {
