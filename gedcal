@@ -1754,6 +1754,7 @@ sub print_person
 				# FIXME:  handle where offspring are from more than one marriage
 				if($numberofchildren) {
 					my %childrenbyspouse;
+					my $childrenseen = 0;
 					foreach my $family ($person->fams()) {
 						if($family->number_of_children() &&
 						   ($spouse = ($sex eq 'M') ? $family->wife() : $family->husband())) {
@@ -1761,6 +1762,7 @@ sub print_person
 								foreach my $spouseschild($spouse->children()) {
 									if($spouseschild eq $child) {
 										$childrenbyspouse{$spouse}++;
+										$childrenseen++;
 										last;
 									}
 								}
@@ -1768,13 +1770,25 @@ sub print_person
 						}
 					}
 					my $parentofall;
-					foreach my $spouse(@spouses) {
-						if($parentofall && $childrenbyspouse{$spouse}) {
-							$parentofall = undef;
-							last;
+					if($childrenseen < $numberofchildren) {
+						# Unable to find the parent of all of the children.  This
+						# may be the case where someone married more than once,
+						# and has a child by a 3rd unknown (or unfound) person
+						if($opts{'w'}) {
+							if($opts{'f'}) {
+								die $person->as_string() . ': one of the parents of ' . $numberofchildren - $childrenseen . ' children is not known';
+							}
+							red_warning({ person => $person, warning => 'One of the parents of ' . $numberofchildren - $childrenseen . ' children is not known'});
 						}
-						if($childrenbyspouse{$spouse}) {
-							$parentofall = $spouse;
+					} else {
+						foreach my $spouse(@spouses) {
+							if($parentofall && $childrenbyspouse{$spouse}) {
+								$parentofall = undef;
+								last;
+							}
+							if($childrenbyspouse{$spouse}) {
+								$parentofall = $spouse;
+							}
 						}
 					}
 					$bio .= ".  $pronoun " .
@@ -1785,10 +1799,14 @@ sub print_person
 						} else {
 							$bio .= '1 child';
 						}
-						if($parentofall) {
-							$bio .= ' with ', $parentofall->as_string();
+						if($childrenseen >= $numberofchildren) {
+							if($parentofall) {
+								$bio .= ' with ', $parentofall->as_string();
+							} else {
+								die $person->as_string() . ': BUG: parentofall not set when only one child';
+							}
 						} else {
-							die $person->as_string() . ': BUG: parentofall not set when only one child';
+							$bio .= ' with an unknown ' . (($sex eq 'M') ? 'mother' : 'father');
 						}
 						$bio .= ', ' . $children[0]->given_names();
 					} else {
@@ -2400,6 +2418,15 @@ sub print_person
 						}
 						$end_of_sentence = 0;
 					} elsif($type eq 'Arrival') {
+						if(!defined($event->place())) {
+							if($opts{'f'}) {
+								die $person->as_string() . ': arrival record without destination';
+							}
+							if($opts{'w'}) {
+								red_warning({ person => $person, warning => 'Arrival record without destination' });
+							}
+							next;
+						}
 						if($events[$index] && ($events[$index]->type() eq 'Arrival') && $event->date()) {
 							if($events[$index]->date()) {
 								$previous = $event;
@@ -2436,7 +2463,7 @@ sub print_person
 									place({ person => $person, record => $previous }) .
 									' and ' .
 									year({ person => $person, record => $event }) .
-									' ' . lcfirst($person->pronoun()) .
+									' ' . lcfirst($pronoun),
 									' arrived' .
 									place({ person => $person, record => $event }) . '. ';
 							}
@@ -3333,6 +3360,8 @@ sub Gedcom::Individual::as_string
 		return '';
 	}
 
+	$rc =~ tr/"/'/;	# fix issues with Graphviz and others - compatibility with ged2site
+
 	return $rc;
 }
 
@@ -4204,6 +4233,7 @@ sub make_filename_from_person
 
 	my $rc = $person->as_string(include_years => 1);
 	$rc =~ tr/ /-/s;
+	$rc =~ tr/"/'/s;
 	$rc =~ s/--+/-/g;
 	# $rc =~ s/--/-/g;
 	$rc =~ s/-$//;
