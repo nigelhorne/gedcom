@@ -688,7 +688,7 @@ sub print_person
 		}
 		$text = $pdfpage->page()->text();
 		$text->textstart();
-		$text->font($params{'font'}, 20);
+		$text->font($params{'font'}, 18);
 
 		$text->translate(20, $pdfpage->newline());
 		$text->text($person->as_string($args));
@@ -4383,9 +4383,13 @@ sub pdfprint
 
 package PDFPage;
 
+our $pixelsperline = 16;	# point size 12
+
 sub new
 {
 	my $class = shift;
+
+	$pixelsperline = 16;
 
 	return bless { y => 750, page => $pdf->page() }, $class;
 }
@@ -4394,7 +4398,7 @@ sub newline
 {
 	my $self = shift;
 
-	$self->{'y'} -= 20;	# point size 12
+	$self->{'y'} -= $pixelsperline;
 
 	if($self->{'y'} <= 10) {
 		my $i = 0;
@@ -4411,14 +4415,14 @@ sub pagefull
 {
 	my $self = shift;
 
-	return $self->{'y'} <= 40;
+	return $self->{'y'} <= $pixelsperline * 2;
 }
 
 sub linesleft
 {
 	my $self = shift;
 
-	return ($self->{'y'} / 20) - 1;	# round fractions down
+	return ($self->{'y'} / $pixelsperline) - 1;	# round fractions down
 }
 
 sub y
