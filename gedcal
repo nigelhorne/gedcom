@@ -100,7 +100,7 @@ if($opts{'w'} || $opts{'B'}) {
 
 	HTTP::Cache::Transparent::init({
 		BasePath => $cachedir,
-		# Verbose => 1,
+		Verbose => $opts{'v'} ? 1 : 0,
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
 	}) || die "$0: $cachedir: $!";
@@ -166,6 +166,7 @@ if($opts{'A'}) {
 
 memoize('Gedcom::Individual::as_string');
 memoize('stepsabove');
+memoize('normalize_name');
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
@@ -3029,6 +3030,8 @@ sub print_person
 
 	if($opts{'B'}) {
 		$text->textend();
+		my $browser = LWP::UserAgent->new();
+		$browser->env_proxy(1);
 		foreach my $o($person->obje()) {
 			my $obje;
 			if(ref($o) eq 'Gedcom::Record') {
@@ -3058,8 +3061,6 @@ sub print_person
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
-					my $browser = LWP::UserAgent->new();
-					$browser->env_proxy(1);
 					my $resp = $browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
 						$title = $file if(!defined($title));
@@ -3104,7 +3105,7 @@ sub print_person
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
 				}
-				if($form && ($form =~ /^JPG$/i)) {
+				if((!defined($image)) && $form && ($form =~ /^JPG$/i)) {
 					if($file =~ /ancestry.com.+guid=.+&tid=/) {
 						# Ancestry's Gedcoms are broken, perhaps pointing to an old
 						# location that they forgot to fix
