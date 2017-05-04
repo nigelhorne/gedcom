@@ -166,7 +166,7 @@ if($opts{'A'}) {
 
 memoize('Gedcom::Individual::as_string');
 memoize('stepsabove');
-memoize('normalize_name');
+memoize('normalize_name');	# Speeds up sort with -B a lot
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
@@ -324,48 +324,7 @@ if($opts{'H'}) {
 
 		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 
-		@everyone = sort {
-			my $aname = $a->surname();
-			# my $sex = get_value({ person => $a, value => 'sex' });
-			# if(defined($sex) && ($sex eq 'F')) {
-				# if(my $husband = $a->husband()) {
-					# $aname = $husband->surname();
-				# } elsif(my $spouse = $a->spouse()) {
-					# $aname = $spouse->surname();
-				# }
-			# }
-
-			if(defined($aname)) {
-				$aname = normalize_name($aname);
-			} else {
-				$aname = 'ZZZZZ';
-			}
-
-			my $bname = $b->surname();
-			# $sex = get_value({ person => $b, value => 'sex' });
-			# if(defined($sex) && ($sex eq 'F')) {
-				# if(my $husband = $b->husband()) {
-					# $bname = $husband->surname();
-				# } elsif(my $spouse = $b->spouse()) {
-					# $bname = $spouse->surname();
-				# }
-			# }
-
-			if(defined($bname)) {
-				$bname = normalize_name($bname);
-			} else {
-				$bname = 'ZZZZZ';
-			}
-
-			if($aname eq $bname) {
-				# $aname = $a_name_components{'given_name_1'} || 'ZZZZZ';
-				# $bname = $b_name_components{'given_name_1'} || 'ZZZZZ';
-				$aname = $a->given_names() || 'ZZZZZ';
-				$bname = $b->given_names() || 'ZZZZZ';
-			}
-
-			$aname cmp $bname
-		} @everyone;
+		@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 
 		generate(everyone => \@everyone);
 
@@ -459,7 +418,7 @@ sub generate {
 				$pr->update($index++);
 				$pr->write();
 				$| = 0;
-				my $surname = $person->surname() || 'UNKNOWN';
+				my $surname = $person->surname() || '?';
 				my $initial = substr $surname, 0, 1;
 				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
 					$surname_initial = $initial;
@@ -947,7 +906,7 @@ sub print_person
 			foreach my $child(@children) {
 				if($child eq $person) {
 					if($opts{'f'}) {
-						die $person->_as_string(), ': person is own parent';
+						die $person->as_string(), ': person is own parent';
 					} else {
 						red_warning({ person => $person, warning => 'person is own parent' });
 					}
@@ -3267,8 +3226,10 @@ sub Gedcom::Individual::as_string
 
 	if($first_name) {
 		$rc .= $first_name;
-	} else {
+	} elsif($self->given_names()) {
 		$rc .= $self->given_names();
+	} elsif($args{'print_unknown'}) {
+		$rc .= ' ?';
 	}
 
 	if($args{'middle_names'}) {
@@ -3289,7 +3250,7 @@ sub Gedcom::Individual::as_string
 			$rc .= " $suffix";
 		}
 	} elsif($args{'print_unknown'}) {
-		$rc .= ' UNKNOWN';
+		$rc .= ' ?';
 	}
 
 	if($has_maiden_name && $self->surname()) {
@@ -3362,6 +3323,97 @@ sub Gedcom::Individual::as_string
 	}
 
 	$rc =~ tr/"/'/;	# fix issues with Graphviz and others - compatibility with ged2site
+
+	return $rc;
+}
+
+sub Gedcom::Individual::as_sort_key
+{
+	my $self = shift;
+	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $surname = $self->surname();
+	my $given_names = $self->given_names();
+	if($surname && length($surname)) {
+		if($given_names) {
+			if($surname =~ /\s(.+?)$/) {
+				$surname = $1;
+			}
+			return normalize_name("$surname, $given_names");
+		} else {
+			return normalize_name($surname) . ', ZZZZZ';
+		}
+	} elsif($given_names) {
+		return 'ZZZZZ, ' . normalize_name($given_names);
+	}
+
+	my $name = $self->name();
+
+	$name =~ s/\///g;
+	$nameparser->parse($name);
+
+	my %name_components = $nameparser->components();
+	my $first_name = $name_components{'given_name_1'};
+	my $middle_name = $name_components{'middle_name'};
+	$surname = $name_components{'surname_1'};
+	if($name_components{'surname_2'}) {
+		$surname .= ' ' . $name_components{'surname_2'};
+	}
+	my $rest;
+	if($name_components{'non_matching'}) {
+		if($name =~ /(\w+)\s(\w+)\s(\w+)\s(\w+)$/) {
+			# Name parser doesn't parse names like this very well
+			$first_name = $1;
+			$middle_name = "$2 $3";
+			$surname = $4;
+		} else {
+			if($surname) {
+				$surname .= ' ';
+			}
+			$rest = $name_components{'non_matching'};
+			if($rest =~ /(.+) $/) {
+				$rest = $1;
+			}
+		}
+	} elsif(!defined($surname)) {
+		$surname = $self->surname();
+	}
+
+	my $rc;
+
+	if($surname) {
+		$rc = normalize_name($surname);
+		if(my $suffix = $name_components{'suffix'}) {
+			$rc .= " $suffix";
+		}
+	} else {
+		$rc = 'ZZZZZZ';
+	}
+
+	if($first_name) {
+		$rc .= ", $first_name";
+	} elsif($given_names) {
+		$rc .= ", $given_names";
+	}
+
+	if($middle_name) {
+		$rc .= " $middle_name";
+	} elsif($name =~ /\s([A-Z])\s.+/) {
+		# Just an initial has been given
+		$rc .= " $1";
+	}
+
+	if($rest) {
+		$surname .= $rest;
+	}
+
+	if((!defined($rc)) && $opts{'w'}) {
+		if($opts{'f'}) {
+			die "\nCan't determine the name for record " . $self->{'xref'};
+		}
+		red_warning({ "Can't determine the name for record " . $self->{'xref'} });
+		return '';
+	}
 
 	return $rc;
 }
