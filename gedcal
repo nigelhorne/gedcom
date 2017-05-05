@@ -1206,7 +1206,7 @@ sub print_person
 		}
 
 		if(!$spouserelationship) {
-			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
+			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 				if($firstname) {
 					$bio .= " $firstname";
 				} else {
@@ -1668,6 +1668,22 @@ sub print_person
 				} else {
 					$bio .= scalar(@spouses) . ' times';
 				}
+				my $all_marriages_have_date = 1;
+				foreach my $spouse(@spouses) {
+					my $date = get_value({ person => $spouse, value => 'marriage date' });
+					if(!defined($date)) {
+						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
+							$date = $marriage->date();
+						}
+					}
+					if(!date_to_datetime($date)) {
+						$all_marriages_have_date = 0;
+						last;
+					}
+				}
+				if($all_marriages_have_date) {
+					@spouses = Sort::Key::DateTime::dtkeysort { date_to_datetime(date => (($_->get_record('fams marriage')->date()) || ($_->get_record('marriage')->date()))) } @spouses;
+				}
 				my $names;
 				my $spousenumber = 0;
 				foreach my $spouse(@spouses) {
@@ -1675,8 +1691,7 @@ sub print_person
 					$names .= $spouse->as_string();
 					my $dateofmarriage = get_value({ person => $spouse, value => 'marriage date' });
 					if(!defined($dateofmarriage)) {
-						my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
-						if($marriage) {
+						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
 							$dateofmarriage = $marriage->date();
 						}
 					}
