@@ -308,6 +308,7 @@ if($opts{'H'}) {
 					$dt->year()
 				);
 				$text->textend();
+				$pdfpage = PDFPage->new();	# blank page 2
 
 				# my $gfx = $page->gfx();
 				# my $image = $pdf->image_png('/Users/njh/src/njh/ged2site/dynamic-site/images/printer.png');
