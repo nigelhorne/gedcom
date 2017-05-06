@@ -1155,7 +1155,9 @@ sub print_person
 					$bio .= ' ' . lc($occupations[0]) . ')';
 				}
 			}
-			$bio .= ', ';
+			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
+				$bio .= ', ';
+			}
 		}
 
 		my $haveprintedspousename;
