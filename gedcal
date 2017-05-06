@@ -2752,19 +2752,14 @@ sub print_person
 					}
 					$bio .= '.';
 				} elsif(get_value({ person => $child, value => 'baptism date' })) {
-					if($opts{'B'}) {
-						$bio .= '<p>';
-					} else {
-						$bio .= "\t";
-					}
-					$bio .= $child->given_names() .
+					$bio .= "\t" . $child->given_names() .
 						' was born c. ' .
 						get_value({ person => $child, value => 'baptism date' }) .
 						'.';
 				}
 			}
 
-			$bio .= $opts{'B'} ? '<p>' : "\n" if(scalar(@children));
+			$bio .= "\n" if(scalar(@children));
 		}
 
 		if($opts{'c'}) {
@@ -3981,13 +3976,14 @@ sub notes
 			$note =~ s/\.$//;
 			if($paragraph) {
 				if($rc) {
-					if($opts{'B'}) {
-						$rc .= '<p>';
-					} else {
-						$rc .= "\n";
-					}
+					$rc .= "\n";
 				}
-				$rc .= "\t$note.";
+				if($opts{'B'}) {
+					$rc .= '    ';
+				} else {
+					$rc .= "\t";
+				}
+				$rc .= "$note.";
 			} else {
 				if($rc) {
 					$rc .= '  ';
