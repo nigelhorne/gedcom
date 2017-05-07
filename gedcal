@@ -2258,10 +2258,26 @@ sub print_person
 					$bio .= ' travelled';
 				}
 
-				$bio .= ' from ' .
-					$departure->place() .
-					' to ' .
-					$arrival->place();
+				if(defined($departure->place())) {
+					$bio .= ' from ' .  $departure->place();
+				} else {
+					if($opts{'f'}) {
+						die $person->as_string() . ': departure record has no location';
+					}
+					if($opts{'w'}) {
+						red_warning({ person => $person, warning => 'Departure record has no location' });
+					}
+				}
+				if(defined($arrival->place())) {
+					$bio .= ' to ' .  $arrival->place();
+				} else {
+					if($opts{'f'}) {
+						die $person->as_string() . ': arrival record has no location';
+					}
+					if($opts{'w'}) {
+						red_warning({ person => $person, warning => 'Arrival record has no location' });
+					}
+				}
 
 				if(defined($dod)) {
 					$bio .= ", departing $dod and";
@@ -2292,14 +2308,32 @@ sub print_person
 			if(ref($event) eq 'Gedcom::Record') {
 				my $type = $event->type();
 				if($type eq 'Arrival') {
-					$bio .= ' ' . $person->pronoun() . ' arrived',
-						place({ person => $person, record => $events[0] }) .
-						' ' .
-						year({ person => $person, record => $events[0] });
+					$bio .= ' ' . $person->pronoun() . ' arrived';
+					if(my $p = place({ person => $person, record => $events[0] })) {
+						$bio .= " $p";
+					} else {
+						if($opts{'f'}) {
+							die $person->as_string() . ": arrival record with no place";
+						}
+						if($opts{'w'}) {
+							red_warning({ person => $person, warning => "Arrival record has no place" });
+						}
+					}
+					if(my $y = year({ person => $person, record => $events[0] })) {
+						$bio .= " $y";
+					} else {
+						if($opts{'f'}) {
+							die $person->as_string() . ": arrival record with no date";
+						}
+						if($opts{'w'}) {
+							red_warning({ person => $person, warning => "Arrival record has no date" });
+						}
+					}
 					if(my $spouse = $person->spouse()) {
 						foreach my $sevent($spouse->event()) {
 							if(ref($sevent) eq 'Gedcom::Record') {
 								if(($sevent->type() eq 'Arrival') &&
+								   $event->date() && $sevent->date() &&
 								   ($event->date() eq $sevent->date()) &&
 								   ($event->place() eq $sevent->place())) {
 									$bio .= ' with ' .
@@ -3669,8 +3703,10 @@ sub year
 		$string = $params{'record'};
 		return unless($string);
 
-		$string = $string->date();
-		return unless($string);
+		if(ref($string) eq 'Gedcom::Record') {
+			$string = $string->date();
+			return unless($string);
+		}
 	}
 
 	if($string =~ /^\d{3,4}$/) {
@@ -3774,14 +3810,16 @@ sub place
 		$place = $params{'record'};
 		return unless($place);
 
-		$address = $place->address();
-		if(ref($address) eq 'Gedcom::Record') {
-			$place = getaddress($address);
-			$address = undef;
-		} else {
-			$place = $place->place();
+		if(ref($place) eq 'Gedcom::Record') {
+			$address = $place->address();
+			if(ref($address) eq 'Gedcom::Record') {
+				$place = getaddress($address);
+				$address = undef;
+			} else {
+				$place = $place->place();
+			}
+			return unless($place);
 		}
-		return unless($place);
 	} elsif(ref($address) eq 'Gedcom::Record') {
 		$place = getaddress($address);
 		$address = undef;
