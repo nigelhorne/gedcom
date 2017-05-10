@@ -76,7 +76,7 @@ if($opts{'f'}) {
 }
 
 if($opts{'w'} || $opts{'B'}) {
-	die '-w option needs -d option' unless($opts{'d'});
+	die '-w option needs -d option' unless($opts{'d'} || $opts{'B'});
 
 	# Cache calls to openstreetmap
 	require File::Spec;
@@ -794,7 +794,7 @@ sub print_person
 
 	$death_dt = date_to_datetime(date => $dateofdeath);
 
-	if($opts{'d'}) {
+	if($opts{'d'} || $opts{'B'}) {
 		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
 
 		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
@@ -1812,9 +1812,9 @@ sub print_person
 							}
 							$childnames = join(', ', map { $_->given_names() } @children);
 						} elsif($sex eq 'M') {
-							$childnames = join(', ', map { $_->given_names() . ' (with ' . $_->mother()->given_names() . ')' } @children);
+							$childnames = join(', ', map { $_->given_names() . ($_->mother() ? (' (with ' . $_->mother()->given_names() . ')') : '') } @children);
 						} else {
-							$childnames = join(', ', map { $_->given_names() . ' (with ' . $_->father()->given_names() . ')' } @children);
+							$childnames = join(', ', map { $_->given_names() . ($_->father() ? (' (with ' . $_->father()->given_names() . ')') : '') } @children);
 						}
 						substr($childnames, rindex($childnames, ', '), 2, ' and ');
 						$bio .= ": $childnames";
