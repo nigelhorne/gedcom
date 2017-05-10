@@ -75,10 +75,14 @@ if($opts{'f'}) {
 	$opts{'w'} = 1;
 }
 
-if($opts{'w'} || $opts{'B'}) {
-	die '-w option needs -d option' unless($opts{'d'} || $opts{'B'});
+die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 
-	# Cache calls to openstreetmap
+my $browser;
+if($opts{'w'} || $opts{'B'}) {
+	$browser = LWP::UserAgent->new();
+	$browser->env_proxy(1);
+
+	# Cache calls to openstreetmap etc.
 	require File::Spec;
 	File::Spec->import();
 
@@ -119,7 +123,12 @@ my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
+
 my $geocoder = Geo::Coder::OSM->new();
+if($browser) {
+	$geocoder->ua($browser);
+}
+
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 my $ninemonths = DateTime::Duration->new(months => 9);
 my $sixteenyears = DateTime::Duration->new(years => 16);
@@ -154,11 +163,12 @@ if($opts{'B'}) {
 	$pdf = PDF::API2->new(-file => $opts{'B'});
 	if(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
 		$pdf->mediabox('Letter');
+		$Text::Wrap::columns = 110;
 	} else {
 		$pdf->mediabox('A4');
+		$Text::Wrap::columns = 100;
 	}
 	$opts{'A'} = 1;
-	$Text::Wrap::columns = 100;
 }
 if($opts{'A'}) {
 	$opts{'a'} = 1;
@@ -3046,8 +3056,6 @@ sub print_person
 
 	if($opts{'B'}) {
 		$text->textend();
-		my $browser = LWP::UserAgent->new();
-		$browser->env_proxy(1);
 		foreach my $o($person->obje()) {
 			my $obje;
 			if(ref($o) eq 'Gedcom::Record') {
