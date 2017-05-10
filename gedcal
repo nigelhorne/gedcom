@@ -460,7 +460,7 @@ sub print_person
 
 	if(defined($dob) && ($dob !~ /^[\d\sA-Z\/]+$/i)) {
 		if($opts{'f'}) {
-			die $person->as_string() . ": Invalid character in date of birth $dob"; 
+			die $person->as_string() . ": Invalid character in date of birth $dob";
 		}
 		red_warning({ person => $person, warning => "Invalid character in date of birth $dob" });
 		$dob = undef;
@@ -3056,6 +3056,7 @@ sub print_person
 
 	if($opts{'B'}) {
 		$text->textend();
+		my @images;
 		foreach my $o($person->obje()) {
 			my $obje;
 			if(ref($o) eq 'Gedcom::Record') {
@@ -3187,27 +3188,65 @@ sub print_person
 					}
 				}
 				if($title) {
-					if($image) {
-						if($image->height() >= ($pdfpage->y() - 80)) {
-							$pdfpage = PDFPage->new();
-						}
-						my $y = $pdfpage->newline() - $image->height();
-						my $x = 300 - ($image->width() / 2);
-						$pdfpage->page()->gfx()->image($image, $x, $y);
-						$pdfpage->y($y);
-					}
-
-					$text = $pdfpage->page()->text();
-					$text->textstart();
-					$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
-					my $x = 300 - (length($title) / 2);
-					if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
-						die "Didn't make enough room for $title; y = " . $pdfpage->y();
-					}
-					$text->textend();
+					push @images, {image => $image, title => $title};
 				}
 				push @tmpfiles, $filename if(defined($filename));
 			}
+		}
+		while(my $i = shift @images) {
+			my $image = $i->{'image'};
+			my $title = $i->{'title'};
+
+			if($image) {
+				if($image->height() >= ($pdfpage->y() - 80)) {
+					$pdfpage = PDFPage->new();
+				}
+				my $y = $pdfpage->newline() - $image->height();
+
+				if(my $peek = $images[0]) {
+					if(my $pimage = $peek->{'image'}) {
+						if(($image->width() < 250) && ($pimage->width() < 250) &&
+						   ($pimage->height() <= $y) && ($pimage->height() <= $image->height())) {
+							# Print two images side by side
+							$peek = shift @images;
+
+							my $x = 150 - ($image->width() / 2);
+							$pdfpage->page()->gfx()->image($image, $x, $y);
+							$x = 450 - ($pimage->width() / 2);
+							$pdfpage->page()->gfx()->image($pimage, $x, $y);
+							$pdfpage->y($y);
+
+							$text = $pdfpage->page()->text();
+							$text->textstart();
+							$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
+							$x = 150 - (length($title) / 2);
+							if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
+								die "Didn't make enough room for $title; y = " . $pdfpage->y();
+							}
+							my $ptitle = $peek->{'title'};
+							$x = 450 - (length($ptitle) / 2);
+							if(!pdfprint(string => $ptitle, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
+								die "Didn't make enough room for $ptitle ; y = " . $pdfpage->y();
+							}
+							$text->textend();
+							next;
+						}
+					}
+				}
+
+				my $x = 300 - ($image->width() / 2);
+				$pdfpage->page()->gfx()->image($image, $x, $y);
+				$pdfpage->y($y);
+			}
+
+			$text = $pdfpage->page()->text();
+			$text->textstart();
+			$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
+			my $x = 300 - (length($title) / 2);
+			if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
+				die "Didn't make enough room for $title; y = " . $pdfpage->y();
+			}
+			$text->textend();
 		}
 	}
 }
