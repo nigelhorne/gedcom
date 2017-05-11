@@ -26,8 +26,9 @@ use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
+use Geo::Coder::List;
 use Geo::Coder::OSM;
-# use Geo::Coder::Canada;
+use Geo::Coder::CA;
 use Term::ANSIColor;
 use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
@@ -124,7 +125,10 @@ my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
 
-my $geocoder = Geo::Coder::OSM->new();
+my $geocoder = Geo::Coder::List->new()
+       ->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+       ->push(Geo::Coder::OSM->new());
+
 if($browser) {
 	$geocoder->ua($browser);
 }
@@ -4128,43 +4132,17 @@ sub validate_place
 			$town = $1;
 		}
 		if(!$geocoder->geocode($town)) {
-			my $found = 0;
-			# if(($place =~ /, Canada$/) &&
-			  # (my $ap = Lingua::EN::AddressParse->new(country => 'CA', auto_clean => 1, force_case => 1, force_post_code => 0))) {
-				# $place =~ s/é/e/g;
-				# $place =~ s/è/e/g;
-				# my $error = $ap->parse($place);
-				# # print $ap->report();
-				# my %nc = $ap->components();
-				# my $g = Geo::Coder::Canada->new();
-				# if($nc{'suburb'}) {
-					# $g->addresst($nc{street_name});
-					# $g->city($nc{suburb});
-					# $g->prov($nc{subcountry});
-				# } elsif($place =~ /,?(.+?),(.+?),(.+?),(.+?)$/) {
-					# $g->city($2);
-					# $g->prov($3);
-				# }
-				# if($g->geocode()) {
-					# $found = 1;
-				# } else {
-					# # die $g->error->description;
-				# }
-			# }
-			if(!$found) {
-				# Don't die because there are many
-				# false positives as locations
-				# may no longer exist
-				my $person = $params{'person'};
-				if($person) {
-					warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place", 'red');
-				} else {
-					warn colored("Unknown location $place", 'red');
-				}
-				$places{$place} = 0;
-				$places{$town} = 0;
-				return 0;
+			# Don't die because there are many
+			# false positives as locations
+			# may no longer exist
+			if(my $person = $params{'person'}) {
+				warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place", 'red');
+			} else {
+				warn colored("Unknown location $place", 'red');
 			}
+			$places{$place} = 0;
+			$places{$town} = 0;
+			return 0;
 		}
 		$places{$town} = 1;
 	}
