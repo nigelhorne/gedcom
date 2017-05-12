@@ -1710,6 +1710,7 @@ sub print_person
 				}
 				my $names;
 				my $spousenumber = 0;
+				my $previousplace;
 				foreach my $spouse(@spouses) {
 					# $names .= ', ' if($names);
 					$names .= $spouse->as_string();
@@ -1726,19 +1727,24 @@ sub print_person
 							$placeofmarriage = $marriage->place();
 						}
 					}
+					if($placeofmarriage) {
+						$placeofmarriage = place({ person => $spouse, place => $placeofmarriage, places_printed => \%places_printed });
+						if($previousplace && ($placeofmarriage eq $previousplace)) {
+							if($placeofmarriage =~ /^(.+?),/) {
+								$placeofmarriage = " also$1";
+							}
+						} else {
+							$previousplace = $placeofmarriage;
+						}
+					}
+
 					if($dateofmarriage && $placeofmarriage) {
-						$names .= ' (' .
-							year({ string => $dateofmarriage }) .
-							place({ person => $spouse, place => $placeofmarriage, places_printed => \%places_printed }) .
-							')';
+						$names .= ' (' . year({ string => $dateofmarriage }) .
+							"$placeofmarriage)";
 					} elsif($placeofmarriage) {
-						$names .= ' (' .
-							place({ person => $spouse, place => $placeofmarriage, places_printed => \%places_printed }) .
-							')';
+						$names .= " ($placeofmarriage)";
 					} elsif($dateofmarriage) {
-						$names .= ' (' .
-							year({ string => $dateofmarriage }) .
-							')';
+						$names .= ' (' . year({ string => $dateofmarriage }) . ')';
 					}
 					$spousenumber++;
 					if($spousenumber == (scalar(@spouses) - 1)) {
