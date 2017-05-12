@@ -2142,11 +2142,20 @@ sub print_person
 										$bio .= ' when ' . lcfirst($person->pronoun()) .
 											' was living with ' .
 											lcfirst($person->possessive()) .
-											($sibling->sex() eq 'F') ? ' sister, ' : ' brother, ' .
+											(($sibling->sex() eq 'F') ? ' sister, ' : ' brother, ') .
 											$sibling->given_names();
 									}
 								}
 							}
+						}
+					}
+					if($spdeath_dt && (my $rdate_dt = date_to_datetime($rdate))) {
+						if($rdate_dt > $spdeath_dt) {
+							$bio .= ' following the death of ' .
+								($person->pronoun() eq 'She' ? 'her' : 'his') .
+								(($sex eq 'M') ? ' wife ' : ' husband ') .
+								year(date => get_value({ person => $spouses[0], value => 'death date' }));
+							$spdeath_dt = undef;
 						}
 					}
 					if($spdeath_dt && (my $rdate_dt = date_to_datetime($rdate))) {
@@ -2178,11 +2187,10 @@ sub print_person
 											lcfirst($person->pronoun()) .
 											' was living with ' .
 											lcfirst($person->possessive()) .
-											($child->sex() eq 'F') ? ' daughter ' : ' son ' .
+											(($child->sex() eq 'F') ? ' daughter ' : ' son ') .
 											$child->given_names() .
 											' following the death of ' .
-											$person->pronoun() eq 'She' ? 'her' : 'his' .
-											($sex eq 'M') ? ' wife ' : ' husband ' .
+											(($sex eq 'M') ? 'his wife ' : 'her husband ') .
 											year(date => get_value({ person => $spouses[0], value => 'death date' }));
 										$spdeath_dt = undef;
 										last CHILD;
