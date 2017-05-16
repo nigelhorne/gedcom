@@ -47,6 +47,8 @@ use Sort::Key::DateTime;
 use Text::Names;
 use Memoize;
 use Data::Fetch;
+use Text::Soundex;
+
 no lib '.';
 
 my %opts;
@@ -354,9 +356,16 @@ if($opts{'H'}) {
 				@everyone = ($me);
 				@everyone = descendents($me, \@everyone);
 				@everyone = ancestors($me, \@everyone);
+				my @siblings = $me->siblings();
+				foreach my $sibling(@siblings) {
+					@everyone = descendents($sibling, \@everyone);
+				}
+				@everyone = (@everyone, @siblings);
 
 				if($surname) {
-					@everyone = grep { $_->as_string() =~ /.*$surname$/i } @everyone;
+					my $nara = soundex_nara($surname);
+					# @everyone = grep { $_->as_string() =~ /.*$surname$/i } @everyone;
+					@everyone = grep { ($_->as_string() =~ /$surname$/i) || ($_->surname() && (soundex_nara($_->surname()) eq $nara)) } @everyone;
 				}
 			} elsif($opts{'s'}) {
 				die '-s and -h must be given together';
