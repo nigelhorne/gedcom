@@ -1561,6 +1561,9 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
+					if($numberofchildren == 0) {
+						$bio .= ' and';
+					}
 					$bio .= ' married ';
 				} elsif(was_alive(person => $person) && was_alive(person => $spouses[0])) {
 					$bio .= ' is married to ';
