@@ -1600,7 +1600,7 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
-					if($numberofchildren == 0) {
+					if(($numberofchildren == 0) && !$all_children_are_alive) {
 						$bio .= ' and';
 					}
 					$bio .= ' married ';
