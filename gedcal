@@ -50,8 +50,8 @@ use Data::Fetch;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfh:Hm:lLp:twvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('aAbB:cCdDfh:Hm:lLp:stwvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -173,7 +173,10 @@ if($opts{'B'}) {
 		$Text::Wrap::columns = 100;
 	}
 	$opts{'A'} = 1;
+} elsif($opts{'s'}) {
+	die '-s only makes sense with the -B option';
 }
+
 if($opts{'A'}) {
 	$opts{'a'} = 1;
 }
@@ -304,9 +307,19 @@ if($opts{'H'}) {
 				$text->textstart();
 				$text->font($font, 28);
 				$text->translate(300, 600);
-				$text->text_center('The Family Tree of');
-				$text->translate(300, 525);
-				$text->text_center(normalize_name($opts{'h'}));
+				my $surname;
+				if($opts{'s'}) {
+					if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
+						$surname = $1;
+					} else {
+						$surname = $opts{'h'};
+					}
+					$text->text_center("The Surname Book of $surname");
+				} else {
+					$text->text_center('The Family Tree of');
+					$text->translate(300, 525);
+					$text->text_center(normalize_name($opts{'h'}));
+				}
 				my %args;
 				if(defined($ENV{'TZ'})) {
 					$args{'time_tone'} = $ENV{'TZ'};
@@ -315,12 +328,20 @@ if($opts{'H'}) {
 				}
 				my $dt = DateTime->today(%args);
 				my $dtl = DateTime::Locale->load($ENV{'LANG'});
-				$text->translate(300, 450);
+				if($opts{'s'}) {
+					$text->translate(300, 525);
+				} else {
+					$text->translate(300, 450);
+				}
 				$text->text_center('Compiled on ' .
 					$dt->day() . ' ' .
 					@{$dtl->month_format_wide()}[$dt->month - 1] . ' ' .
 					$dt->year()
 				);
+				if($opts{'s'}) {
+					$text->translate(300, 450);
+					$text->text_center('for ' . normalize_name($opts{'h'}));
+				}
 				$text->textend();
 				$pdfpage = PDFPage->new();	# blank page 2
 
@@ -333,6 +354,12 @@ if($opts{'H'}) {
 				@everyone = ($me);
 				@everyone = descendents($me, \@everyone);
 				@everyone = ancestors($me, \@everyone);
+
+				if($surname) {
+					@everyone = grep { $_->as_string() =~ /.*$surname$/i } @everyone;
+				}
+			} elsif($opts{'s'}) {
+				die '-s and -h must be given together';
 			}
 		}
 		$fetcher = Data::Fetch->new();
@@ -425,7 +452,10 @@ sub generate {
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
-		next if($me && ($person eq $me));
+		if($me && ($person eq $me)) {
+			$index++;
+			next;
+		}
 
 		if(!$printed{$person->{'xref'}}) {
 			if($opts{'B'}) {
@@ -1812,7 +1842,7 @@ sub print_person
 						}
 						if($childrenseen >= $numberofchildren) {
 							if($parentofall) {
-								$bio .= ' with ', $parentofall->as_string();
+								$bio .= ' with ' . $parentofall->as_string();
 							} else {
 								die $person->as_string() . ': BUG: parentofall not set when only one child';
 							}
