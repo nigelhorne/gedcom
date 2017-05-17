@@ -3143,6 +3143,8 @@ sub print_person
 				$file =~ s/\r//g;
 				my $image;
 				my $filename;
+				my $orig_image;
+				my $orig_filename;
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
@@ -3154,26 +3156,26 @@ sub print_person
 						open(my $fh, '>', $tmp->filename());
 						print $fh $resp->decoded_content();
 						close $fh;
+						$orig_filename = $filename;
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
 						my $height = $resize->height();
 						my $gd;
-						if(($pdfpage->y() < $height) || ($height > 200)) {
-							my $newwidth = $width * (200 / $height);
+						if($height > 250) {
+							my $newwidth = $width * (250 / $height);
 							my $newheight;
-							if($newwidth > 500) {
-								$newheight = $height * (500 / $width);
-								$gd = $resize->resize(500, $newheight);
+							if($newwidth > 550) {
+								$newheight = $height * (550 / $width);
+								$gd = $resize->resize(550, $newheight);
 							} else {
-								$gd = $resize->resize($newwidth, 200);
-								$newheight = 200;
+								$gd = $resize->resize($newwidth, 250);
+								$newheight = 205;
 							}
-						} elsif($width > 500) {
-							my $newheight = $height * (500 / $width);
-							$gd = $resize->resize(500, $newheight);
+						} elsif($width > 550) {
+							my $newheight = $height * (550 / $width);
+							$gd = $resize->resize(550, $newheight);
 						}
 						if($gd) {
-							unlink $filename;
 							$tmp = File::Temp->new(UNLINK => 0);
 							$filename = $tmp->filename();
 							open(my $fh, '>', $filename);
@@ -3181,6 +3183,7 @@ sub print_person
 							close $fh;
 						}
 						$image = $pdf->image_jpeg($filename);
+						$orig_image = $pdf->image_jpeg($orig_filename);
 					} else {
 						if(!$resp->is_success()) {
 							red_warning({ person => $person, warning => "download $file failed " . $resp->status_line() });
@@ -3205,33 +3208,35 @@ sub print_person
 							}
 							red_warning({ person => $person, warning => "BUG: update ACOM mapping for $file" });
 							unlink $filename if(defined($filename));
+							unlink $orig_filename if(defined($orig_filename));
 							next;
 						}
 					}
 					my $rc;
 					my $tmp = File::Temp->new(UNLINK => 0);
 					$filename = $tmp->filename();
+					$orig_filename = $filename;
 					if(is_success($rc = getstore($file, $filename))) {
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
 						my $height = $resize->height();
 						my $gd;
-						if(($pdfpage->y() < $height) || ($height > 200)) {
-							my $newwidth = $width * (200 / $height);
+						if($height > 250) {
+							my $newwidth = $width * (250 / $height);
 							my $newheight;
-							if($newwidth > 500) {
-								$newheight = $height * (500 / $width);
-								$gd = $resize->resize(500, $newheight);
+							if($newwidth > 550) {
+								$newheight = $height * (550 / $width);
+								$gd = $resize->resize(550, $newheight);
 							} else {
-								$gd = $resize->resize($newwidth, 200);
-								$newheight = 200;
+								$gd = $resize->resize($newwidth, 250);
+								$newheight = 250;
 							}
-						} elsif($width > 500) {
-							my $newheight = $height * (500 / $width);
-							$gd = $resize->resize(500, $newheight);
+						} elsif($width > 550) {
+							my $newheight = $height * (550 / $width);
+							$gd = $resize->resize(550, $newheight);
 						}
 						if($gd) {
-							unlink $filename;
+							$orig_image = $pdf->image_jpeg($orig_filename);
 							$tmp = File::Temp->new(UNLINK => 0);
 							$filename = $tmp->filename();
 							open(my $fh, '>', $filename);
@@ -3248,13 +3253,15 @@ sub print_person
 					}
 				}
 				if($title) {
-					push @images, {image => $image, title => $title};
+					push @images, {image => $image, orig_image => $orig_image, title => $title};
 				}
 				push @tmpfiles, $filename if(defined($filename));
+				push @tmpfiles, $orig_filename if(defined($orig_filename) && ($orig_filename ne $filename));
 			}
 		}
 		while(my $i = shift @images) {
 			my $image = $i->{'image'};
+			my $orig_image = $i->{'orig_image'};
 			my $title = $i->{'title'};
 
 			if($image) {
@@ -3294,9 +3301,18 @@ sub print_person
 					}
 				}
 
-				my $x = 300 - ($image->width() / 2);
-				$pdfpage->page()->gfx()->image($image, $x, $y);
-				$pdfpage->y($y);
+				if(($pdfpage->y() > ($orig_image->height() + 80)) && ($orig_image->width() < 550)) {
+					# No need to shrink the image
+					$y = $pdfpage->y() - $orig_image->height();
+					my $x = 300 - ($orig_image->width() / 2);
+					$pdfpage->page()->gfx()->image($orig_image, $x, $y);
+					$pdfpage->y($y);
+				} else {
+					# Shrink the image to fit on the page
+					my $x = 300 - ($image->width() / 2);
+					$pdfpage->page()->gfx()->image($image, $x, $y);
+					$pdfpage->y($y);
+				}
 			}
 
 			$text = $pdfpage->page()->text();
