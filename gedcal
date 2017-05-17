@@ -1402,7 +1402,7 @@ sub print_person
 					}
 				}
 				if($dateofbaptism || $placeofbaptism) {
-					if(scalar(@spouses) && !($opts{'a'} || $opts{'p'})) {
+					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0) && !($opts{'a'} || $opts{'p'})) {
 						$bio .= ', was';
 					} else {
 						$bio .= ' and';
