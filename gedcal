@@ -2136,7 +2136,7 @@ sub print_person
 							}
 							$bio .= 'During ' .
 								lc($person->possessive()) .
-								' life ' . lcfirst($pronoun) . ' lived';
+								' life ' . lcfirst($pronoun) . ' was living';
 						}
 						$have_printed = 1;
 					}
