@@ -2104,6 +2104,7 @@ sub print_person
 			if($spouses[0]) {
 				$spdeath_dt = date_to_datetime(date => get_value({ person => $spouses[0], value => 'death date' }));
 			}
+			my $print_year_only;
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
@@ -2168,7 +2169,12 @@ sub print_person
 							}
 							red_warning({ person => $person, warning => "Two residence records for $rdate" });
 						}
-						$bio .= " $this_date";
+						if($print_year_only) {
+							$bio .= $rdate;
+							$print_year_only = 0;
+						} else {
+							$bio .= " $this_date";
+						}
 						$prev_date = $this_date;
 					}
 					# Find if they are an adult living with an adult sibling
@@ -2271,7 +2277,12 @@ sub print_person
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 						$peek = $residencelist[$count + 1];
 						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-							$bio .= ',';
+							if(($rdate =~ /^\d{4}$/) && ($peek->date() =~ /^\d{4}$/)) {
+								$bio .= '-';
+								$print_year_only = 1;
+							} else {
+								$bio .= ',';
+							}
 						} else {
 							$bio .= ' and';
 						}
