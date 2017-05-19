@@ -1271,10 +1271,13 @@ sub print_person
 
 		if(!$spouserelationship) {
 			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
+				if($relationship) {
+					$bio .= ' ';
+				}
 				if($firstname) {
-					$bio .= " $firstname";
+					$bio .= $firstname;
 				} else {
-					$bio .= " $pronoun";
+					$bio .= $pronoun;
 				}
 			}
 		}
@@ -2138,7 +2141,7 @@ sub print_person
 							}
 							$bio .= 'During ' .
 								lc($person->possessive()) .
-								' life ' . lcfirst($pronoun) . ' was living';
+								' life, ' . lcfirst($pronoun) . ' was living';
 						}
 						$have_printed = 1;
 					}
