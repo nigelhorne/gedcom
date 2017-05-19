@@ -2170,8 +2170,8 @@ sub print_person
 							red_warning({ person => $person, warning => "Two residence records for $rdate" });
 						}
 						if($print_year_only) {
-							$bio .= $rdate;
-							$print_year_only = 0;
+							# $bio .= $rdate;
+							# $print_year_only = 0;
 						} else {
 							$bio .= " $this_date";
 						}
@@ -2271,6 +2271,10 @@ sub print_person
 				}
 				$count++;
 				if(($count == 1) && (scalar(@residencelist) == 2)) {
+					if($print_year_only) {
+						$bio .= $rdate;
+						$print_year_only = 0;
+					}
 					$bio .= ' and';
 				} else {
 					my $peek = $residencelist[$count];
@@ -2281,14 +2285,26 @@ sub print_person
 								$bio .= '-';
 								$print_year_only = 1;
 							} else {
+								if($print_year_only) {
+									$bio .= $rdate;
+									$print_year_only = 0;
+								}
 								$bio .= ',';
 							}
-						} else {
+						} elsif(!$print_year_only) {
 							$bio .= ' and';
 						}
 					} elsif($count == (scalar(@residencelist) - 1)) {
+						if($print_year_only) {
+							$bio .= $rdate;
+							$print_year_only = 0;
+						}
 						$bio .= '; and';
 					} elsif($count < (scalar(@residencelist) - 1)) {
+						if($print_year_only) {
+							$bio .= $rdate;
+							$print_year_only = 0;
+						}
 						$bio .= ';';
 					}
 				}
