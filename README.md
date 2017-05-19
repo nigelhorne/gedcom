@@ -36,11 +36,11 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcal -dwlHm $i -y 2016 gedcom-file.ged > $i.html
     done
 
-You can create a genealogy book of your family history to give to your dad on
-father's day:
+You can create a genealogy book as a PDF of your family history to give to
+your dad on father's day:
 
     # Note that this will only print people related to your father, even if you give -a
-    gedcal -B 'family-history.pdf' -dh "Your Father's Full Name" gedcom-file.ged
+    gedcal -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
 The options are:
 
@@ -76,7 +76,7 @@ Acknowledgements
 ================
 
 So many Perl CPAN modules that if I list them all I'll miss one, but special
-	mention goes to the Gedcom module.
+mention goes to the Gedcom module.
 
 # LICENSE AND COPYRIGHT
 
