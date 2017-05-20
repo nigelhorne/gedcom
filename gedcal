@@ -128,8 +128,8 @@ my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
 
 my $geocoder = Geo::Coder::List->new()
-       ->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
-       ->push(Geo::Coder::OSM->new());
+	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+	->push(Geo::Coder::OSM->new());
 
 if($browser) {
 	$geocoder->ua($browser);
@@ -2173,8 +2173,10 @@ sub print_person
 							red_warning({ person => $person, warning => "Two residence records for $rdate" });
 						}
 						if($print_year_only) {
-							# $bio .= $rdate;
-							# $print_year_only = 0;
+							if($count == (scalar(@residencelist) - 1)) {
+								$bio .= $rdate;
+								# $print_year_only = 0;
+							}
 						} else {
 							$bio .= " $this_date";
 						}
@@ -2284,7 +2286,7 @@ sub print_person
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 						$peek = $residencelist[$count + 1];
 						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-							if(($rdate =~ /^\d{4}$/) && ($peek->date() =~ /^\d{4}$/)) {
+							if((!$opts{'c'}) && ($rdate =~ /^\d{4}$/) && ($peek->date() =~ /^\d{4}$/)) {
 								if(!$print_year_only) {
 									$bio .= '-';
 									$print_year_only = 1;
@@ -2315,6 +2317,7 @@ sub print_person
 				}
 				$printed_residence = 1;
 			}
+
 			if($printed_residence) {
 				$bio .= '. ';
 				$end_of_sentence = 1;
