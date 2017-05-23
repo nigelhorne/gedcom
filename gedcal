@@ -1753,7 +1753,16 @@ sub print_person
 					}
 				}
 				if($all_marriages_have_date) {
-					@spouses = Sort::Key::DateTime::dtkeysort { date_to_datetime(date => (($_->get_record('fams marriage')->date()) || ($_->get_record('marriage')->date()))) } @spouses;
+					@spouses = Sort::Key::DateTime::dtkeysort {
+						my $date;
+						if(my $rec = $_->get_record('fams marriage')) {
+							$date = $rec->date();
+						}
+						if((!defined($date)) && (my $rec = $_->get_record('marriage'))) {
+							$date = $rec->date();
+						}
+						date_to_datetime(date => $date);
+					} @spouses;
 				}
 				my $names;
 				my $spousenumber = 0;
@@ -2287,7 +2296,7 @@ sub print_person
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 						$peek = $residencelist[$count + 1];
 						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-							if((!$opts{'c'}) && ($rdate =~ /^\d{4}$/) && ($peek->date() =~ /^\d{4}$/)) {
+							if((!$opts{'c'}) && $rdate && ($rdate =~ /^\d{4}$/) && $peek->date() && ($peek->date() =~ /^\d{4}$/)) {
 								if(!$print_year_only) {
 									$bio .= '-';
 									$print_year_only = 1;
