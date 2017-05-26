@@ -134,6 +134,7 @@ my $geocoder = Geo::Coder::List->new()
 	->push(Geo::Coder::XYZ->new());
 
 if($browser) {
+	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
 }
 
@@ -4365,7 +4366,7 @@ sub validate_place
 			# may no longer exist
 			if(my $person = $params{'person'}) {
 				my @call_details = caller(0);
-				warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place at line " . $call_details[2], 'red');
+				warn colored($person->as_string({ include_years => 1 }) . ": unknown location '$place' at line " . $call_details[2], 'red');
 			} else {
 				warn colored("Unknown location $place", 'red');
 			}
