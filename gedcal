@@ -28,6 +28,7 @@ use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::List;
 use Geo::Coder::OSM;
+use Geo::Coder::XYZ;
 use Geo::Coder::CA;
 use Term::ANSIColor;
 use Lingua::EN::NameCase;
@@ -129,7 +130,8 @@ my $dfn = DateTime::Format::Natural->new();
 
 my $geocoder = Geo::Coder::List->new()
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
-	->push(Geo::Coder::OSM->new());
+	->push(Geo::Coder::OSM->new())
+	->push(Geo::Coder::XYZ->new());
 
 if($browser) {
 	$geocoder->ua($browser);
@@ -4362,7 +4364,8 @@ sub validate_place
 			# false positives as locations
 			# may no longer exist
 			if(my $person = $params{'person'}) {
-				warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place", 'red');
+				my @call_details = caller(0);
+				warn colored($person->as_string({ include_years => 1 }) . ": unknown location $place at line " . $call_details[2], 'red');
 			} else {
 				warn colored("Unknown location $place", 'red');
 			}
