@@ -41,7 +41,7 @@ use DateTime::Duration;
 use DateTime::Format::Natural;
 use Text::Wrap;
 use LWP::Simple;
-use LWP::UserAgent;
+use LWP::UserAgent::Throttled;
 use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
@@ -83,7 +83,7 @@ die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 
 my $browser;
 if($opts{'w'} || $opts{'B'}) {
-	$browser = LWP::UserAgent->new();
+	$browser = LWP::UserAgent::Throttled->new();
 	$browser->env_proxy(1);
 
 	# Cache calls to openstreetmap etc.
@@ -134,6 +134,7 @@ my $geocoder = Geo::Coder::List->new()
 	->push(Geo::Coder::XYZ->new());
 
 if($browser) {
+	$browser->load(0.1);
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
 }
