@@ -42,6 +42,10 @@ your dad on father's day:
     # Note that this will only print people related to your father, even if you give -a
     gedcal -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
+You can create a book of your family name:
+
+    gedcal -B smith.pdf -dsh 'John Smith' gedcom-file.ged
+
 The options are:
 
     -a: all days otherwise just today
@@ -60,6 +64,7 @@ The options are:
     -L: include ged2site hyperlinks with -H
     -p: print the biography of the given person
     -t: print tomorrow's information, don't use with -a
+    -s: only print entries matching the home person's surname
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -y: year for -H calendar
