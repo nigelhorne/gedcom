@@ -3056,7 +3056,7 @@ sub print_person
 				return $orig_uri;
 			});
 
-			my %years;
+			my %census_years;
 			my $findagrave;
 			foreach my $citation(1..$citationcount) {
 				if(!$citations{$citation}) {
@@ -3129,7 +3129,7 @@ sub print_person
 				}
 
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
-					$years{$1} = $title;
+					$census_years{$1} = $title;
 				}
 				if($title =~ /find a grave/i) {
 					$findagrave = 1;
@@ -3141,17 +3141,17 @@ sub print_person
 				foreach my $event(@events) {
 					if((ref($event) eq 'Gedcom::Record') &&
 					   ($event->type() =~ /^Census U[KS] (\d{4})$/)) {
-						$years{$1} = $event->type();
+						$census_years{$1} = $event->type();
 					}
 				}
-				foreach my $year(sort keys(%years)) {
-					if($years{$year + 20} && !$years{$year + 10}) {
+				foreach my $year(sort { $a <=> $b } keys(%census_years)) {
+					if($census_years{$year + 20} && !$census_years{$year + 10}) {
 						if($opts{'f'}) {
-							die 'Census citation missing between ', $years{$year}, ' and ', $years{$year + 20};
+							die 'Census citation missing between ', $census_years{$year}, ' and ', $census_years{$year + 20};
 						}
 						red_warning({
 							person => $person,
-							warning => 'Census citation missing between ' . $years{$year} . ' and ' . $years{$year + 20}
+							warning => 'Census citation missing between ' . $census_years{$year} . ' and ' . $census_years{$year + 20}
 						});
 					}
 				}
