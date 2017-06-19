@@ -3286,6 +3286,7 @@ sub print_person
 	if($opts{'B'}) {
 		$text->textend();
 		my @images;
+		my %files;
 		foreach my $o($person->obje()) {
 			my $obje;
 			if(ref($o) eq 'Gedcom::Record') {
@@ -3300,6 +3301,11 @@ sub print_person
 					$file = $file->{'file'};
 					next if($file eq '*');
 				}
+				if($files{$file}) {
+					print "$file is already printed\n" if($opts{'v'});
+					next;
+				}
+				$files{$file} = 1;
 				my $title = $obje->title() || $obje->tag_record('TITL', 1);
 				my $form = $obje->form();
 				if((!$form) && $obje->items()) {
@@ -3429,11 +3435,9 @@ sub print_person
 			}
 		}
 		while(my $i = shift @images) {
-			my $image = $i->{'image'};
-			my $orig_image = $i->{'orig_image'};
 			my $title = $i->{'title'};
 
-			if($image) {
+			if(my $image = $i->{'image'}) {
 				if($image->height() >= ($pdfpage->y() - 80)) {
 					$pdfpage = PDFPage->new();
 				}
@@ -3465,10 +3469,13 @@ sub print_person
 								die "Didn't make enough room for $ptitle ; y = " . $pdfpage->y();
 							}
 							$text->textend();
+							shift @images;
 							next;
 						}
 					}
 				}
+
+				my $orig_image = $i->{'orig_image'};
 
 				if(($pdfpage->y() > ($orig_image->height() + 80)) && ($orig_image->width() < 550)) {
 					# No need to shrink the image
