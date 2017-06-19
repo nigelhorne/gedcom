@@ -352,6 +352,9 @@ if($opts{'H'}) {
 					$text->translate(300, 450);
 					$text->text_center('for ' . normalize_name($opts{'h'}));
 				}
+				$text->font($font, 12);
+				$text->translate(220, 40);
+				$text->text('Produced by gedcal - https://github.com/nigelhorne/gedcal');
 				$text->textend();
 				$pdfpage = PDFPage->new();	# blank page 2
 
