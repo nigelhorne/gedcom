@@ -77,6 +77,9 @@ observed by websites.
 If you see lumpy English text in the output, or just plain mistakes,
 please e-mail me or add a bug report to github.com/nigelhorne/gedcal.
 
+I've tested against a number of Gedcoms including the Torture Tests at
+https://www.tamurajones.net/DownloadTortureTests.xhtml
+
 Acknowledgements
 ================
 

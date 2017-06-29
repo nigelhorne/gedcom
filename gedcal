@@ -3219,6 +3219,12 @@ sub print_person
 				$bio = '';
 			}
 		} else {
+			if($bio eq "\t.") {
+				if($opts{'f'}) {
+					die $person->as_string(), ": couldn't extract a biography";
+				}
+				red_warning({ person => $person, warning => "couldn't extract a biography" });
+			}
 			print "$bio\n", '-' x 80, "\n";
 		}
 	} else {
