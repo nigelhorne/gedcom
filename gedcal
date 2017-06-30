@@ -1060,7 +1060,7 @@ sub print_person
 				} else {
 					$bio .= lc($occupations[0]);
 				}
-				if(!($father || $mother || $spouserelationship)) {
+				if(!($father || $mother || $spouserelationship || $occupations[0])) {
 					$bio .= ', ';
 				}
 			}
@@ -1229,7 +1229,7 @@ sub print_person
 					$bio .= ' ' . lc($occupations[0]) . ')';
 				}
 			}
-			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses) || $relationship) {
+			if(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses) || $relationship) && ($occupations[0])) {
 				$bio .= ', ';
 			}
 		}
