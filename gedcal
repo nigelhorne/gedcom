@@ -1229,7 +1229,9 @@ sub print_person
 				}
 			}
 			if($mother) {
-				$bio .=  ' ' . $mother->as_string({ give_maidenname => 0 });
+				if(my $m = $mother->as_string(give_maidenname => 0)) {
+					$bio .=  " $m";
+				}
 				my @occupations = $mother->get_value('occupation');
 				# TODO: print all occupations
 				if($occupations[0]) {
@@ -1901,7 +1903,11 @@ sub print_person
 							if($parentofall) {
 								$bio .= ' with ' . $parentofall->as_string();
 							} else {
-								die $person->as_string() . ': BUG: parentofall not set when only one child';
+								if($opts{'f'}) {
+									die $person->as_string(), ': BUG: parentofall not set when only one child';
+								} else {
+									red_warning({ person => $person, warning => 'BUG: parentofall not set when only one child' });
+								}
 							}
 						} else {
 							$bio .= ' with an unknown ' . (($sex eq 'M') ? 'mother' : 'father');
