@@ -53,8 +53,8 @@ use Text::Soundex;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfh:Hm:lLp:stwvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -w ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('aAbB:cCdDfh:Hm:lLp:stwWvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -w [ -W ] ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -168,6 +168,9 @@ if($opts{'y'} && !$opts{'H'}) {
 }
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
+}
+if($opts{'W'} && !$opts{'w'}) {
+	die '-W only makes sense with the -w option';
 }
 
 if($opts{'B'}) {
@@ -513,12 +516,18 @@ sub print_person
 	my $dob = get_value({ person => $person, value => 'birth date' });
 
 	# ACOM starts approximate dates with "Abt." instead of "ABT".
-	if(defined($dob) && (($dob !~ /^[\d\sA-Z\/]+$/i) && ($dob !~ /^Abt\./))) {
-		if($opts{'f'}) {
-			die $person->as_string() . ": Invalid character in date of birth $dob";
+	if(defined($dob)) {
+		$dob =~ s/[\.\-]/ /g;
+		if($dob =~ /^About[:\s](.+)/) {
+			$dob = "ABT$1";
 		}
-		red_warning({ person => $person, warning => "Invalid character in date of birth $dob" });
-		$dob = undef;
+		if(($dob !~ /^[\d\sA-Z\/]+$/i) && ($dob !~ /^Abt\./)) {
+			if($opts{'f'}) {
+				die $person->as_string() . ": Invalid character in date of birth $dob";
+			}
+			red_warning({ person => $person, warning => "Invalid character in date of birth $dob" });
+			$dob = undef;
+		}
 	}
 
 	my $onlybirthdays = $params{'onlybirthdays'};
@@ -541,7 +550,9 @@ sub print_person
 	if($dob && ($dob =~ /.*?(\d{3,4})/)) {
 		$yob = $1;
 	} elsif($dob) {
-		if($opts{'w'} && !$warned{$person}) {
+		if($dob eq 'UNKNOWN') {
+			$dob = undef;
+		} elsif($opts{'w'} && !$warned{$person}) {
 			if($opts{'f'}) {
 				die $person->name(), ": invalid date of birth $dob\n";
 			}
@@ -1353,11 +1364,12 @@ sub print_person
 					}
 				}
 				if($dateofbirth) {
-					$bio .= ' ' . year({
+					my $y = year({
 						person => $person,
 						date => $dateofbirth,
 						must_predate => $death_dt
 					});
+					$bio .= " $y" if($y);
 				}
 				$bio .= "[$_]" foreach(@birthcitations);
 				if($opts{'w'}) {
@@ -1830,14 +1842,17 @@ sub print_person
 				if($numberofchildren) {
 					my %childrenbyspouse;
 					my $childrenseen = 0;
+					my $unknown;
 					foreach my $family ($person->fams()) {
 						if($family->number_of_children() &&
 						   ($spouse = ($sex eq 'M') ? $family->wife() : $family->husband())) {
 							foreach my $child($person->children()) {
+								$unknown = $child;
 								foreach my $spouseschild($spouse->children()) {
 									if($spouseschild eq $child) {
 										$childrenbyspouse{$spouse}++;
 										$childrenseen++;
+										$unknown = undef;
 										last;
 									}
 								}
@@ -1851,9 +1866,17 @@ sub print_person
 						# and has a child by a 3rd unknown (or unfound) person
 						if($opts{'w'}) {
 							if($opts{'f'}) {
-								die $person->as_string() . ': one of the parents of ' . $numberofchildren - $childrenseen . ' children is not known';
+								die $person->as_string() . ': one of the parents of ' . ($numberofchildren - $childrenseen) . ' children is not known';
 							}
-							red_warning({ person => $person, warning => 'One of the parents of ' . $numberofchildren - $childrenseen . ' children is not known'});
+							if(($numberofchildren - $childrenseen) == 1) {
+								if($unknown) {
+									red_warning({ person => $person, warning => 'One of the parents of ' . $unknown->as_string() . ' is not known'});
+								} else {
+									red_warning({ person => $person, warning => 'One of the parents of 1 child is not known'});
+								}
+							} else {
+								red_warning({ person => $person, warning => 'One of the parents of ' . ($numberofchildren - $childrenseen) . ' children is not known'});
+							}
 						}
 					} else {
 						foreach my $spouse(@spouses) {
@@ -2099,7 +2122,7 @@ sub print_person
 					if($opts{'f'}) {
 						die $person->name(), ': Contains a residence without a date';
 					}
-					red_warning({ person => $person, warning => 'Contains a residence without a date' });
+					red_warning({ person => $person, warning => 'Contains a residence' . place(record => $residence) . ' without a date' });
 					$all_residences_have_date = 0;
 					last;
 				}
@@ -2313,7 +2336,7 @@ sub print_person
 									$print_year_only = 1;
 								}
 							} else {
-								if($print_year_only) {
+								if($print_year_only && $rdate) {
 									$bio .= $rdate;
 									$print_year_only = 0;
 								}
@@ -4040,14 +4063,16 @@ sub year
 	}
 	if(($string =~ /^\d/) && ($string !~ /[a-z]$/i)) {
 		my $person = $params{'person'};
-		my $d;
-		eval {
-			$d = $date_parser->parse(date => $string);
-		};
-		if($d) {
-			$d = @{$d}[0];
+		if($string =~ /^31 Nov/) {
+			if($opts{'f'}) {
+				die $person->as_string(), ": $string is invalid, there are only 30 days in November";
+			}
+			if($opts{'w'}) {
+				red_warning({ person => $person, warning => "$string is invalid, there are only 30 days in November" });
+			}
+			return;
 		}
-		if($d) {
+		if(my $d = date_parser_cached(date => $string)) {
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			my $must_postdate = $params{'must_postdate'};
 			if($must_postdate) {
@@ -4064,7 +4089,7 @@ sub year
 					die $person->as_string(), ": Something is wrong with the date $string which should be before ", $must_predate->strftime('%x') if($d > $must_predate);
 				}
 				if($opts{'w'}) {
-					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
+					red_warning({ person => $person, warning => "something is wrong with the date $string 22222222222222 which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 				}
 			}
 			return 'on ' . $d->strftime('%x');
@@ -4390,10 +4415,18 @@ sub validate_place
 			# false positives as locations
 			# may no longer exist
 			if(my $person = $params{'person'}) {
-				my @call_details = caller(0);
-				warn colored($person->as_string({ include_years => 1 }) . ": unknown location '$place' at line " . $call_details[2], 'red');
+				if($opts{'W'}) {
+					print STDERR $person->as_string({ include_years => 1 }), ": unknown location '$place'\n";
+				} else {
+					my @call_details = caller(0);
+					warn colored($person->as_string({ include_years => 1 }) . ": unknown location '$place' at line " . $call_details[2], 'red');
+				}
 			} else {
-				warn colored("Unknown location $place", 'red');
+				if($opts{'W'}) {
+					print STDERR "Unknown location $place\n";
+				} else {
+					warn colored("Unknown location $place", 'red');
+				}
 			}
 			$places{$place} = 0;
 			$places{$town} = 0;
@@ -4509,9 +4542,17 @@ sub red_warning
 
 		if($params{'person'}) {
 			my @call_details = caller(0);
-			warn colored(['red'], $params{'person'}->as_string(), ': ', $params{'warning'}, ' at line ', $call_details[2]);
+			if($opts{'W'}) {
+				print STDERR $params{'person'}->as_string(), ': ', $params{'warning'}, "\n";
+			} else {
+				warn colored(['red'], $params{'person'}->as_string(), ': ', $params{'warning'}, ' at line ', $call_details[2]);
+			}
 		} else {
-			warn colored(lcfirst($params{'warning'}), 'red');
+			if($opts{'W'}) {
+				print STDERR lcfirst($params{'warning'}), "\n";
+			} else {
+				warn colored(lcfirst($params{'warning'}), 'red');
+			}
 		}
 		# my $i = 0;
 		# while((my @call_details = (caller($i++)))) {

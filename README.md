@@ -67,6 +67,7 @@ The options are:
     -s: only print entries matching the home person's surname
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
+    -W: don't colorize warning output
     -y: year for -H calendar
 
 Bugs
