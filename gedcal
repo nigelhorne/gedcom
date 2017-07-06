@@ -4089,7 +4089,7 @@ sub year
 					die $person->as_string(), ": Something is wrong with the date $string which should be before ", $must_predate->strftime('%x') if($d > $must_predate);
 				}
 				if($opts{'w'}) {
-					red_warning({ person => $person, warning => "something is wrong with the date $string 22222222222222 which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
+					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 				}
 			}
 			return 'on ' . $d->strftime('%x');
