@@ -524,13 +524,30 @@ sub print_person
 			$dob = "ABT$1";
 		} elsif($dob =~ /^Bet\s[a-z]{3}.+([a-z]{3}\s+.*)/i) {	# Bet Jun-Jul 1860
 			$dob = "ABT $1";
+		} elsif($dob =~ /^(.+)\s*\?/i) {
+			$dob = "ABT$1";
 		}
 		if(($dob !~ /^[\d\sA-Z\/]+$/i) && ($dob !~ /^Abt\./)) {
-			if($opts{'f'}) {
-				die $person->as_string() . ": Invalid character in date of birth $dob";
+			if($dob =~ /(\d{4})\s*(.+)/) {
+				$dob = "ABT$1";
+				if(place({ peron => $person, place => $2 })) {
+					if($opts{'f'}) {
+						die $person->as_string(), ": Unexpected text ($2) after the date $1  - should be in the location record";
+					}
+					red_warning({ person => $person, warning => "Unexpected text ($2) after the date $1 - should be in the location record" });
+				} else {
+					if($opts{'f'}) {
+						die $person->as_string(), ": Unexpected text ($2) after the date $1 - should be in the note field";
+					}
+					red_warning({ person => $person, warning => "Unexpected text ($2) after the date $1 - should be in the note field" });
+				}
+			} else {
+				if($opts{'f'}) {
+					die $person->as_string(), ": Invalid character in date of birth $dob";
+				}
+				red_warning({ person => $person, warning => "Invalid character in date of birth $dob" });
+				$dob = undef;
 			}
-			red_warning({ person => $person, warning => "Invalid character in date of birth $dob" });
-			$dob = undef;
 		}
 	}
 
@@ -1092,6 +1109,7 @@ sub print_person
 			shift @occupations;
 		}
 		my $print_sibling_count = 0;
+		my $printed_comma = 0;
 		if($father || $mother) {
 			if(scalar(@occupations)) {
 				$bio .= ' and the ';
@@ -1248,6 +1266,7 @@ sub print_person
 			}
 			if(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses) || $relationship) && ($occupations[0])) {
 				$bio .= ', ';
+				$printed_comma = 1;
 			}
 		}
 
@@ -1255,7 +1274,7 @@ sub print_person
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
-					$bio .= ', ' unless($father || $mother);
+					$bio .= ', ' unless($printed_comma);
 				} elsif(was_alive(person => $person)) {
 					$bio .= $person->as_string . ' is ';
 				} else {
@@ -1268,7 +1287,7 @@ sub print_person
 			$bio .= " $relationship";
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
-				$bio .= ', ' unless($father || $mother);
+				$bio .= ', ' unless($printed_comma);
 				if($firstname) {
 					$bio .= $firstname;
 				} else {
