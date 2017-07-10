@@ -1092,7 +1092,7 @@ sub print_person
 				} else {
 					$bio .= lc($occupations[0]);
 				}
-				if(!($father || $mother || $spouserelationship || $occupations[0])) {
+				if(!($father || $mother || $spouserelationship)) {
 					$bio .= ', ';
 				}
 			}
