@@ -1248,6 +1248,8 @@ sub print_person
 				}
 				if($mother) {
 					$bio .= ' and';
+				} else {
+					$bio .= ', ';
 				}
 			}
 			if($mother) {
