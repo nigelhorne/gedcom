@@ -1263,6 +1263,19 @@ sub print_person
 					}
 					$bio .= ' ' . lc($occupations[0]) . ')';
 				}
+				if($opts{'w'}) {
+					my $mdod = get_value({ person => $mother, value => 'death date' });
+					if($mdod && $birth_dt) {
+						if(my $dt = date_to_datetime(date => $mdod)) {
+							if($birth_dt > $dt) {
+								if($opts{'f'}) {
+									die $person->name(), ': Born after mother died';
+								}
+								red_warning({ person => $person, warning => 'Born after mother died' });
+							}
+						}
+					}
+				}
 			}
 			if(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses) || $relationship) && ($occupations[0])) {
 				$bio .= ', ';
@@ -2253,6 +2266,27 @@ sub print_person
 				}
 				# Citation residence notes print later
 				if($rdate) {	# residence has a date?
+					if($opts{'w'} && $yod && ($rdate =~ /(\d{3,4})$/)) {
+						if($1 > $yod) {
+							if($opts{'f'}) {
+								die $person->as_string(), ": Year of residence $1 is after the year of death $yod";
+							}
+							red_warning({
+								person => $person,
+								warning => "Year of residence $1 is after the year of death $yod"
+							});
+						} elsif($death_dt && (my $rdate_dt = date_to_datetime($rdate))) {
+							if($rdate_dt > $death_dt) {
+								if($opts{'f'}) {
+									die $person->as_string(), ": Date of residence $rdate is after date of death ", $death_dt->strftime('x');
+								}
+								red_warning({
+									person => $person,
+									warning => "Date of residence $rdate is after date of death " . $death_dt->strftime('x')
+								});
+							}
+						}
+					}
 					if(scalar(@residencelist) > 1) {
 						my $this_date = year({ person => $person, date => $rdate });
 						if($prev_date && ($prev_date eq $this_date)) {
