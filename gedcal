@@ -144,7 +144,7 @@ if($browser) {
 }
 
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
-my $ninemonths = DateTime::Duration->new(months => 9);
+my $tenmonths = DateTime::Duration->new(months => 10);
 my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fetcher;
 my $pdf;
@@ -1173,15 +1173,15 @@ sub print_person
 									$d = $dfn->parse_datetime($d->{'canonical'});
 									if($opts{'w'} &&
 									  ($d < $birth_dt) &&
-									  ($d > ($birth_dt - $ninemonths))) {
+									  ($d > ($birth_dt - $tenmonths))) {
 										if($opts{'f'}) {
 											die $sibling->as_string(),
-												' was born less than 9 months before ',
+												' was born less than 10 months before ',
 												$person->as_string();
 										}
 										red_warning({
 											person => $sibling,
-											warning => 'Born less than 9 months before ' . $person->as_string()
+											warning => 'Born less than 10 months before ' . $person->as_string()
 										});
 									}
 									$count++ if($d && ($d < $birth_dt));
@@ -1421,6 +1421,14 @@ sub print_person
 								red_warning({
 									person => $person,
 									warning => "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)"
+								});
+							} elsif(($yob - $mumdateofbirth) >= 52) {
+								if($opts{'f'}) {
+									die "something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)";
+								}
+								red_warning({
+									person => $person,
+									warning => "something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)"
 								});
 							}
 						}
@@ -3130,15 +3138,15 @@ sub print_person
 									die $child->name(), ': Born after mother died';
 								}
 								red_warning({ person => $child, warning => 'born after mother died' });
-							} elsif(($sex eq 'M') && $death_dt && ($d > ($death_dt + $ninemonths))) {
+							} elsif(($sex eq 'M') && $death_dt && ($d > ($death_dt + $tenmonths))) {
 								# Allow the child to be
-								# born up to 9 months
+								# born up to 10 months
 								# after the death of the
 								# father
 								if($opts{'f'}) {
-									die $child->name(), ': Born more than 9 months after father died';
+									die $child->name(), ': Born more than 10 months after father died';
 								}
-								red_warning({ person => $child, warning => 'born more than 9 months after father died' });
+								red_warning({ person => $child, warning => 'born more than 10 months after father died' });
 							}
 						}
 					}
