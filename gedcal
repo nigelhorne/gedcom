@@ -1986,6 +1986,7 @@ sub print_person
 							}
 							$childnames = join(', ', map { $_->given_names() } @children);
 						} elsif($sex eq 'M') {
+							# FIXME: children from the same parent should be listed together
 							$childnames = join(', ', map { $_->given_names() . ($_->mother() ? (' (with ' . $_->mother()->given_names() . ')') : '') } @children);
 						} else {
 							$childnames = join(', ', map { $_->given_names() . ($_->father() ? (' (with ' . $_->father()->given_names() . ')') : '') } @children);
