@@ -2088,6 +2088,12 @@ sub print_person
 							last;
 						}
 					}
+					if(!$dateofbirth) {
+						if($opts{'f'}) {
+							die $person->as_string(), ': census information not used to approximate a date of birth';
+						}
+						red_warning({ person => $person, warning => 'Census information not used to approximate a date of birth' });
+					}
 					push @residences, $event if($newresidence);
 				} elsif($type eq 'Hospitalisation') {	# Find My Past
 					push @residences, $event;
