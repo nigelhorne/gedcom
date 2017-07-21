@@ -1074,6 +1074,7 @@ sub print_person
 		}
 
 		my $same_occupation_as_father;
+		my $printed_comma = 0;
 
 		my $bio = "\t";
 
@@ -1100,6 +1101,7 @@ sub print_person
 				}
 				if(!($father || $mother || $spouserelationship)) {
 					$bio .= ', ';
+					$printed_comma = 1;
 				}
 			}
 		} elsif(scalar(@occupations)) {
@@ -1115,7 +1117,6 @@ sub print_person
 			shift @occupations;
 		}
 		my $print_sibling_count = 0;
-		my $printed_comma = 0;
 		if($father || $mother) {
 			if(scalar(@occupations)) {
 				$bio .= ' and the ';
