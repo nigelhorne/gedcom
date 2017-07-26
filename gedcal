@@ -3852,10 +3852,9 @@ sub Gedcom::Individual::as_string
 sub Gedcom::Individual::as_sort_key
 {
 	my $self = shift;
-	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
-
 	my $surname = $self->surname();
 	my $given_names = $self->given_names();
+
 	if($surname && length($surname)) {
 		if($given_names) {
 			if($surname =~ /\s(.+?)$/) {
