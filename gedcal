@@ -59,6 +59,7 @@ die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] 
 
 my $me;
 my @myancestors;
+my @mydescendents;
 my %warned;
 my %printed;
 my %places;
@@ -69,10 +70,22 @@ if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
 }
 
+my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
+
 if($opts{h}) {
-	$me = $ged->get_individual($opts{h});
-	unless($me) {
+	my @rc = $ged->get_individual($opts{h});
+	if(scalar(@rc) == 0) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
+	} elsif(scalar(@rc) == 1) {
+		$me = $rc[0];
+	} else {
+		my $i = 0;
+		print join("\n", map { $i++; "$i: " . $_->as_string({ include_years => 1, middle_names => 1 }) } @rc),
+			"\nMore than one $opts{h} found - choose a line number: ";
+		$i = <STDIN>;
+		chomp $i;
+		$me = $rc[$i - 1];
+		die "Incorrect line number" unless($me);
 	}
 }
 
@@ -144,7 +157,6 @@ if($browser) {
 	$geocoder->ua($browser);
 }
 
-my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 my $tenmonths = DateTime::Duration->new(months => 10);
 my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fetcher;
@@ -354,7 +366,13 @@ if($opts{'H'}) {
 				);
 				if($opts{'s'}) {
 					$text->translate(300, 450);
-					$text->text_center('for ' . normalize_name($opts{'h'}));
+					if(was_alive(person => $me)) {
+						$text->text_center('for ' . normalize_name($opts{'h'}));
+					} else {
+						my $n = normalize_name($me->as_string(include_years => 1));
+						$n =~ s/\sC(\d)/ c$1/;
+						$text->text_center("for $n");
+					}
 				}
 				$text->font($font, 12);
 				$text->translate(220, 40);
@@ -3908,7 +3926,7 @@ sub Gedcom::Individual::as_sort_key
 	}
 
 	if($rest) {
-		$surname .= $rest;
+		$rc .= $rest;
 	}
 
 	if((!defined($rc)) && $opts{'w'}) {
@@ -3972,7 +3990,14 @@ sub Gedcom::Individual::possessive
 # FIXME: currently only finds ancestors
 # TODO: find in-laws
 # See http://www.myrelative.com/html/relationship.html for inspiration
-sub Gedcom::Individual::relationship
+sub Gedcom::Individual::relationship {
+	my $self = shift;
+	my $other = shift;
+
+	return $self->relationship_up($other) || $self->relationship_down($other);
+}
+
+sub Gedcom::Individual::relationship_up
 {
 	my $self = shift;
 	my $other = shift;
@@ -4117,6 +4142,62 @@ sub Gedcom::Individual::relationship
 				# print "$steps1, $steps2\n" if(!defined($rc));
 
 				return $rc;
+			}
+		}
+	}
+}
+
+sub Gedcom::Individual::relationship_down
+{
+	my $self = shift;
+	my $other = shift;
+
+	unless(@mydescendents) {
+		@mydescendents = $self->descendents();
+	}
+	return unless @mydescendents;
+
+	my $sex = get_value({ person => $other, value => 'sex' });
+	if((!defined($sex)) || ($sex !~ /[MF]/)) {
+		if($opts{'f'}) {
+			die "\n", $other->as_string(), ": unknown sex\n";
+		}
+		if($opts{'w'}) {
+			red_warning({ person => $other, warning => 'unknown sex' });
+		}
+		return;
+	}
+
+	foreach my $person1(@mydescendents) {
+		die if($person1 eq $self);
+		if($person1 eq $other) {
+			# Direct desendent
+			my $steps = stepsabove($other, $self, 0);
+			my $title = ($sex eq 'M') ? 'son' : 'daughter';
+			if($steps >= 5) {
+				$steps -= 2;
+				return "$steps times great-grand$title";
+			} elsif($steps == 1) {
+				return $title;
+			} elsif($steps == 2) {
+				return "grand$title";
+			} elsif($steps == 3) {
+				return "great-grand$title";
+			} elsif($steps == 4) {
+				return "great-great-grand$title";
+			} elsif($steps <= 0) {
+				if(my $spouse = $other->spouse()) {
+					if(stepsabove($self, $spouse, 0)) {
+						# The caller should now check
+						# the spouse's relationship
+						return;
+					}
+				}
+				if($opts{'f'}) {
+					die $other->as_string(), ": BUG - not a direct ancestor, steps = $steps";
+				} else {
+					warn colored($other->as_string() . ": BUG - not a direct ancestor, steps = $steps", 'red');
+				}
 			}
 		}
 	}
@@ -4698,15 +4779,18 @@ sub get_value
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $args = {
-		object => $params{'person'},
-		message => 'get_value',
-		arg => $params{'value'}
-	};
+	if($fetcher) {
+		my $args = {
+			object => $params{'person'},
+			message => 'get_value',
+			arg => $params{'value'}
+		};
 
-	# Doesn't use the prefetching feature, but will automatically cache which is nice
-	# $fetcher->prime($args);
-	return $fetcher->get($args);
+		# Doesn't use the prefetching feature, but will automatically cache which is nice
+		# $fetcher->prime($args);
+		return $fetcher->get($args);
+	}
+	return $params{'person'}->get_value($params{'value'});
 }
 
 sub get_source
