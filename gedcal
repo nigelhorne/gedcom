@@ -54,8 +54,8 @@ use Text::Soundex;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfh:Hm:lLp:stwWvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -w [ -W ] ] filename [ filename2 ] \n" unless($ARGV[0]);
+getopts('aAbB:cCdDfGh:Hm:lLp:stwWvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -w [ -W ] ] filename [ filename2 ] \n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -185,6 +185,9 @@ if($opts{'L'} && !$opts{'H'}) {
 if($opts{'W'} && !$opts{'w'}) {
 	die '-W only makes sense with the -w option';
 }
+if($opts{'A'} && $opts{'G'}) {
+	die '-A doesn\'t make sense with the -G option';
+}
 
 if($opts{'B'}) {
 	require PDF::API2;
@@ -198,12 +201,12 @@ if($opts{'B'}) {
 		$pdf->mediabox('A4');
 		$Text::Wrap::columns = 100;
 	}
-	$opts{'A'} = 1;
+	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
 	die '-s only makes sense with the -B option';
 }
 
-if($opts{'A'}) {
+if($opts{'A'} || $opts{'G'}) {
 	$opts{'a'} = 1;
 }
 
@@ -322,7 +325,7 @@ if($opts{'H'}) {
 	die '-D and -a should not be given together' if($opts{'D'});
 	die '-p and -a should not be given together' if($opts{'p'});
 
-	if($opts{'A'}) {
+	if($opts{'A'} || $opts{'G'}) {
 		if($opts{'B'}) {
 			if($opts{'h'}) {
 				my $page = $pdf->page();
@@ -364,7 +367,7 @@ if($opts{'H'}) {
 					@{$dtl->month_format_wide()}[$dt->month - 1] . ' ' .
 					$dt->year()
 				);
-				if($opts{'s'}) {
+				if($opts{'s'} && !$opts{'G'}) {
 					$text->translate(300, 450);
 					if(was_alive(person => $me)) {
 						$text->text_center('for ' . normalize_name($opts{'h'}));
@@ -387,8 +390,8 @@ if($opts{'H'}) {
 				# $image->width(32);
 
 				@everyone = ($me);
-				@everyone = descendents($me, \@everyone);
 				@everyone = ancestors($me, \@everyone);
+				@everyone = descendents($me, \@everyone);
 				my @siblings = $me->siblings();
 				foreach my $sibling(@siblings) {
 					@everyone = descendents($sibling, \@everyone);
@@ -408,7 +411,17 @@ if($opts{'H'}) {
 
 		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 
-		@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
+		if($opts{'G'}) {
+			# FIXME: This sorting only works when all people are descendents of $me, there are no
+			# ancestors involved
+			@everyone = sort {
+				(stepsabove($a, $me, 0) == stepsabove($b, $me, 0)) ?
+					$a->as_sort_key() cmp $b->as_sort_key() :
+					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
+			} @everyone;
+		} else {
+			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
+		}
 
 		generate(everyone => \@everyone);
 
@@ -491,10 +504,11 @@ sub generate {
 		$params{'font'} = $pdf->corefont('Times-New-Roman');
 	}
 	my $index = 1;
+	my $generation = 0;
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
-		if($me && ($person eq $me)) {
+		if($me && ($person eq $me) && !$opts{'a'}) {
 			$index++;
 			next;
 		}
@@ -505,11 +519,45 @@ sub generate {
 				$pr->update($index++);
 				$pr->write();
 				$| = 0;
-				my $surname = $person->surname() || '?';
-				my $initial = substr $surname, 0, 1;
-				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
-					$surname_initial = $initial;
-					$pdfpage = PDFPage->new();
+				if($opts{'G'}) {
+					if(stepsabove($person, $me, 0) != $generation) {
+						# FIXME:  only do this if the generation contains dead people of the -l flag is given
+						$pdfpage = PDFPage->new();
+						$generation = stepsabove($person, $me, 0);
+
+						my $font = $pdf->corefont('Times-New-Roman-Bold');
+						my $text = $pdfpage->page()->text();
+						$text->textstart();
+						$text->font($font, 18);
+
+						$text->translate(300, $pdfpage->newline());
+
+						my $t;
+
+						if($generation >= 5) {
+							$t = ($generation - 2) . ' times great-grandchildren';
+						} elsif($generation == 1) {
+							$t = 'Children';
+						} elsif($generation == 2) {
+							$t = 'Grandchildren';
+						} elsif($generation == 3) {
+							$t = 'Great-grandchilden';
+						} elsif($generation == 4) {
+							$t = 'Great-great-grandchildren';
+						} else {
+							die '-G: Doesn\'t yet support ancestors';
+						}
+						$text->text_center($t);
+
+						$text->font($params{'font'}, 12);
+					}
+				} else {
+					my $surname = $person->surname() || '?';
+					my $initial = substr $surname, 0, 1;
+					if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
+						$pdfpage = PDFPage->new();
+						$surname_initial = $initial;
+					}
 				}
 			}
 
@@ -761,7 +809,7 @@ sub print_person
 		title => 1,
 		print_unknown => 1,
 	};
-	if(!$opts{'A'}) {
+	if(!($opts{'A'} || $opts{'G'})) {
 		$args->{'nee'} = 1;
 	}
 	my $text;
@@ -1063,7 +1111,7 @@ sub print_person
 			}
 		}
 
-		if($me && ($person ne $me)) {
+		if($me && ($person ne $me) && !$opts{'G'}) {
 			$relationship = $me->relationship($person);
 			if((!$relationship) && scalar(@spouses)) {
 				if($person->spouse() eq $me) {
@@ -1180,7 +1228,7 @@ sub print_person
 						}
 					}
 					if($all_siblings_have_dob) {
-						@siblings = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => get_value({ person => $_, value => 'birth date'}))}[0]->{'canonical'}) } @siblings;
+						@siblings = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => get_value({ person => $_, value => 'birth date' }))}[0]->{'canonical'}) } @siblings;
 					}
 					my $count = 1;
 					$print_sibling_count = 1;

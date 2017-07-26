@@ -42,9 +42,9 @@ your dad on father's day:
     # Note that this will only print people related to your father, even if you give -a
     gedcal -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
-You can create a book of your family name:
+You can create a book of your family name based on the descendents of John Smith:
 
-    gedcal -B smith.pdf -dsh 'John Smith' gedcom-file.ged
+    gedcal -GB smith.pdf -dsh 'John Smith' gedcom-file.ged
 
 The options are:
 
@@ -57,6 +57,7 @@ The options are:
     -d: show the detailed lifetime information about the person
     -D: only print anniversaries of deaths
     -f: treat warnings as fatals, implies -w
+    -G: print everyone, in generation order
     -H: Print an HTML calendar of this month
     -h: set the home person - useful for calculating relationships with -d
     -m: month for -H calendar
