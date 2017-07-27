@@ -37,6 +37,8 @@ use Lingua::EN::Numbers::Ordinate;
 use Lingua::EN::ABC;
 use Lingua::EN::Inflect;
 # use Lingua::EN::AddressParse;
+use Geo::StreetAddress::US;
+use Locale::US;
 use DateTime::Duration;
 use DateTime::Format::Natural;
 use Text::Wrap;
@@ -96,6 +98,7 @@ if($opts{'f'}) {
 die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 
 my $browser;
+my $us;
 if($opts{'w'} || $opts{'B'}) {
 	$browser = LWP::UserAgent::Throttled->new();
 	$browser->env_proxy(1);
@@ -134,6 +137,11 @@ if($opts{'w'} || $opts{'B'}) {
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
+
+		require Locale::US;
+		Locale::US->import();
+
+		$us = Locale::US->new();
 	}
 }
 
@@ -4488,18 +4496,6 @@ sub place
 	}
 
 	if($address) {
-		# my $ap;
-		# my $p = $place;
-		# if(($place =~ /USA$/) || ($place =~ /United States$/)) {
-			# $ap = Lingua::EN::AddressParse->new(country => 'US', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
-		# } elsif($place =~ /England$/) {
-			# $ap = Lingua::EN::AddressParse->new(country => 'GB', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
-			# $p .= ', United Kingdom';
-		# }
-		# if($ap) {
-			# my $error = $ap->parse("$address, $p");
-			# print $ap->report();
-		# }
 		$place = " at $address, $place";
 	} elsif($params{'nopreposition'}) {
 		$place = " $place";
@@ -4677,6 +4673,33 @@ sub validate_place
 			$place = "$1$2";
 		}
 		$place =~ s/^(in|at)\s//;
+		if($places{$place}) {
+			return $places{$place};
+		}
+		# my $ap;
+		# my $p = $place;
+		# if(($place =~ /USA$/) || ($place =~ /United States$/)) {
+			# $ap = Lingua::EN::AddressParse->new(country => 'US', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
+		# } elsif($place =~ /England$/) {
+			# $ap = Lingua::EN::AddressParse->new(country => 'GB', auto_clean => 1, force_case => 1, force_post_code_flag => 0);
+			# $p .= ', United Kingdom';
+		# }
+		# if($ap) {
+			# my $error = $ap->parse("$address, $p");
+			# print $ap->report();
+		# }
+		if(($place =~ /USA$/) || ($place =~ /United States$/)) {
+			if(my $href = Geo::StreetAddress::US->parse_location($place)) {
+				if($href->{'state'} && !$us->{code2state}{$href->{'state'}}) {
+					my $person = $params{'place'};
+					if($opts{'f'}) {
+						die $person->as_string, ": Unknown state in $place";
+					}
+					red_warning({ person => $person, warning => "Unknown state in $place" });
+				}
+			}
+		}
+
 		my $town = $place;
 		if($place =~ /,\s*(.+,.+,.+,.+)$/) {
 			# Use only the town part
