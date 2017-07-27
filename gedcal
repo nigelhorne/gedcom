@@ -2832,14 +2832,16 @@ sub print_person
 										}
 										if($doa =~ /^\d/) {
 											$doa = "on $doa";
+										} elsif($yoa == $yod) {
+											$doa = 'later that same year';
 										} else {
-											$doa = "during $doa";
+											$doa = "during $yoa";
 										}
 									}
 								}
 								if($previous->date()) {
 									if($yod && $yoa && ($yod == $yoa)) {
-										$bio .= "During $yod " . lc($person->pronoun());
+										$bio .= " During $yod " . lc($person->pronoun());
 									} else {
 										$bio .= $person->pronoun();
 
