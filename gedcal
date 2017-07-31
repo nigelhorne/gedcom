@@ -222,6 +222,32 @@ memoize('Gedcom::Individual::as_string');
 memoize('stepsabove');
 memoize('normalize_name');	# Speeds up sort with -B a lot
 
+my $dot;
+my $jpegtran;
+my $jpegoptim;
+if($opts{'G'}) {
+	if(-x '/usr/bin/dot') {
+		$dot = '/usr/bin/dot';
+	} elsif(-x '/usr/local/bin/dot') {
+		$dot = '/usr/local/bin/dot';
+	} elsif(-x '/sw/bin/dot') {
+		$dot = '/sw/bin/dot';
+	}
+
+	if(!defined($dot)) {
+		if($opts{'f'}) {
+			die 'Graphviz not found, no family trees';
+		}
+		if($opts{'w'}) {
+			red_warning(warning => 'Graphviz not found, no family trees');
+		}
+	} else {
+		require Image::Magick::Thumbnail;
+		Image::Magick::Thumbnail->import();
+		print "Using $dot\n" if($opts{'v'});
+	}
+}
+
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
 	die '-a doesn\'t make sense with the -H option' if($opts{'a'});
@@ -427,6 +453,42 @@ if($opts{'H'}) {
 					$a->as_sort_key() cmp $b->as_sort_key() :
 					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
 			} @everyone;
+
+			my $tmp = File::Temp->new();
+			my $filename = $tmp->filename();
+			my $png = '/tmp/njh.png';	# FIXME
+			my @children = $me->children();
+			if(open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
+			# if(open(my $fout, '|-', '/bin/cat')) {
+				# print $fout 'digraph family { graph [rankdir=LR];';
+				# Best to agree with the colour in css/web.css
+				# print $fout 'digraph family { bgcolor="#d6d6d6"',
+				print $fout 'digraph family {',
+					'subgraph main { rank="same"; ';
+				print_graphviz({ person => $me, fout => $fout, format => 'dynamic' });
+				print $fout '} subgraph children { rank="max"; ';
+				# TODO: sort by date of birth
+				foreach my $child(@children) {
+					print_graphviz({ person => $child, fout => $fout, format => 'dynamic' });
+				}
+				print $fout '} ';
+
+				foreach my $child(@children) {
+					print $fout $me->{'xref'}, ' -> ', $child->{'xref'}, ";\n";
+				}
+
+				print $fout '}';
+				close $fout;
+
+				# my $filename = make_filename_from_object(object => $person);
+				# my $dim = Image::Info::html_dim(Image::Info::image_info($png));
+				# print $csv "/img/$filename.png---$dim---";
+				# $tmp->seek(0, SEEK_SET);
+				# foreach my $line(<$tmp>) {
+					# chomp $line;
+					# print $csv $line;
+				# }
+			}
 		} else {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
@@ -5115,6 +5177,97 @@ sub pdfprint
 		}
 	}
 	return 1;
+}
+
+# Inspired by Tree::Family.  That module doesn't quite do what I want, so
+# I've mercilessly re-used the ideas of what to do from it.
+sub print_graphviz
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $fout = $params{'fout'};
+	my $person = $params{'person'};
+	my $colour = $params{'colour'};
+	my $profile_image = $params{'profile_image'};
+
+	if(!defined($colour)) {
+		my $gender = get_value({ person => $person, value => 'sex' }) || $person->sex();
+		if(defined($gender)) {
+			$gender = $gender;
+		} else {
+			if($opts{'f'}) {
+				die "\n", $person->as_string(), ": unknown sex\n";
+			}
+			if($opts{'w'}) {
+				red_warning({ person => $person, warning => 'unknown sex' });
+			}
+			$gender = 'M';	# Avoid "Use of uninitialized value" in Tree::Family
+		}
+		$colour = ($gender eq 'M' ? '#093AB5' : '#C666B8');
+	}
+
+	print $fout $person->{'xref'}, ' [shape=box,fontsize="10",',
+		"color=\"$colour\",";
+
+	if($params{'format'} eq 'dynamic') {
+		print $fout 'href="?page=people&entry=', $person->{'xref'}, '",';
+	} else {
+		print $fout 'href="', make_filename_from_person(person => $person), '",';
+	}
+
+	my $label = $person->as_string();
+	my $dob = get_value({ person => $person, value => 'birth date' });
+	my $dod = get_value({ person => $person, value => 'death date' });
+
+	my $thumbnail;
+
+	# If you get 'Warning: No loadimage plugin for "jpeg:cairo"', do this
+	# instead:
+	# if(0) {
+	if($profile_image && (defined($dod) || $opts{'l'})) {
+		if(defined($dob)) {
+			$dob .= "<TR><TD>b. $dob</TD></TR>";
+		} else {
+			$dob = '';
+		}
+		if(defined($dod)) {
+			$dod .= "<TR><TD>d. $dod</TD></TR>";
+		} else {
+			$dod = '';
+		}
+		# Create a thumbnail
+		my $image = Image::Magick->new();
+		$image->read($profile_image);
+		my ($thumb, $x, $y) = Image::Magick::Thumbnail::create($image, 100);
+		my @thumbname = File::Basename::fileparse($profile_image);
+		# use PNG to try to avoid
+		#	'Warning: No loadimage plugin for "jpeg:cairo"'
+		$thumbname[0] =~ s/\.jpg$/.png/;
+		$thumbnail = "thumbs/$thumbname[0]";
+		$thumb->Write($thumbnail);
+
+		# FIXME: TABLE isn't supported by Graphviz
+		print $fout "label=<<TABLE border=\"0\" cellborder=\"0\"><TR><TD><IMG SRC=\"thumbs/$thumbname[0]\" scale=\"true\"/></TD></TR><TR><TD>$label</TD></TR>$dob$dod</TABLE>>",
+			",labelloc=b";
+
+		# print $fout ",image=\"$profile_image\",labelloc=b";
+
+		chmod 0444, $thumbnail;
+	} elsif(defined($dod) || $opts{'l'}) {
+		if(defined($dob)) {
+			$label .= "\\nb. $dob";
+		}
+		if(defined($dod)) {
+			$label .= "\\nd. $dod";
+		}
+		print $fout "label=\"$label\"";
+	} else {
+		print $fout "label=\"$label\"";
+	}
+
+	print $fout "];\n";
+
+	return $thumbnail;
 }
 
 1;
