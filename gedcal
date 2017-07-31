@@ -553,7 +553,9 @@ sub generate {
 						} elsif($generation == 4) {
 							$t = 'Great-great-grandchildren';
 						} else {
-							die '-G: Doesn\'t yet support ancestors';
+							# May have found a spouse with the same name, so it shouldn't be included
+							next unless($person->father() || $person->mother());
+							die $person->as_string(), '/', $me->as_string(), "; -G ($generation): Doesn't yet support ancestors";
 						}
 						$text->text_center($t);
 
