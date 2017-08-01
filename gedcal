@@ -477,14 +477,8 @@ if($opts{'H'}) {
 					$gd = $resize->resize(550, $newheight);
 				}
 				if($gd) {
-					$tmp = File::Temp->new(UNLINK => 0);
-					$filename = $tmp->filename();
-					open(my $fh, '>', $filename);
-					print $fh $gd->png(0);	# No compression, highest quality
-					close $fh;
-					$image = $pdf->image_png($filename);
+					$image = $pdf->image_gd($gd, -lossless => 1);
 					unlink $png;
-					push @tmpfiles, $filename;
 				} else {
 					$image = $pdf->image_png($png);
 					push @tmpfiles, $png;
