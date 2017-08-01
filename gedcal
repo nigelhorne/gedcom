@@ -384,7 +384,7 @@ if($opts{'H'}) {
 					$text->text_center(normalize_name($opts{'h'}));
 				}
 				my %args;
-				if(defined($ENV{'TZ'})) {
+				if(defined($ENV{'TZ'}) && ($ENV{'TZ'} !~ /^\//)) {
 					$args{'time_tone'} = $ENV{'TZ'};
 				} else {
 					$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
@@ -445,14 +445,7 @@ if($opts{'H'}) {
 		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 
 		if($opts{'G'}) {
-			# FIXME: This sorting only works when all people are descendents of $me, there are no
-			# ancestors involved
-			@everyone = sort {
-				(stepsabove($a, $me, 0) == stepsabove($b, $me, 0)) ?
-					$a->as_sort_key() cmp $b->as_sort_key() :
-					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
-			} @everyone;
-
+			# Put a family tree on page 2
 			my $tmp = File::Temp->new();
 			my $filename = $tmp->filename();
 			my $png = '/tmp/njh.png';	# FIXME
@@ -478,7 +471,6 @@ if($opts{'H'}) {
 						$gd = $resize->resize(550, $newheight);
 					} else {
 						$gd = $resize->resize($newwidth, 715);
-						$newheight = 700;
 					}
 				} elsif($width > 550) {
 					my $newheight = $height * (550 / $width);
@@ -499,19 +491,20 @@ if($opts{'H'}) {
 				}
 				$pdfpage = PDFPage->new();
 				my $x = 300 - ($image->width() / 2);
-				if(($pdfpage->y() > ($image->height() + 80)) && ($image->width() < 550)) {
-					# No need to shrink the image
-					my $y = $pdfpage->y() - $image->height();
-					$pdfpage->page()->gfx()->image($image, $x, $y);
-					$pdfpage->y($y);
-				} else {
-					# Shrink the image to fit on the page
-					my $y = $pdfpage->newline() - $image->height();
-					$pdfpage->page()->gfx()->image($image, $x, $y);
-					$pdfpage->y($y);
-				}
+				my $y = $pdfpage->y() - $image->height();
+				$pdfpage->page()->gfx()->image($image, $x, $y);
+				$pdfpage->y($y);
 				$pdfpage = PDFPage->new();
 			}
+
+			# FIXME: This sorting only works when all people are descendents of $me, there are no
+			# ancestors involved
+			@everyone = sort {
+				(stepsabove($a, $me, 0) == stepsabove($b, $me, 0)) ?
+					$a->as_sort_key() cmp $b->as_sort_key() :
+					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
+			} @everyone;
+
 		} else {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
@@ -5299,8 +5292,6 @@ sub print_graphviz_generation
 
 	my $fout = $params{'fout'};
 	my $person = $params{'person'};
-	my $colour = $params{'colour'};
-	my $profile_image = $params{'profile_image'};
 	my $rank = $params{'rank'} + 1;
 	$params{'rank'} = $rank;
 
