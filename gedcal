@@ -1491,7 +1491,7 @@ sub print_person
 				$bio .= ',';
 			}
 			$haveprintedspousename = 1;
-		} elsif(($mother || $father) && !$printed_comma) {
+		} elsif(($mother || $father) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) && !$printed_comma) {
 			$bio .= ', ';
 		}
 
