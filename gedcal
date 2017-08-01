@@ -223,9 +223,7 @@ memoize('stepsabove');
 memoize('normalize_name');	# Speeds up sort with -B a lot
 
 my $dot;
-my $jpegtran;
-my $jpegoptim;
-if($opts{'G'}) {
+	if($opts{'G'}) {
 	if(-x '/usr/bin/dot') {
 		$dot = '/usr/bin/dot';
 	} elsif(-x '/usr/local/bin/dot') {
@@ -3661,13 +3659,10 @@ sub print_person
 							$gd = $resize->resize(550, $newheight);
 						}
 						if($gd) {
-							$tmp = File::Temp->new(UNLINK => 0);
-							$filename = $tmp->filename();
-							open(my $fh, '>', $filename);
-							print $fh $gd->jpeg();
-							close $fh;
+							$image = $pdf->image_gd($gd, -lossless => 1);
+						} else {
+							$image = $pdf->image_jpeg($filename);
 						}
-						$image = $pdf->image_jpeg($filename);
 						$orig_image = $pdf->image_jpeg($orig_filename);
 					} else {
 						if(!$resp->is_success()) {
@@ -3721,12 +3716,13 @@ sub print_person
 							$gd = $resize->resize(550, $newheight);
 						}
 						if($gd) {
-							$orig_image = $pdf->image_jpeg($orig_filename);
-							$tmp = File::Temp->new(UNLINK => 0);
-							$filename = $tmp->filename();
-							open(my $fh, '>', $filename);
-							print $fh $gd->jpeg();
-							close $fh;
+							# $orig_image = $pdf->image_jpeg($orig_filename);
+							# $tmp = File::Temp->new(UNLINK => 0);
+							# $filename = $tmp->filename();
+							# open(my $fh, '>', $filename);
+							# print $fh $gd->jpeg();
+							# close $fh;
+							$image = $pdf->image_gd($gd, -lossless => 1);
 						}
 						$image = $pdf->image_jpeg($filename);
 						$title = $file if(!defined($title));
