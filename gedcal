@@ -415,7 +415,6 @@ if($opts{'H'}) {
 				$text->translate(220, 40);
 				$text->text('Produced by gedcal - https://github.com/nigelhorne/gedcal');
 				$text->textend();
-				$pdfpage = PDFPage->new();	# blank page 2
 
 				# my $gfx = $page->gfx();
 				# my $image = $pdf->image_png('/Users/njh/src/njh/ged2site/dynamic-site/images/printer.png');
@@ -457,37 +456,61 @@ if($opts{'H'}) {
 			my $tmp = File::Temp->new();
 			my $filename = $tmp->filename();
 			my $png = '/tmp/njh.png';	# FIXME
-			my @children = $me->children();
 			if(open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
-			# if(open(my $fout, '|-', '/bin/cat')) {
-				# print $fout 'digraph family { graph [rankdir=LR];';
-				# Best to agree with the colour in css/web.css
-				# print $fout 'digraph family { bgcolor="#d6d6d6"',
+			# if(open(my $fout, '|-', '/usr/bin/tee foo')) {
 				print $fout 'digraph family {',
-					'subgraph main { rank="same"; ';
+					'rotate = 90 subgraph main { rank="0"; ';
 				print_graphviz({ person => $me, fout => $fout, format => 'dynamic' });
-				print $fout '} subgraph children { rank="max"; ';
-				# TODO: sort by date of birth
-				foreach my $child(@children) {
-					print_graphviz({ person => $child, fout => $fout, format => 'dynamic' });
-				}
-				print $fout '} ';
-
-				foreach my $child(@children) {
-					print $fout $me->{'xref'}, ' -> ', $child->{'xref'}, ";\n";
-				}
-
-				print $fout '}';
+				print_graphviz_generation({ person => $me, fout => $fout, format => 'dynamic', rank => 0 });
+				print $fout '}}';
 				close $fout;
 
-				# my $filename = make_filename_from_object(object => $person);
-				# my $dim = Image::Info::html_dim(Image::Info::image_info($png));
-				# print $csv "/img/$filename.png---$dim---";
-				# $tmp->seek(0, SEEK_SET);
-				# foreach my $line(<$tmp>) {
-					# chomp $line;
-					# print $csv $line;
-				# }
+				my $image;
+				my $resize = Image::Resize->new($png);
+				my $width = $resize->width();
+				my $height = $resize->height();
+				my $gd;
+				if($height > 715) {
+					my $newwidth = $width * (715 / $height);
+					my $newheight;
+					if($newwidth > 550) {
+						$newheight = $height * (550 / $width);
+						$gd = $resize->resize(550, $newheight);
+					} else {
+						$gd = $resize->resize($newwidth, 715);
+						$newheight = 700;
+					}
+				} elsif($width > 550) {
+					my $newheight = $height * (550 / $width);
+					$gd = $resize->resize(550, $newheight);
+				}
+				if($gd) {
+					$tmp = File::Temp->new(UNLINK => 0);
+					$filename = $tmp->filename();
+					open(my $fh, '>', $filename);
+					print $fh $gd->png(0);	# No compression, highest quality
+					close $fh;
+					$image = $pdf->image_png($filename);
+					unlink $png;
+					push @tmpfiles, $filename;
+				} else {
+					$image = $pdf->image_png($png);
+					push @tmpfiles, $png;
+				}
+				$pdfpage = PDFPage->new();
+				my $x = 300 - ($image->width() / 2);
+				if(($pdfpage->y() > ($image->height() + 80)) && ($image->width() < 550)) {
+					# No need to shrink the image
+					my $y = $pdfpage->y() - $image->height();
+					$pdfpage->page()->gfx()->image($image, $x, $y);
+					$pdfpage->y($y);
+				} else {
+					# Shrink the image to fit on the page
+					my $y = $pdfpage->newline() - $image->height();
+					$pdfpage->page()->gfx()->image($image, $x, $y);
+					$pdfpage->y($y);
+				}
+				$pdfpage = PDFPage->new();
 			}
 		} else {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
@@ -5209,11 +5232,11 @@ sub print_graphviz
 	print $fout $person->{'xref'}, ' [shape=box,fontsize="10",',
 		"color=\"$colour\",";
 
-	if($params{'format'} eq 'dynamic') {
-		print $fout 'href="?page=people&entry=', $person->{'xref'}, '",';
-	} else {
-		print $fout 'href="', make_filename_from_person(person => $person), '",';
-	}
+	# if($params{'format'} eq 'dynamic') {
+		# print $fout 'href="?page=people&entry=', $person->{'xref'}, '",';
+	# } else {
+		# print $fout 'href="', make_filename_from_person(person => $person), '",';
+	# }
 
 	my $label = $person->as_string();
 	my $dob = get_value({ person => $person, value => 'birth date' });
@@ -5268,6 +5291,42 @@ sub print_graphviz
 	print $fout "];\n";
 
 	return $thumbnail;
+}
+
+sub print_graphviz_generation
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $fout = $params{'fout'};
+	my $person = $params{'person'};
+	my $colour = $params{'colour'};
+	my $profile_image = $params{'profile_image'};
+	my $rank = $params{'rank'} + 1;
+	$params{'rank'} = $rank;
+
+	print $fout "} subgraph children$rank { rank=\"$rank\"; ";
+	print_graphviz({ person => $person, fout => $fout, format => 'dynamic' });
+
+	if(my $father = $person->father()) {
+		print $fout $father->{'xref'}, ' -> ', $person->{'xref'}, ";\n";
+	}
+
+	if($person->sex() eq 'M') {
+		# my @children = $person->children();
+		my @children;
+		foreach my $f($person->fams()) {
+			@children = (@children, $f->children());
+		}
+		if(scalar(@children) > 0) {
+			# TODO: sort by date of birth
+			foreach my $child(@children) {
+				if(!was_alive(person => $child)) {
+					$params{'person'} = $child;
+					print_graphviz_generation(\%params);
+				}
+			}
+		}
+	}
 }
 
 1;
