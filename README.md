@@ -30,7 +30,7 @@ a sort of lint for Gedcom files.
 
 For example:
 
-    gedcom -dawl gedcom-file.ged > /dev/null
+    gedcom -dawWl gedcom-file.ged > /dev/null
 
 ## Genealogy Calendar
 
@@ -97,8 +97,8 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## See Also
 
-[ged2site](https://github.com/nigelhorne/ged2site) - create a website from a Gedcom file
-[gedcmp](https://github.com/nigelhorne/gedcmp) - compare two Gedcoms
+* [ged2site](https://github.com/nigelhorne/ged2site) - create a website from a Gedcom file
+* [gedcmp](https://github.com/nigelhorne/gedcmp) - compare two Gedcoms
 
 ## LICENSE AND COPYRIGHT
 
