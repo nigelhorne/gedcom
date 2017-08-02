@@ -265,7 +265,7 @@ if($opts{'H'}) {
 		unshift @dow, pop @dow;
 	}
 	my $table = HTML::Table->new(-border => 1, -padding => 5, -head => \@dow);
-	print '<html><head><title>Gedcal Calendar</title></head><body><font size="2">',
+	print '<html><head><title>Gedcom Calendar</title></head><body><font size="2">',
 		'<style>table { empty-cells: show; }</style>';
 
 	foreach my $day(0..6) {
@@ -413,7 +413,7 @@ if($opts{'H'}) {
 				}
 				$text->font($font, 12);
 				$text->translate(220, 40);
-				$text->text('Produced by gedcal - https://github.com/nigelhorne/gedcal');
+				$text->text('Produced by gedcom - https://github.com/nigelhorne/gedcom');
 				$text->textend();
 
 				# my $gfx = $page->gfx();
