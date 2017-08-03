@@ -3078,6 +3078,15 @@ sub print_person
 						($type ne 'Race') &&
 						($type ne 'Hospitalisation')) {
 						red_warning({ person => $person, warning => "Unhandled event type: $type" });
+						if(my $notes = notes({ record => $event })) {
+							$notes =~ s/\.$//;
+							if($end_of_sentence) {
+								$bio .= ' ' . ucfirst($notes) . '. ';
+							} else {
+								$notes = lcfirst($notes);
+								$bio .= " ($notes)";
+							}
+						}
 					}
 				}
 			}
@@ -3430,6 +3439,7 @@ sub print_person
 						$bio = '';
 					}
 				} else {
+					$bio =~ s/\s+$//;
 					$bio .= "\n\t";
 				}
 				$bio .= "[$citation]: $title";
