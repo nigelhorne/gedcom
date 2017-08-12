@@ -1472,13 +1472,13 @@ sub print_person
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
 					$bio .= ', ' unless($printed_comma);
 				} elsif(was_alive(person => $person)) {
-					$bio .= $person->as_string . ' is ';
+					$bio .= $person->as_string() . ' is ';
 				} else {
-					$bio .= $person->as_string . ' was ';
+					$bio .= $person->as_string() . ' was ';
 				}
 				$bio .= 'your';
 			} else {
-				$bio .= "Your";
+				$bio .= 'Your';
 			}
 			$bio .= " $relationship";
 		} elsif($spouserelationship) {
@@ -5101,15 +5101,11 @@ sub was_alive
 	if(($dob =~ /^\d{3,4}$/) && ($dob < ($year - 100))) {
 		return 0;
 	}
+	if($dob =~ /^abt (\d{4})$/i) {
+		$dob = $1;
+	}
 	if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
-		my $d;
-		eval {
-			$d = $date_parser->parse(date => $dob);
-		};
-		if($d) {
-			$d = @{$d}[0];
-		}
-		if($d) {
+		if(my $d = date_parser_cached(date => $dob)) {
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			if($d->strftime('%Y') < ($year - 120)) {
 				return 0;
