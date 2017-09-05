@@ -964,35 +964,43 @@ sub print_person
 				}
 			}
 			my @s = sort { (get_source({ gedcom => $ged, person => $person, source => $a }) && get_source({ gedcom => $ged, person => $person, source => $b })) ? get_source({ gedcom => $ged, person => $person, source => $a })->title() cmp get_source({ gedcom => $ged, person => $person, source => $b })->title() : 0 } $birth->source();
-			my $previous;
-			foreach my $src(@s) {
-				$src = get_source({ gedcom => $ged, person => $person, source => $src}) unless ref($src);
-				if(defined($src) && (my $title = $src->title())) {
-					if($previous && ($title eq $previous)) {
-						next;
+			if(scalar(@s)) {
+				my $previous;
+				foreach my $src(@s) {
+					$src = get_source({ gedcom => $ged, person => $person, source => $src}) unless ref($src);
+					if(defined($src) && (my $title = $src->title())) {
+						if($previous && ($title eq $previous)) {
+							next;
+						}
+						$previous = $title;
+						push @birthcitations, ++$citationcount;
+						$citations{$citationcount} = $src;
 					}
-					$previous = $title;
-					push @birthcitations, ++$citationcount;
-					$citations{$citationcount} = $src;
 				}
+			} elsif($opts{'w'}) {
+				red_warning({ person => $person, warning => "Birth date ($dateofbirth) has no citations" });
 			}
 		}
 		if($death) {
 			my @s = $death->source();
-			foreach my $src(@s) {
-				$src = $ged->get_source($src) unless ref($src);
-				my $seen;
-				foreach my $bc(@birthcitations) {
-					if($src eq $citations{$bc}) {
-						push @deathcitations, $bc;
-						$seen++;
-						last;
+			if(scalar(@s)) {
+				foreach my $src(@s) {
+					$src = $ged->get_source($src) unless ref($src);
+					my $seen;
+					foreach my $bc(@birthcitations) {
+						if($src eq $citations{$bc}) {
+							push @deathcitations, $bc;
+							$seen++;
+							last;
+						}
+					}
+					if(!$seen) {
+						push @deathcitations, ++$citationcount;
+						$citations{$citationcount} = $src;
 					}
 				}
-				if(!$seen) {
-					push @deathcitations, ++$citationcount;
-					$citations{$citationcount} = $src;
-				}
+			} elsif($opts{'w'}) {
+				red_warning({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
 			}
 		}
 	}
@@ -1115,37 +1123,47 @@ sub print_person
 						$marriagecitation = ++$citationcount;
 						$citations{$marriagecitation} = $src;
 					}
+				} elsif($opts{'w'}) {
+					red_warning({ person => $person, warning => "Marriage date ($dateofmarriage) has no citations" });
 				}
 			}
 			if($burial) {
 				my @s = $burial->source();
-				foreach my $src(@s) {
-					$src = $ged->get_source($src) unless ref($src);
-					if(!defined($src)) {
-						if($opts{'w'}) {
-							my $src = $burial->source();
-							if($opts{'f'}) {
-								die $person->as_string(), ": burial citation can't find source $src";
+				if(scalar(@s)) {
+					foreach my $src(@s) {
+						$src = $ged->get_source($src) unless ref($src);
+						if(!defined($src)) {
+							if($opts{'w'}) {
+								my $src = $burial->source();
+								if($opts{'f'}) {
+									die $person->as_string(), ": burial citation can't find source $src";
+								}
+								red_warning({ person => $person, warning => "burial citation can't find source $src" });
 							}
-							red_warning({ person => $person, warning => "burial citation can't find source $src" });
+							next;
 						}
-						next;
+						my $seen;
+						foreach my $dc(@deathcitations) {
+							if($src eq $citations{$dc}) {
+								push @burialcitations, $dc;
+								$seen++;
+								last;
+							}
+						}
+						if(!$seen) {
+							if($marriagecitation && ($citations{$marriagecitation} eq $src)) {
+								push @burialcitations, $marriagecitation;
+							} else {
+								push @burialcitations, ++$citationcount;
+								$citations{$citationcount} = $src;
+							}
+						}
 					}
-					my $seen;
-					foreach my $dc(@deathcitations) {
-						if($src eq $citations{$dc}) {
-							push @burialcitations, $dc;
-							$seen++;
-							last;
-						}
-					}
-					if(!$seen) {
-						if($marriagecitation && ($citations{$marriagecitation} eq $src)) {
-							push @burialcitations, $marriagecitation;
-						} else {
-							push @burialcitations, ++$citationcount;
-							$citations{$citationcount} = $src;
-						}
+				} elsif($opts{'w'}) {
+					if($dateofburial) {
+						red_warning({ person => $person, warning => "Burial date ($dateofburial) has no citations" });
+					} else {
+						red_warning({ person => $person, warning => "Burial place ($placeofburial) has no citations" });
 					}
 				}
 			}

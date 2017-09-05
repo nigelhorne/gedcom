@@ -32,6 +32,8 @@ For example:
 
     gedcom -dawWl gedcom-file.ged > /dev/null
 
+Adding the -c option will add the checking of missing citations.
+
 ## Genealogy Calendar
 
 You can create a month-to-a-page genealogical calendar of your ancestors:
