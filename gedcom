@@ -46,6 +46,7 @@ use DateTime::Format::Natural;
 use Text::Wrap;
 use LWP::Simple;
 use LWP::UserAgent::Throttled;
+use LWP::ConnCache;
 use URI;
 use URI::Find::Schemeless;
 use Sort::Key::DateTime;
@@ -102,8 +103,9 @@ die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 my $browser;
 my $us;
 if($opts{'w'} || $opts{'B'}) {
-	$browser = LWP::UserAgent::Throttled->new();
+	$browser = LWP::UserAgent::Throttled->new(keep_alive => 1);
 	$browser->env_proxy(1);
+	$browser->conn_cache->total_capacity(undef);
 
 	# Cache calls to openstreetmap etc.
 	require File::Spec;
@@ -162,6 +164,7 @@ if($browser) {
 		'nominatim.openstreetmap.org' => 1,
 		'geocode.xyz' => 1,
 		'geocoder.ca' => 1,
+		'www.findagrave.com' => 1,
 	});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
@@ -940,11 +943,19 @@ sub print_person
 	if((!$dateofbirth) && $birth) {
 		$dateofbirth = $birth->date();
 	}
+	my $placeofbirth = get_value({ person => $person, value => 'birth place' });
+	if((!$placeofbirth) && $birth) {
+		$placeofbirth = $birth->place();
+	}
 
 	my $death = $person->get_record('death');
 	my $dateofdeath = get_value({ person => $person, value => 'death date' });
 	if((!$dateofdeath) && $death) {
 		$dateofdeath = $death->date();
+	}
+	my $placeofdeath = get_value({ person => $person, value => 'death place' });
+	if((!$placeofdeath) && $death) {
+		$placeofdeath = $death->place();
 	}
 
 	my %citations;
@@ -978,7 +989,11 @@ sub print_person
 					}
 				}
 			} elsif($opts{'w'}) {
-				red_warning({ person => $person, warning => "Birth date ($dateofbirth) has no citations" });
+				if($dateofbirth) {
+					red_warning({ person => $person, warning => "Birth date ($dateofbirth) has no citations" });
+				} else {
+					red_warning({ person => $person, warning => "Birth place ($placeofbirth) has no citations" });
+				}
 			}
 		}
 		if($death) {
@@ -1000,7 +1015,11 @@ sub print_person
 					}
 				}
 			} elsif($opts{'w'}) {
-				red_warning({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
+				if($dateofdeath) {
+					red_warning({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
+				} else {
+					red_warning({ person => $person, warning => "Death place ($placeofdeath) has no citations" });
+				}
 			}
 		}
 	}
@@ -1065,11 +1084,6 @@ sub print_person
 	if($opts{'d'} || $opts{'B'}) {
 		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
 
-		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
-		if((!$placeofbirth) && $birth) {
-			$placeofbirth = $birth->place();
-		}
-
 		my $baptism = $person->get_record('baptism');
 		my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
 		if((!$dateofbaptism) && $baptism) {
@@ -1083,11 +1097,6 @@ sub print_person
 		my $placeofmarriage = get_value({ person => $person, value => 'marriage place' });
 		if((!$placeofmarriage) && $marriage) {
 			$placeofmarriage = $marriage->place();
-		}
-
-		my $placeofdeath = get_value({ person => $person, value => 'death place' });
-		if((!$placeofdeath) && $death) {
-			$placeofdeath = $death->place();
 		}
 
 		my $burial = $person->get_record('burial');
@@ -1124,7 +1133,11 @@ sub print_person
 						$citations{$marriagecitation} = $src;
 					}
 				} elsif($opts{'w'}) {
-					red_warning({ person => $person, warning => "Marriage date ($dateofmarriage) has no citations" });
+					if($dateofmarriage) {
+						red_warning({ person => $person, warning => "Marriage date ($dateofmarriage) has no citations" });
+					} else {
+						red_warning({ person => $person, warning => "Marriage place ($placeofmarriage) has no citations" });
+					}
 				}
 			}
 			if($burial) {
@@ -3623,7 +3636,8 @@ sub print_person
 					my %opts = (
 						date_of_death => $yod,
 						firstname => $firstname,
-						lastname => $surname
+						lastname => $surname,
+						ua => $browser,
 					);
 					if($placeofburial) {
 						if($placeofburial =~ /.+,\s+(\w+)/) {
