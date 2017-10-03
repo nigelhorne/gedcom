@@ -1464,6 +1464,7 @@ sub print_person
 					$bio .= ' and';
 				} else {
 					$bio .= ', ';
+					$printed_comma = 1;
 				}
 			}
 			if($mother) {
@@ -1502,7 +1503,7 @@ sub print_person
 		my $haveprintedspousename;
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
-				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism) {
+				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 					$bio .= ', ' unless($printed_comma);
 				} elsif(was_alive(person => $person)) {
 					$bio .= $person->as_string() . ' is ';
