@@ -5171,7 +5171,7 @@ sub print_sibling_baptism
 		if($dateofsiblingbirth && $birthdate && ($dateofsiblingbirth eq $birthdate)) {
 			$rc .= 'twin ';
 		}
-		$rc .= $sibling->sex() eq 'M' ? 'brother ' : 'sister ',
+		$rc .= ($sibling->sex() eq 'M' ? 'brother ' : 'sister ') .
 			$sibling->given_names();
 		$count++;
 	}
