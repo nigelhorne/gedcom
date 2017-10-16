@@ -56,6 +56,7 @@ use Text::Names::GB;
 use Memoize;
 use Data::Fetch;
 use Text::Soundex;
+use List::Util;
 
 no lib '.';
 
@@ -3404,7 +3405,7 @@ sub print_person
 					$bio .= $p;
 					$places_printed{$p} = 1;
 				}
-				$bio .= "[$_]" foreach(sort @deathcitations);
+				$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
 				# Print notes about the death, if any
 				if(my $d = notes({ person => $person, record => $death })) {
 					$d =~ tr/\r//;
@@ -3517,7 +3518,7 @@ sub print_person
 			} elsif((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage)) {
 				$bio .= place({ person => $person, place => $placeofdeath });
 			}
-			$bio .= "[$_]" foreach(@deathcitations);
+			$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
 			# Print notes about the death, if any
 			if(defined($death) && (my $d = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$d =~ tr/\r//;
