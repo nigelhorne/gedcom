@@ -1947,7 +1947,7 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
-					if(($numberofchildren == 0) && (scalar(@residences) == 0) && (!($aob || $opts{'p'} || $opts{'G'})) && !$all_children_are_alive) {
+					if(($numberofchildren == 0) && (scalar(@residences) == 0) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'})) && !$all_children_are_alive) {
 						$bio .= ' and';
 					}
 					$bio .= ' married ';
