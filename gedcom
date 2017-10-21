@@ -28,7 +28,7 @@ use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
-use Geo::Coder::List;
+use Geo::Coder::List 0.15;
 use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
@@ -652,6 +652,14 @@ sub generate {
 
 			$params{'person'} = $person;
 			print_person(\%params);
+
+			if($opts{'v'}) {
+				my $log = $geocoder->log();
+				$geocoder->flush();
+				foreach my $l(@{$log}) {
+					print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, "\n";
+				}
+			}
 		}
 	}
 
