@@ -29,6 +29,7 @@ use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::List 0.15;
+use Geo::Coder::Free;
 use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
@@ -158,6 +159,7 @@ my $dfn = DateTime::Format::Natural->new();
 
 my $geocoder = Geo::Coder::List->new()
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+	# ->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() })
 	->push({ regex => qr/^\w+,\s*\w+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
 	->push(Geo::Coder::OSM->new())
 	->push(Geo::Coder::XYZ->new());
@@ -168,6 +170,7 @@ if($browser) {
 		'geocode.xyz' => 1,
 		'geocoder.ca' => 1,
 		'www.findagrave.com' => 1,
+		'api.postcodes.io' => 1,
 	});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
