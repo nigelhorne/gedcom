@@ -661,9 +661,13 @@ sub generate {
 				$geocoder->flush();
 				foreach my $l(@{$log}) {
 					if($l->{geocoder}) {
-						print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, "\n";
+						if($l->{error}) {
+							print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, '(', $l->{error}, ")\n";
+						} else {
+							print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, "\n";
+						}
 					} else {
-						print $l->{location}, ': ',  $l->{timetaken}, "s from cache\n";
+						print $l->{location}, ": cached\n";
 					}
 				}
 			}
