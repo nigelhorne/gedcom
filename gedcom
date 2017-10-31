@@ -931,7 +931,7 @@ sub print_person
 		$text->textstart();
 		$text->font($params{'font'}, 18);
 
-		$text->translate(20, $pdfpage->newline());
+		$text->translate(25, $pdfpage->newline());
 		$text->text($person->as_string($args));
 
 		$text->font($params{'font'}, 12);
