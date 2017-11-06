@@ -374,7 +374,7 @@ if($opts{'H'}) {
 			if($opts{'h'}) {
 				my $page = $pdf->page();
 
-				my $font = $pdf->corefont('Times-New-Roman-Bold');
+				my $font = $pdf->corefont('Times-Bold');
 
 				my $text = $page->text();
 				$text->textstart();
@@ -591,7 +591,7 @@ sub generate {
 
 	my $surname_initial;
 	if($opts{'B'}) {
-		$params{'font'} = $pdf->corefont('Times-New-Roman');
+		$params{'font'} = $pdf->corefont('Times-Roman');
 	}
 	my $index = 1;
 	my $generation = 0;
@@ -615,7 +615,7 @@ sub generate {
 						$pdfpage = PDFPage->new();
 						$generation = stepsabove($person, $me, 0);
 
-						my $font = $pdf->corefont('Times-New-Roman-Bold');
+						my $font = $pdf->corefont('Times-Bold');
 						my $text = $pdfpage->page()->text();
 						$text->textstart();
 						$text->font($font, 18);
@@ -906,7 +906,7 @@ sub print_person
 				red_warning({
 					person => $person,
 					warning => "not found in $ARGV[1]"
-				})
+				});
 			}
 		}
 	}
@@ -931,7 +931,7 @@ sub print_person
 		$text->textstart();
 		$text->font($params{'font'}, 18);
 
-		$text->translate(20, $pdfpage->newline());
+		$text->translate(25, $pdfpage->newline());
 		$text->text($person->as_string($args));
 
 		$text->font($params{'font'}, 12);
@@ -1069,13 +1069,11 @@ sub print_person
 				}
 			} else {
 				foreach my $event(@events) {
-					if(ref($event) eq 'Gedcom::Record') {
-						my $type = $event->type();
-						if($type eq 'Custom Marriage') {
-							# FindMyPast
-							$marriage = $event;
-							last;
-						}
+					if((ref($event) eq 'Gedcom::Record') &&
+					  ($event->type() eq 'Custom Marriage')) {
+						# FindMyPast
+						$marriage = $event;
+						last;
 					}
 				}
 			}
@@ -1705,7 +1703,7 @@ sub print_person
 								if($1 > $yod) {
 									if($opts{'f'}) {
 										die $person->as_string(),
-											": Year of citation of $title is after the death year of $yod"
+											": Year of citation of $title is after the death year of $yod";
 									}
 									red_warning({
 										person => $person,
@@ -4086,7 +4084,7 @@ sub print_person
 
 							$text = $pdfpage->page()->text();
 							$text->textstart();
-							$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
+							$text->font($pdf->corefont('Times-Italic'), 12);
 							$x = 150 - (length($title) / 2);
 							if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
 								die "Didn't make enough room for $title; y = " . $pdfpage->y();
@@ -4121,7 +4119,7 @@ sub print_person
 
 			$text = $pdfpage->page()->text();
 			$text->textstart();
-			$text->font($pdf->corefont('Times-New-Roman-Italic'), 12);
+			$text->font($pdf->corefont('Times-Italic'), 12);
 			my $x = 300 - (length($title) / 2);
 			if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
 				die "Didn't make enough room for $title; y = " . $pdfpage->y();
