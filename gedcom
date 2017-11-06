@@ -413,7 +413,7 @@ if($opts{'H'}) {
 				);
 				if($opts{'s'} && !$opts{'G'}) {
 					$text->translate(300, 450);
-					if(was_alive(person => $me)) {
+					if(is_alive(person => $me)) {
 						$text->text_center('for ' . normalize_name($opts{'h'}));
 					} else {
 						my $n = normalize_name($me->as_string(include_years => 1));
@@ -1527,7 +1527,7 @@ sub print_person
 			if($father || $mother || $occupations[0]) {
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 					$bio .= ', ' unless($printed_comma);
-				} elsif(was_alive(person => $person)) {
+				} elsif(is_alive(person => $person)) {
 					$bio .= $person->as_string() . ' is ';
 				} else {
 					$bio .= $person->as_string() . ' was ';
@@ -1550,7 +1550,7 @@ sub print_person
 				$bio .= $person->as_string();
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$bio .= ', the ';
-				} elsif(was_alive(person => $person)) {
+				} elsif(is_alive(person => $person)) {
 					$bio .= ' is the ';
 				} else {
 					$bio .= ' was the ';
@@ -1970,7 +1970,7 @@ sub print_person
 						$bio .= ' and';
 					}
 					$bio .= ' married ';
-				} elsif(was_alive(person => $person) && was_alive(person => $spouses[0])) {
+				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					$bio .= ' is married to ';
 				} else {
 					$bio .= ' was married to ';
@@ -2330,7 +2330,7 @@ sub print_person
 		if($same_occupation_as_father) {
 			$bio .= '. ' if(!$end_of_sentence);
 			$bio .= ' Like his father, ' . lcfirst($pronoun) .
-				(was_alive(person => $person) ? ' is a' : ' was a');
+				(is_alive(person => $person) ? ' is a' : ' was a');
 			if($same_occupation_as_father =~ /^[aeiou]/i) {
 				$bio .= 'n';
 			}
@@ -5309,7 +5309,7 @@ sub must_predate
 	}
 }
 
-sub was_alive
+sub is_alive
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
@@ -5328,7 +5328,7 @@ sub was_alive
 				# TODO: Look at children's lifespan for a clue
 	}
 
-	my $year = $params{'year'} || (localtime)[5];
+	my $year = (localtime)[5];
 	$year += 1900 if($year < 1900);
 
 	if(($dob =~ /^\d{3,4}$/) && ($dob < ($year - 100))) {
@@ -5618,7 +5618,7 @@ sub print_graphviz_generation
 		if(scalar(@children) > 0) {
 			# TODO: sort by date of birth
 			foreach my $child(@children) {
-				if(!was_alive(person => $child)) {
+				if(!is_alive(person => $child)) {
 					$params{'person'} = $child;
 					print_graphviz_generation(\%params);
 				}
