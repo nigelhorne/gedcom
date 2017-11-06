@@ -1992,7 +1992,7 @@ sub print_person
 							my @items = $soccupation->items();
 							$soccupation = $items[0]->value();
 						}
-						if($soccupation =~ /^self-employed$/i) {
+						if(lc($soccupation) eq 'self-employed') {
 							$bio .= 'self-employed ';
 						} else {
 							$bio .= 'a';
@@ -3991,7 +3991,7 @@ sub print_person
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
 				}
-				if((!defined($image)) && $form && ($form =~ /^JPG$/i)) {
+				if((!defined($image)) && $form && (lc($form) eq 'JPG')) {
 					if($file =~ /ancestry.com.+guid=.+&tid=/) {
 						# Ancestry's Gedcoms are broken, perhaps pointing to an old
 						# location that they forgot to fix
