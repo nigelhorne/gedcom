@@ -1060,12 +1060,10 @@ sub print_person
 						$event = $e;
 					}
 				}
-				if(ref($event) eq 'Gedcom::Record') {
-					my $type = $event->type();
-					if($type eq 'Custom Marriage') {
-						# FindMyPast
-						$marriage = $event;
-					}
+				if((ref($event) eq 'Gedcom::Record') &&
+				  ($event->type() eq 'Custom Marriage')) {
+					# FindMyPast
+					$marriage = $event;
 				}
 			} else {
 				foreach my $event(@events) {
