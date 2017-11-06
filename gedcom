@@ -906,7 +906,7 @@ sub print_person
 				red_warning({
 					person => $person,
 					warning => "not found in $ARGV[1]"
-				})
+				});
 			}
 		}
 	}
@@ -1069,13 +1069,11 @@ sub print_person
 				}
 			} else {
 				foreach my $event(@events) {
-					if(ref($event) eq 'Gedcom::Record') {
-						my $type = $event->type();
-						if($type eq 'Custom Marriage') {
-							# FindMyPast
-							$marriage = $event;
-							last;
-						}
+					if((ref($event) eq 'Gedcom::Record') &&
+					  ($event->type() eq 'Custom Marriage')) {
+						# FindMyPast
+						$marriage = $event;
+						last;
 					}
 				}
 			}
@@ -1705,7 +1703,7 @@ sub print_person
 								if($1 > $yod) {
 									if($opts{'f'}) {
 										die $person->as_string(),
-											": Year of citation of $title is after the death year of $yod"
+											": Year of citation of $title is after the death year of $yod";
 									}
 									red_warning({
 										person => $person,
