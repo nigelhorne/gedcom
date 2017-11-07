@@ -5219,9 +5219,15 @@ sub print_sibling_baptism
 
 sub complain
 {
-	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+	my %params;
 
-	die "What do you want to say?" unless($params{'warning'});
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		$params{'warning'} = shift;
+	}
 
 	if($opts{'w'}) {
 		$params{'caller'} = 1;
