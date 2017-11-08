@@ -2804,45 +2804,6 @@ sub print_person
 							}
 						}
 					}
-					# Find if they are an adult living with an adult sibling or in-law
-					if($all_residences_have_date && scalar(@siblings) && $birth_dt) {
-						foreach my $r(@residences) {
-							my $rdate = $r->date();
-							my $place = place({ person => $person, record => $r });
-
-							foreach my $sibling(@siblings) {
-								my $bdiff = $dfn->parse_datetime($rdate) - $birth_dt;
-								if(my $ss = $sibling->spouse()) {
-									next if($bdiff->in_units('years') < 20);
-									# If they are living with an in-law, assume both are adults
-									my @ssr = get_all_residences(person => $ss);
-									foreach my $ssr(@ssr) {
-										next if($ssr->date() ne $rdate);
-										if(place({ person => $ss, record => $ssr }) eq $place) {
-											$bio .= ' with ' . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-												' ' .
-												(($ss->sex() eq 'F') ? 'sister-in-law, ' : 'brother-in-law, ') .
-												$ss->as_string();
-											last;
-										}
-									}
-								}
-								next if($bdiff->in_units('years') < 40);
-								# Safe to assume both are adults at this time
-								my @sr = get_all_residences(person => $sibling);
-								foreach my $sr(@sr) {
-									next if($sr->date() ne $rdate);
-									if(place({ person => $sibling, record => $sr }) eq $place) {
-										$bio .= ' with ' . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-											' ' .
-											(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
-											$sibling->given_names();
-										last;
-									}
-								}
-							}
-						}
-					}
 				}
 				if((!($opts{'c'} && $residence->source())) && (my $notes = notes({ record => $residence }))) {
 					$notes =~ s/\.$//;
