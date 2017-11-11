@@ -4010,7 +4010,7 @@ sub print_person
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
 					$form = 'JPG';
 				}
-				if((!defined($image)) && $form && (lc($form) eq 'JPG')) {
+				if((!defined($image)) && $form && (lc($form) eq 'jpg')) {
 					if($file =~ /ancestry.com.+guid=.+&tid=/) {
 						# Ancestry's Gedcoms are broken, perhaps pointing to an old
 						# location that they forgot to fix
