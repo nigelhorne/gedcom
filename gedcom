@@ -3965,6 +3965,9 @@ sub print_person
 				my $filename;
 				my $orig_image;
 				my $orig_filename;
+				if($file =~ /^http:\/\/(\w+)\.findmypast\.(co[\w\.]+)\/(.+)/) {
+					$file = "https://$1.findmypast.$2/$3";
+				}
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
@@ -4002,9 +4005,7 @@ sub print_person
 						}
 						$orig_image = $pdf->image_jpeg($orig_filename);
 					} else {
-						if(!$resp->is_success()) {
-							red_warning({ person => $person, warning => "download $file failed " . $resp->status_line() });
-						}
+						complain({ person => $person, warning => "download $file failed " . $resp->status_line() });
 						$title = undef;
 					}
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
@@ -4020,10 +4021,7 @@ sub print_person
 							# 404
 							$file = "https://mediasvc.ancestry.com/v2/image/namespaces/1093/media/$1.jpg?client=Trees";
 						} else {
-							if($opts{'f'}) {
-								die "BUG: update ACOM mapping for $file";
-							}
-							red_warning({ person => $person, warning => "BUG: update ACOM mapping for $file" });
+							complain({ person => $person, warning => "BUG: update ACOM mapping for $file" });
 							unlink $filename if(defined($filename));
 							unlink $orig_filename if(defined($orig_filename));
 							next;
@@ -4081,6 +4079,8 @@ sub print_person
 			my $title = $i->{'title'};
 
 			if(my $image = $i->{'image'}) {
+				print "$title: height: ", $image->height(), "\n" if($opts{'v'});
+
 				if($image->height() >= ($pdfpage->y() - 80)) {
 					$pdfpage = PDFPage->new();
 				}
