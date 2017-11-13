@@ -4005,7 +4005,9 @@ sub print_person
 						}
 						$orig_image = $pdf->image_jpeg($orig_filename);
 					} else {
-						complain({ person => $person, warning => "download $file failed " . $resp->status_line() });
+						if(!$resp->is_success()) {
+							complain({ person => $person, warning => "download $file failed " . $resp->status_line() });
+						}
 						$title = undef;
 					}
 				} elsif(($file =~ /^([A-Z]:[\/\\].+\.jpe?g+)/) || ($file =~ /^(\/.+\.jpe?g)/)) {
@@ -5260,11 +5262,13 @@ sub complain
 		return;
 	}
 
-	my @call_details = caller(0);
-	if($params{'person'}) {
-		die $params{'person'}, ': ', ucfirst($params{'warning'}), ' at line ', $call_details[2];
+	if($opts{'f'}) {
+		my @call_details = caller(0);
+		if($params{'person'}) {
+			die $params{'person'}->as_string(), ': ', ucfirst($params{'warning'}), ' at line ', $call_details[2];
+		}
+		die ucfirst($params{'warning'}), ' at line ', $call_details[2];
 	}
-	die ucfirst($params{'warning'}), ' at line ', $call_details[2];
 }
 
 sub red_warning
