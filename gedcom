@@ -30,6 +30,9 @@ use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::List 0.15;
 use Geo::Coder::Free 0.03;
+use Geo::Coder::Ovi;
+use Geo::Coder::RandMcnally;
+use Geo::Coder::US::Census;
 use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
@@ -159,9 +162,12 @@ my $dfn = DateTime::Format::Natural->new();
 
 my $geocoder = Geo::Coder::List->new()
 	->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() })
+	->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 	->push({ regex => qr/^\w+,\s*\w+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
 	->push(Geo::Coder::OSM->new())
+	->push(Geo::Coder::Ovi->new())
 	->push(Geo::Coder::XYZ->new());
 
 if($browser) {
@@ -169,8 +175,10 @@ if($browser) {
 		'nominatim.openstreetmap.org' => 1,
 		'geocode.xyz' => 1,
 		'geocoder.ca' => 1,
-		'www.findagrave.com' => 1,
 		'api.postcodes.io' => 1,
+		'where.desktop.mos.svc.ovi.com' => 1,
+		'geocoding.geo.census.gov' => 1,
+		'a2ageo.rmservers.com/mapengine3/sli' => 1,
 	});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
@@ -3471,7 +3479,18 @@ sub print_person
 							$bio .= place($opts);
 						}
 					}
-					$bio .= ' ' . year({ person => $person, date => $dateofburial });
+					my $must_postdate;
+					if($death_dt) {
+						$must_postdate = $death_dt;
+					} elsif($dateofdeath =~ /^(Abt|ca?)\.?\s*(.+)/i) {
+						my $d = $2;
+						if($d !~ /^\d/) {
+							$must_postdate = date_to_datetime("1 $d");
+						} else {
+							$must_postdate = date_to_datetime($d);
+						}
+					}
+					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && (!$death->address())) {
 					$bio .= ' and is buried there at ' . $burial->address();
@@ -4733,10 +4752,22 @@ sub year
 		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
-		if($params{'circa'}) {
-			return $params{'circa'} . " $2";
+		my $rc = $2;
+		if(my $must_postdate = $params{'must_postdate'}) {
+			my $dt;
+			if($rc !~ /^\d/) {
+				$dt = date_to_datetime("1 $rc");
+			} else {
+				$dt = date_to_datetime($rc);
+			}
+			if($dt && ($dt < $must_postdate)) {
+				die $rc;
+			}
 		}
-		return "c. $2";
+		if($params{'circa'}) {
+			return $params{'circa'} . " $rc";
+		}
+		return "c. $rc";
 	}
 	if($string =~ /^bet (.+) and (.+)/i) {
 		my $from = year({ %params, string => $1 });
@@ -4748,13 +4779,7 @@ sub year
 
 	if($string =~ /(.+)\s(\d{4})\/\d{2}/) {
 		my $year = $2 + 1;
-		if($opts{'w'}) {
-			my $person = $params{'person'};
-			if($opts{'f'}) {
-				die $person->as_string(), ": old-style date ($string) should be in $year";
-			}
-			red_warning({ person => $person, warning => "old-style date ($string) should be in $year" });
-		}
+		complain({ person => $params{'person'}, warning => "old-style date ($string) should be in $year" });
 		$string = "$1 $year";
 	}
 
@@ -4772,12 +4797,7 @@ sub year
 		if(my $d = date_parser_cached(date => $string)) {
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			if(my $must_postdate = $params{'must_postdate'}) {
-				if($opts{'f'}) {
-					die $person->as_string(), ": Something is wrong with the date $string which should be after ", $must_postdate->strftime('%x') if($d < $must_postdate);
-				}
-				if($opts{'w'}) {
-					red_warning({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
-				}
+				complain({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
 			}
 			if(my $must_predate = $params{'must_predate'}) {
 				if($opts{'f'}) {
