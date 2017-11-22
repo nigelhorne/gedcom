@@ -108,6 +108,7 @@ die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 
 my $browser;
 my $us;
+my $birth_country;
 if($opts{'w'} || $opts{'B'}) {
 	$browser = LWP::UserAgent::Throttled->new(keep_alive => 1);
 	$browser->env_proxy(1);
@@ -955,16 +956,10 @@ sub print_person
 	my $lastname = $name_components{'surname_1'};
 
 	if($firstname && ($firstname =~ /\d/)) {
-		if($opts{'f'}) {
-			die $person->as_string(), ': First name contains a digit';
-		}
-		red_warning({ person => $person, warning => 'First name contains a digit' });
+		complain({ person => $person, warning => 'First name contains a digit' });
 	}
 	if($lastname && ($lastname =~ /\d/)) {
-		if($opts{'f'}) {
-			die $person->as_string(), ': Last name contains a digit';
-		}
-		red_warning({ person => $person, warning => 'Last name contains a digit' });
+		complain({ person => $person, warning => 'Last name contains a digit' });
 	}
 
 	my ($birth_dt, $marriage_dt, $death_dt);
@@ -976,6 +971,12 @@ sub print_person
 	my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 	if((!$placeofbirth) && $birth) {
 		$placeofbirth = $birth->place();
+	}
+	if($opts{'B'} && $placeofbirth && ($placeofbirth =~ /.+?,.+,\s*([\w\s]+)/)) {
+		$birth_country = $1;
+		if($birth_country =~ /.+,\s*([\w\s]+)/) {
+			$birth_country = $1;
+		}
 	}
 
 	my $death = $person->get_record('death');
@@ -997,10 +998,7 @@ sub print_person
 			if($opts{'w'}) {
 				foreach my $s($birth->source()) {
 					if(!defined(get_source({ gedcom => $ged, person => $person, source => $s }))) {
-						if($opts{'f'}) {
-							die $person->as_string(), ': Citation is missing a source';
-						}
-						red_warning({ person => $person, warning => 'Citation is missing a source' });
+						complain({ person => $person, warning => 'Citation is missing a source' });
 					}
 				}
 			}
@@ -4910,6 +4908,10 @@ sub place
 
 	if($params{'person'}) {
 		validate_place({ person => $params{'person'}, place => $place });
+	}
+
+	if($birth_country && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
+		$place = $1;
 	}
 
 	if($place =~ /^\d/) {
