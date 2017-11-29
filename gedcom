@@ -2024,7 +2024,6 @@ sub print_person
 									$father = $_;
 									last;
 								}
-								print "!!!!!", $child->as_string(), "/", $_->as_string(), "\n";
 							}
 							if((!defined($father)) || ($father ne $spouse)) {
 								push @childrenunknownparent, $child;
@@ -3817,15 +3816,8 @@ sub print_person
 				if(defined($sex) && ($sex eq 'F')) {
 					if(my $husband = $person->husband()) {
 						$surname = $husband->surname();
-					} elsif(my $spouse = $person->spouse()) {
-						if($opts{'f'}) {
-							die 'married, but no husband relationship';
-						}
-						if($opts{'w'}) {
-							red_warning({ person => $person, warning => 'married, but no husband relationship' });
-						} else {
-							$surname = $spouse->surname();
-						}
+					} elsif($spouse) {
+						complain({ person => $person, warning => 'married, but no husband relationship' });
 					}
 				}
 				if($yod && $firstname && $surname && !$findagrave) {
