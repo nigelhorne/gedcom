@@ -3817,7 +3817,7 @@ sub print_person
 					if(my $husband = $person->husband()) {
 						$surname = $husband->surname();
 					} elsif($spouse) {
-						complain({ person => $person, warning => 'married, but no husband relationship' });
+						# complain({ person => $person, warning => 'married, but no husband relationship' });
 					}
 				}
 				if($yod && $firstname && $surname && !$findagrave) {
