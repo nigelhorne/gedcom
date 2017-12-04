@@ -4141,11 +4141,11 @@ sub print_person
 					$pdfpage->page()->gfx()->image($orig_image, $x, $y);
 					$pdfpage->y($y);
 				} elsif($newpage && ($orig_image->width() < 550)) {
-					# Shrink the image to take the entire page width and appropriate height
+					# Shrink the image to take the entire page height and appropriate width
 					my $width = $orig_image->width();
 					my $height = $orig_image->height();
 					if($height >= 650) {
-						my $newwidth = ($width * 650) / 700;
+						my $newwidth = ($width * 650) / $height;
 						my $gd = GD::Image->new($i->{'orig_filename'});
 						my $resize = Image::Resize->new($gd);
 						$gd = $resize->resize($newwidth, 650);
@@ -4158,7 +4158,43 @@ sub print_person
 					my $x = 300 - ($width / 2);
 					$pdfpage->page()->gfx()->image($image, $x, 740 - $height);
 					$pdfpage->y(740 - $height);
-					# TODO:  if newpage and the height is OK but width isn't, shrink just on width
+				} elsif($newpage && ($orig_image->height() < 650)) {
+					# Shrink the image to take the entire page width and appropriate height
+					my $width = $orig_image->width();
+					my $height = $orig_image->height();
+					if($width >= 500) {
+						my $newheight = ($height * 500) / $width;
+						my $gd = GD::Image->new($i->{'orig_filename'});
+						my $resize = Image::Resize->new($gd);
+						$gd = $resize->resize(500, $newheight);
+						$image = $pdf->image_gd($gd, -lossless => 1);
+						$width = 500;
+						$height = $newheight;
+					} else {
+						$image = $orig_image;
+					}
+					my $x = 300 - ($width / 2);
+					$pdfpage->page()->gfx()->image($image, $x, 740 - $height);
+					$pdfpage->y(740 - $height);
+				} elsif($newpage) {
+					# Handle when both height and width are too big
+					my $width = $orig_image->width();
+					my $height = $orig_image->height();
+					my $newwidth = ($width * 650) / $height;
+					my $newheight = 650;
+					if($newwidth > 500) {
+						$newheight = ($height * 500) / $width;
+						$newwidth = 500;
+					}
+					my $gd = GD::Image->new($i->{'orig_filename'});
+					my $resize = Image::Resize->new($gd);
+					$gd = $resize->resize($newwidth, $newheight);
+					$image = $pdf->image_gd($gd, -lossless => 1);
+					$height = $newheight;
+					$width = $newwidth;
+					my $x = 300 - ($width / 2);
+					$pdfpage->page()->gfx()->image($image, $x, 740 - $height);
+					$pdfpage->y(740 - $height);
 				} else {
 					# Shrink the image to fit on the page
 					my $x = 300 - ($image->width() / 2);
