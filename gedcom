@@ -1509,10 +1509,7 @@ sub print_person
 					if($mdod && $birth_dt) {
 						if(my $dt = date_to_datetime(date => $mdod)) {
 							if($birth_dt > $dt) {
-								if($opts{'f'}) {
-									die $person->name(), ': Born after mother died';
-								}
-								red_warning({ person => $person, warning => 'Born after mother died' });
+								complain({ person => $person, warning => 'Born after mother died' });
 							}
 						}
 					}
@@ -1532,6 +1529,9 @@ sub print_person
 				} elsif(is_alive(person => $person)) {
 					$bio .= $person->as_string() . ' is ';
 				} else {
+					if($opts{'p'} || $opts{'a'}) {
+						$bio .= ', ' unless($printed_comma);
+					}
 					$bio .= $person->as_string() . ' was ';
 				}
 				$bio .= 'your';
@@ -1975,6 +1975,9 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					$bio .= ' is married to ';
 				} else {
+					if(!(defined($placeofdeath)) && (!defined($dateofdeath)) && (!defined($placeofburial)) && (!defined($dateofburial))) {
+						$bio .= ' and';
+					}
 					$bio .= ' was married to ';
 				}
 				if($haveprintedspousename) {
@@ -2990,7 +2993,7 @@ sub print_person
 				$bio .= " arriving $doa. ";
 			} else {
 				$bio .= ucfirst(year({ person => $person, record => $arrival })) .
-					' ' . lcfirst($person->pronoun()) .
+					', ' . lcfirst($person->pronoun()) .
 					' arrived' .
 					place({ person => $person, record => $arrival }) . '. ';
 			}
