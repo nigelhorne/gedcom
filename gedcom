@@ -75,6 +75,14 @@ my %warned;
 my %printed;
 my %places;
 
+# FIXME: Should in a configuration file
+my %known_locations = (
+	'Newport Pagnall, Buckinghamshire, England' => {
+		'latitude' => 52.08675,
+		'longitude' => -0.72270
+	}
+);
+
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $ged2;
 if($ARGV[1]) {
@@ -166,7 +174,7 @@ my $geocoder = Geo::Coder::List->new()
 	->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
-	->push({ regex => qr/^\w+,\s*\w+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
+	->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
 	->push(Geo::Coder::OSM->new())
 	->push(Geo::Coder::Ovi->new())
 	->push(Geo::Coder::XYZ->new());
@@ -5152,6 +5160,10 @@ sub validate_place
 	$place =~ s/^\s+//;
 	if($places{$place}) {
 		return $places{$place};
+	}
+
+	if($known_locations{$place}) {
+		return 1;
 	}
 
 	# US and Canada are more logical, using city,county,state,country, than other countries
