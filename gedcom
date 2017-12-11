@@ -75,9 +75,10 @@ my %warned;
 my %printed;
 my %places;
 
-# FIXME: Should in a configuration file
+# FIXME: Should be in a configuration file
+# Will be removed when new G:C:Free is published
 my %known_locations = (
-	'Newport Pagnall, Buckinghamshire, England' => {
+	'Newport Pagnell, Buckinghamshire, England' => {
 		'latitude' => 52.08675,
 		'longitude' => -0.72270
 	}
