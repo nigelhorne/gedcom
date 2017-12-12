@@ -4133,6 +4133,7 @@ sub print_person
 								die "Didn't make enough room for $title; y = " . $pdfpage->y();
 							}
 							my $ptitle = $peek->{'title'};
+							$pdfpage->y($y);	# Put the two captions on the same line
 							$x = 450 - (length($ptitle) / 2);
 							if(!pdfprint(string => $ptitle, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
 								die "Didn't make enough room for $ptitle ; y = " . $pdfpage->y();
