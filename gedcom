@@ -1631,10 +1631,16 @@ sub print_person
 			$bio .= "[$_]" foreach(sort @deathcitations);
 			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$notes =~ s/\.$//;
-				$notes = lcfirst($notes);
-				$bio .= " ($notes)";
+				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+				$bio .= " ($notes).";
+				if(length($notes) > 160) {
+					$bio .= "\n\t";
+				} else {
+					$bio .= ' ';
+				}
+			} else {
+				$bio .= '. ';
 			}
-			$bio .= '. ';
 			$end_of_sentence = 1;
 		}
 
@@ -1936,36 +1942,9 @@ sub print_person
 			$all_children_are_alive = 0;
 		} else {
 			foreach my $child(@children) {
-				if($child->get_record('death') || get_value({ person => $child, value => 'death date' })) {
+				if(!is_alive(person => $child)) {
 					$all_children_are_alive = 0;
 					last;
-				}
-				if($child->get_record('burial')) {
-					$all_children_are_alive = 0;
-					last;
-				}
-				my $dob = get_value({ person => $child, value => 'birth date' });
-				if($dob) {
-					if(($dob =~ /^\d{3,4}$/) && ($dob < ($year - 100))) {
-						$all_children_are_alive = 0;
-						last;
-					}
-					if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
-						my $d;
-						eval {
-							$d = $date_parser->parse(date => $dob);
-						};
-						if($d) {
-							$d = @{$d}[0];
-						}
-						if($d) {
-							$d = $dfn->parse_datetime($d->{'canonical'});
-							if($d->strftime('%Y') < ($year - 120)) {
-								$all_children_are_alive = 0;
-								last;
-							}
-						}
-					}
 				}
 			}
 		}
@@ -1984,7 +1963,7 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					$bio .= ' is married to ';
 				} else {
-					if(!(defined($placeofdeath)) && (!defined($dateofdeath)) && (!defined($placeofburial)) && (!defined($dateofburial))) {
+					if(!(defined($placeofdeath)) && (!defined($dateofdeath)) && (!defined($placeofburial)) && (!defined($dateofburial)) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'}))) {
 						$bio .= ' and';
 					}
 					$bio .= ' was married to ';
@@ -3417,7 +3396,7 @@ sub print_person
 					if(my $address = $burial->address()) {
 						$bio .= " at $address";
 					}
-					$bio .= ' in ' .  lcfirst($person->possessive()) .
+					$bio .= ' in ' . lcfirst($person->possessive()) .
 						' home town of ';
 					my $city = $placeofburial;
 					if($city =~ /^(.+?),/) {
@@ -3464,7 +3443,7 @@ sub print_person
 					$d =~ tr/\r//;
 					$d =~ tr/\n/ /;
 					$d =~ s/\.$//;
-					$d = lcfirst($d);
+					$d = lcfirst($d) unless($d =~ /^[A-Z]{2}/);
 					$bio .= " ($d)";
 				}
 				my $opts = {
@@ -3502,8 +3481,7 @@ sub print_person
 						}
 					}
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
-				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) &&
-				   $burial->address() && (!$death->address())) {
+				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) && $burial->address() && (!$death->address())) {
 					$bio .= ' and is buried there at ' . $burial->address();
 				} else {
 					$bio .= ' and is buried' . place($opts);
@@ -3572,10 +3550,8 @@ sub print_person
 						}
 						if(defined($place)) {
 							$bio .= $place;
-						} elsif($opts{'f'}) {
-							die $person->as_string(), "Place of death ($placeofdeath) can't be parsed";
-						} elsif($opts{'w'}) {
-							red_warning({
+						} else {
+							complain({
 								person => $person,
 								warning => "Place of death ($placeofdeath) can't be parsed"
 							});
@@ -5081,36 +5057,9 @@ sub notes
 	foreach my $note(@notes) {
 		if($note) {
 			if(ref($note) eq 'Gedcom::Record') {
-				if($note->cont()) {
-					my $n = $note->value();
-					$n =~ s/\r//g;
-					$n =~ s/\.$//;
-					foreach my $c($note->cont()) {
-						if((!ref($c)) && length($c)) {
-							$c =~ s/\s\s+/ /g;
-							$c =~ s/\.$//;
-							if($n =~ /[;:]$/) {
-								$n .= " $c";
-							} else {
-								$n .= ".  $c";
-							}
-						}
-					}
-					$note = $n;
-				} elsif($note->conc()) {
-					my $n = $note->value();
-					$n =~ s/\r//g;
-					$n =~ s/\.$//;
-					foreach my $c($note->conc()) {
-						if((!ref($c)) && length($c)) {
-							$c =~ s/\s\s+/ /g;
-							$n .= $c;
-						}
-					}
-					$note = $n;
-				} else {
-					$note = $note->value();
-				}
+				$note = $note->full_value();	# Include CONC records
+			} else {
+				complain("Note record is just description ($note), infomation may have been lost");
 			}
 			$note =~ s/\r//g;
 			$note =~ tr/\n/ /;
@@ -5131,6 +5080,8 @@ sub notes
 				}
 				$rc .= "$note.";
 			}
+		} else {
+			complain('Notes field is empty');
 		}
 	}
 	if($rc) {
@@ -5364,8 +5315,8 @@ sub red_warning
 	if($opts{'w'}) {
 		my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
+		my @call_details = caller($params{'caller'} || 0);
 		if($params{'person'}) {
-			my @call_details = caller($params{'caller'} || 0);
 			if($opts{'W'}) {
 				print STDERR $params{'person'}->as_string(middle_names => 1), ': ', $params{'warning'}, "\n";
 			} else {
@@ -5375,7 +5326,7 @@ sub red_warning
 			if($opts{'W'}) {
 				print STDERR lcfirst($params{'warning'}), "\n";
 			} else {
-				warn colored(lcfirst($params{'warning'}), 'red');
+				warn colored(['red'], $params{'warning'}, ' at line ', $call_details[2]);
 			}
 		}
 		# my $i = 0;
