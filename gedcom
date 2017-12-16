@@ -3270,6 +3270,7 @@ sub print_person
 							}
 						}
 						$bio .= '. ';
+						$end_of_sentence = 1;
 					} elsif(($type !~ /^Census U[KS] (\d{4})$/) &&
 						($type ne 'Register UK 1939') &&
 						($type ne 'Race') &&
@@ -5735,7 +5736,7 @@ sub journey
 	}
 	if($dod) {
 		if($yod && $yoa && ($yod == $yoa)) {
-			$rc = " During $yod " . lc($person->pronoun());
+			$rc = " In $yod, " . lc($person->pronoun());
 		} else {
 			$rc = $person->pronoun();
 
