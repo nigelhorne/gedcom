@@ -3731,15 +3731,9 @@ sub print_person
 						}
 						$census_years{$year} = $type;
 						if(defined($yod) && ($year > $yod)) {
-							if($opts{'f'}) {
-								die $person->as_person(), "Census for $year is after year of death ($yod)";
-							}
-							red_warning({ person => $person, warning => "Census for $year after year of death ($yod)" });
+							complain({ person => $person, warning => "Census for $year after year of death ($yod)" });
 						} elsif(defined($yob) && ($year < $yob)) {
-							if($opts{'f'}) {
-								die $person->as_person(), "Census for $year is after year of birth ($yob)";
-							}
-							red_warning({ person => $person, warning => "Census for $year after year of birth ($yob)" });
+							complain({ person => $person, warning => "Census for $year after year of birth ($yob)" });
 						}
 					}
 				}
