@@ -183,12 +183,12 @@ my $geocoder = Geo::Coder::List->new()
 if($browser) {
 	$browser->throttle({
 		'nominatim.openstreetmap.org' => 1,
-		'geocode.xyz' => 1,
+		'geocode.xyz' => 2,
 		'geocoder.ca' => 1,
 		'api.postcodes.io' => 1,
 		'where.desktop.mos.svc.ovi.com' => 1,
 		'geocoding.geo.census.gov' => 1,
-		'a2ageo.rmservers.com/mapengine3/sli' => 1,
+		'a2ageo.rmservers.com' => 1,
 	});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
