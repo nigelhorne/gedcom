@@ -5458,10 +5458,10 @@ sub descendents
 	if(scalar(@children)) {
 		foreach my $child(@children) {
 			push @list, $child;
-			my @spouses = $child->spouse();
-			if(scalar(@spouses)) {
-				push @list, @spouses;
-			}
+			# my @spouses = $child->spouse();
+			# if(scalar(@spouses)) {
+				# push @list, @spouses;
+			# }
 			@list = descendents($child, \@list);
 		}
 	}
@@ -5481,10 +5481,10 @@ sub ancestors
 		my @siblings = $mother->siblings();
 		foreach my $sibling(@siblings) {
 			push @list, $sibling;
-			my @spouses = $sibling->spouse();
-			if(scalar(@spouses)) {
-				push @list, @spouses;
-			}
+			# my @spouses = $sibling->spouse();
+			# if(scalar(@spouses)) {
+				# push @list, @spouses;
+			# }
 			@list = descendents($sibling, \@list);
 		}
 	}
@@ -5494,10 +5494,10 @@ sub ancestors
 		my @siblings = $father->siblings();
 		foreach my $sibling(@siblings) {
 			push @list, $sibling;
-			my @spouses = $sibling->spouse();
-			if(scalar(@spouses)) {
-				push @list, @spouses;
-			}
+			# my @spouses = $sibling->spouse();
+			# if(scalar(@spouses)) {
+				# push @list, @spouses;
+			# }
 			@list = descendents($sibling, \@list);
 		}
 	}
