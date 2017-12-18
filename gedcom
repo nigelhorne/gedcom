@@ -119,7 +119,7 @@ my $browser;
 my $us;
 my $birth_country;
 if($opts{'w'} || $opts{'B'}) {
-	$browser = LWP::UserAgent::Throttled->new(keep_alive => 1);
+	$browser = LWP::UserAgent::Throttled->new(agent => 'gedcom', keep_alive => 1);
 	$browser->env_proxy(1);
 	$browser->conn_cache->total_capacity(undef);
 
@@ -473,6 +473,9 @@ if($opts{'H'}) {
 		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 
 		if($opts{'G'}) {
+			if($me->father() || $me->mother()) {
+				die 'A generations book (-B and -G) must have the -h person at the top of the tree';
+			}
 			# Put a family tree on page 2
 			my $tmp = File::Temp->new();
 			my $filename = $tmp->filename();
@@ -527,6 +530,8 @@ if($opts{'H'}) {
 					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
 			} @everyone;
 
+			die "BUG: sort hasn't worked" if($everyone[0] ne $me);
+print "1111111 ", $everyone[0]->as_string(), "\n";
 		} else {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
