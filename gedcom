@@ -37,6 +37,7 @@ use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
 use Geo::Coder::Postcodes;
+# use Geo::Coder::GeocodeFarm;
 use Term::ANSIColor;
 use Lingua::EN::NameCase;
 use Lingua::EN::NameParse;
@@ -179,6 +180,7 @@ my $geocoder = Geo::Coder::List->new()
 	->push(Geo::Coder::OSM->new())
 	->push(Geo::Coder::Ovi->new())
 	->push(Geo::Coder::XYZ->new());
+	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
 if($browser) {
 	$browser->throttle({
@@ -531,7 +533,6 @@ if($opts{'H'}) {
 			} @everyone;
 
 			die "BUG: sort hasn't worked" if($everyone[0] ne $me);
-print "1111111 ", $everyone[0]->as_string(), "\n";
 		} else {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
