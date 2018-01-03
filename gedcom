@@ -3323,6 +3323,9 @@ sub print_person
 					$bio .= " $pronoun was buried";
 					if($placeofburial) {
 						if($placeofbirth && ($placeofburial eq $placeofbirth)) {
+							if(my $address = $burial->address()) {
+								$bio .= " at $address";
+							}
 							$bio .= ' in ' .
 								lcfirst($person->possessive()) .
 								' home town of ';
