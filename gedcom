@@ -1700,18 +1700,12 @@ sub print_person
 						if($mumdateofbirth =~ /.*?(\d{3,4})/) {
 							$mumdateofbirth = $1;
 							if(($yob - $mumdateofbirth) <= 13) {
-								if($opts{'f'}) {
-									die "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)";
-								}
-								red_warning({
+								complain({
 									person => $person,
 									warning => "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)"
 								});
 							} elsif(($yob - $mumdateofbirth) >= 52) {
-								if($opts{'f'}) {
-									die "something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)";
-								}
-								red_warning({
+								complain({
 									person => $person,
 									warning => "something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)"
 								});
@@ -1722,10 +1716,7 @@ sub print_person
 						if($daddateofbirth =~ /.*?(\d{3,4})/) {
 							$daddateofbirth = $1;
 							if(($yob - $daddateofbirth) <= 13) {
-								if($opts{'f'}) {
-									die "something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)";
-								}
-								red_warning({
+								complain({
 									person => $person,
 									warning => "something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)"
 								});
@@ -1873,10 +1864,7 @@ sub print_person
 									if(defined($d) && !$d->{'flag'}) {
 										$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
 										if($d > ($yobaptism - 13)) {
-											if($opts{'f'}) {
-												die "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)";
-											}
-											red_warning({
+											complain({
 												person => $person,
 												warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
 											});
@@ -1896,7 +1884,7 @@ sub print_person
 				$end_of_sentence = 0;
 			}
 			if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0)) {
-				$bio .= ' and';
+				# $bio .= ' and';
 			} else {
 				$bio .= '. ';
 				$end_of_sentence = 1;
@@ -1951,9 +1939,7 @@ sub print_person
 				});
 			}
 			if(scalar(@spouses)) {
-				if(scalar(@residences)) {
-					$bio .= ' and';
-				} else {
+				if(!scalar(@residences)) {
 					$bio .= ',';
 				}
 				$end_of_sentence = 0;
@@ -1983,7 +1969,8 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
-					if(($numberofchildren == 0) && (scalar(@residences) == 0) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'})) && !$all_children_are_alive) {
+					# if(($numberofchildren == 0) && (scalar(@residences) == 0) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'})) && !$all_children_are_alive) {
+					if(!$end_of_sentence) {
 						$bio .= ' and';
 					}
 					$bio .= ' married ';
