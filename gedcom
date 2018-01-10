@@ -37,6 +37,9 @@ use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
 use Geo::Coder::Postcodes;
+use Geo::Coder::GooglePlaces;
+use Geo::Coder::Bing;
+use Geo::GeoNames;
 # use Geo::Coder::GeocodeFarm;
 use Term::ANSIColor;
 use Lingua::EN::NameCase;
@@ -182,6 +185,19 @@ my $geocoder = Geo::Coder::List->new()
 	->push(Geo::Coder::XYZ->new());
 	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
+if(my $username = $ENV{'GEONAMES_USER'}) {
+	$geocoder->push(Geo::GeoNames->new(username => $username));
+}
+if(my $key = $ENV{'GMAP_KEY'}) {
+	$geocoder->push(Geo::Coder::GooglePlaces->new(
+		key => $key,
+		api_key => $key,
+	));
+};
+if(my $key = $ENV{BMAP_KEY}) {
+	$geocoder->push(Geo::Coder::Bing->new(key => $key));
+}
+
 if($browser) {
 	$browser->throttle({
 		'nominatim.openstreetmap.org' => 1,
@@ -191,6 +207,8 @@ if($browser) {
 		'where.desktop.mos.svc.ovi.com' => 1,
 		'geocoding.geo.census.gov' => 1,
 		'a2ageo.rmservers.com' => 1,
+		'dev.virtualearth.net' => 1,	# Bing
+		'api.geonames.org' => 1,
 	});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
