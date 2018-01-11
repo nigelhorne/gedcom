@@ -2119,6 +2119,9 @@ sub print_person
 				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 			} else {
+				if(!$end_of_sentence) {
+					$bio .= ' and';
+				}
 				$bio .= ' was married ';
 				if(scalar(@spouses) == 2) {
 					$bio .= 'twice';
