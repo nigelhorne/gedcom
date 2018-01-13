@@ -40,7 +40,7 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
-        gedcom -dwlHm $i -y 2016 gedcom-file.ged > $i.html
+        gedcom -dwlHm $i -y 2018 gedcom-file.ged > $i.html
     done
 
 ## Family History Book
@@ -54,6 +54,14 @@ your dad on father's day:
 You can create a book of your family name based on the descendents of John Smith:
 
     gedcom -GB smith.pdf -dsh 'John Smith' gedcom-file.ged
+
+## Environment Variables
+
+For compatibility with other code, these environment variables are honoured:
+
+    BMAP_KEY: Bing (virtualearth.net) API Key
+    GMAP_KEY: Google Places (maps.googleapis.com) API Key
+    GEONAMES_USE: geonames.org registered username
 
 ## Reference
 
@@ -105,7 +113,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2015-2017 Nigel Horne.
+Copyright 2015-2018 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)

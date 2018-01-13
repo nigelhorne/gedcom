@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2017, Nigel Horne
+# Copyright (C) 2015-2018, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -210,6 +210,8 @@ if($browser) {
 		'dev.virtualearth.net' => 1,	# Bing
 		'api.geonames.org' => 1,
 	});
+	# G::C::GooglePlaces
+	$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
 }
