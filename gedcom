@@ -5128,27 +5128,32 @@ sub validate_place
 			# Use only the town part
 			$town = $1;
 		}
-		if($opts{'w'} && !$geocoder->geocode($town)) {
-			# Don't die because there are many
-			# false positives as locations
-			# may no longer exist
-			if(my $person = $params{'person'}) {
-				if($opts{'W'}) {
-					print STDERR $person->as_string({ include_years => 1 }), ": unknown location '$place'\n";
+		if($opts{'w'}) {
+			# Force wantarray for improved caching in
+			# G:C:L
+			my @locations = $geocoder->geocode($town);
+			if(scalar(@locations) == 0) {
+				# Don't die because there are many
+				# false positives as locations
+				# may no longer exist
+				if(my $person = $params{'person'}) {
+					if($opts{'W'}) {
+						print STDERR $person->as_string({ include_years => 1 }), ": unknown location '$place'\n";
+					} else {
+						my @call_details = caller(0);
+						warn colored($person->as_string({ include_years => 1 }) . ": unknown location '$place' at line " . $call_details[2], 'red');
+					}
 				} else {
-					my @call_details = caller(0);
-					warn colored($person->as_string({ include_years => 1 }) . ": unknown location '$place' at line " . $call_details[2], 'red');
+					if($opts{'W'}) {
+						print STDERR "Unknown location $place\n";
+					} else {
+						warn colored("Unknown location $place", 'red');
+					}
 				}
-			} else {
-				if($opts{'W'}) {
-					print STDERR "Unknown location $place\n";
-				} else {
-					warn colored("Unknown location $place", 'red');
-				}
+				$places{$place} = 0;
+				$places{$town} = 0;
+				return 0;
 			}
-			$places{$place} = 0;
-			$places{$town} = 0;
-			return 0;
 		}
 		$places{$town} = 1;
 	}
@@ -5173,7 +5178,7 @@ sub places_are_the_same
 
 	if(my $person = $params{'person'}) {
 		validate_place({ person => $person, place => $place1 });
-		validate_place({ person => $person, place => $place2 });
+		validate_place({ person => $person, place => $place2 }) unless($place1 eq $place2);
 	}
 
 	if(my $address = $record1->address()) {
@@ -5690,8 +5695,9 @@ sub get_all_residences
 	my @residences = $person->residence();
 	my @rc;
 	foreach my $residence(@residences) {
-		next if(!ref($residence));
-		push @rc, $residence;
+		if(ref($residence)) {
+			push @rc, $residence;
+		}
 	}
 	my @events = $person->event();
 	my $index = 0;
