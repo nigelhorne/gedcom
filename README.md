@@ -84,6 +84,7 @@ The options are:
     -L: include ged2site hyperlinks with -H
     -p: print the biography of the given person
     -t: print tomorrow's information, don't use with -a
+    -T: print a list of towns, useful for finding typos and inconsistencies
     -s: only print entries matching the home person's surname
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
@@ -100,6 +101,9 @@ please e-mail me or add a bug report to github.com/nigelhorne/gedcom.
 I've tested against a number of Gedcoms including the Torture Tests at
 https://www.tamurajones.net/DownloadTortureTests.xhtml and gedcoms
 from gedcomlibrary.com.
+
+With the -T option, countries and counties can be optimized out.
+That will be fixed.
 
 ## Acknowledgements
 
