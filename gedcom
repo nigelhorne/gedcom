@@ -645,7 +645,8 @@ if($opts{'T'}) {
 			if($previous && ($person eq $previous)) {
 				next;
 			}
-			print $person->as_string(), ';';
+			print $person->as_string({ include_years => 1, middle_names => 1, nee => 1 }),
+				';';
 			$previous = $person;
 		}
 		print "\n";
@@ -4933,7 +4934,7 @@ sub place
 		validate_place({ person => $params{'person'}, place => $place });
 	}
 
-	if($birth_country && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
+	if($birth_country && (!$opts{'T'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
 		$place = $1;
 	}
 
