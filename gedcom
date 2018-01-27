@@ -4943,12 +4943,16 @@ sub place
 			$places_printed->{" at$place"} = 1;
 			if($place =~ /(.+),(.+?),(.+?),(.+?),(.+?)$/) {
 				if($places_printed->{" in$3,$4,$5"}) {
-					$places_printed->{"in $1,$2,$3"} = 1;
+					if(!$opts{'T'}) {
+						$places_printed->{"in $1,$2,$3"} = 1;
+					}
 					return " at $1,$2,$3";
 				}
 			}
 			if($place =~ /(.+),(.+?),(.+?),(.+?)$/) {
-				$places_printed->{" in$2,$3,$4"} = 1;
+				if(!$opts{'T'}) {
+					$places_printed->{" in$2,$3,$4"} = 1;
+				}
 			}
 		}
 		return " at $place";
@@ -4992,7 +4996,9 @@ sub place
 			if($places_printed->{" at$str"}) {
 				return "$1,$2,$3";
 			}
-			$places_printed->{" in$str"} = 1;
+			if(!$opts{'T'}) {
+				$places_printed->{" in$str"} = 1;
+			}
 			$places_printed->{" in$2,$3,$4"} = 1;
 		} elsif($place =~ /(.+),(.+),(.+)$/) {
 			if($places_printed->{" in$2,$3"}) {
@@ -5000,7 +5006,9 @@ sub place
 				# return place, county
 				return "$1,$2";
 			}
-			$places_printed->{" in$2,$3"} = 1;
+			if(!$opts{'T'}) {
+				$places_printed->{" in$2,$3"} = 1;
+			}
 		}
 		$places_printed->{$place} = 1;
 	}
