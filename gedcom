@@ -194,7 +194,7 @@ if(my $key = $ENV{'GMAP_KEY'}) {
 		key => $key,
 		api_key => $key,
 	));
-};
+}
 if(my $key = $ENV{BMAP_KEY}) {
 	$geocoder->push(Geo::Coder::Bing->new(key => $key));
 }
@@ -958,16 +958,11 @@ sub print_person
 	my $person2;
 	if($ged2) {
 		$person2 = $ged2->get_individual($person->as_string());
-		if($opts{'w'}) {
-			if(!defined($person2)) {
-				if($opts{'f'}) {
-					die $person->as_string() . ": not found in $ARGV[1]";
-				}
-				red_warning({
-					person => $person,
-					warning => "not found in $ARGV[1]"
-				});
-			}
+		if(!defined($person2)) {
+			complain({
+				person => $person,
+				warning => "not found in $ARGV[1]"
+			});
 		}
 	}
 
@@ -5446,6 +5441,7 @@ sub make_filename_from_person
 	return "$rc.html";
 }
 
+# Parse Gedcom format dates
 # Genealogy::Gedcom::Date is expensive, so cache results
 sub date_parser_cached
 {
@@ -5473,8 +5469,8 @@ sub date_parser_cached
 	if($d && (ref($d) eq 'ARRAY')) {
 		$d = @{$d}[0];
 		$all_dates{$date} = $d;
-		return $d;
 	}
+	return $d;
 }
 
 sub date_to_datetime
@@ -5489,10 +5485,13 @@ sub date_to_datetime
 		$params{'date'} = shift;
 	}
 
-	my $date = $params{'date'};
-	if($date && ($date !~ /^\d{3,4}$/) && ($date =~ /^\d/)) {
-		if(my $d = date_parser_cached($date)) {
-			return $dfn->parse_datetime($d->{'canonical'});
+	if(my $date = $params{'date'}) {
+		if($date !~ /^\d{3,4}$/) {
+			if(($date =~ /^\d/) && (my $d = date_parser_cached($date))) {
+				return $dfn->parse_datetime($d->{'canonical'});
+			}
+			# ACOM exports full month names and non-standard format dates e.g. U.S. format MMM, DD YYYY
+			return $dfn->parse_datetime($date);
 		}
 	}
 }
