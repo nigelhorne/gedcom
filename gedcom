@@ -3407,8 +3407,7 @@ sub print_person
 				if($dateofdeath) {
 					$bio .= ' ' . year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				}
-				if($placeofdeath) {
-					my $p = place({ person => $person, record => $death, places_printed => \%places_printed });
+				if($placeofdeath && (my $p = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
 					$bio .= $p;
 					$places_printed{$p} = 1;
 				}
@@ -5288,6 +5287,8 @@ sub complain
 	} else {
 		$params{'warning'} = shift;
 	}
+
+	die "What do you want to say?" unless($params{'warning'});
 
 	if($opts{'w'}) {
 		$params{'caller'} = 1;
