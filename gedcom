@@ -4761,7 +4761,7 @@ sub year
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
 		my $rc = $2;
-		if(my $must_postdate = $params{'must_postdate'}) {
+		if($opts{'w'} && (my $must_postdate = $params{'must_postdate'})) {
 			my $dt;
 			if($rc !~ /^\d/) {
 				$dt = date_to_datetime("1 $rc");
@@ -4769,7 +4769,7 @@ sub year
 				$dt = date_to_datetime($rc);
 			}
 			if($dt && ($dt < $must_postdate)) {
-				die $rc;
+				complain({ person => $params{'person'}, warning => "something is wrong with the date $string which should be after $must_postdate" });
 			}
 		}
 		if($params{'circa'}) {
@@ -4808,12 +4808,7 @@ sub year
 				complain({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
 			}
 			if(my $must_predate = $params{'must_predate'}) {
-				if($opts{'f'}) {
-					die $person->as_string(), ": Something is wrong with the date $string which should be before ", $must_predate->strftime('%x') if($d > $must_predate);
-				}
-				if($opts{'w'}) {
-					red_warning({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
-				}
+				complain({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 			}
 			return 'on ' . $d->strftime('%x');
 		}
@@ -5491,8 +5486,10 @@ sub date_to_datetime
 			if(($date =~ /^\d/) && (my $d = date_parser_cached($date))) {
 				return $dfn->parse_datetime($d->{'canonical'});
 			}
-			# ACOM exports full month names and non-standard format dates e.g. U.S. format MMM, DD YYYY
-			return $dfn->parse_datetime($date);
+			if(($date !~ /^(Abt|ca?)/i) && ($date =~ /^[\w\s]+$/)) {
+				# ACOM exports full month names and non-standard format dates e.g. U.S. format MMM, DD YYYY
+				return $dfn->parse_datetime($date);
+			}
 		}
 	}
 }
