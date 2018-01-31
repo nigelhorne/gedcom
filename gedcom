@@ -2200,6 +2200,7 @@ sub print_person
 						$names .= ' (' . year({ string => $dateofmarriage }) .
 							"$placeofmarriage)";
 					} elsif($placeofmarriage) {
+						$placeofmarriage =~ s/^\s+//;
 						$names .= " ($placeofmarriage)";
 					} elsif($dateofmarriage) {
 						$names .= ' (' . year({ string => $dateofmarriage }) . ')';
