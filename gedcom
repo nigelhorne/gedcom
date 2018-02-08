@@ -442,7 +442,7 @@ if($opts{'H'}) {
 				}
 				my %args;
 				if(defined($ENV{'TZ'}) && ($ENV{'TZ'} !~ /^\//)) {
-					$args{'time_tone'} = $ENV{'TZ'};
+					$args{'time_zone'} = $ENV{'TZ'};
 				} else {
 					$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
 				}
