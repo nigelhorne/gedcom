@@ -2733,26 +2733,15 @@ sub print_person
 								next if(($yoe - $cyob) > 10);	# Over 10 years old
 
 								my $missing_child = 1;
-								my $index = 0;
-								my @cr = $child->residence();
-								my @ce = $child->event();
+								my @residences = get_all_residences($child);
 
-								foreach my $event(@ce, @cr) {
-									$index++;
-									if(!ref($event)) {
-										# FIXME: Assumes not traversing cr - ce must come first
-										$event = $child->tag_record('EVEN', $index);
+								foreach my $event(@residences) {
+									my $type = $event->type();
+									if(!defined($type)) {
+										next;
 									}
-									if(ref($event) eq 'Gedcom::Record') {
-										my $type = $event->type();
-										if(!defined($type)) {
-											next;
-										}
 
-										if(($type !~ /^Census U[KS] \d{4}$/) && ($type ne 'Register UK 1939')) {
-											next;
-										}
-									} else {
+									if(($type !~ /^Census U[KS] \d{4}$/) && ($type ne 'Register UK 1939')) {
 										next;
 									}
 									my $edate = $event->date();
@@ -5754,7 +5743,15 @@ sub print_graphviz_generation
 
 sub get_all_residences
 {
-	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		$params{'person'} = shift;
+	}
 
 	my $person = $params{'person'};
 
@@ -5778,7 +5775,7 @@ sub get_all_residences
 		next if(ref($event) ne 'Gedcom::Record');
 		my $type = $event->type();
 		next if(!defined($type));
-		if(($type =~ /^Census U[KS] (\d{4})$/) || ($type eq 'Register UK 1939')) {
+		if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
 			push @rc, $event;
 		}
 	}
