@@ -2619,21 +2619,15 @@ sub print_person
 						my $yoe = $1;
 						if($yod) {
 							if($yoe > $yod) {
-								if($opts{'f'}) {
-									die $person->as_string(), ": Year of residence $yoe is after the year of death $yod";
-								}
-								red_warning({
+								compplain({
 									person => $person,
 									warning => "Year of residence $yoe is after the year of death $yod"
 								});
 							} elsif($death_dt && (my $rdate_dt = date_to_datetime($rdate))) {
 								if($rdate_dt > $death_dt) {
-									if($opts{'f'}) {
-										die $person->as_string(), ": Date of residence $rdate is after date of death ", $death_dt->strftime('x');
-									}
-									red_warning({
+									complain({
 										person => $person,
-										warning => "Date of residence $rdate is after date of death " . $death_dt->strftime('x')
+										warning => "Date of residence $rdate is after date of death " . $death_dt->strftime('%x')
 									});
 								}
 							}
