@@ -880,19 +880,18 @@ sub print_person
 	my @spouses = $person->spouse();
 
 	# TODO: Properly chart which spouse a child comes from
-	my $family;
-	foreach my $f($person->fams()) {
-		if($f->number_of_children()) {
-			$family = $f;
-			last;
+	if($opts{'w'}) {
+		my $family;
+		foreach my $f($person->fams()) {
+			if($f->number_of_children()) {
+				$family = $f;
+				last;
+			}
 		}
-	}
 
-	if($opts{'w'} && (!$family) && (scalar(@siblings) == 0) && (!$mother) && (!$father) && (scalar(@spouses) == 0)) {
-		if($opts{'f'}) {
-			die $person->as_string() . ': not connected to the tree';
+		if((!$family) && (scalar(@siblings) == 0) && (!$mother) && (!$father) && (scalar(@spouses) == 0)) {
+			complain({ person => $person, warning => 'not connected to the tree' });
 		}
-		red_warning({ person => $person, warning => 'not connected to the tree' });
 	}
 
 	my $year = $params{'year'} || (localtime)[5];
@@ -1382,44 +1381,47 @@ sub print_person
 
 		my $bio = "\t";
 
-		if($occupations[0]) {
-			if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
-				$same_occupation_as_father = $occupations[0];
-				@occupations = ();
-			} else {
-				$bio .= 'A';
-				if($occupations[0] =~ /^works on (.+)/i) {
-					$occupations[0] = "$1 worker";
-				}
-				if($occupations[0] =~ /^[aeiou]/i) {
-					$bio .= 'n';
-				}
-				$bio .= ' ';
-				if($occupations[1]) {
-					# my $alloccupations = join(', ', @occupations);
-					# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
-					# print lc($alloccupations);
-					$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
+		if(!$opts{'T'}) {
+			if($occupations[0]) {
+				if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
+					$same_occupation_as_father = $occupations[0];
+					@occupations = ();
 				} else {
-					$bio .= lc($occupations[0]);
+					$bio .= 'A';
+					if($occupations[0] =~ /^works on (.+)/i) {
+						$occupations[0] = "$1 worker";
+					}
+					if($occupations[0] =~ /^[aeiou]/i) {
+						$bio .= 'n';
+					}
+					$bio .= ' ';
+					if($occupations[1]) {
+						# my $alloccupations = join(', ', @occupations);
+						# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
+						# print lc($alloccupations);
+						$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
+					} else {
+						$bio .= lc($occupations[0]);
+					}
+					if(!($father || $mother || $spouserelationship)) {
+						$bio .= ', ';
+						$printed_comma = 1;
+					}
 				}
-				if(!($father || $mother || $spouserelationship)) {
-					$bio .= ', ';
-					$printed_comma = 1;
+			} elsif(scalar(@occupations)) {
+				if($opts{'w'}) {
+					if($opts{'f'}) {
+						die $person->as_string, ': occupation is empty';
+					}
+					red_warning({
+						person => $person,
+						warning => 'occupation is empty'
+					});
 				}
+				shift @occupations;
 			}
-		} elsif(scalar(@occupations)) {
-			if($opts{'w'}) {
-				if($opts{'f'}) {
-					die $person->as_string, ': occupation is empty';
-				}
-				red_warning({
-					person => $person,
-					warning => 'occupation is empty'
-				});
-			}
-			shift @occupations;
 		}
+
 		my $print_sibling_count = 0;
 		if($father || $mother) {
 			if(scalar(@occupations)) {
@@ -4777,6 +4779,8 @@ sub stepsabove
 
 sub year
 {
+	return '' if($opts{'T'});
+
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $string = $params{'string'} || $params{'date'};
