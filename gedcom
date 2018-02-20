@@ -1340,10 +1340,7 @@ sub print_person
 				my $siblingbirth = get_value({ person => $sibling, value => 'birth date' });
 				if($siblingbirth && ($siblingbirth eq $dateofbirth) &&
 				  (($sibling->name() eq $person->name()) || Text::Names::samePerson($sibling->name(), $person->name()))) {
-					if($opts{'f'}) {
-						die $person->name(), ': Possible duplicate person';
-					}
-					red_warning({ person => $sibling, warning => 'possible duplicate person' });
+					complain({ person => $sibling, warning => 'possible duplicate person' });
 				}
 			}
 		}
@@ -1370,6 +1367,8 @@ sub print_person
 		}
 		while(scalar(@occupations) > 1) {
 			if(($occupations[0] =~ /labou?rer/i) && ($occupations[1] =~ /labou?rer/i)) {
+				shift @occupations;
+			} elsif($occupations[0] eq $occupations[1]) {
 				shift @occupations;
 			} else {
 				last;
@@ -1409,15 +1408,10 @@ sub print_person
 					}
 				}
 			} elsif(scalar(@occupations)) {
-				if($opts{'w'}) {
-					if($opts{'f'}) {
-						die $person->as_string, ': occupation is empty';
-					}
-					red_warning({
-						person => $person,
-						warning => 'occupation is empty'
-					});
-				}
+				complain({
+					person => $person,
+					warning => 'occupation is empty'
+				});
 				shift @occupations;
 			}
 		}
