@@ -1063,9 +1063,9 @@ sub print_person
 				}
 			} elsif($opts{'w'}) {
 				if($dateofbirth) {
-					red_warning({ person => $person, warning => "Birth date ($dateofbirth) has no citations" });
+					complain({ person => $person, warning => "Birth date ($dateofbirth) has no citations" });
 				} else {
-					red_warning({ person => $person, warning => "Birth place ($placeofbirth) has no citations" });
+					complain({ person => $person, warning => "Birth place ($placeofbirth) has no citations" });
 				}
 			}
 		}
@@ -1087,11 +1087,13 @@ sub print_person
 						$citations{$citationcount} = $src;
 					}
 				}
-			} elsif($opts{'w'}) {
+			} elsif($opts{'l'} || !is_alive(person => $person)) {
 				if($dateofdeath) {
-					red_warning({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
+					complain({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
+				} elsif($placeofdeath) {
+					complain({ person => $person, warning => "Death place ($placeofdeath) has no citations" });
 				} else {
-					red_warning({ person => $person, warning => "Death place ($placeofdeath) has no citations" });
+					complain({ person => $person, warning => 'Death record exists with no date or place' });
 				}
 			}
 		}
@@ -2388,7 +2390,7 @@ sub print_person
 					next;
 				}
 
-				if(($type =~ /^Census U[KS] (\d{4})$/) || ($type eq 'Register UK 1939')) {
+				if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
 					my $newresidence = 1;
 					foreach my $residence(@residences) {
 						if(!ref($residence)) {
@@ -2413,10 +2415,7 @@ sub print_person
 						}
 					}
 					if(!$dateofbirth) {
-						if($opts{'f'}) {
-							die $person->as_string(), ': census information not used to approximate a date of birth';
-						}
-						red_warning({ person => $person, warning => 'Census information not used to approximate a date of birth' });
+						complain({ person => $person, warning => 'Census information not used to approximate a date of birth' });
 					}
 					push @residences, $event if($newresidence);
 				} elsif($type eq 'Hospitalisation') {	# Find My Past
@@ -2631,45 +2630,46 @@ sub print_person
 						if($yob && (($yoe - $yob) <= 10)) {
 							my $found_parent = 0;
 							if($mother) {
-								my @mr = $mother->residence();
-								my @me = $mother->event();
-								my $index = 0;
-								foreach my $event(@me) {
-									$index++;
-									if(!ref($event)) {
-										my $e = $mother->tag_record('EVEN', $index);
-										if(ref($e) eq 'Gedcom::Record') {
-											$event = $e;
-										} else {
-											next;
-										}
-									}
-									if(ref($event) eq 'Gedcom::Record') {
-										my $type = $event->type();
-										if(!defined($type)) {
-											next;
-										}
-
-										if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
-											push @mr, $event;
-										}
-									}
-								}
-								$index = 0;
-								foreach my $residence(@mr) {
-									$index++;
-									if(ref($residence) ne 'Gedcom::Record') {
-										$residence = $person->record(['residence', $index]);
-									}
-									if(ref($residence) eq 'Gedcom::Record') {
+								# my @mr = $mother->residence();
+								# my @me = $mother->event();
+								# my $index = 0;
+								# foreach my $event(@me) {
+									# $index++;
+									# if(!ref($event)) {
+										# my $e = $mother->tag_record('EVEN', $index);
+										# if(ref($e) eq 'Gedcom::Record') {
+											# $event = $e;
+										# } else {
+											# next;
+										# }
+									# }
+									# if(ref($event) eq 'Gedcom::Record') {
+										# my $type = $event->type();
+										# if(!defined($type)) {
+											# next;
+										# }
+# 
+										# if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
+											# push @mr, $event;
+										# }
+									# }
+								# }
+								# $index = 0;
+								# foreach my $residence(@mr) {
+								foreach my $residence(get_all_residences($mother)) {
+									# $index++;
+									# if(ref($residence) ne 'Gedcom::Record') {
+										# $residence = $person->record(['residence', $index]);
+									# }
+									# if(ref($residence) eq 'Gedcom::Record') {
 										my $date = $residence->date();
-										if($date && ($date =~ /(\d{3,4})$/)) {
+										if(defined($date) && ($date =~ /(\d{3,4})$/)) {
 											if($1 == $yoe) {
 												$found_parent = $residence;
 												last;
 											}
 										}
-									}
+									# }
 								}
 							}
 							if($father && !$found_parent) {
@@ -5438,7 +5438,15 @@ sub must_predate
 
 sub is_alive
 {
-	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		$params{'person'} = shift;
+	}
 
 	my $person = $params{'person'};
 
@@ -5801,7 +5809,7 @@ sub get_all_residences
 		next if(ref($event) ne 'Gedcom::Record');
 		my $type = $event->type();
 		next if(!defined($type));
-		if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
+		if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939') || ($type eq 'Hospitalisation')) {
 			push @rc, $event;
 		}
 	}
