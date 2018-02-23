@@ -176,7 +176,7 @@ my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
 
 my $geocoder = Geo::Coder::List->new()
-	->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() })
+	->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new(openaddr => $ENV{'OPENADDR_HOME'}) })
 	->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
