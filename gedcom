@@ -3595,6 +3595,15 @@ sub print_person
 				$place =~ s/^ in //;
 				push @{$all_places{$place}}, $person;
 			}
+			if($placeofbirth) {
+				push @{$all_places{$placeofbirth}}, $person;
+			}
+			if($placeofmarriage) {
+				push @{$all_places{$placeofmarriage}}, $person;
+			}
+			if($placeofdeath) {
+				push @{$all_places{$placeofdeath}}, $person;
+			}
 
 			return;
 		}
