@@ -644,6 +644,10 @@ if($opts{'H'}) {
 }
 
 if($opts{'T'}) {
+	# my $g;
+	# if(my $oa = $ENV{'OPENADDR_HOME'}) {
+		# $g = Geo::Coder::Free->new(openaddr => $oa);
+	# }
 	foreach my $place(sort keys %all_places) {
 		print "$place: ";
 		my $previous;
@@ -656,6 +660,13 @@ if($opts{'T'}) {
 			$previous = $person;
 		}
 		print "\n";
+		# if($g && ($place =~ /USA|Canada/)) {
+			# my @locations = $g->geocode($place);
+			# if(scalar(@locations) == 0) {
+				# # complain(person => $person, warning => "$place not found in Geo::Coder::Free");
+				# warn("$place not found in Geo::Coder::Free");
+			# }
+		# }
 	}
 }
 
