@@ -981,6 +981,7 @@ sub print_person
 		$args->{'nee'} = 1;
 	}
 	my $text;
+	my %places_printed;
 	if($opts{'B'}) {
 		if($pdfpage->full() || ($pdfpage->linesleft() <= 7)) {
 			$pdfpage = PDFPage->new();
@@ -995,7 +996,23 @@ sub print_person
 		$text->text($person->as_string($args));
 
 		$text->font($params{'font'}, 12);
-	} elsif(!$opts{'T'}) {
+	} elsif($opts{'T'}) {
+		foreach my $place(get_all_residences($person)) {
+			my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 });
+			$p =~ s/^\s//;
+			push @{$all_places{$p}}, $person;
+		}
+		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
+		if((!$placeofbirth) && (my $birth = $person->get_record('birth'))) {
+			$placeofbirth = $birth->place();
+		}
+		if($placeofbirth) {
+			my $p = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed, nopreposition => 1 });
+			$p =~ s/^\s//;
+			push @{$all_places{$p}}, $person;
+		}
+		return;
+	} else {
 		print $person->as_string($args), "\n";
 	}
 
@@ -1341,7 +1358,6 @@ sub print_person
 		my $relationship;
 		my $spouserelationship;
 		my $spouse;
-		my %places_printed;
 
 		if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
 			foreach my $sibling(@siblings) {
@@ -1388,40 +1404,38 @@ sub print_person
 
 		my $bio = "\t";
 
-		if(!$opts{'T'}) {
-			if($occupations[0]) {
-				if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
-					$same_occupation_as_father = $occupations[0];
-					@occupations = ();
-				} else {
-					$bio .= 'A';
-					if($occupations[0] =~ /^works on (.+)/i) {
-						$occupations[0] = "$1 worker";
-					}
-					if($occupations[0] =~ /^[aeiou]/i) {
-						$bio .= 'n';
-					}
-					$bio .= ' ';
-					if($occupations[1]) {
-						# my $alloccupations = join(', ', @occupations);
-						# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
-						# print lc($alloccupations);
-						$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
-					} else {
-						$bio .= lc($occupations[0]);
-					}
-					if(!($father || $mother || $spouserelationship)) {
-						$bio .= ', ';
-						$printed_comma = 1;
-					}
+		if($occupations[0]) {
+			if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
+				$same_occupation_as_father = $occupations[0];
+				@occupations = ();
+			} else {
+				$bio .= 'A';
+				if($occupations[0] =~ /^works on (.+)/i) {
+					$occupations[0] = "$1 worker";
 				}
-			} elsif(scalar(@occupations)) {
-				complain({
-					person => $person,
-					warning => 'occupation is empty'
-				});
-				shift @occupations;
+				if($occupations[0] =~ /^[aeiou]/i) {
+					$bio .= 'n';
+				}
+				$bio .= ' ';
+				if($occupations[1]) {
+					# my $alloccupations = join(', ', @occupations);
+					# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
+					# print lc($alloccupations);
+					$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
+				} else {
+					$bio .= lc($occupations[0]);
+				}
+				if(!($father || $mother || $spouserelationship)) {
+					$bio .= ', ';
+					$printed_comma = 1;
+				}
 			}
+		} elsif(scalar(@occupations)) {
+			complain({
+				person => $person,
+				warning => 'occupation is empty'
+			});
+			shift @occupations;
 		}
 
 		my $print_sibling_count = 0;
@@ -3589,24 +3603,6 @@ sub print_person
 			$end_of_sentence = 0;
 		}
 
-		if($opts{'T'}) {
-			foreach my $place(keys(%places_printed)) {
-				$place =~ s/^ at //;
-				$place =~ s/^ in //;
-				push @{$all_places{$place}}, $person;
-			}
-			if($placeofbirth) {
-				push @{$all_places{$placeofbirth}}, $person;
-			}
-			if($placeofmarriage) {
-				push @{$all_places{$placeofmarriage}}, $person;
-			}
-			if($placeofdeath) {
-				push @{$all_places{$placeofdeath}}, $person;
-			}
-
-			return;
-		}
 		$bio .= '.' if(!$end_of_sentence);
 
 		# if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
@@ -3876,13 +3872,13 @@ sub print_person
 				}
 				$bio = '';
 			}
-		} elsif(!$opts{'T'}) {
+		} else {
 			if($bio eq "\t.") {
 				complain({ person => $person, warning => "couldn't extract a biography" });
 			}
 			print "$bio\n", '-' x 80, "\n";
 		}
-	} elsif(!$opts{'T'}) {
+	} else {
 		my ($dob, $dod);
 		eval {
 			$dob = $person->get_value('birth date');
@@ -4799,8 +4795,6 @@ sub stepsabove
 
 sub year
 {
-	return '' if($opts{'T'});
-
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $string = $params{'string'} || $params{'date'};
@@ -4966,7 +4960,11 @@ sub place
 	if($there && ($place eq $there)) {
 		if($address) {
 			if($place =~ /^(.+?),.+,/) {
-				return " at $address, $1";
+				if($params{'nopreposition'}) {
+					return " $address, $1";
+				} else {
+					return " at $address, $1";
+				}
 			}
 		} else {
 			return ' there';
@@ -4974,7 +4972,7 @@ sub place
 	}
 
 	# The more consistent the data, the fewer lookups on Geocoders and the smoother the English output
-	if((!$opts{'T'}) && ($place =~ /(.+?)\s*United States$/i)) {
+	if($place =~ /(.+?)\s*United States$/i) {
 		$place = "$1 USA";
 	} elsif($place =~ /States\s*$/) {
 		complain({ person => $params{'person'}, warning => "Unexpected text at the end of the place '$place'" });
@@ -4988,21 +4986,17 @@ sub place
 		$place = $1;
 	}
 
-	if($place =~ /^\d/) {
+	if((!$opts{'T'}) && $place =~ /^\d/) {
 		if(my $places_printed = $params{'places_printed'}) {
 			$places_printed->{" at$place"} = 1;
 			if($place =~ /(.+),(.+?),(.+?),(.+?),(.+?)$/) {
 				if($places_printed->{" in$3,$4,$5"}) {
-					if(!$opts{'T'}) {
-						$places_printed->{"in $1,$2,$3"} = 1;
-					}
+					$places_printed->{"in $1,$2,$3"} = 1;
 					return " at $1,$2,$3";
 				}
 			}
 			if($place =~ /(.+),(.+?),(.+?),(.+?)$/) {
-				if(!$opts{'T'}) {
-					$places_printed->{" in$2,$3,$4"} = 1;
-				}
+				$places_printed->{" in$2,$3,$4"} = 1;
 			}
 		}
 		return " at $place";
@@ -5013,7 +5007,11 @@ sub place
 	}
 
 	if($address) {
-		$place = " at $address, $place";
+		if($params{'nopreposition'}) {
+			$place = " $address, $place";
+		} else {
+			$place = " at $address, $place";
+		}
 	} elsif($params{'nopreposition'}) {
 		$place = " $place";
 	} else {
@@ -5021,7 +5019,7 @@ sub place
 	}
 
 	# Only print the town if the location has already been printed
-	if(my $places_printed = $params{'places_printed'}) {
+	if((!$opts{'T'}) && (my $places_printed = $params{'places_printed'})) {
 		if($places_printed->{$place} && $place =~ /^(.+?),/) {
 			return $1;
 		}
@@ -5046,9 +5044,7 @@ sub place
 			if($places_printed->{" at$str"}) {
 				return "$1,$2,$3";
 			}
-			if(!$opts{'T'}) {
-				$places_printed->{" in$str"} = 1;
-			}
+			$places_printed->{" in$str"} = 1;
 			$places_printed->{" in$2,$3,$4"} = 1;
 		} elsif($place =~ /(.+),(.+),(.+)$/) {
 			if($places_printed->{" in$2,$3"}) {
@@ -5056,9 +5052,7 @@ sub place
 				# return place, county
 				return "$1,$2";
 			}
-			if(!$opts{'T'}) {
-				$places_printed->{" in$2,$3"} = 1;
-			}
+			$places_printed->{" in$2,$3"} = 1;
 		}
 		$places_printed->{$place} = 1;
 	}
