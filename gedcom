@@ -646,7 +646,7 @@ if($opts{'H'}) {
 if($opts{'T'}) {
 	# my $g;
 	# if(my $oa = $ENV{'OPENADDR_HOME'}) {
-		# $g = Geo::Coder::Free->new(openaddr => $oa);
+		# $g = Geo::Coder::Free::OpenAddresses->new(openaddr => $oa);
 	# }
 	foreach my $place(sort keys %all_places) {
 		print "$place: ";
@@ -664,7 +664,7 @@ if($opts{'T'}) {
 			# my @locations = $g->geocode($place);
 			# if(scalar(@locations) == 0) {
 				# # complain(person => $person, warning => "$place not found in Geo::Coder::Free");
-				# warn("$place not found in Geo::Coder::Free");
+				# warn colored(['red'], "$place not found in Geo::Coder::Free");
 			# }
 		# }
 	}
@@ -5178,7 +5178,7 @@ sub validate_place
 			$place = "$1$2";
 		}
 		$place =~ s/^(in|at)\s//;
-		if($places{$place}) {
+		if(defined($places{$place})) {
 			return $places{$place};
 		}
 		# my $ap;
