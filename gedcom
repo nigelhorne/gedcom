@@ -1013,50 +1013,17 @@ sub print_person
 			$p =~ s/^\s//;
 			push @{$all_places{$p}}, $person;
 		}
-		my $placeofbirth = get_value({ person => $person, value => 'birth place' });
-		if((!$placeofbirth) && (my $birth = $person->get_record('birth'))) {
-			$placeofbirth = $birth->place();
-		}
-		if($placeofbirth) {
-			my $p = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
-		}
-		my $placeofbaptism = get_value({ person => $person, value => 'baptism place' });
-		if((!$placeofbaptism) && (my $baptism = $person->get_record('baptism'))) {
-			$placeofbaptism = $baptism->place();
-		}
-		if($placeofbaptism) {
-			my $p = place({ person => $person, place => $placeofbaptism, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
-		}
-		my $placeofmarriage = get_value({ person => $person, value => 'marriage place' });
-		if((!$placeofmarriage) && (my $marriage = $person->get_record('marriage'))) {
-			$placeofmarriage = $marriage->place();
-		}
-		if($placeofmarriage) {
-			my $p = place({ person => $person, place => $placeofmarriage, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
-		}
-		my $placeofdeath = get_value({ person => $person, value => 'death place' });
-		if((!$placeofdeath) && (my $death = $person->get_record('death'))) {
-			$placeofdeath = $death->place();
-		}
-		if($placeofdeath) {
-			my $p = place({ person => $person, place => $placeofdeath, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
-		}
-		my $placeofburial = get_value({ person => $person, value => 'burial place' });
-		if((!$placeofburial) && (my $burial = $person->get_record('burial'))) {
-			$placeofburial = $burial->place();
-		}
-		if($placeofburial) {
-			my $p = place({ person => $person, place => $placeofburial, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
+		for my $event('birth', 'baptism', 'marriage', 'death', 'burial') {
+			my $p;
+			if(my $r = $person->get_record($event)) {
+				$p = place({ person => $person, record => $r, places_printed => \%places_printed, nopreposition => 1 });
+			} elsif($p = get_value({ person => $person, value => "$event place" })) {
+				$p = place({ person => $person, place => $p, places_printed => \%places_printed, nopreposition => 1 });
+			}
+			if($p) {
+				$p =~ s/^\s//;
+				push @{$all_places{$p}}, $person;
+			}
 		}
 		return;
 	} else {
