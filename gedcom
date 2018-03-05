@@ -1400,7 +1400,10 @@ sub print_person
 			}
 		}
 
-		while($occupations[0] && (lc($occupations[0]) =~ /^scho(ol|lar)/i)) {
+		while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
+			shift @occupations;
+		}
+		while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
 			shift @occupations;
 		}
 		while(scalar(@occupations) > 1) {
@@ -1552,7 +1555,10 @@ sub print_person
 				$bio .= ' ' . $father->as_string();
 				if(!$same_occupation_as_father) {
 					my @occupations = $father->get_value('occupation');
-					while($occupations[0] && (lc($occupations[0]) =~ /^scho(ol|lar)/i)) {
+					while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
+						shift @occupations;
+					}
+					while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
 						shift @occupations;
 					}
 					# TODO: print all occupations
@@ -2051,20 +2057,22 @@ sub print_person
 						# $bio .= ', ';
 					# }
 					if(my $soccupation = $spouses[0]->occupation()) {
-						$bio .= ' (';
-						$parentheses = 1;
-						if(ref($soccupation) eq 'Gedcom::Record') {
-							my @items = $soccupation->items();
-							$soccupation = $items[0]->value();
-						}
-						if(lc($soccupation) eq 'self-employed') {
-							$bio .= 'self-employed ';
-						} else {
-							$bio .= 'a';
-							if($soccupation =~ /^[aeiou]/i) {
-								$bio .= 'n';
+						if(($soccupation =~ /^scho(ol|lar)/i) && ($soccupation =~ /wife$/i)) {
+							$bio .= ' (';
+							$parentheses = 1;
+							if(ref($soccupation) eq 'Gedcom::Record') {
+								my @items = $soccupation->items();
+								$soccupation = $items[0]->value();
 							}
-							$bio .= ' ' . lc($soccupation) . ' ';
+							if(lc($soccupation) eq 'self-employed') {
+								$bio .= 'self-employed ';
+							} else {
+								$bio .= 'a';
+								if($soccupation =~ /^[aeiou]/i) {
+									$bio .= 'n';
+								}
+								$bio .= ' ' . lc($soccupation) . ' ';
+							}
 						}
 					}
 					my @childrenofthisspouse;
