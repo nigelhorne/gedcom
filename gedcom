@@ -885,10 +885,7 @@ sub print_person
 	}
 
 	if($opts{'w'} && !$person->validate_semantics()) {
-		if($opts{'f'}) {
-			die $person->as_string, ': failed consistency check';
-		}
-		red_warning({ person => $person, warning => 'failed consistency check' });
+		complain({ person => $person, warning => 'failed consistency check' });
 	}
 
 	my @siblings = $person->siblings();
@@ -908,6 +905,12 @@ sub print_person
 
 		if((!$family) && (scalar(@siblings) == 0) && (!$mother) && (!$father) && (scalar(@spouses) == 0)) {
 			complain({ person => $person, warning => 'not connected to the tree' });
+		}
+
+		# FIXME: needs to only complain about more than two biological parents
+		my @parents = $person->parents();
+		if(scalar(@parents) > 2) {
+			complain({ person => $person, warning => 'has more than two parents' });
 		}
 	}
 
