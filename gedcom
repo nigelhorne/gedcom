@@ -791,7 +791,7 @@ sub print_person
 		if(($dob !~ /^[\d\sA-Z\/]+$/i) && ($dob !~ /^Abt\./)) {
 			if($dob =~ /(\d{4})\s*(.+)/) {
 				$dob = "ABT$1";
-				if(place({ peron => $person, place => $2 })) {
+				if(place({ person => $person, place => $2 })) {
 					complain({ person => $person, warning => "Unexpected text ($2) after the date $1 - should be in the location record" });
 				} else {
 					complain({ person => $person, warning => "Unexpected text ($2) after the date $1 - should be in the note field" });
