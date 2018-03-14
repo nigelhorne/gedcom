@@ -488,8 +488,9 @@ if($opts{'H'}) {
 				@everyone = ($me);
 				@everyone = ancestors($me, \@everyone);
 				@everyone = descendents($me, \@everyone);
-				my @siblings = $me->siblings();
+				my @siblings = ($me->siblings(), $me->half_siblings());
 				foreach my $sibling(@siblings) {
+				print $sibling->as_string(), "\n";
 					@everyone = descendents($sibling, \@everyone);
 				}
 				@everyone = (@everyone, @siblings);
@@ -4525,10 +4526,12 @@ sub Gedcom::Individual::relationship {
 	my $self = shift;
 	my $other = shift;
 
-	if($self->mother() && $other->mother() && $self->father() && $other->father &&
-	  ($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
+	if($self->mother() && $other->mother() && $self->father() && $other->father()) {
 		my $sex = get_value({ person => $other, value => 'sex' });
-		return ($sex eq 'M') ? 'brother' : 'sister';
+		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
+			return ($sex eq 'M') ? 'brother' : 'sister';
+		}
+		return ($sex eq 'M') ? 'half-brother' : 'half-sister';
 	}
 
 	return $self->relationship_down($other) || $self->relationship_up($other);
