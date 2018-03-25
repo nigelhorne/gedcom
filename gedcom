@@ -1562,9 +1562,6 @@ sub print_person
 					while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
 						shift @occupations;
 					}
-					while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
-						shift @occupations;
-					}
 					# TODO: print all occupations
 					if($occupations[0]) {
 						$bio .= ' (a';
@@ -1600,6 +1597,9 @@ sub print_person
 					shift @occupations;
 				}
 				while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
+					shift @occupations;
+				}
+				while($occupations[0] && ($occupations[0] =~ /Unpaid domestic duties/i)) {
 					shift @occupations;
 				}
 				# TODO: print all occupations
@@ -2067,7 +2067,7 @@ sub print_person
 						# $bio .= ', ';
 					# }
 					if(my $soccupation = $spouses[0]->occupation()) {
-						if(($soccupation =~ /^scho(ol|lar)/i) && ($soccupation =~ /wife$/i)) {
+						if(($soccupation !~ /^scho(ol|lar)/i) && ($soccupation !~ /wife$/i)) {
 							$bio .= ' (';
 							$parentheses = 1;
 							if(ref($soccupation) eq 'Gedcom::Record') {
@@ -2156,6 +2156,15 @@ sub print_person
 					}
 				} else {
 					my @spouse_occupations = $spouses[0]->get_value('occupation');
+					while($spouse_occupations[0] && ($spouse_occupations[0] =~ /^scho(ol|lar)/i)) {
+						shift @spouse_occupations;
+					}
+					while($spouse_occupations[0] && ($spouse_occupations[0] =~ /wife$/i)) {
+						shift @spouse_occupations;
+					}
+					while($spouse_occupations[0] && ($spouse_occupations[0] =~ /Unpaid domestic duties/i)) {
+						shift @spouse_occupations;
+					}
 					if($spouse_occupations[0]) {
 						$bio .= ' (a ' . lc($spouse_occupations[0]);
 						$parentheses = 1;
