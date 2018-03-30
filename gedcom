@@ -2675,7 +2675,7 @@ sub print_person
 						my $yoe = $1;
 						if($yod) {
 							if($yoe > $yod) {
-								compplain({
+								complain({
 									person => $person,
 									warning => "Year of residence $yoe is after the year of death $yod"
 								});
