@@ -183,6 +183,10 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() });
 }
 
+if(my $username = $ENV{'GEONAMES_USER'}) {
+	$geocoder->push(Geo::GeoNames->new(username => $username));
+}
+
 $geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
@@ -192,9 +196,6 @@ $geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder 
 	->push(Geo::Coder::XYZ->new());
 	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
-if(my $username = $ENV{'GEONAMES_USER'}) {
-	$geocoder->push(Geo::GeoNames->new(username => $username));
-}
 if(my $key = $ENV{'GMAP_KEY'}) {
 	$geocoder->push(Geo::Coder::GooglePlaces->new(
 		key => $key,
