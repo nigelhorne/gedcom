@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Geo::Coder::Free;
+
+die "Usage: $0 gedcom-file\n" unless($ARGV[0]);
+my $g = Geo::Coder::Free::OpenAddresses->new(openaddr => $ENV{'OPENADDR_HOME'});
+
+open(my $fin, '-|', "./gedcom -T \"$ARGV[0]\"") or die;
+
+while(my $line = <$fin>) {
+	next if($line =~ /\d%/);
+
+	$line =~ s/:\s.+$//;
+	$line =~ s/[\r\n]//;
+
+	run($line);
+}
+
+sub run {
+	my $l = shift;
+
+	return unless($l =~ /(Canada|US|USA|United States)$/i);
+
+	if(!defined($g->geocode($l))) {
+		print "$l failed\n";
+	}
+}

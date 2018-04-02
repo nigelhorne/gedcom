@@ -70,7 +70,7 @@ no lib '.';
 
 my %opts;
 getopts('aAbB:cCdDfGh:Hm:lLp:stTwWvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ][ -T ] [ -w [ -W ] ] filename [ filename2 ] \n" unless($ARGV[0]);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ][ -T ] [ -w [ -W ] ] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
