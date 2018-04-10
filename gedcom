@@ -16,6 +16,7 @@
 #	anything
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
+# TODO: add warning for 'bet 2000 and 1999'
 
 use strict;
 use warnings;
