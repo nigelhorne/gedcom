@@ -52,6 +52,7 @@ use Geo::StreetAddress::US;
 use Locale::US;
 use DateTime::Duration;
 use DateTime::Format::Natural;
+use DateTime::Format::Genealogy;
 use Text::Wrap;
 use LWP::Simple;
 use LWP::UserAgent::Throttled;
@@ -174,6 +175,7 @@ my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
+my $dfg = DateTime::Format::Genealogy->new();
 
 my $geocoder = Geo::Coder::List->new();
 
@@ -958,14 +960,14 @@ sub print_person
 			$str .= $person->as_string();
 		}
 		if($aob) {
-			if(my $d = date_to_datetime(date => get_value({ person => $person, value => 'birth date' }))) {
+			if(my $d = $dfg->parse_datetime(date => get_value({ person => $person, value => 'birth date' }))) {
 				$str .= ' b' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
 			}
 		}
 		if($aod) {
-			if(my $d = date_to_datetime(date => get_value({ person => $person, value => 'death date' }))) {
+			if(my $d = $dfg->parse_datetime(date => get_value({ person => $person, value => 'date date' }))) {
 				$str .= ' d' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of death '$dod'" });
