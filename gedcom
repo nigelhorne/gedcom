@@ -81,15 +81,6 @@ my %printed;
 my %places;
 my %all_places;
 
-# FIXME: Should be in a configuration file
-# Will be removed when new G:C:Free is published
-my %known_locations = (
-	'Newport Pagnell, Buckinghamshire, England' => {
-		'latitude' => 52.08675,
-		'longitude' => -0.72270
-	}
-);
-
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $ged2;
 if($ARGV[1]) {
@@ -1176,7 +1167,7 @@ sub print_person
 				last;
 			}
 			if(my $date = $event->date()){
-				if(!date_to_datetime($date)) {
+				if(!$dfg->parse_datetime(date => $date)) {
 					$all_have_dates = 0;
 					last;
 				}
@@ -1187,7 +1178,7 @@ sub print_person
 		}
 		if($all_have_dates) {
 			# print join(' ', map { $_->date() } @events), "\n";
-			@events = Sort::Key::DateTime::dtkeysort { date_to_datetime($_->date()) } @events;
+			@events = Sort::Key::DateTime::dtkeysort { $dfg->parse_datetime(date => $_->date()) } @events;
 			# print join(' ', map { $_->date() } @events), "\n";
 		}
 	}
@@ -5178,10 +5169,6 @@ sub validate_place
 	$place =~ s/^\s+//;
 	if(defined($places{$place})) {
 		return $places{$place};
-	}
-
-	if($known_locations{$place}) {
-		return 1;
 	}
 
 	# US and Canada are more logical, using city,county,state,country, than other countries
