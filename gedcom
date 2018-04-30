@@ -484,7 +484,7 @@ if($opts{'H'}) {
 				@everyone = descendents($me, \@everyone);
 				my @siblings = ($me->siblings(), $me->half_siblings());
 				foreach my $sibling(@siblings) {
-				print $sibling->as_string(), "\n";
+					# print $sibling->as_string(), "\n";
 					@everyone = descendents($sibling, \@everyone);
 				}
 				@everyone = (@everyone, @siblings);
