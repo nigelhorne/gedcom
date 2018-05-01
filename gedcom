@@ -3860,7 +3860,23 @@ sub print_person
 		}
 		if($opts{'B'}) {
 			if($bio) {
-				if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+				if(length($bio) > 4000) {
+					# It's not going to fit on one page
+					my @paras = split(/\n/, $bio);
+					foreach my $p(@paras) {
+						next if(length($p) == 0);
+						if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
+							$text->textend();
+
+							$pdfpage = PDFPage->new();
+
+							$text = $pdfpage->page()->text();
+							$text->textstart();
+							$text->font($params{'font'}, 12);
+							die "Print failure: $p" if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage));
+						}
+					}
+				} elsif(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 					$text->textend();
 
 					$pdfpage = PDFPage->new();
@@ -3869,25 +3885,7 @@ sub print_person
 					$text->textstart();
 					$text->font($params{'font'}, 12);
 					$bio =~ s/\.\././g;
-					if(length($bio) > 4000) {
-						# It's not going to fit on one page
-						my @paras = split(/\n/, $bio);
-						foreach my $p(@paras) {
-							next if(length($p) == 0);
-							if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
-								$text->textend();
-
-								$pdfpage = PDFPage->new();
-
-								$text = $pdfpage->page()->text();
-								$text->textstart();
-								$text->font($params{'font'}, 12);
-								die "Print failure: $p" if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage));
-							}
-						}
-					} else {
-						die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
-					}
+					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 				}
 				$bio = '';
 			}
