@@ -3863,10 +3863,26 @@ sub print_person
 				$bio =~ s/\.\././g;
 				if(length($bio) > 4000) {
 					# It's not going to fit on one page
+					# Split into paragraphs
 					my @paras = split(/\n/, $bio);
 					foreach my $p(@paras) {
 						next if(length($p) == 0);
-						if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
+						if(length($p) > 4000) {
+							# Very long paragraph
+							my @lines = split(/\n/, wrap('', '', ($p)));
+							foreach my $l(@lines) {
+								if(!pdfprint(string => $l, text => $text, pdfpage => $pdfpage, noindent => 1)) {
+									$text->textend();
+
+									$pdfpage = PDFPage->new();
+
+									$text = $pdfpage->page()->text();
+									$text->textstart();
+									$text->font($params{'font'}, 12);
+									die "Print failure: $l" if(!pdfprint(string => $l, text => $text, pdfpage => $pdfpage, noindent => 1));
+								}
+							}
+						} elsif(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
 
 							$pdfpage = PDFPage->new();
@@ -5675,7 +5691,9 @@ sub pdfprint
 
 	return 0 if($pdfpage->full());
 
-	my @lines = split(/\n/, wrap('    ', '', ($params{'string'})));
+	my $indent = ($params{'noindent'}) ? '' : '    ';
+
+	my @lines = split(/\n/, wrap($indent, '', ($params{'string'})));
 
 	if(scalar(@lines) >= $pdfpage->linesleft() - 1) {
 		return 0;
