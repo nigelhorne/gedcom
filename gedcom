@@ -5251,27 +5251,28 @@ sub notes
 			complain('Notes field is empty');
 		}
 	}
-	if($rc) {
-		$rc =~ s/ $//;
-		$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
-		$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
-		$rc =~ s/\x80"/"/g;
-		$rc =~ s/\xe2\x80\x99/'/g;
-		$rc =~ s/[\x93\x94]/"/g;
-		$rc =~ s/[\x91\x92]/'/g;
-		$rc =~ s/[\xc2\xe2]//g;
-
-		if(defined($ENV{'LANG'})) {
-			if($ENV{'LANG'} =~ /^en_US/) {
-				$rc = Lingua::EN::ABC::b2a($rc);
-			} elsif($ENV{'LANG'} =~ /^en_GB/) {
-				$rc = Lingua::EN::ABC::a2b($rc);
-			}
-		}
-		# if(my $hr = $textgeocoder->geocode(scantext => $rc)) {
-			# print Data::Dumper->new([$hr])->Dump();
-		# }
+	if((!defined($rc)) || (length($rc) == 0)) {
+		return;
 	}
+	$rc =~ s/ $//;
+	$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
+	$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
+	$rc =~ s/\x80"/"/g;
+	$rc =~ s/\xe2\x80\x99/'/g;
+	$rc =~ s/[\x93\x94]/"/g;
+	$rc =~ s/[\x91\x92]/'/g;
+	$rc =~ s/[\xc2\xe2]//g;
+
+	if(defined($ENV{'LANG'})) {
+		if($ENV{'LANG'} =~ /^en_US/) {
+			$rc = Lingua::EN::ABC::b2a($rc);
+		} elsif($ENV{'LANG'} =~ /^en_GB/) {
+			$rc = Lingua::EN::ABC::a2b($rc);
+		}
+	}
+	# if(my $hr = $textgeocoder->geocode(scantext => $rc)) {
+		# print Data::Dumper->new([$hr])->Dump();
+	# }
 	return $rc;
 }
 
