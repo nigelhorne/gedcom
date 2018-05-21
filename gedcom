@@ -49,6 +49,7 @@ use Lingua::EN::ABC;
 use Lingua::EN::Inflect;
 # use Lingua::EN::AddressParse;
 use Geo::StreetAddress::US;
+# use Geo::Parser::Text;
 use Locale::US;
 use DateTime::Duration;
 use DateTime::Format::Natural;
@@ -169,6 +170,7 @@ my $dfn = DateTime::Format::Natural->new();
 my $dfg = DateTime::Format::Genealogy->new();
 
 my $geocoder = Geo::Coder::List->new();
+# my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
 	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => Geo::Coder::Free->new(openaddr => $oa) });
@@ -215,6 +217,9 @@ if($browser) {
 	$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
+
+	# $textgeocoder = Geo::Parser::Text->new('https://geocoder.ca');
+	# $textgeocoder = Geo::Parser::Text->new('https://geocode.xyz');
 }
 
 my $oneday = DateTime::Duration->new(days => 1);
@@ -5212,7 +5217,6 @@ sub notes
 	my @notes = $record->get_record('note');
 
 	# my @deathnotes = get_value({ person => $person, value => 'death note' });
-	# my @deathnotes = $person, value => 'death note' });
 	my $rc = $record->get_value();
 	$rc .= '.' if($rc && !scalar(@notes));
 
@@ -5264,6 +5268,9 @@ sub notes
 				$rc = Lingua::EN::ABC::a2b($rc);
 			}
 		}
+		# if(my $hr = $textgeocoder->geocode(scantext => $rc)) {
+			# print Data::Dumper->new([$hr])->Dump();
+		# }
 	}
 	return $rc;
 }
