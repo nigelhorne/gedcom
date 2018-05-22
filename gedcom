@@ -29,7 +29,7 @@ use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::List 0.15;
-use Geo::Coder::Free 0.03;
+use Geo::Coder::Free 0.10;	# 0.11 really
 use Geo::Coder::Ovi;
 use Geo::Coder::RandMcnally;
 use Geo::Coder::US::Census;
@@ -171,11 +171,14 @@ my $dfg = DateTime::Format::Genealogy->new();
 
 my $geocoder = Geo::Coder::List->new();
 # my $textgeocoder;
+my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
-	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => Geo::Coder::Free->new(openaddr => $oa) });
+	$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
+	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
 } else {
-	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() });
+	$textgeocoder = Geo::Coder::Free->new();
+	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder });
 }
 
 if(my $username = $ENV{'GEONAMES_USER'}) {
@@ -5270,8 +5273,21 @@ sub notes
 			$rc = Lingua::EN::ABC::a2b($rc);
 		}
 	}
-	# if(my $hr = $textgeocoder->geocode(scantext => $rc)) {
-		# print Data::Dumper->new([$hr])->Dump();
+
+	# my $region;
+	# if($record && (my $place = $record->place())) {
+		# if($place =~ /^.+,\s([[a-z\s]+)$/i) {
+			# if($1 =~ /(England|United Kingdom)/i) {
+				# $region = 'gb';
+			# } elsif($1 =~ /(USA|US|United States)/i) {
+				# $region = 'us';
+			# } elsif(lc($1) eq 'Canada') {
+				# $region = 'ca';
+			# }
+		# }
+	# }
+	# if(($rc !~ /^was /i) && (my @hr = $textgeocoder->geocode(scantext => $rc, region => $region))) {
+		# print STDERR Data::Dumper->new([\@hr])->Dump();
 	# }
 	return $rc;
 }
