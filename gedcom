@@ -5275,16 +5275,30 @@ sub notes
 	}
 
 	# my $region;
-	# if($record && (my $place = $record->place())) {
-		# if($place =~ /^.+,\s([[a-z\s]+)$/i) {
-			# if($1 =~ /(England|United Kingdom)/i) {
-				# $region = 'gb';
-			# } elsif($1 =~ /(USA|US|United States)/i) {
-				# $region = 'us';
-			# } elsif(lc($1) eq 'Canada') {
-				# $region = 'ca';
-			# }
+
+	# if($record) {
+		# $region = $record->place();
+	# }
+	# if(!$region && (my $person = $params{'person'})) {
+		# $region = get_value({ person => $person, value => 'birth place' });
+		# if(!$region) {
+			# $region = get_value({ person => $person, value => 'death place' });
 		# }
+	# }
+	# if($region && ($region =~ /^.+,\s([[a-z\s]+)$/i)) {
+		# if($1 =~ /(England|United Kingdom)/i) {
+			# $region = 'gb';
+		# } elsif($1 =~ /(USA|US|United States)/i) {
+			# $region = 'us';
+		# } elsif(lc($1) eq 'Canada') {
+			# $region = 'ca';
+		# }
+	# }
+
+	# my @call_details = caller(0);
+	# print 'line ', $call_details[2], ">>>>$region\n";
+	# foreach my $k(keys %params) {
+		# print "\t$k\n";
 	# }
 	# if(($rc !~ /^was /i) && (my @hr = $textgeocoder->geocode(scantext => $rc, region => $region))) {
 		# print STDERR Data::Dumper->new([\@hr])->Dump();
