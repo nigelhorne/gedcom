@@ -29,7 +29,7 @@ use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
 use Getopt::Std;
 use Geo::Coder::List 0.15;
-use Geo::Coder::Free 0.03;
+use Geo::Coder::Free 0.10;	# 0.11 really
 use Geo::Coder::Ovi;
 use Geo::Coder::RandMcnally;
 use Geo::Coder::US::Census;
@@ -49,6 +49,7 @@ use Lingua::EN::ABC;
 use Lingua::EN::Inflect;
 # use Lingua::EN::AddressParse;
 use Geo::StreetAddress::US;
+# use Geo::Parser::Text;
 use Locale::US;
 use DateTime::Duration;
 use DateTime::Format::Natural;
@@ -169,11 +170,15 @@ my $dfn = DateTime::Format::Natural->new();
 my $dfg = DateTime::Format::Genealogy->new();
 
 my $geocoder = Geo::Coder::List->new();
+# my $textgeocoder;
+my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
-	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => Geo::Coder::Free->new(openaddr => $oa) });
+	$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
+	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
 } else {
-	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => Geo::Coder::Free->new() });
+	$textgeocoder = Geo::Coder::Free->new();
+	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder });
 }
 
 if(my $username = $ENV{'GEONAMES_USER'}) {
@@ -215,6 +220,9 @@ if($browser) {
 	$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
 	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
 	$geocoder->ua($browser);
+
+	# $textgeocoder = Geo::Parser::Text->new('https://geocoder.ca');
+	# $textgeocoder = Geo::Parser::Text->new('https://geocode.xyz');
 }
 
 my $oneday = DateTime::Duration->new(days => 1);
@@ -5206,7 +5214,6 @@ sub notes
 	my @notes = $record->get_record('note');
 
 	# my @deathnotes = get_value({ person => $person, value => 'death note' });
-	# my @deathnotes = $person, value => 'death note' });
 	my $rc = $record->get_value();
 	$rc .= '.' if($rc && !scalar(@notes));
 
@@ -5241,24 +5248,55 @@ sub notes
 			complain('Notes field is empty');
 		}
 	}
-	if($rc) {
-		$rc =~ s/ $//;
-		$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
-		$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
-		$rc =~ s/\x80"/"/g;
-		$rc =~ s/\xe2\x80\x99/'/g;
-		$rc =~ s/[\x93\x94]/"/g;
-		$rc =~ s/[\x91\x92]/'/g;
-		$rc =~ s/[\xc2\xe2]//g;
+	if((!defined($rc)) || (length($rc) == 0)) {
+		return;
+	}
+	$rc =~ s/ $//;
+	$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
+	$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
+	$rc =~ s/\x80"/"/g;
+	$rc =~ s/\xe2\x80\x99/'/g;
+	$rc =~ s/[\x93\x94]/"/g;
+	$rc =~ s/[\x91\x92]/'/g;
+	$rc =~ s/[\xc2\xe2]//g;
 
-		if(defined($ENV{'LANG'})) {
-			if($ENV{'LANG'} =~ /^en_US/) {
-				$rc = Lingua::EN::ABC::b2a($rc);
-			} elsif($ENV{'LANG'} =~ /^en_GB/) {
-				$rc = Lingua::EN::ABC::a2b($rc);
-			}
+	if(defined($ENV{'LANG'})) {
+		if($ENV{'LANG'} =~ /^en_US/) {
+			$rc = Lingua::EN::ABC::b2a($rc);
+		} elsif($ENV{'LANG'} =~ /^en_GB/) {
+			$rc = Lingua::EN::ABC::a2b($rc);
 		}
 	}
+
+	# my $region;
+
+	# if($record) {
+		# $region = $record->place();
+	# }
+	# if(!$region && (my $person = $params{'person'})) {
+		# $region = get_value({ person => $person, value => 'birth place' });
+		# if(!$region) {
+			# $region = get_value({ person => $person, value => 'death place' });
+		# }
+	# }
+	# if($region && ($region =~ /^.+,\s([[a-z\s]+)$/i)) {
+		# if($1 =~ /(England|United Kingdom)/i) {
+			# $region = 'gb';
+		# } elsif($1 =~ /(USA|US|United States)/i) {
+			# $region = 'us';
+		# } elsif(lc($1) eq 'Canada') {
+			# $region = 'ca';
+		# }
+	# }
+
+	# my @call_details = caller(0);
+	# print 'line ', $call_details[2], ">>>>$region\n";
+	# foreach my $k(keys %params) {
+		# print "\t$k\n";
+	# }
+	# if(($rc !~ /^was /i) && (my @hr = $textgeocoder->geocode(scantext => $rc, region => $region))) {
+		# print STDERR Data::Dumper->new([\@hr])->Dump();
+	# }
 	return $rc;
 }
 
