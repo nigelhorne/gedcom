@@ -826,7 +826,7 @@ sub print_person
 		if($dob eq 'UNKNOWN') {
 			$dob = undef;
 		} elsif($opts{'w'} && !$warned{$person}) {
-			complain({ person => $person, warning => ": invalid date of birth $dob" });
+			complain({ person => $person, warning => "invalid date of birth $dob" });
 			$warned{$person} = 1;
 		}
 	}
@@ -1503,16 +1503,10 @@ sub print_person
 								$d = @{$d}[0];
 							}
 							if($@ || !defined($d)) {
-								if($opts{'f'}) {
-									die $sibling->as_string(),
-										" has an invalid date of birth: $dob";
-								}
-								if($opts{'w'}) {
-									red_warning({
-										person => $sibling,
-										warning => "has an invalid date of birth: $dob"
-									});
-								}
+								complain({
+									person => $sibling,
+									warning => "has an invalid date of birth: $dob"
+								});
 								$all_siblings_have_dob = 0;
 								last;
 							}
