@@ -24,15 +24,19 @@ or
 
 ## Gedcom validation
 
-Gedcom also includes rudimentary santity checking of your Gedcom file.  You can
-enable this mode with -w, which will print warnings of anything it finds.  It's
-a sort of lint for Gedcom files.
+Gedcom also includes rudimentary santity checking of your Gedcom file.
+You can enable this mode with -w, which will print warnings of anything it finds.
+It's a sort of lint for Gedcom files.
 
 For example:
 
     gedcom -dawWl gedcom-file.ged > /dev/null
 
 Adding the -c option will add the checking of missing citations.
+
+To sort by error type
+
+    gedcom -dawWl gedcom-file.ged > /dev/null | sort -t: +2
 
 ## Genealogy Calendar
 
