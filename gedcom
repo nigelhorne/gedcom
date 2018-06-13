@@ -1694,8 +1694,12 @@ sub print_person
 			} else {
 				$bio .= 'husband';
 			}
-			$bio .= " of your $spouserelationship " .
-				$spouse->as_string({ middle_names => 1, title => 1 });
+			$bio .= " of your $spouserelationship";
+			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
+				$bio .= " $s";
+			} else {
+				complain({ person => $spouse, warning => "seems to have no name" });
+			}
 			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 				$bio .= ',';
 			}
@@ -2077,7 +2081,11 @@ sub print_person
 					$nameparser->parse($spouses[0]->name());
 
 					my %name_components = $nameparser->components();
-					$bio .= $name_components{'given_name_1'};
+					if(my $n = $name_components{'given_name_1'}) {
+						$bio .= $n;
+					} else {
+						complain({ person => $spouses[0], warning => "seems to have no name" });
+					}
 				} else {
 					$bio .= $spouses[0]->as_string();
 					$haveprintedspousename = 1;

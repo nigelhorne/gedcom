@@ -36,7 +36,7 @@ Adding the -c option will add the checking of missing citations.
 
 To sort by error type
 
-    gedcom -dawWl gedcom-file.ged > /dev/null | sort -t: +2
+    gedcom -dawWl gedcom-file.ged > /dev/null | sort -t: -k2
 
 ## Genealogy Calendar
 
