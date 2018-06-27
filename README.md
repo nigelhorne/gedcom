@@ -112,10 +112,12 @@ That will be fixed.
 
 ## Pre-Requisites
 
-This program uses many CPAN modules. To install them all:
+This program uses many CPAN modules. To install them all and run the program
+via Carton:
 
     cpan -i Carton
     carton install
+    carton exec ./gedcom [args]
 
 ## Acknowledgements
 
