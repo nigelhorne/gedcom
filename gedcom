@@ -1019,9 +1019,10 @@ sub print_person
 		$text->font($params{'font'}, 12);
 	} elsif($opts{'T'}) {
 		foreach my $place(get_all_residences($person)) {
-			my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 });
-			$p =~ s/^\s//;
-			push @{$all_places{$p}}, $person;
+			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
+				$p =~ s/^\s//;
+				push @{$all_places{$p}}, $person;
+			}
 		}
 		for my $event('birth', 'baptism', 'marriage', 'death', 'burial') {
 			my $p;

@@ -110,6 +110,13 @@ from gedcomlibrary.com.
 With the -T option, countries and counties can be optimized out.
 That will be fixed.
 
+## Pre-Requisites
+
+This program uses many CPAN modules. To install them all:
+
+    cpan -i Carton
+    carton install
+
 ## Acknowledgements
 
 So many Perl CPAN modules that if I list them all I'll miss one, but special
