@@ -1780,7 +1780,7 @@ sub print_person
 
 				$bio .= ' was born';
 				if($placeofbirth) {
-					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath)) {
+					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
 						$bio .= ' there';
 					} else {
 						$bio .= place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
