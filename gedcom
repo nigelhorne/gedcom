@@ -235,7 +235,8 @@ my @tmpfiles;
 my $pr;
 
 my @everyone;
-unless($opts{'p'}) {
+# Don't get everyone if we're after a specific person, or we're producing a book of a person
+unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 	@everyone = $ged->individuals();
 }
 
@@ -290,7 +291,7 @@ memoize('stepsabove');
 memoize('normalize_name');	# Speeds up sort with -B a lot
 
 my $dot;
-if($opts{'G'}) {
+if($opts{'B'}) {
 	if(-x '/usr/bin/dot') {
 		$dot = '/usr/bin/dot';
 	} elsif(-x '/usr/local/bin/dot') {
@@ -487,9 +488,7 @@ if($opts{'H'}) {
 				# $image->height(32);
 				# $image->width(32);
 
-				@everyone = ($me);
-				@everyone = ancestors($me, \@everyone);
-				@everyone = descendents($me, \@everyone);
+				@everyone = ($me, ancestors($me), descendents($me));
 				my @siblings = ($me->siblings(), $me->half_siblings());
 				foreach my $sibling(@siblings) {
 					# print $sibling->as_string(), "\n";
@@ -514,16 +513,23 @@ if($opts{'H'}) {
 			if($me->father() || $me->mother()) {
 				die 'A generations book (-B and -G) must have the -h person at the top of the tree';
 			}
-			# Put a family tree on page 2
+			# Put a family tree of the first few generations on page 2
+			# Fit as many as we can until the text is going to become too small
 			my $tmp = File::Temp->new();
 			my $filename = $tmp->filename();
 			my $png = '/tmp/njh.png';	# FIXME
+
+			my $maxrank = 2;
+			while(count_descendents_at_level($me, $maxrank + 1) <= 10) {
+				$maxrank++;
+			}
+
 			if(open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
 			# if(open(my $fout, '|-', '/usr/bin/tee foo')) {
 				print $fout 'digraph family {',
 					'rotate = 90 subgraph main { rank="0"; ';
 				print_graphviz({ person => $me, fout => $fout, format => 'dynamic' });
-				print_graphviz_generation({ person => $me, fout => $fout, format => 'dynamic', rank => 0 });
+				print_graphviz_generation({ person => $me, fout => $fout, format => 'dynamic', rank => 0, maxrank => $maxrank + 1 });
 				print $fout '}}';
 				close $fout;
 
@@ -556,7 +562,6 @@ if($opts{'H'}) {
 				my $x = 300 - ($image->width() / 2);
 				my $y = $pdfpage->y() - $image->height();
 				$pdfpage->page()->gfx()->image($image, $x, $y);
-				$pdfpage->y($y);
 				$pdfpage = PDFPage->new();
 			}
 
@@ -569,7 +574,71 @@ if($opts{'H'}) {
 			} @everyone;
 
 			die "BUG: sort hasn't worked" if($everyone[0] ne $me);
-		} else {
+		} elsif($opts{'h'}) {
+			# Put a family tree going back a few generations on page 2
+			# Go back until it looks like it will be very small text
+			my $tmp = File::Temp->new();
+			my $filename = $tmp->filename();
+			my $png = '/tmp/njh.png';	# FIXME
+			my $top = $me;
+
+			my $level = 0;
+			while(1) {
+				my $parent;
+				if($top->father()) {
+					$parent = $top->father();
+				} elsif($top->mother()) {
+					$parent = $top->mother();
+				} else {
+					last;
+				}
+				if(count_descendents_at_level($parent, $level + 1) > 20) {
+					last;
+				}
+				$top = $parent;
+				$level++;
+				# print $top->as_string(), " $level, ", count_descendents_at_level($top, $level), "\n";
+			}
+
+			if(($top ne $me) && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
+			# if(open(my $fout, '|-', '/usr/bin/tee foo')) {
+				print $fout 'digraph family {',
+					'rotate = 90 subgraph main { rank="0"; ';
+				print_graphviz({ person => $top, fout => $fout, format => 'dynamic' });
+				print_graphviz_generation({ person => $top, fout => $fout, format => 'dynamic', rank => 0, maxrank => $level + 1 });
+				print $fout '}}';
+				close $fout;
+
+				my $image;
+				my $resize = Image::Resize->new($png);
+				my $width = $resize->width();
+				my $height = $resize->height();
+				my $gd;
+				if($height > 715) {
+					my $newwidth = $width * (715 / $height);
+					my $newheight;
+					if($newwidth > 550) {
+						$newheight = $height * (550 / $width);
+						$gd = $resize->resize(550, $newheight);
+					} else {
+						$gd = $resize->resize($newwidth, 715);
+					}
+				} elsif($width > 550) {
+					my $newheight = $height * (550 / $width);
+					$gd = $resize->resize(550, $newheight);
+				}
+				if($gd) {
+					$image = $pdf->image_gd($gd, -lossless => 1);
+					unlink $png;
+				} else {
+					$image = $pdf->image_png($png);
+					push @tmpfiles, $png;
+				}
+				$pdfpage = PDFPage->new();
+				my $x = 300 - ($image->width() / 2);
+				my $y = $pdfpage->y() - $image->height();
+				$pdfpage->page()->gfx()->image($image, $x, $y);
+			}
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
@@ -700,7 +769,7 @@ sub generate {
 			if($opts{'B'}) {
 				if($opts{'G'}) {
 					if(stepsabove($person, $me, 0) != $generation) {
-						# FIXME:  only do this if the generation contains dead people of the -l flag is given
+						# FIXME:  only do this if the generation contains dead people if the -l flag is not given
 						$pdfpage = PDFPage->new();
 						$generation = stepsabove($person, $me, 0);
 
@@ -751,9 +820,9 @@ sub generate {
 				foreach my $l(@{$log}) {
 					if($l->{geocoder}) {
 						if($l->{error}) {
-							print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, '(', $l->{error}, ")\n";
+							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
 						} else {
-							print $l->{location}, ': ',  $l->{timetaken}, 's with ',  $l->{geocoder}, "\n";
+							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, "\n";
 						}
 					} else {
 						print $l->{location}, ": cached\n";
@@ -1969,10 +2038,10 @@ sub print_person
 								}
 							}
 						} else {
-							if($opts{'f'}) {
-								die $person->name(), ": invalid date of baptism $dateofbaptism\n";
-							}
-							warn $person->name(), ": invalid date of baptism $dateofbaptism\n";
+							complain({
+								person => $person,
+								warning => "invalid date of baptism $dateofbaptism"
+							});
 							$warned{$person} = 1;
 						}
 					}
@@ -2948,17 +3017,19 @@ sub print_person
 									}
 								}
 							}
-							if($spouse && $marriage_dt && ($marriage_dt > $rdate)) {
-								my @sr = get_all_residences(person => $spouse);
-								foreach my $sr(@sr) {
-									my $sdate = $sr->date();
-									next if(!defined($sdate));
-									next if($sdate ne $rdate);
-									if(place({ person => $spouse, record => $sr }) eq $place) {
-										$bio .= ($printed_sibling ? ' and ' : ' with ') .
-											($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
-											$spouse->given_names();
-										last;
+							if($spouse && $marriage_dt && (my $rdate_dt = date_to_datetime($rdate))) {
+								if($marriage_dt > $rdate_dt) {
+									my @sr = get_all_residences(person => $spouse);
+									foreach my $sr(@sr) {
+										my $sdate = $sr->date();
+										next if(!defined($sdate));
+										next if($sdate ne $rdate);
+										if(place({ person => $spouse, record => $sr }) eq $place) {
+											$bio .= ($printed_sibling ? ' and ' : ' with ') .
+												($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
+												$spouse->given_names();
+											last;
+										}
 									}
 								}
 							}
@@ -3117,7 +3188,7 @@ sub print_person
 				}
 
 				if(defined($departure->place())) {
-					$bio .= ' from ' .  $departure->place();
+					$bio .= ' from ' . $departure->place();
 				} else {
 					if($opts{'f'}) {
 						die $person->as_string() . ': departure record has no location';
@@ -3127,7 +3198,7 @@ sub print_person
 					}
 				}
 				if(defined($arrival->place())) {
-					$bio .= ' to ' .  $arrival->place();
+					$bio .= ' to ' . $arrival->place();
 				} else {
 					if($opts{'f'}) {
 						die $person->as_string() . ': arrival record has no location';
@@ -5830,8 +5901,11 @@ sub date_to_datetime
 sub descendents
 {
 	my $person = shift;
-	my $l = shift;
-	my @list = @{$l};
+
+	my @list;
+	if(my $l = shift) {
+		@list = @{$l};
+	}
 
 	my @children = $person->children();
 	if(scalar(@children)) {
@@ -5851,8 +5925,11 @@ sub descendents
 sub ancestors
 {
 	my $person = shift;
-	my $l = shift;
-	my @list = @{$l};
+
+	my @list;
+	if(my $l = shift) {
+		@list = @{$l};
+	}
 
 	if(my $mother = $person->mother()) {
 		push @list, $mother;
@@ -6014,12 +6091,15 @@ sub print_graphviz_generation
 	my $fout = $params{'fout'};
 	my $person = $params{'person'};
 	my $rank = $params{'rank'} + 1;
+	my $maxrank = $params{'maxrank'} + 1;
 	$params{'rank'} = $rank;
+
+	return if($maxrank && ($rank >= $maxrank));
 
 	print $fout "} subgraph children$rank { rank=\"$rank\"; ";
 	print_graphviz({ person => $person, fout => $fout, format => 'dynamic' });
 
-	if(my $father = $person->father()) {
+	if(($rank > 1) && (my $father = $person->father())) {
 		print $fout $father->{'xref'}, ' -> ', $person->{'xref'}, ";\n";
 	}
 
@@ -6032,7 +6112,7 @@ sub print_graphviz_generation
 		if(scalar(@children) > 0) {
 			# TODO: sort by date of birth
 			foreach my $child(@children) {
-				if(!is_alive(person => $child)) {
+				if($opts{'l'} || !is_alive(person => $child)) {
 					$params{'person'} = $child;
 					print_graphviz_generation(\%params);
 				}
@@ -6163,6 +6243,22 @@ sub journey
 	}
 
 	return $rc;
+}
+
+sub count_descendents_at_level
+{
+	my $person = shift;
+	my $level = shift;
+
+	my $count = 0;
+	foreach my $child($person->children()) {
+		if($level == 1) {
+			$count++;
+		} else {
+			$count += count_descendents_at_level($child, $level - 1);
+		}
+	}
+	return $count;
 }
 
 1;
