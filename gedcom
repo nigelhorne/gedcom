@@ -289,6 +289,7 @@ if($opts{'T'}) {
 memoize('Gedcom::Individual::as_string');
 memoize('stepsabove');
 memoize('normalize_name');	# Speeds up sort with -B a lot
+memoize('date_to_datetime');
 
 my $dot;
 if($opts{'B'}) {
@@ -2376,7 +2377,8 @@ sub print_person
 					$spouse_number++;
 					if((scalar(@spouses) == 2) && $all_marriages_have_date && ($spouse_number == 2) &&
 					   (my $death_of_first_spouse = get_value({ person => $spouses[0], value => 'death date' }))) {
-						if(date_to_datetime($dateofmarriage) > date_to_datetime($death_of_first_spouse)) {
+						if(date_to_datetime($death_of_first_spouse) &&
+						   (date_to_datetime($dateofmarriage) > date_to_datetime($death_of_first_spouse))) {
 							if($printed_bracket) {
 								$names .= ', ';
 							} else {
