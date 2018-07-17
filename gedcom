@@ -2345,8 +2345,7 @@ sub print_person
 					}
 					my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
 					if(!defined($placeofmarriage)) {
-						my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
-						if($marriage) {
+						if(my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage')) {
 							$placeofmarriage = $marriage->place();
 						}
 					}
@@ -2377,19 +2376,20 @@ sub print_person
 					$spouse_number++;
 					if((scalar(@spouses) == 2) && $all_marriages_have_date && ($spouse_number == 2) &&
 					   (my $death_of_first_spouse = get_value({ person => $spouses[0], value => 'death date' }))) {
-						if($printed_bracket) {
-							$names .= ', ';
-						} else {
-							$names .= '(';
-							$printed_bracket = 1;
+						if(date_to_datetime($dateofmarriage) > date_to_datetime($death_of_first_spouse)) {
+							if($printed_bracket) {
+								$names .= ', ';
+							} else {
+								$names .= '(';
+								$printed_bracket = 1;
+							}
+							$names .= 'following the death of ' .
+								$spouses[0]->as_string() . ' ' .
+								year({
+									person => $spouses[0],
+									record => $death_of_first_spouse,
+								});
 						}
-						$names .= 'following the death of ' .
-							$spouses[0]->as_string() . ' ' .
-							year({
-								person => $spouses[0],
-								record => $death_of_first_spouse,
-								must_predate => date_to_datetime($dateofmarriage)
-							});
 					}
 					$names .= ')' if($printed_bracket);
 					if($spouse_number == (scalar(@spouses) - 1)) {
@@ -2467,11 +2467,7 @@ sub print_person
 							if($parentofall) {
 								$bio .= ' with ' . $parentofall->as_string();
 							} else {
-								if($opts{'f'}) {
-									die $person->as_string(), ': BUG: parentofall not set when only one child';
-								} else {
-									red_warning({ person => $person, warning => 'BUG: parentofall not set when only one child' });
-								}
+								complain({ person => $person, warning => 'BUG: parentofall not set when only one child' });
 							}
 						} else {
 							$bio .= ' with an unknown ' . (($sex eq 'M') ? 'mother' : 'father');
