@@ -5683,7 +5683,7 @@ sub red_warning
 				$text = $pdfpage->text();
 				$text->font($pdf->corefont('Times-Bold'), 12);
 				if($params{'person'}) {
-					pdfprint(string => $params{'person'}->as__string(middle_names => 1) . ': ' . $params{'warning'}, text => $text, pdfpage => $pdfpage);
+					pdfprint(string => $params{'person'}->as_string(middle_names => 1) . ': ' . $params{'warning'}, text => $text, pdfpage => $pdfpage);
 				} else {
 					pdfprint(string => $params{'warning'}, text => $text, pdfpage => $pdfpage);
 				}
