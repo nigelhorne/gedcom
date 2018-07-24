@@ -434,7 +434,6 @@ if($opts{'H'}) {
 				my $font = $pdf->corefont('Times-Bold');
 
 				my $text = $page->text();
-				$text->textstart();
 				$text->font($font, 28);
 				$text->translate(300, 600);
 				my $surname;
@@ -775,8 +774,7 @@ sub generate {
 						$generation = stepsabove($person, $me, 0);
 
 						my $font = $pdf->corefont('Times-Bold');
-						my $text = $pdfpage->page()->text();
-						$text->textstart();
+						my $text = $pdfpage->text();
 						$text->font($font, 18);
 
 						$text->translate(300, $pdfpage->newline());
@@ -1079,8 +1077,7 @@ sub print_person
 		} else {
 			$pdfpage->newline();
 		}
-		$text = $pdfpage->page()->text();
-		$text->textstart();
+		$text = $pdfpage->text();
 		$text->font($params{'font'}, 18);
 
 		$text->translate(25, $pdfpage->newline());
@@ -2748,8 +2745,7 @@ sub print_person
 
 									$pdfpage = PDFPage->new();
 
-									$text = $pdfpage->page()->text();
-									$text->textstart();
+									$text = $pdfpage->text();
 									$text->font($params{'font'}, 12);
 									pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 								}
@@ -3585,8 +3581,7 @@ sub print_person
 
 							$pdfpage = PDFPage->new();
 
-							$text = $pdfpage->page()->text();
-							$text->textstart();
+							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
@@ -3691,8 +3686,7 @@ sub print_person
 
 							$pdfpage = PDFPage->new();
 
-							$text = $pdfpage->page()->text();
-							$text->textstart();
+							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
@@ -3757,8 +3751,7 @@ sub print_person
 
 						$pdfpage = PDFPage->new();
 
-						$text = $pdfpage->page()->text();
-						$text->textstart();
+						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
 						die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 					}
@@ -3876,8 +3869,7 @@ sub print_person
 
 							$pdfpage = PDFPage->new();
 
-							$text = $pdfpage->page()->text();
-							$text->textstart();
+							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
@@ -4012,8 +4004,7 @@ sub print_person
 
 									$pdfpage = PDFPage->new();
 
-									$text = $pdfpage->page()->text();
-									$text->textstart();
+									$text = $pdfpage->text();
 									$text->font($params{'font'}, 12);
 									die "Print failure: $l" if(!pdfprint(string => $l, text => $text, pdfpage => $pdfpage, noindent => 1));
 								}
@@ -4023,8 +4014,7 @@ sub print_person
 
 							$pdfpage = PDFPage->new();
 
-							$text = $pdfpage->page()->text();
-							$text->textstart();
+							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							die "Print failure: $p" if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage));
 						}
@@ -4034,8 +4024,7 @@ sub print_person
 
 					$pdfpage = PDFPage->new();
 
-					$text = $pdfpage->page()->text();
-					$text->textstart();
+					$text = $pdfpage->text();
 					$text->font($params{'font'}, 12);
 					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 				}
@@ -4285,8 +4274,7 @@ sub print_person
 							$pdfpage->page()->gfx()->image($pimage, $x, $y);
 							$pdfpage->y($y);
 
-							$text = $pdfpage->page()->text();
-							$text->textstart();
+							$text = $pdfpage->text();
 							$text->font($pdf->corefont('Times-Italic'), 12);
 							$x = 150 - (length($title) / 2);
 							if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
@@ -4387,22 +4375,25 @@ sub print_person
 						$image = $pdf->image_gd($gd, -lossless => 1);
 						$height = $newheight;
 						$width = $newwidth;
-						$y = $pdfpage->newline() - $image->height();
+						$y = $pdfpage->newline() - $newheight;
 					}
 					my $x = 300 - ($image->width() / 2);
 					$pdfpage->page()->gfx()->image($image, $x, $y);
 					$pdfpage->y($y);
+					# FIXME: when printing the title the location of the image is wrong
+					$title = undef;
 				}
 			}
 
-			$text = $pdfpage->page()->text();
-			$text->textstart();
-			$text->font($pdf->corefont('Times-Italic'), 12);
-			my $x = 300 - (length($title) / 2);
-			if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
-				die "Didn't make enough room for $title; y = " . $pdfpage->y();
+			if($title) {
+				$text = $pdfpage->text();
+				$text->font($pdf->corefont('Times-Italic'), 12);
+				my $x = 300 - (length($title) / 2);
+				if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
+					die "Didn't make enough room for $title; y = " . $pdfpage->y();
+				}
+				# $text->textend();
 			}
-			$text->textend();
 		}
 	}
 }
@@ -5681,7 +5672,25 @@ sub red_warning
 		my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 		my @call_details = caller($params{'caller'} || 0);
-		if($params{'person'}) {
+		if($opts{'B'}) {
+			my $text = $pdfpage->text();
+			$text->fillcolor('red');
+			if(!pdfprint(string => $params{'warning'}, text => $text, pdfpage => $pdfpage)) {
+				$text->textend();
+
+				$pdfpage = PDFPage->new();
+
+				$text = $pdfpage->text();
+				$text->font($pdf->corefont('Times-Bold'), 12);
+				if($params{'person'}) {
+					pdfprint(string => $params{'person'}->as__string(middle_names => 1) . ': ' . $params{'warning'}, text => $text, pdfpage => $pdfpage);
+				} else {
+					pdfprint(string => $params{'warning'}, text => $text, pdfpage => $pdfpage);
+				}
+				$text->font($pdf->corefont('Times-Roman'), 12);
+			}
+			$text->fillcolor('black');
+		} elsif($params{'person'}) {
 			if($opts{'W'}) {
 				print STDERR $params{'person'}->as_string(middle_names => 1), ': ', $params{'warning'}, "\n";
 			} else {
@@ -5959,6 +5968,7 @@ sub ancestors
 	return @list;
 }
 
+# Print the text in "string" to the "text" object returned from PDF::API2->text()
 sub pdfprint
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
@@ -5977,7 +5987,7 @@ sub pdfprint
 		return 0;
 	}
 
-	my $text = $params{'text'};
+	my $text = $params{'text'} || $pdfpage->text();
 	my $x = $params{'x'} || 40;
 
 	foreach my $line (@lines) {
@@ -6355,6 +6365,17 @@ sub page
 	my $self = shift;
 
 	return $self->{'page'};
+}
+
+sub text
+{
+	my $self = shift;
+
+	if(!defined($self->{'text'})) {
+		my $text = $self->{'text'} = $self->{'page'}->text();
+		$text->textstart();
+	}
+	return $self->{'text'};
 }
 
 # TODO: DESTROY - add a page number

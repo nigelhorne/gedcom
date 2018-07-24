@@ -59,6 +59,8 @@ You can create a book of your family name based on the descendents of John Smith
 
     gedcom -GB smith.pdf -dsh 'John Smith' gedcom-file.ged
 
+If you enable the -w flag with the -B option, warnings will appear in red in the book.
+
 ## Environment Variables
 
 For compatibility with other code, these environment variables are honoured:
