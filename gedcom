@@ -4251,8 +4251,8 @@ sub print_person
 		while(my $i = shift @images) {
 			my $title = $i->{'title'};
 
+			my $newpage;
 			if(my $image = $i->{'image'}) {
-				my $newpage;
 				print "$title: height: ", $image->height(), "\n" if($opts{'v'});
 
 				if($image->height() >= ($pdfpage->y() - 80)) {
@@ -4380,13 +4380,13 @@ sub print_person
 					my $x = 300 - ($image->width() / 2);
 					$pdfpage->page()->gfx()->image($image, $x, $y);
 					$pdfpage->y($y);
-					# FIXME: when printing the title the location of the image is wrong
-					$title = undef;
 				}
 			}
 
 			if($title) {
 				$text = $pdfpage->text();
+				# This is needed because of the text end about
+				$text->textstart() if(!$newpage);
 				$text->font($pdf->corefont('Times-Italic'), 12);
 				my $x = 300 - (length($title) / 2);
 				if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
@@ -5675,18 +5675,20 @@ sub red_warning
 		if($opts{'B'}) {
 			my $text = $pdfpage->text();
 			$text->fillcolor('red');
-			if(!pdfprint(string => $params{'warning'}, text => $text, pdfpage => $pdfpage)) {
+			my $message;
+			if($params{'person'}) {
+				$message = $params{'person'}->as_string(middle_names => 1) . ': ' . $params{'warning'};
+			} else {
+				$message = params{'warning'};
+			}
+			if(!pdfprint(string => $message, text => $text, pdfpage => $pdfpage)) {
 				$text->textend();
 
 				$pdfpage = PDFPage->new();
 
 				$text = $pdfpage->text();
 				$text->font($pdf->corefont('Times-Bold'), 12);
-				if($params{'person'}) {
-					pdfprint(string => $params{'person'}->as_string(middle_names => 1) . ': ' . $params{'warning'}, text => $text, pdfpage => $pdfpage);
-				} else {
-					pdfprint(string => $params{'warning'}, text => $text, pdfpage => $pdfpage);
-				}
+				pdfprint(string => $message, text => $text, pdfpage => $pdfpage);
 				$text->font($pdf->corefont('Times-Roman'), 12);
 			}
 			$text->fillcolor('black');
