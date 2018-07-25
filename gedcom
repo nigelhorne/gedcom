@@ -5446,7 +5446,14 @@ sub validate_place
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $place = $params{'place'};
-	die 'place is not optional' unless $place;
+	if(!$place) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'place is not optional';
+	}
 
 	$place =~ s/^\s+//;
 	if(defined($places{$place})) {
@@ -6265,6 +6272,19 @@ sub datecmp
 	my $left = shift;
 	my $right = shift;
 
+	if((!defined($left)) || !defined($right)) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+			if(!defined($left)) {
+				print STDERR "BUG: left not defined\n";
+			}
+			if(!defined($right)) {
+				print STDERR "BUG: right not defined\n";
+			}
+		}
+	}
 	if(!ref($left)) {
 		if($left =~ /^(Abt|ca?)\s+(.+)/i) {
 			$left = $2;
