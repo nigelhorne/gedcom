@@ -2826,17 +2826,16 @@ sub print_person
 							}	# TODO: else warn if both parents locations are different
 						} elsif($numberofchildren) {
 							# Look if a young child isn't with this parent
-							my $rdt = date_to_datetime($rdate);
 							foreach my $child(@children) {
 								my $cyob = get_value({ person => $child, value => 'birth date' });
 								next if(!defined($cyob));
-								next if(datecmp($cyob, $rdt) >= 0);	# Child was not born yet
+								next if(datecmp($cyob, $rdate) >= 0);	# Child was not born yet
 								if($cyob =~ /(\d{3,4})\s*$/) {
 									$cyob = $1;
 								}
 								next if(($yoe - $cyob) > 10);	# Over 10 years old
 								if(my $cyod = get_value({ person => $child, value => 'death date' })) {
-									next if(datecmp($cyod, $rdt) <= 0);	# Child was dead by this event
+									next if(datecmp($cyod, $rdate) <= 0);	# Child was dead by this event
 								}
 
 								my $missing_child = 1;
@@ -6266,7 +6265,6 @@ sub count_descendents_at_level
 
 # Compare two dates. Approximate dates are compared.
 # TODO: handle when only months are known
-
 sub datecmp
 {
 	my $left = shift;
