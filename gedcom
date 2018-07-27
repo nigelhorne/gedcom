@@ -1188,7 +1188,7 @@ sub print_person
 			# $death_country = 'United States';
 		# } elsif($c eq 'United States of America') {
 			# $death_country = 'United States';
-		# } elsif($c eq 'Scotland') {
+		} elsif($c eq 'Scotland') {
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Wales') {
 			# $death_country = 'United Kingdom';
@@ -4326,7 +4326,7 @@ sub print_person
 							if(!pdfprint(string => $ptitle, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
 								die "Didn't make enough room for $ptitle ; y = " . $pdfpage->y();
 							}
-							$text->textend();
+							# $text->textend();
 							shift @images;
 							next;
 						}
