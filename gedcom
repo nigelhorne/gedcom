@@ -1182,7 +1182,7 @@ sub print_person
 		my $c = $1;
 		if($c eq 'England') {
 			# $death_country = 'United Kingdom';
-		# } elsif($c eq 'USA') {
+		} elsif($c eq 'USA') {
 			# $death_country = 'United States';
 		# } elsif($c eq 'Texas') {
 			# $death_country = 'United States';
