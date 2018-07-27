@@ -67,6 +67,7 @@ use Memoize;
 use Data::Fetch;
 use Text::Soundex;
 use List::Util;
+use Locale::Object::Country;
 
 no lib '.';
 
@@ -1157,16 +1158,10 @@ sub print_person
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'Preußen') {	# Prussia
 			$birth_country = 'Germany';
+		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
+			$birth_country = $b->code_alpha2();
 		} else {
-			my $b;
-			eval {
-				$b = Locale::Object::Country->new(name => $c);
-			};
-			if(defined($b)) {
-				$birth_country = $b->code_alpha2();
-			} else {
-				complain({ person => $person, warning => "Unknown birth country: '$c' in '$placeofbirth'" });
-			}
+			complain({ person => $person, warning => "Unknown birth country: '$c' in '$placeofbirth'" });
 		}
 	}
 
@@ -1203,16 +1198,10 @@ sub print_person
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Preußen') {	# Prussia
 			# $death_country = 'Germany';
+		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
+			# $death_country = $b->code_alpha2();
 		} else {
-			my $d;
-			eval {
-				$d = Locale::Object::Country->new(name => $c);
-			};
-			if(defined($d)) {
-				# $death_country = $d->code_alpha2();
-			} else {
-				complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
-			}
+			complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
 		}
 	}
 

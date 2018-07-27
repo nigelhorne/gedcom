@@ -45,3 +45,4 @@ requires 'PDF::API2';
 requires 'GD';
 requires 'DateTime::Format::Genealogy';
 requires 'String::ProgressBar';
+requires 'Locale::Object::Country';
