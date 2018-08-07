@@ -4440,6 +4440,10 @@ sub print_person
 				# This is needed because of the text end above
 				$text->textstart() if(!$newpage);
 				$text->font($pdf->corefont('Times-Italic'), 12);
+				if(length($title) > 200) {
+					complain({ person => $person, warning => "Truncating long picture title $title" });
+					$title = substr $title, 0, 200;
+				}
 				my $x = 300 - (length($title) / 2);
 				if(!pdfprint(string => $title, pdfpage => $pdfpage, x => $x, centre => 1)) {
 					die "Didn't make enough room for '$title'; y = " . $pdfpage->y();
@@ -4826,11 +4830,7 @@ sub Gedcom::Individual::relationship_up
 						return;
 					}
 				}
-				if($opts{'f'}) {
-					die $other->as_string(), ": BUG - not a direct ancestor, steps = $steps";
-				} else {
-					warn colored($other->as_string() . ": BUG - not a direct ancestor, steps = $steps", 'red');
-				}
+				complain({ person => $other, warning => ": BUG - not a direct ancestor, steps = $steps" });
 			}
 		}
 	}
@@ -5069,11 +5069,7 @@ sub Gedcom::Individual::relationship_down
 						return;
 					}
 				}
-				if($opts{'f'}) {
-					die $other->as_string(), ": BUG - not a direct ancestor, steps = $steps";
-				} else {
-					warn colored($other->as_string() . ": BUG - not a direct ancestor, steps = $steps", 'red');
-				}
+				complain({ person => $other, warning => ": BUG - not a direct ancestor, steps = $steps" });
 			}
 		}
 	}
