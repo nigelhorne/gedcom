@@ -1073,7 +1073,7 @@ sub print_person
 	my $text;
 	my %places_printed;
 	if($opts{'B'}) {
-		if($pdfpage->full() || ($pdfpage->linesleft() <= 7)) {
+		if($pdfpage->full() || ($pdfpage->linesleft() <= 10)) {
 			# Start this person on a new page
 			$pdfpage->text()->textend();
 			$pdfpage = PDFPage->new();
@@ -4070,7 +4070,7 @@ sub print_person
 					$text->font($params{'font'}, 12);
 					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 				}
-				$bio = '';
+				$bio = undef;
 			}
 		} else {
 			if($bio eq "\t.") {
@@ -4300,13 +4300,16 @@ sub print_person
 					print "$title: height/width: ", $image->height(), '/', $image->width(), "\n";
 				}
 
-				if($image->height() >= ($pdfpage->y() - 80)) {
+				if(($image->height() >= ($pdfpage->y() - 80)) ||
+				   ($pdfpage->linesleft() <= 15)) {
 					print "New page to fit image on it\n" if($opts{'v'});
 					$pdfpage = PDFPage->new();
 					$newpage = 1;
 				}
 				my $y = $pdfpage->newline() - $image->height();
 
+if(0) {
+				# FIXME: Disable side-by-side printing for the moment - it loses some text and images
 				if(my $peek = $images[0]) {
 					if(my $pimage = $peek->{'image'}) {
 						if(($image->width() < 250) && ($pimage->width() < 250) &&
@@ -4324,19 +4327,20 @@ sub print_person
 							$text->font($pdf->corefont('Times-Italic'), 12);
 							$x = 150 - (length($title) / 2);
 							if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
-								die "Didn't make enough room for $title; y = " . $pdfpage->y();
+								die "Didn't make enough room for $title; y = ", $pdfpage->y();
 							}
 							my $ptitle = $peek->{'title'};
 							$pdfpage->y($y);	# Put the two captions on the same line
 							$x = 450 - (length($ptitle) / 2);
 							if(!pdfprint(string => $ptitle, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
-								die "Didn't make enough room for $ptitle ; y = " . $pdfpage->y();
+								die "Didn't make enough room for $ptitle ; y = ", $pdfpage->y();
 							}
 							# $text->textend();
 							next;
 						}
 					}
 				}
+}
 
 				my $orig_image = $i->{'orig_image'};
 
