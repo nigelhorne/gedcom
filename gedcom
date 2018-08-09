@@ -4324,6 +4324,8 @@ if(0) {
 							$pdfpage->y($y);
 
 							$text = $pdfpage->text();
+							# This is needed because of the text end above
+							$text->textstart() if(!$newpage);
 							$text->font($pdf->corefont('Times-Italic'), 12);
 							$x = 150 - (length($title) / 2);
 							if(!pdfprint(string => $title, text => $text, pdfpage => $pdfpage, x => $x, centre => 1)) {
