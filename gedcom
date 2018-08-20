@@ -2198,7 +2198,7 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					$bio .= ' is married to ';
 				} else {
-					if(!(defined($placeofdeath)) && (!defined($dateofdeath)) && (!defined($placeofburial)) && (!defined($dateofburial)) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'}))) {
+					if(($aod || ((!defined($placeofdeath)) && !defined($dateofdeath))) && (!defined($placeofburial)) && (!defined($dateofburial)) && (!($aob || $opts{'p'} || $opts{'G'} || $opts{'B'}))) {
 						$bio .= ' and';
 					}
 					$bio .= ' was married to ';
@@ -2210,7 +2210,7 @@ sub print_person
 					if(my $n = $name_components{'given_name_1'}) {
 						$bio .= $n;
 					} else {
-						complain({ person => $spouses[0], warning => "seems to have no name" });
+						complain({ person => $spouses[0], warning => 'seems to have no name' });
 					}
 				} else {
 					$bio .= $spouses[0]->as_string();
