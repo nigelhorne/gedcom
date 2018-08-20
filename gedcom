@@ -4308,8 +4308,6 @@ sub print_person
 				}
 				my $y = $pdfpage->newline() - $image->height();
 
-if(0) {
-				# FIXME: Disable side-by-side printing for the moment - it loses some text and images
 				if(my $peek = $images[0]) {
 					if(my $pimage = $peek->{'image'}) {
 						if(($image->width() < 250) && ($pimage->width() < 250) &&
@@ -4342,7 +4340,6 @@ if(0) {
 						}
 					}
 				}
-}
 
 				my $orig_image = $i->{'orig_image'};
 
