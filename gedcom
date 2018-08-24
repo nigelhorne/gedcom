@@ -1836,6 +1836,10 @@ sub print_person
 			$bio .= ', ';
 		}
 
+		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
+			complain({ person => $person, warning => 'Baptism information not used to determine a parent' });
+		}
+
 		if(!$spouserelationship) {
 			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 				if($relationship) {
@@ -2881,7 +2885,10 @@ sub print_person
 								}
 							}
 							if((!$mother) && !$father) {
-								complain({ person => $person, warning => 'Census information not used to determine a parent' });
+								# People not related by blood tend not to have been researched
+								if($relationship) {
+									complain({ person => $person, warning => 'Census information not used to determine a parent' });
+								}
 							} elsif(!$found_parent) {
 								# FIXME: both parents could be dead
 								complain({ person => $person, warning => "Residence information in $yoe, but no residence information found for either parent" });
