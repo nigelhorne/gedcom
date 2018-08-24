@@ -2880,7 +2880,9 @@ sub print_person
 									}
 								}
 							}
-							if(($father || $mother) && !$found_parent) {
+							if((!$mother) && !$father) {
+								complain({ person => $person, warning => 'Census information not used to determine a parent' });
+							} elsif(!$found_parent) {
 								# FIXME: both parents could be dead
 								complain({ person => $person, warning => "Residence information in $yoe, but no residence information found for either parent" });
 							}	# TODO: else warn if both parents locations are different
