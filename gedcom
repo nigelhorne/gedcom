@@ -4025,7 +4025,7 @@ sub print_person
 						}
 					}
 					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
-						$opts{'country'} = 'The United States';
+						$opts{'country'} = 'United States of America';
 					}
 					my $f = WWW::Scrape::FindaGrave->new(\%opts);
 					while(my $url = $f->get_next_entry()) {
