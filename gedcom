@@ -153,6 +153,9 @@ if($opts{'w'} || $opts{'B'}) {
 		require WWW::Scrape::FindaGrave;
 		WWW::Scrape::FindaGrave->import();
 
+		require WWW::Scrape::BillionGraves;
+		WWW::Scrape::BillionGraves->import();
+
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
@@ -3888,7 +3891,7 @@ sub print_person
 			});
 
 			my %census_years;
-			my $findagrave;
+			my $burialrecord;
 			foreach my $citation(1..$citationcount) {
 				if(!$citations{$citation}) {
 					if($opts{'f'}) {
@@ -3962,8 +3965,9 @@ sub print_person
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
 					$census_years{$1} = $title;
 				}
-				if($title =~ /find a grave/i) {
-					$findagrave = 1;
+				if(($title =~ /find a grave/i) ||
+				   ($title =~ /billiongraves/i)) {
+					$burialrecord = 1;
 				}
 			}
 			$bio .= "\n" if($citationcount);
@@ -4008,7 +4012,7 @@ sub print_person
 						$surname = $husband->surname();
 					}
 				}
-				if($yod && $firstname && $surname && !$findagrave) {
+				if($yod && $firstname && $surname && !$burialrecord) {
 					my %opts = (
 						date_of_death => $yod,
 						firstname => $firstname,
@@ -4027,12 +4031,13 @@ sub print_person
 					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
 						$opts{'country'} = 'United States of America';
 					}
-					my $f = WWW::Scrape::FindaGrave->new(\%opts);
-					while(my $url = $f->get_next_entry()) {
-						complain({
-							person => $person,
-							warning => "possible Find a Grave link $url"
-						});
+					foreach my $b(WWW::Scrape::FindaGrave->new(\%opts), WWW::Scrape::BillionGraves->new(\%opts)) {
+						while(my $url = $b->get_next_entry()) {
+							complain({
+								person => $person,
+								warning => "possible burial link $url"
+							});
+						}
 					}
 				}
 			}
