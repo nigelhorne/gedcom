@@ -3994,7 +3994,7 @@ sub print_person
 						if(defined($yod) && ($year > $yod)) {
 							complain({ person => $person, warning => "Census for $year after year of death ($yod)" });
 						} elsif(defined($yob) && ($year < $yob)) {
-							complain({ person => $person, warning => "Census for $year after year of birth ($yob)" });
+							complain({ person => $person, warning => "Census for $year before year of birth ($yob)" });
 						}
 					}
 				}
@@ -4002,9 +4002,16 @@ sub print_person
 					if($census_years{$year + 20} && !$census_years{$year + 10}) {
 						complain({
 							person => $person,
-							warning => 'Census citation missing between ' . $census_years{$year} . ' and ' . $census_years{$year + 20}
+							warning => 'Census information missing between ' . $census_years{$year} . ' and ' . $census_years{$year + 20}
 						});
 					}
+				}
+				if($placeofbirth && $placeofdeath && $dateofdeath && (!$census_years{1939}) &&
+				   (datecmp($dateofdeath, '1939') >= 0) && ($placeofbirth =~ /England$/) && ($placeofdeath =~ /England$/)) {
+					complain({
+						person => $person,
+						warning => '1939 UK register information missing'
+					});
 				}
 				my $surname = $lastname;
 				if(defined($sex) && ($sex eq 'F')) {
