@@ -190,7 +190,7 @@ if(my $username = $ENV{'GEONAMES_USER'}) {
 }
 
 $geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
-	->push({ regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+	->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 	->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
 	->push(Geo::Coder::OSM->new())
@@ -199,10 +199,7 @@ $geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder 
 	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
 if(my $key = $ENV{'GMAP_KEY'}) {
-	$geocoder->push(Geo::Coder::GooglePlaces->new(
-		key => $key,
-		api_key => $key,
-	));
+	$geocoder->push({ limit => 200, geocoder => Geo::Coder::GooglePlaces->new(key => $key, api_key => $key) });
 }
 if(my $key = $ENV{BMAP_KEY}) {
 	$geocoder->push(Geo::Coder::Bing->new(key => $key));
