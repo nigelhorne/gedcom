@@ -153,9 +153,6 @@ if($opts{'w'} || $opts{'B'}) {
 		require WWW::Scrape::FindaGrave;
 		WWW::Scrape::FindaGrave->import();
 
-		require WWW::Scrape::BillionGraves;
-		WWW::Scrape::BillionGraves->import();
-
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
@@ -4035,7 +4032,7 @@ sub print_person
 					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
 						$opts{'country'} = 'United States of America';
 					}
-					foreach my $b(WWW::Scrape::FindaGrave->new(\%opts), WWW::Scrape::BillionGraves->new(\%opts)) {
+					foreach my $b(WWW::Scrape::FindaGrave->new(\%opts)) {
 						while(my $url = $b->get_next_entry()) {
 							complain({
 								person => $person,
