@@ -1615,8 +1615,6 @@ sub print_person
 			shift @occupations;
 		}
 
-		my $print_sibling_count = 0;
-
 		my @twins;
 		foreach my $s(@siblings) {
 			if(my $dob = get_value({ person => $s, value => 'birth date' })) {
@@ -1645,6 +1643,8 @@ sub print_person
 					' of ' . $twins[0]->given_names();
 			}
 		}
+		my $print_sibling_count = 0;
+
 		if($father || $mother) {
 			if(scalar(@occupations) || scalar(@twins)) {
 				$bio .= ' and the ';
