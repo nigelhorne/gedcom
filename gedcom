@@ -68,6 +68,8 @@ use Data::Fetch;
 use Text::Soundex;
 use List::Util;
 use Locale::Object::Country;
+use Config::Auto;
+use Module::Load;
 
 no lib '.';
 
@@ -115,6 +117,7 @@ die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 my $browser;
 my $us;
 my $birth_country;
+my $grave_modules;
 if($opts{'w'} || $opts{'B'}) {
 	$browser = LWP::UserAgent::Throttled->new(agent => 'gedcom', keep_alive => 1);
 	$browser->env_proxy(1);
@@ -148,9 +151,22 @@ if($opts{'w'} || $opts{'B'}) {
 	}) || die "$0: $cachedir: $!";
 
 	if($opts{'w'}) {
-		require WWW::Scrape::FindaGrave;
-		WWW::Scrape::FindaGrave->import();
+		# If you have a locally written module to look up entries, list them in gedcom.config, otherwise use
+		# WWW::Scrape::FindaGrave
+		my $config;
 
+		eval { $config = Config::Auto::parse() };
+		
+		if($config && $config->{'grave_modules'}) {
+			$grave_modules = $config->{'grave_modules'};
+
+			foreach my $module(@{$grave_modules}) {
+				autoload $module;
+			}
+		} else {
+			require WWW::Scrape::FindaGrave;
+			WWW::Scrape::FindaGrave->import();
+		}
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
@@ -4063,7 +4079,9 @@ sub print_person
 					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
 						$opts{'country'} = 'United States of America';
 					}
-					foreach my $b(WWW::Scrape::FindaGrave->new(\%opts)) {
+					# foreach my $b(WWW::Scrape::FindaGrave->new(\%opts)) {
+					foreach my $m(@{$grave_modules}) {
+						$b = $m->new(\%opts);
 						while(my $url = $b->get_next_entry()) {
 							complain({
 								person => $person,
