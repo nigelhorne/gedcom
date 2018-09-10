@@ -91,6 +91,7 @@ if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
 }
 
+my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 if($opts{h}) {
 	my @rc = $ged->get_individual($opts{h});
 	if(scalar(@rc) == 0) {
@@ -245,7 +246,6 @@ my $pdf;
 my $pdfpage;
 my @tmpfiles;
 my $pr;
-my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
