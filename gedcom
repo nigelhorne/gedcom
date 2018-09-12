@@ -5512,10 +5512,8 @@ sub notes
 				} else {
 					$rc .= "\t";
 				}
-			} else {
-				if($rc) {
-					$rc .= '  ';
-				}
+			} elsif($rc) {
+				$rc .= '  ';
 			}
 			$rc .= "$note.";
 		} else {
