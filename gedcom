@@ -2800,7 +2800,7 @@ sub print_person
 			}
 			my $count = 0;
 			my $have_printed = 0;
-			my $prev_date;
+			my $prev_residence;
 			my $spdeath_dt;
 			if($spouses[0]) {
 				$spdeath_dt = date_to_datetime(date => get_value({ person => $spouses[0], value => 'death date' }));
@@ -2946,7 +2946,7 @@ sub print_person
 					}
 					if(scalar(@residencelist) > 1) {
 						my $this_date = year({ person => $person, date => $rdate });
-						if($prev_date && ($prev_date eq $this_date)) {
+						if($prev_residence && (year(record => $prev_residence) eq $this_date) && (place(record => $prev_residence) ne place(record => $residence))) {
 							complain({ person => $person, warning => "Two residence records for $rdate" });
 						}
 						if($print_year_only) {
@@ -2957,7 +2957,7 @@ sub print_person
 						} else {
 							$bio .= " $this_date";
 						}
-						$prev_date = $this_date;
+						$prev_residence = $residence;
 					}
 					if($spdeath_dt && (my $rdate_dt = date_to_datetime($rdate))) {
 						if($rdate_dt > $spdeath_dt) {
