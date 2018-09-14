@@ -2947,7 +2947,7 @@ sub print_person
 					if(scalar(@residencelist) > 1) {
 						my $this_date = year({ person => $person, date => $rdate });
 						if($prev_residence && (year(record => $prev_residence) eq $this_date) && (place(record => $prev_residence) ne place(record => $residence))) {
-							complain({ person => $person, warning => "Two residence records for $rdate" });
+							complain({ person => $person, warning => "Two residence records for $rdate differ in location" });
 						}
 						if($print_year_only) {
 							if($count == (scalar(@residencelist) - 1)) {
