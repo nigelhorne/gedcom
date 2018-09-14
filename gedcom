@@ -157,7 +157,7 @@ if($opts{'w'} || $opts{'B'}) {
 		my $config;
 
 		eval { $config = Config::Auto::parse() };
-		
+
 		if($config && $config->{'grave_modules'}) {
 			$grave_modules = $config->{'grave_modules'};
 
