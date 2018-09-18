@@ -1511,10 +1511,7 @@ sub print_person
 					}
 				}
 				if($error) {
-					if($opts{'f'}) {
-						die $person->name(), ': Check the gender of the record';
-					}
-					red_warning({ person => $person, warning => 'Check the gender of the record' });
+					complain({ person => $person, warning => 'Check the gender of the record' });
 				}
 			}
 		}
@@ -1530,6 +1527,8 @@ sub print_person
 			foreach my $child(@children) {
 				if($child eq $person) {
 					complain({ person => $person, warning => 'person is own parent' });
+					# Avoid loops in G::I::Relationship
+					return;
 				}
 			}
 		}
