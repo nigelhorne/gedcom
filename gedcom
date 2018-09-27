@@ -241,6 +241,7 @@ if($browser) {
 my $oneday = DateTime::Duration->new(days => 1);
 my $tenmonths = DateTime::Duration->new(months => 10);
 my $sixteenyears = DateTime::Duration->new(years => 16);
+my $fortyyears = DateTime::Duration->new(years => 40);
 my $fetcher;
 my $pdf;
 my $pdfpage;
@@ -917,7 +918,7 @@ sub print_person
 		if($dob eq 'UNKNOWN') {
 			$dob = undef;
 		} elsif($opts{'w'} && !$warned{$person}) {
-			complain({ person => $person, warning => "invalid date of birth $dob" });
+			complain({ person => $person, warning => "Invalid date of birth $dob" });
 			$warned{$person} = 1;
 		}
 	}
@@ -1000,7 +1001,7 @@ sub print_person
 		# FIXME: needs to only complain about more than two biological parents
 		my @parents = $person->parents();
 		if(scalar(@parents) > 2) {
-			complain({ person => $person, warning => 'has more than two parents' });
+			complain({ person => $person, warning => 'Has more than two parents' });
 		}
 	}
 
@@ -1139,7 +1140,7 @@ sub print_person
 		complain({ person => $person, warning => 'Last name contains a digit' });
 	}
 
-	my ($birth_dt, $marriage_dt, $death_dt);
+	my ($marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
 	my $dateofbirth = get_value({ person => $person, value => 'birth date' });
 	if((!$dateofbirth) && $birth) {
@@ -1365,7 +1366,27 @@ sub print_person
 		}
 	}
 
-	$birth_dt = date_to_datetime(date => $dateofbirth);
+	my $birth_dt = date_to_datetime(date => $dateofbirth);
+
+	if($birth_dt && (my $spouse = $spouses[0])) {
+		my $sdob = get_value({ person => $spouse, value => 'birth date' });
+		if((!$sdob) && (my $sb = $spouse->get_record('birth'))) {
+			$sdob = $sb->date();
+		}
+		if($sdob && (my $sbirth_dt = date_to_datetime(date => $sdob))) {
+			if($sbirth_dt > ($birth_dt + $fortyyears)) {
+				complain({
+					person => $person,
+					warning => 'Spouse born more than 40 years after date of birth'
+				});
+			} elsif($birth_dt > ($sbirth_dt + $fortyyears)) {
+				complain({
+					person => $person,
+					warning => 'Born more than 40 years after date of birth of spouse'
+				});
+			}
+		}
+	}
 
 	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	if((!$dateofmarriage) && $marriage) {
@@ -1424,10 +1445,7 @@ sub print_person
 					if(!defined($src)) {
 						if($opts{'w'}) {
 							my $src = $marriage->source();
-							if($opts{'f'}) {
-								die $person->as_string(), ": marriage citation can't find source $src";
-							}
-							red_warning({ person => $person, warning => "marriage citation can't find source $src" });
+							complain({ person => $person, warning => "marriage citation can't find source $src" });
 						}
 					} elsif($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
 						$marriagecitation = $birthcitations[0];
@@ -3855,25 +3873,16 @@ sub print_person
 						if($d) {
 							$d = $dfn->parse_datetime($d->{'canonical'});
 							if($birth_dt && ($d <= $birth_dt)) {
-								if($opts{'f'}) {
-									die $child->name(), ': Born before parent was born';
-								}
-								red_warning({ person => $child, warning => 'born before parent was born' });
+								complain({ person => $child, warning => 'born before parent was born' });
 							}
 							if(($sex eq 'F') && $death_dt && ($d > $death_dt)) {
-								if($opts{'f'}) {
-									die $child->name(), ': Born after mother died';
-								}
-								red_warning({ person => $child, warning => 'born after mother died' });
+								complain({ person => $child, warning => 'born after mother died' });
 							} elsif(($sex eq 'M') && $death_dt && ($d > ($death_dt + $tenmonths))) {
 								# Allow the child to be
 								# born up to 10 months
 								# after the death of the
 								# father
-								if($opts{'f'}) {
-									die $child->name(), ': Born more than 10 months after father died';
-								}
-								red_warning({ person => $child, warning => 'born more than 10 months after father died' });
+								complain({ person => $child, warning => 'born more than 10 months after father died' });
 							}
 						}
 					}
