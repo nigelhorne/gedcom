@@ -3342,22 +3342,12 @@ sub print_person
 					if(my $p = place({ person => $person, record => $events[0] })) {
 						$bio .= $p;
 					} else {
-						if($opts{'f'}) {
-							die $person->as_string() . ": arrival record with no place";
-						}
-						if($opts{'w'}) {
-							red_warning({ person => $person, warning => "Arrival record has no place" });
-						}
+						complain({ person => $person, warning => 'Arrival record has no place' });
 					}
 					if(my $y = year({ person => $person, record => $events[0] })) {
 						$bio .= " $y";
 					} else {
-						if($opts{'f'}) {
-							die $person->as_string() . ": arrival record with no date";
-						}
-						if($opts{'w'}) {
-							red_warning({ person => $person, warning => "Arrival record has no date" });
-						}
+						complain({ person => $person, warning => 'Arrival record has no date' });
 					}
 					if(my $spouse = $person->spouse()) {
 						foreach my $sevent($spouse->event()) {
@@ -3519,7 +3509,7 @@ sub print_person
 										year({ person => $person, record => $event }) .
 										' ' . lcfirst($pronoun) .
 										' arrived' .
-										place({ person => $person, record => $event }) . '. ';
+										place({ person => $person, record => $event });
 								}
 							}
 							$previous = undef;
@@ -3534,7 +3524,7 @@ sub print_person
 									$notes = lcfirst($notes);
 									$bio .= " ($notes)";
 								}
-								$bio .= ' ' . lcfirst($person->pronoun()) . " arrived$place. ";
+								$bio .= ' ' . lcfirst($person->pronoun()) . " arrived$place";
 							} else {
 								complain({ person => $person, warning => "Can't determine $type date" });
 							}
