@@ -25,7 +25,7 @@ use autodie qw(:all);
 # use warnings::unused;
 
 BEGIN {
-	eval 'use Geo::Coder::Free Config::Auto';
+	eval 'use Config::Auto';
 	if($@) {
 		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes');
@@ -79,8 +79,8 @@ use Data::Fetch;
 use Text::Soundex;
 use List::Util;
 use Locale::Object::Country;
-use Config::Auto;
 use Module::Load;
+use Config::Auto;
 
 no lib '.';
 
@@ -172,8 +172,12 @@ if($opts{'w'} || $opts{'B'}) {
 		if($config && $config->{'grave_modules'}) {
 			$grave_modules = $config->{'grave_modules'};
 
-			foreach my $module(@{$grave_modules}) {
-				autoload $module;
+			if(ref($grave_modules)) {
+				foreach my $module(@{$grave_modules}) {
+					autoload $module;
+				}
+			} else {
+				autoload $grave_modules;
 			}
 		} else {
 			require WWW::Scrape::FindaGrave;
@@ -4102,13 +4106,25 @@ sub print_person
 						$opts{'country'} = 'United States of America';
 					}
 					# foreach my $b(WWW::Scrape::FindaGrave->new(\%opts)) {
-					foreach my $m(@{$grave_modules}) {
-						$b = $m->new(\%opts);
-						while(my $url = $b->get_next_entry()) {
-							complain({
-								person => $person,
-								warning => "possible burial link $url"
-							});
+					if(defined($grave_modules)) {
+						if(ref($grave_modules)) {
+							foreach my $m(@{$grave_modules}) {
+								$b = $m->new(\%opts);
+								while(my $url = $b->get_next_entry()) {
+									complain({
+										person => $person,
+										warning => "possible burial link $url"
+									});
+								}
+							}
+						} else {
+							$b = $grave_modules->new(\%opts);
+							while(my $url = $b->get_next_entry()) {
+								complain({
+									person => $person,
+									warning => "possible burial link $url"
+								});
+							}
 						}
 					}
 				}
