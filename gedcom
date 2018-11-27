@@ -951,7 +951,7 @@ sub print_person
 		return;
 	}
 
-	print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
+	# print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
 	my $print = 0;
 	my $aob;
@@ -5663,6 +5663,10 @@ sub validate_place
 			$town = $1;
 		}
 		if($opts{'w'}) {
+			# Strange locations in censuses
+			if($town =~ /Royal Navy/) {
+				return 0;
+			}
 			# Force wantarray for improved caching in
 			# G:C:L
 			my @locations = $geocoder->geocode($town);
