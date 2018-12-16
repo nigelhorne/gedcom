@@ -212,6 +212,9 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder });
 }
 
+# E.g. 'Nebraska, USA'
+$geocoder->push({ regex => qr/[\w\s]+?,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => Geo::Coder::Free->new() });
+
 if(my $username = $ENV{'GEONAMES_USER'}) {
 	$geocoder->push(Geo::GeoNames->new(username => $username));
 }
