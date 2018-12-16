@@ -852,7 +852,7 @@ sub generate {
 				$geocoder->flush();
 				foreach my $l(@{$log}) {
 					if($l->{'line'}) {
-						print 'Line: ', $l->{'line'}, ': ';
+						print 'Line ', $l->{'line'}, ': ';
 					}
 					if($l->{geocoder}) {
 						if($l->{error}) {
