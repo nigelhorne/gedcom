@@ -4957,6 +4957,7 @@ sub Gedcom::Individual::relationship_up
 				my %male_relationships = (
 					1 << 24 | 1 => 'brother',
 					1 << 24 | 2 => 'nephew',
+					1 << 24 | 3 => 'great-nephew',
 					2 << 24 | 1 => 'uncle',
 					2 << 24 | 2 => 'cousin',
 					2 << 24 | 3 => 'first cousin once-removed',
@@ -5028,6 +5029,7 @@ sub Gedcom::Individual::relationship_up
 				my %female_relationships = (
 					1 << 24 | 1 => 'sister',
 					1 << 24 | 2 => 'niece',
+					1 << 24 | 3 => 'great-niece',
 					2 << 24 | 1 => 'aunt',
 					2 << 24 | 2 => 'cousin',
 					2 << 24 | 3 => 'first cousin once-removed',
