@@ -212,6 +212,9 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder });
 }
 
+# E.g. 'Nebraska, USA'
+$geocoder->push({ regex => qr/[\w\s]+?,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => Geo::Coder::Free->new() });
+
 if(my $username = $ENV{'GEONAMES_USER'}) {
 	$geocoder->push(Geo::GeoNames->new(username => $username));
 }
@@ -851,6 +854,9 @@ sub generate {
 				my $log = $geocoder->log();
 				$geocoder->flush();
 				foreach my $l(@{$log}) {
+					if($l->{'line'}) {
+						print 'Line ', $l->{'line'}, ': ';
+					}
 					if($l->{geocoder}) {
 						if($l->{error}) {
 							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
@@ -1295,26 +1301,26 @@ sub print_person
 				}
 			} elsif($opts{'l'} || !is_alive(person => $person)) {
 				if($dateofdeath) {
-					my $dateismissing = 0;
-					my @objects = $person->obje();
-					foreach my $o(@objects) {
-						my $obje;
-						if(ref($o) eq 'Gedcom::Record') {
-							$obje = $o;	# e.g. Ancestry
-						} else {
-							$obje = $ged->resolve_xref($o);	# e.g. FMP
-						}
-						foreach my $item($obje->items()) {
-							next if($item->tag() ne '_DATE');
-							if($item->value() eq $dateofdeath) {
-								$dateismissing = 0;
-								last;
-							}
-						}
-					}
-					if($dateismissing) {
+					# my $dateismissing = 0;
+					# my @objects = $person->obje();
+					# foreach my $o(@objects) {
+						# my $obje;
+						# if(ref($o) eq 'Gedcom::Record') {
+							# $obje = $o;	# e.g. Ancestry
+						# } else {
+							# $obje = $ged->resolve_xref($o);	# e.g. FMP
+						# }
+						# foreach my $item($obje->items()) {
+							# next if($item->tag() ne '_DATE');
+							# if($item->value() eq $dateofdeath) {
+								# $dateismissing = 0;
+								# last;
+							# }
+						# }
+					# }
+					# if($dateismissing) {
 						complain({ person => $person, warning => "Death date ($dateofdeath) has no citations" });
-					}
+					# }
 				} elsif($placeofdeath) {
 					complain({ person => $person, warning => "Death place ($placeofdeath) has no citations" });
 				} else {
@@ -4053,7 +4059,9 @@ sub print_person
 						});
 					}
 				}
-				if($placeofbirth && $placeofdeath && $dateofdeath && (!$census_years{1939}) &&
+				if($dateofdeath && !defined($placeofdeath)) {
+					complain({ person => $person, warning => 'Date of death is known, but not place' });
+				} elsif($placeofbirth && $dateofdeath && (!$census_years{1939}) &&
 				   (datecmp($dateofdeath, '1939') >= 0) && ($placeofbirth =~ /England$/) && ($placeofdeath =~ /England$/) &&
 				   ((!$dateofbirth) || (datecmp($dateofbirth, '1939') <= 0))) {
 				   	my $has1939 = 0;
