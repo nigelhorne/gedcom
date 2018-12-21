@@ -3544,7 +3544,7 @@ sub print_person
 							complain({ person => $person, warning => 'Departure record without destination' });
 							next;
 						}
-						if($events[$index] && ($events[$index]->type() eq 'Arrival') && $event->date()) {
+						if($events[$index] && (ref($events[$index]) eq 'Gedcom::Record') && ($events[$index]->type() eq 'Arrival') && $event->date()) {
 							if($events[$index]->date()) {
 								$previous = $event;
 								$prev_type = 'Departure';
