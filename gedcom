@@ -1078,7 +1078,7 @@ sub print_person
 			}
 		}
 		if($aod) {
-			if(my $d = $dfg->parse_datetime(date => get_value({ person => $person, value => 'date date' }))) {
+			if(my $d = $dfg->parse_datetime(date => get_value({ person => $person, value => 'death date' }))) {
 				$str .= ' d' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of death '$dod'" });
