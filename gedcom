@@ -857,6 +857,9 @@ sub generate {
 					if($l->{'line'}) {
 						print 'Line ', $l->{'line'}, ': ';
 					}
+					if($l->{'error'}) {
+						print $l->{'error'}, ', ';
+					}
 					if($l->{geocoder}) {
 						if($l->{error}) {
 							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
