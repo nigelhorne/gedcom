@@ -206,7 +206,9 @@ my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
 	$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
-	$geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
+	# $geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
+		$geocoder->push({ regex => qr/,\s*(USA|US|United States|Canada|Australia)\s*$/, geocoder => $textgeocoder })
+			->push({ regex => qr/^([\w\s]+,)?\s*[\w\s]+,\s*[\w\s]+\s*$/, geocoder => $textgeocoder });
 } else {
 	$textgeocoder = Geo::Coder::Free->new();
 	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder });
