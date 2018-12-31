@@ -251,6 +251,7 @@ if($browser) {
 		'a2ageo.rmservers.com' => 1,
 		'dev.virtualearth.net' => 1,	# Bing
 		'api.geonames.org' => 1,
+		'yboss.yahooapis.com' => 1,	# Geo::Coder::PlaceFinder
 	});
 	# G::C::GooglePlaces
 	$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
