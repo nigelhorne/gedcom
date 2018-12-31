@@ -5557,7 +5557,7 @@ sub notes
 					$rc .= "\t";
 				}
 			} elsif($rc) {
-				$rc .= '  ';
+				$rc .= '; ';
 			}
 			$rc .= "$note.";
 		} else {
