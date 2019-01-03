@@ -236,9 +236,6 @@ if(my $key = $ENV{'GMAP_KEY'}) {
 if(my $key = $ENV{BMAP_KEY}) {
 	$geocoder->push(Geo::Coder::Bing->new(key => $key));
 }
-if((my $ckey = $ENV{'YAHOO_CONSUMER'}) && (my $skey = $ENV{'YAHOO_SECRET'})) {
-	$geocoder->push(Geo::Coder::PlaceFinder->new(consumer_key => $ckey, secret_key => $skey));
-}
 
 if($browser) {
 	$browser->throttle({
@@ -260,6 +257,11 @@ if($browser) {
 
 	# $textgeocoder = Geo::Parser::Text->new('https://geocoder.ca');
 	# $textgeocoder = Geo::Parser::Text->new('https://geocode.xyz');
+
+	# Geo::Coder::PlaceFinder doesn't support the ua() method
+	if((my $ckey = $ENV{'YAHOO_CONSUMER'}) && (my $skey = $ENV{'YAHOO_SECRET'})) {
+		$geocoder->push(Geo::Coder::PlaceFinder->new(consumer_key => $ckey, secret_key => $skey, ua => $browser));
+	}
 }
 
 my $oneday = DateTime::Duration->new(days => 1);
