@@ -180,8 +180,8 @@ if($opts{'w'} || $opts{'B'}) {
 				autoload $grave_modules;
 			}
 		} else {
-			require WWW::Scrape::FindaGrave;
-			WWW::Scrape::FindaGrave->import();
+			# require WWW::Scrape::FindaGrave;
+			# WWW::Scrape::FindaGrave->import();
 		}
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
