@@ -17,6 +17,7 @@
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
 # TODO: add warning for 'bet 2000 and 1999'
+# TODO: note if a child was orphaned by both parents dying before they were 16
 
 use strict;
 use warnings;
