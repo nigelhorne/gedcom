@@ -25,7 +25,7 @@ use autodie qw(:all);
 # use warnings::unused;
 
 BEGIN {
-	eval 'use Gedcom';
+	eval 'use Gedcom Geo::Coder::List';
 	if($@) {
 		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes');
