@@ -32,7 +32,7 @@ BEGIN {
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes');
 		system('cpan -i Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB Data::Fetch HTTP::Cache::Transparent');
+		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB Data::Fetch HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
 	}
 }
 
@@ -51,6 +51,7 @@ use Geo::Coder::CA;
 use Geo::Coder::Postcodes;
 use Geo::Coder::GooglePlaces;
 use Geo::Coder::Bing;
+use Geo::Coder::DataScienceToolkit;
 use Geo::GeoNames;
 use Geo::Coder::PlaceFinder;
 # use Geo::Coder::GeocodeFarm;
@@ -222,7 +223,8 @@ if(my $username = $ENV{'GEONAMES_USER'}) {
 	$geocoder->push(Geo::GeoNames->new(username => $username));
 }
 
-$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
+$geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
+	->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 	->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 	->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England)$/i, geocoder => Geo::Coder::Postcodes->new() })
