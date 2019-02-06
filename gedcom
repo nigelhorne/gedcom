@@ -5892,10 +5892,12 @@ sub red_warning
 				warn colored(['red'], $params{'warning'}, ' at line ', $call_details[2]);
 			}
 		}
-		# my $i = 0;
-		# while((my @call_details = (caller($i++)))) {
-			# print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[3], 'red'), "\n";
-		# }
+		if($params{'stack_trace'}) {
+			my $i = 0;
+			while((my @call_details = (caller($i++)))) {
+				print STDERR "\t", colored($call_details[1] . ':' . $call_details[2] . ' calling function ' . $call_details[3], 'red'), "\n";
+			}
+		}
 	}
 }
 
