@@ -3381,7 +3381,7 @@ sub print_person
 					} else {
 						complain({ person => $person, warning => 'Arrival record has no date' });
 					}
-					if(my $spouse = $person->spouse()) {
+					if(my $spouse = $spouses[0]) {
 						foreach my $sevent($spouse->event()) {
 							if(ref($sevent) eq 'Gedcom::Record') {
 								my $type = $event->type();
