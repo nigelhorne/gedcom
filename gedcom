@@ -96,7 +96,9 @@ my @mydescendents;
 my %warned;
 my %printed;
 my %places;
+my %all_locations;
 my %all_places;
+my $pi = atan2(1,1) * 4;
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $ged2;
@@ -2857,6 +2859,8 @@ sub print_person
 			my $printed_following_message;
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
+				my $latitude;
+				my $longitude;
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
 					if($birth && $dob && $rdate && ($rdate eq $dob) &&
 					   places_are_the_same({ person => $person, first => $birth, second => $residence})) {
@@ -2906,6 +2910,53 @@ sub print_person
 
 						$bio .= $p;
 						$places_printed{$p} = 1;
+					}
+					if($rdate && (my $rdate_dt = date_to_datetime($rdate))) {
+						my $year = $rdate_dt->year();
+						my $strftime = $rdate_dt->strftime('%x');
+						my $place = place({
+							person => $person,
+							record => $residence,
+						});
+						if($place) {
+							$place =~ s/^\s(at|in)\s//;
+							my @locations = $geocoder->geocode($place);
+							if(defined($locations[0]->{geometry}{location}{lat}) && !defined($locations[0]->{'error'})) {
+								$latitude = $locations[0]->{geometry}{location}{lat};
+								$longitude = $locations[0]->{geometry}{location}{lng};
+								push @{$all_locations{$year}},
+									{
+										'residence' => $residence,
+										'person' => $person,
+										'date' => $strftime,
+										'latitude' => $latitude,
+										'longitude' => $longitude,
+									};
+							}
+						}
+						if($opts{'w'} && $marriage_dt && ($rdate_dt > $marriage_dt)) {
+							if(!defined($spouses[0])) {
+								complain({ person => $person, warning => 'Has a date of marriage but no spouse' });
+							} else {
+								# Check this person was living at the same place as their spouse.
+								# TODO: Also check all children under 10
+								foreach my $l(@{$all_locations{$year}}) {
+									if(($l->{'person'} eq $spouses[0]) &&
+									   ($l->{'date'} eq $strftime)) {
+										my $r1 = place(record => $residence, nopreposition => 1);
+										my $r2 = place(record => $l->{'residence'}, nopreposition => 1);
+										if($r1 ne $r2) {
+											$r1 =~ s/^\s+//;
+											$r2 =~ s/^\s+//;
+											complain({
+												person => $person,
+												warning => "$strftime: not living at same address as spouse " . $spouses[0]->as_string() . " ('$r1'/'$r2')"
+											});
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 				# Citation residence notes print later
@@ -3010,6 +3061,46 @@ sub print_person
 							}
 							$prev_residence = $residence;
 						}
+					}
+					if(defined($latitude)) {
+						# Print close relatives living close by
+						# This really only works when printing a lot of people, for example with the -a
+						#	flag, or when producing a PDF book, since it relies on having found data
+						#	on people beforehand
+						my $year = date_to_datetime($rdate)->year();
+						my $printed_person = 0;
+
+						foreach my $l(@{$all_locations{$year}}) {
+							# print Data::Dumper->new([$l])->Dump();
+							if(($l->{'person'} ne $person) &&
+							   ($l->{latitude} != $latitude) &&
+							   ($l->{longitude} != $longitude) &&
+							   (($spouses[0] && ($l->{'person'} eq $spouses[0])) ||
+							   (my $relationship = $person->relationship($l->{'person'})) &&
+							    ((stepsabove($l->{'person'}, $person, 0) <= 3) &&
+							    (stepsabove($person, $l->{'person'}, 0) <= 3)))) {
+							   	my $distance = distance($l->{latitude}, $l->{longitude}, $latitude, $longitude, 'M');
+								if(($distance < 1) && (my $place = place({ person => $l->{'person'}, record => $l->{'residence'} }))) {
+									if($printed_person) {
+										$bio .= ' and ';
+									} else {
+										$bio .= ', less than a mile from ';
+									}
+									if($spouses[0] && ($l->{'person'} eq $spouses[0])) {
+										# FIXME: Only when before they married, though when
+										#	they are married it should be the same place, right?
+										$bio .= (($sex eq 'M') ? 'his future wife ' : 'her future husband ');
+									} else {
+										$bio .= ($sex eq 'M' ? 'his' : 'her') .
+											" $relationship ";
+									}
+									$bio .= $l->{'person'}->as_string() .
+										" who was living$place";
+									$printed_person = 1;
+								}
+							}
+						}
+						$bio .= ',' if($printed_person);
 					}
 					if($spdeath_dt && (!$printed_following_message) && (my $rdate_dt = date_to_datetime($rdate))) {
 						if($rdate_dt > $spdeath_dt) {
@@ -6595,6 +6686,48 @@ sub Geo::Coder::PlaceFinder::ua
 	}
 
 	return $self->{_ua};
+}
+
+# From http://www.geodatasource.com/developers/perl
+# FIXME:  use Math::Trig
+sub distance {
+	my ($lat1, $lon1, $lat2, $lon2, $unit) = @_;
+	my $theta = $lon1 - $lon2;
+	my $dist = sin(_deg2rad($lat1)) * sin(_deg2rad($lat2)) + cos(_deg2rad($lat1)) * cos(_deg2rad($lat2)) * cos(_deg2rad($theta));
+	$dist = _acos($dist);
+	$dist = _rad2deg($dist);
+	$dist = $dist * 60 * 1.1515;
+	if ($unit eq "K") {
+		return $dist * 1.609344;
+	} elsif ($unit eq "N") {
+		return  $dist * 0.8684;
+	}
+	return ($dist);
+}
+
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::  This function get the arccos function using arctan function   :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+sub _acos {
+	my ($rad) = @_;
+	my $ret = atan2(sqrt(1 - $rad**2), $rad);
+	return $ret;
+}
+
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::  This function converts decimal degrees to radians             :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+sub _deg2rad {
+	my ($deg) = @_;
+	return ($deg * $pi / 180);
+}
+
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::  This function converts radians to decimal degrees             :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+sub _rad2deg {
+	my ($rad) = @_;
+	return ($rad * 180 / $pi);
 }
 
 1;
