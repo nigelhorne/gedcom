@@ -3079,7 +3079,7 @@ sub print_person
 							   (my $relationship = $person->relationship($l->{'person'})) &&
 							    ((stepsabove($l->{'person'}, $person, 0) <= 3) &&
 							    (stepsabove($person, $l->{'person'}, 0) <= 3)))) {
-							   	my $distance = distance($l->{latitude}, $l->{longitude}, $latitude, $longitude, 'M');
+								my $distance = distance($l->{latitude}, $l->{longitude}, $latitude, $longitude, 'M');
 								if(($distance < 1) && (my $place = place({ person => $l->{'person'}, record => $l->{'residence'} }))) {
 									if($printed_person) {
 										$bio .= ' and ';
@@ -4181,7 +4181,7 @@ sub print_person
 				} elsif($placeofbirth && $dateofdeath && (!$census_years{1939}) &&
 				   (datecmp($dateofdeath, '1939') >= 0) && ($placeofbirth =~ /England$/) && ($placeofdeath =~ /England$/) &&
 				   ((!$dateofbirth) || (datecmp($dateofbirth, '1939') <= 0))) {
-				   	my $has1939 = 0;
+					my $has1939 = 0;
 					foreach my $residence(@residences) {
 						if($residence->date() && ($residence->date() =~ /1939$/)) {
 							$has1939 = 1;
