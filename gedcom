@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2018, Nigel Horne
+# Copyright (C) 2015-2019, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -2980,7 +2980,11 @@ sub print_person
 							}
 						}
 						# Check if spouse listed at all residences when we only know the year
-						if(($dateofmarriage =~ /(\d{3,4})$/) && (my $spouse = $spouses[0])) {
+						my $spyod = get_value({ person => $spouses[0], value => 'death date' }) || ($yoe + 1);
+						if($spyod =~ /(\d{3,4})$/) {
+							$spyod = $1;
+						}
+						if(($dateofmarriage =~ /(\d{3,4})$/) && (my $spouse = $spouses[0]) && ($yoe < $spyod)) {
 							my $yom = $1;
 							if($yom < $yoe) {
 								my $found_spouse;
