@@ -3001,7 +3001,7 @@ sub print_person
 									}
 								}
 								if(!$found_spouse) {
-									complain({ person => $person, warning => [" is listed in the residence for $rdate, but spouse ", $spouse->as_string(), ' is not'] });
+									complain({ person => $person, warning => ["Listed in the residence for $rdate, but spouse ", $spouse->as_string(), ' is not'] });
 								}
 							}
 						}
