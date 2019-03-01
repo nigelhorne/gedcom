@@ -587,9 +587,8 @@ if($opts{'H'}) {
 				my $gd;
 				if($height > 715) {
 					my $newwidth = $width * (715 / $height);
-					my $newheight;
 					if($newwidth > 550) {
-						$newheight = $height * (550 / $width);
+						my $newheight = $height * (550 / $width);
 						$gd = $resize->resize(550, $newheight);
 					} else {
 						$gd = $resize->resize($newwidth, 715);
@@ -663,9 +662,8 @@ if($opts{'H'}) {
 				my $gd;
 				if($height > 715) {
 					my $newwidth = $width * (715 / $height);
-					my $newheight;
 					if($newwidth > 550) {
-						$newheight = $height * (550 / $width);
+						my $newheight = $height * (550 / $width);
 						$gd = $resize->resize(550, $newheight);
 					} else {
 						$gd = $resize->resize($newwidth, 715);
@@ -1278,9 +1276,7 @@ sub print_person
 				foreach my $src(@s) {
 					$src = get_source({ gedcom => $ged, person => $person, source => $src}) unless ref($src);
 					if(defined($src) && (my $title = $src->title())) {
-						if($previous && ($title eq $previous)) {
-							next;
-						}
+						next if($previous && ($title eq $previous));
 						$previous = $title;
 						push @birthcitations, ++$citationcount;
 						$citations{$citationcount} = $src;
@@ -1480,10 +1476,10 @@ sub print_person
 					$src = $ged->get_source($src) unless ref($src);
 					# FIXME:  Only looks for matches in the first citations
 					if(!defined($src)) {
-						if($opts{'w'}) {
-							my $src = $marriage->source();
-							complain({ person => $person, warning => "marriage citation can't find source $src" });
-						}
+						complain({
+							person => $person,
+							warning => [ "marriage citation can't find source ", $marriage->source() ]
+						});
 					} elsif($birthcitations[0] && ($citations{$birthcitations[0]} eq $src)) {
 						$marriagecitation = $birthcitations[0];
 					} elsif($deathcitations[0] && ($citations{$deathcitations[0]} eq $src)) {
@@ -1506,13 +1502,10 @@ sub print_person
 					foreach my $src(@s) {
 						$src = $ged->get_source($src) unless ref($src);
 						if(!defined($src)) {
-							if($opts{'w'}) {
-								my $src = $burial->source();
-								if($opts{'f'}) {
-									die $person->as_string(), ": burial citation can't find source $src";
-								}
-								red_warning({ person => $person, warning => "burial citation can't find source $src" });
-							}
+							complain({
+								person => $person,
+								warning => [ "burial citation can't find source ", $burial->source() ]
+							});
 							next;
 						}
 						my $seen;
