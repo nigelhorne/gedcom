@@ -3148,7 +3148,7 @@ sub print_person
 									}
 									my $type = $event->type();
 
-									# if(($type !~ /^Census U[KS] (\d{4})$/) && ($type ne 'Register UK 1939')) {
+									# if(($type !~ /^Census U[KS] \d{4}$/) && ($type ne 'Register UK 1939')) {
 									if(($type !~ /^Census/) && ($type ne 'Register UK 1939')) {
 										next EVENT;
 									}
@@ -3556,7 +3556,7 @@ sub print_person
 						$bio .= " ($notes)";
 					}
 					$end_of_sentence = 0;
-				# } elsif(($type !~ /^Census U[KS] (\d{4})$/) &&
+				# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 				} elsif(($type !~ /^Census/) &&
 					($type ne 'Race') &&
 					($type ne 'Custom Marriage') &&
@@ -3725,7 +3725,7 @@ sub print_person
 						}
 						$bio .= '. ';
 						$end_of_sentence = 1;
-					# } elsif(($type !~ /^Census U[KS] (\d{4})$/) &&
+					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif(($type !~ /^Census/) &&
 						($type ne 'Register UK 1939') &&
 						($type ne 'Race') &&
@@ -4177,8 +4177,7 @@ sub print_person
 					if(ref($event) eq 'Gedcom::Record') {
 						my $type = $event->type();
 						my $year;
-						# if($type =~ /^Census U[KS] (\d{4})$/) {
-						if($type =~ /^Census/) {
+						if($type =~ /^Census U[KS] (\d{4})$/) {
 							$year = $1;
 							if(!$event->date()) {
 								complain({ person => $person, warning => "Census for $year missing a date" });
@@ -4188,6 +4187,15 @@ sub print_person
 								complain({ person => $person, warning => '1939 UK register is missing the date 29 Sep 1939' });
 							}
 							$year = 1939;
+						} elsif($type eq 'Census') {
+							if(my $date = $event->date()) {
+								if($date =~ /(\d{4})$/) {
+									$year = $1;
+								}
+							}
+							if(!defined($year)) {
+								complain({ person => $person, warning => '1939 UK register is missing the date 29 Sep 1939' });
+							}
 						} else {
 							next;
 						}
