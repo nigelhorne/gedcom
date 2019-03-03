@@ -2310,7 +2310,7 @@ sub print_person
 					if(my $n = $name_components{'given_name_1'}) {
 						$bio .= $n;
 					} else {
-						complain({ person => $spouses[0], warning => 'seems to have no name' });
+						complain({ person => $spouses[0], warning => 'seems to have no first name' });
 					}
 				} else {
 					$bio .= $spouses[0]->as_string();
@@ -2588,7 +2588,7 @@ sub print_person
 						# and has a child by a 3rd unknown (or unfound) person
 						if($opts{'w'}) {
 							if($opts{'f'}) {
-								die $person->as_string() . ': one of the parents of ' . ($numberofchildren - $childrenseen) . ' children is not known';
+								die $person->as_string(), ': one of the parents of ', ($numberofchildren - $childrenseen), ' children is not known';
 							}
 							if(($numberofchildren - $childrenseen) == 1) {
 								if($unknown) {
