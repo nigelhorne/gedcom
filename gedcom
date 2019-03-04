@@ -298,7 +298,7 @@ if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
 }
 if($opts{'W'} && !$opts{'w'}) {
-	die '-W only makes sense with the -w option';
+	warn '-W only makes sense with the -w option';
 }
 if($opts{'A'} && $opts{'G'}) {
 	die '-A doesn\'t make sense with the -G option';
@@ -1186,6 +1186,11 @@ sub print_person
 		$placeofbirth = $birth->place();
 	}
 
+	if($placeofbirth && ($placeofbirth =~ /,\s*$/)) {
+		complain({ person => $person, warning => 'Trailing comma in birth location' });
+		$placeofbirth =~ s/\s*,\s*$//;
+	}
+
 	if($placeofbirth && ($placeofbirth =~ /(.+[a-z]) USA$/)) {
 		complain({ person => $person, warning => "Comma missing before USA in birth location '$placeofbirth'" });
 		$placeofbirth = "$1, USA";
@@ -1195,8 +1200,6 @@ sub print_person
 		if($c eq 'England') {
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'USA') {
-			$birth_country = 'United States';
-		} elsif($c eq 'Texas') {
 			$birth_country = 'United States';
 		} elsif($c eq 'United States of America') {
 			$birth_country = 'United States';
@@ -1210,10 +1213,19 @@ sub print_person
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'Preußen') {	# Prussia
 			$birth_country = 'Germany';
-		} elsif($c eq 'Nova Scotia') {
+		} elsif(($c eq 'Holland') || ($c eq 'The Netherlands')) {
+			$birth_country = 'Netherlands';
+		} elsif($c eq 'NL') {
+			$birth_country = 'Netherlands';
+			complain({ person => $person, warning => 'Assuming country of birth is Netherlands' });
+		} elsif(($c eq 'Texas') || ($c eq 'New York') || ($c eq 'New Jersey')) {
+			$birth_country = 'United States';
+			complain({ person => $person, warning => 'Assuming country of birth is USA' });
+		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			$birth_country = 'Canada';
-		} elsif($c eq 'NFLD') {
-			$birth_country = 'Canada';
+			complain({ person => $person, warning => 'Assuming country of birth is Canada' });
+		} elsif($c =~ 'England,?\sUK') {
+			$birth_country = 'United Kingdom';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			$birth_country = $b->code_alpha2();
 		} else {
@@ -1231,6 +1243,20 @@ sub print_person
 		$placeofdeath = $death->place();
 	}
 
+	if($placeofdeath && ($placeofdeath =~ /\s\s/)) {
+		complain({ person => $person, warning => 'Removing successive spaces from place of death' });
+		$placeofdeath =~ s/\s\s+/ /g;
+	}
+
+	if($placeofdeath && ($placeofdeath =~ /,\s*$/)) {
+		complain({ person => $person, warning => 'Trailing comma in death location' });
+		$placeofdeath =~ s/\s*,\s*$//;
+	}
+	if($placeofdeath && ($placeofdeath =~ /^,/)) {
+		complain({ person => $person, warning => 'Leading comma in death location' });
+		$placeofdeath =~ s/^,\s*//g;
+	}
+
 	if($placeofdeath && ($placeofdeath =~ /(.+[a-z]) USA$/)) {
 		complain({ person => $person, warning => "Comma missing before USA in death location '$placeofdeath'" });
 		$placeofdeath = "$1, USA";
@@ -1242,7 +1268,8 @@ sub print_person
 			# $death_country = 'United States';
 		# } elsif($c eq 'Texas') {
 			# $death_country = 'United States';
-		} elsif($c eq 'New York') {
+		} elsif(($c =~ /New York\s*/) || ($c eq 'NY') || ($c eq 'California') || ($c eq 'Minnesota')) {
+			complain({ person => $person, warning => "Country 'USA' missing from death record" });
 			# $death_country = 'United States';
 		} elsif($c eq 'United States of America') {
 			# $death_country = 'United States';
@@ -1250,14 +1277,20 @@ sub print_person
 			# $death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
 			# $death_country = 'United Kingdom';
-		} elsif($c eq 'Newfoundland') {
+		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
+			complain({ person => $person, warning => "Country 'Canada' missing from death record" });
 			# $death_country = 'Canada';
+		} elsif(($c eq 'Holland') || ($c eq 'The Netherlands')) {
+			# $death_country = 'Netherlands';
 		# } elsif($c eq 'Isle of Man') {
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Northern Ireland') {
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Preußen') {	# Prussia
 			# $death_country = 'Germany';
+		} elsif($c =~ /Can\.?/) {
+			complain({ person => $person, warning => 'Assuming country of death is Canada' });
+			# $death_country = 'Canada';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			# $death_country = $b->code_alpha2();
 		} else {
@@ -2655,7 +2688,11 @@ sub print_person
 					}
 				}
 			}
-			$end_of_sentence = 0;
+			if($bio =~ /\.$/) {
+				$end_of_sentence = 1;
+			} else {
+				$end_of_sentence = 0;
+			}
 		} elsif($numberofchildren) {
 			if($end_of_sentence) {
 				$bio .= " $pronoun";
@@ -3982,7 +4019,11 @@ sub print_person
 				$d =~ s/\.$//;
 				$bio .= " ($d)";
 			}
-			$end_of_sentence = 0;
+			if($bio =~ /\.$/) {
+				$end_of_sentence = 1;
+			} else {
+				$end_of_sentence = 0;
+			}
 		}
 
 		$bio .= '.' if(!$end_of_sentence);
@@ -5440,7 +5481,7 @@ sub year
 					$dt = date_to_datetime($rc);
 				}
 				if($dt && ($dt < $must_postdate)) {
-					complain({ person => $params{'person'}, warning => "something is wrong with the date $string which should be after $must_postdate" });
+					complain({ person => $params{'person'}, warning => "Something is wrong with the date $string which should be after $must_postdate" });
 				}
 			}
 			if(my $must_predate = $params{'must_predate'}) {
@@ -5451,7 +5492,7 @@ sub year
 					$dt = date_to_datetime($rc);
 				}
 				if($dt && ($dt > $must_predate)) {
-					complain({ person => $params{'person'}, warning => "something is wrong with the date $string which should be before $must_predate" });
+					complain({ person => $params{'person'}, warning => "Something is wrong with the date $string which should be before $must_predate" });
 				}
 			}
 		}
@@ -5488,7 +5529,11 @@ sub year
 		if(my $d = date_parser_cached(date => $string)) {
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			if(my $must_postdate = $params{'must_postdate'}) {
-				complain({ person => $person, warning => "something is wrong with the date $string which should be after " . $must_postdate->strftime('%x') }) if($d < $must_postdate);
+				complain({
+					person => $person,
+					warning => [ "something is wrong with the date $string which should be after ", $must_postdate->strftime('%x') ],
+					# stack_trace => 1,
+				}) if($d < $must_postdate);
 			}
 			if(my $must_predate = $params{'must_predate'}) {
 				complain({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
@@ -5500,7 +5545,7 @@ sub year
 			chomp $@;
 			if($opts{'f'}) {
 				if($person) {
-					die $person->as_string() . ": $@";
+					die $person->as_string(), ": $@";
 				}
 				die $@;
 			}
@@ -5520,7 +5565,7 @@ sub year
 		my $person = $params{'person'};
 		if($opts{'f'}) {
 			if($person) {
-				die $person->as_string() . " says 'By' instead of 'Bef'";
+				die $person->as_string(), " says 'By' instead of 'Bef'";
 			}
 			die "Got 'By' instead of 'Bef'";
 		}
@@ -6077,7 +6122,7 @@ sub red_warning
 			}
 		} else {
 			if($opts{'W'}) {
-				print STDERR lcfirst($params{'warning'}), "\n";
+				print STDERR $params{'warning'}, "\n";
 			} else {
 				warn colored(['red'], $params{'warning'}, ' at line ', $call_details[2]);
 			}
@@ -6230,6 +6275,11 @@ sub date_parser_cached
 
 	my $date = $params{'date'};
 
+	if($date =~ /^([A-Z]{3})\s+(\d{1,2}),\s+(\d{3,4})$/i) {
+		complain(warning => "Changing US format date '$date' to Gedcom format '$2 $1 $3'");
+		$date = "$2 $1 $3";
+	}
+
 	if($all_dates{$date}) {
 		print "$date is already known\n" if($opts{'v'});
 		return $all_dates{$date};
@@ -6272,6 +6322,10 @@ sub date_to_datetime
 			return;
 		}
 		if($date !~ /^\d{3,4}$/) {
+			if($date =~ /[A-Z]{4}/i) {
+				complain(warning => "Unparseable date $date - often because the month name isn't 3 letters");
+				return;
+			}
 			if(($date =~ /^\d/) && (my $d = date_parser_cached($date))) {
 				return $dfn->parse_datetime($d->{'canonical'});
 			}
@@ -6685,8 +6739,7 @@ sub count_descendents_at_level
 # TODO: handle when only months are known
 sub datecmp
 {
-	my $left = shift;
-	my $right = shift;
+	my ($left, $right) = @_;
 
 	if((!defined($left)) || !defined($right)) {
 		print STDERR "\n";
@@ -6707,7 +6760,8 @@ sub datecmp
 			$left = $2;
 		}
 		if($left !~ /^\d{3,4}$/) {
-			my $rc = $dfg->parse_datetime($left);
+			my @l = $dfg->parse_datetime($left);
+			my $rc = $l[1] || $l[0];
 			if(!defined($rc)) {
 				print STDERR "Date parse failure: ($left):\n";
 				my $i = 0;
@@ -6735,9 +6789,10 @@ sub datecmp
 			# while((my @call_details = caller($i++))) {
 				# print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 			# }
-			# die $right;
+			# die join('<=>', @_);
 		# }
-		$right = $dfg->parse_datetime($right);
+		my @r = $dfg->parse_datetime($right);
+		$right = $r[0];
 	}
 	if((!ref($left)) && ref($right)) {
 		return $left <=> $right->year();
@@ -6754,9 +6809,8 @@ sub datecmp
 sub Geo::Coder::PlaceFinder::ua
 {
 	my $self = shift;
-	my $ua = shift;
 
-	if($ua = shift) {
+	if(my $ua = shift) {
 		return $self->{_ua} = $ua;
 	}
 
