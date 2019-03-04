@@ -1210,6 +1210,10 @@ sub print_person
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'Preußen') {	# Prussia
 			$birth_country = 'Germany';
+		} elsif($c eq 'Nova Scotia') {
+			$birth_country = 'Canada';
+		} elsif($c eq 'NFLD') {
+			$birth_country = 'Canada';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			$birth_country = $b->code_alpha2();
 		} else {
@@ -1238,12 +1242,16 @@ sub print_person
 			# $death_country = 'United States';
 		# } elsif($c eq 'Texas') {
 			# $death_country = 'United States';
-		# } elsif($c eq 'United States of America') {
+		} elsif($c eq 'New York') {
+			# $death_country = 'United States';
+		} elsif($c eq 'United States of America') {
 			# $death_country = 'United States';
 		} elsif($c eq 'Scotland') {
 			# $death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
 			# $death_country = 'United Kingdom';
+		} elsif($c eq 'Newfoundland') {
+			# $death_country = 'Canada';
 		# } elsif($c eq 'Isle of Man') {
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Northern Ireland') {
