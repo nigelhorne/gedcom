@@ -1288,7 +1288,7 @@ sub print_person
 			# $death_country = 'United Kingdom';
 		# } elsif($c eq 'Preußen') {	# Prussia
 			# $death_country = 'Germany';
-		} elsif($c =~ /Can\.?/) {
+		} elsif($c =~ /Can\./) {
 			complain({ person => $person, warning => 'Assuming country of death is Canada' });
 			# $death_country = 'Canada';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
@@ -2463,8 +2463,11 @@ sub print_person
 				if($placeofmarriage && $dateofmarriage &&
 				   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
 				    ($aod && $placeofbirth && ($placeofmarriage eq $placeofbirth)))) {
-					$bio .= ' there ' .
-						year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt);
+					$bio .= ' there ';
+					if(my $address = $marriage->address()) {
+						$bio .= "at $address ";
+					}
+					$bio .= year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt);
 				} else {
 					$bio .= ' ' . year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt) if($dateofmarriage);
 					if($placeofmarriage) {
