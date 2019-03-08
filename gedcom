@@ -6817,7 +6817,7 @@ sub Geo::Coder::PlaceFinder::ua
 }
 
 # From http://www.geodatasource.com/developers/perl
-# FIXME:  use Math::Trig
+# FIXME:  use Math::Trig, or GIS::Distance
 sub distance {
 	my ($lat1, $lon1, $lat2, $lon2, $unit) = @_;
 	my $theta = $lon1 - $lon2;
