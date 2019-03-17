@@ -205,7 +205,7 @@ my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
 my $dfg = DateTime::Format::Genealogy->new();
 
-my $geocoder = Geo::Coder::List->new();
+my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
 # my $textgeocoder;
 my $textgeocoder;
 
