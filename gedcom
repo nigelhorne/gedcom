@@ -207,7 +207,7 @@ my $dfg = DateTime::Format::Genealogy->new();
 
 # my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
 my $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
-my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'File', root_dir => $cachedir ));
+my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'File', root_dir => $cachedir));
 my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
