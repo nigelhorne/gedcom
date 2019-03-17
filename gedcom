@@ -1231,6 +1231,9 @@ sub print_person
 		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			$birth_country = 'Canada';
 			complain({ person => $person, warning => 'Assuming country of birth is Canada' });
+		} elsif(($c eq 'Norfolk') || ($c eq 'Kent') || ($c eq 'Sussex')) {
+			$birth_country = 'United Kingdom';
+			complain({ person => $person, warning => 'Assuming country of birth is UK' });
 		} elsif($c =~ 'England,?\sUK') {
 			$birth_country = 'United Kingdom';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
@@ -1284,6 +1287,9 @@ sub print_person
 			# $death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
 			# $death_country = 'United Kingdom';
+		} elsif(($c eq 'Norfolk') || ($c eq 'Kent') || ($c eq 'Sussex')) {
+			# $death_country = 'United Kingdom';
+			complain({ person => $person, warning => 'Assuming country of death is UK' });
 		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			complain({ person => $person, warning => "Country 'Canada' missing from death record" });
 			# $death_country = 'Canada';
@@ -5134,7 +5140,7 @@ sub Gedcom::Individual::relationship_up
 	unless(@myancestors) {
 		@myancestors = $self->ancestors();
 	}
-	if($self eq $me) {
+	if($me && ($self eq $me)) {
 		unless(@myancestors) {
 			@myancestors = $me->ancestors();
 		}
@@ -5361,7 +5367,7 @@ sub Gedcom::Individual::relationship_up
 					my $myfather = $self->father();
 					my $mymother = $self->mother();
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
-						if($self eq $me) {
+						if($me && ($self eq $me)) {
 							$rc .= " on your father's side";
 						} else {
 							$rc .= ' on ' .
@@ -5369,7 +5375,7 @@ sub Gedcom::Individual::relationship_up
 								" father's side";
 						}
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
-						if($self eq $me) {
+						if($me && ($self eq $me)) {
 							$rc .= " on your mother's side";
 						} else {
 							$rc .= ' on ' .
@@ -5394,7 +5400,7 @@ sub Gedcom::Individual::relationship_down
 	my $other = shift;
 	my @descendents;
 
-	if($self eq $me) {
+	if($me && ($self eq $me)) {
 		unless(@mydescendents) {
 			@mydescendents = $me->descendents();
 		}
