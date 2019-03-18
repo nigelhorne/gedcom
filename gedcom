@@ -45,6 +45,7 @@ use File::Spec;
 use Getopt::Std;
 use Geo::Coder::List 0.15;
 use Geo::Coder::Free 0.10;	# 0.11 really
+use Geo::Coder::Free::Local;
 use Geo::Coder::Ovi;
 use Geo::Coder::RandMcnally;
 use Geo::Coder::US::Census;
@@ -224,7 +225,9 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 		->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
 }
 
-$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s],\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
+
+$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s],\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder })
+	->push(Geo::Coder::Free::Local->new());
 
 if(my $username = $ENV{'GEONAMES_USER'}) {
 	$geocoder->push(Geo::GeoNames->new(username => $username));
