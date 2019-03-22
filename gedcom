@@ -18,6 +18,8 @@
 # TODO: write a post-processor to sort errors by type
 # TODO: add warning for 'bet 2000 and 1999'
 # TODO: note if a child was orphaned by both parents dying before they were 16
+# TOOO: note if close relatives by blood or marriage, or future spouses, live
+#	very close (say less than 100 yards) next to each other
 
 use strict;
 use warnings;
