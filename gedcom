@@ -2924,6 +2924,7 @@ sub print_person
 			}
 			my $print_year_only;	# used when printing a range, e.g. 1871-1891
 			my $printed_following_message;
+			my %printed_dates;
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
 				my $latitude;
@@ -3028,6 +3029,8 @@ sub print_person
 				}
 				# Citation residence notes print later
 				if($rdate) {	# residence has a date?
+					next if($printed_dates{$rdate});
+					$printed_dates{$rdate}++;
 					if($opts{'w'} && ($rdate =~ /(\d{3,4})$/)) {
 						my $yoe = $1;
 						if($yod) {
@@ -3334,6 +3337,7 @@ sub print_person
 									}
 									$bio .= ' mother ' . $mother->given_names();
 									$printed_sibling = 1;
+									$first = 0;
 									last;
 								}
 							}
@@ -3448,6 +3452,7 @@ sub print_person
 			}
 
 			if($printed_residence) {
+				$bio =~ s/ and$//;
 				$bio .= '. ';
 				$end_of_sentence = 1;
 			}
