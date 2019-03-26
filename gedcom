@@ -3278,11 +3278,14 @@ sub print_person
 								foreach my $ssr(@ssr) {
 									if(my $d = $ssr->date()) {
 										next if($d ne $rdate);
-										if(my $ssp = place({ person => $ss, record => $ssr })) {
+
+										# Compare only if full addresses to prevent
+										# false positives when only a city is known
+										if(($place =~ /^d/ && (my $ssp = place({ person => $ss, record => $ssr })))) {
 											if($ssp eq $place) {
 												if($first) {
-													$bio .= ' with ' . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-														' ' .
+													$bio .= ' when ' . ($person->pronoun() eq 'She' ? 'her' : 'his') .
+													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
 														(($ss->sex() eq 'F') ? 'sister-in-law, ' : 'brother-in-law, ') .
 														$ss->as_string();
 														$first = 0;
@@ -3293,7 +3296,10 @@ sub print_person
 													$bio .= ' and ' .
 														(($ss->sex() eq 'F') ? 'sister-in-law, ' : 'brother-in-law, ') .
 														$ss->as_string();
-													}
+												}
+												$printed_sibling = 1;
+												# May be removed later
+												$bio .= ' and';
 												last;
 											}
 										}
@@ -3307,13 +3313,13 @@ sub print_person
 								my $sdate = $sr->date();
 								next if(!defined($sdate));
 								next if($sdate ne $rdate);
-								if(place({ person => $sibling, record => $sr }) eq $place) {
+								if(($place =~ /^\d/) && (place({ person => $sibling, record => $sr }) eq $place)) {
 									if($first) {
 										$bio .= ' with ' . ($person->pronoun() eq 'She' ? 'her' : 'his');
 										$first = 0;
 									}
 									$bio .= ' ' .
-										(($sibling->sex() eq 'F') ? 'sister ' : 'brother ') .
+										(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
 										$sibling->given_names() . ',';
 									$printed_sibling = 1;
 									last;
@@ -3439,6 +3445,7 @@ sub print_person
 							$bio .= $rdate;
 							$print_year_only = 0;
 						}
+						$bio =~ s/,$//;
 						$bio .= '; and';
 					} elsif($count < (scalar(@residencelist) - 1)) {
 						if($print_year_only) {
@@ -3457,6 +3464,7 @@ sub print_person
 				$end_of_sentence = 1;
 			}
 		}
+		$bio =~ s/;$//;
 
 		my $all_events_have_date = 1;
 		foreach my $event(@events) {
