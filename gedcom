@@ -94,8 +94,8 @@ use Config::Auto;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfGh:Hm:lLp:stTwWvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ][ -T ] [ -w [ -W ] ] filename [ filename2 ]\n" unless($ARGV[0]);
+getopts('aAbB:cCdDfGh:Hm:lLp:stTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -T ] [ -w [ -W ] [ -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -346,10 +346,14 @@ if($opts{'B'}) {
 if($opts{'A'} || $opts{'G'}) {
 	$opts{'a'} = 1;
 }
+if($opts{'x'}) {
+	$opts{'T'} = 1;
+}
 if($opts{'T'}) {
-	require String::ProgressBar;
-	String::ProgressBar->import();
-	$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
+	if(!$opts{'x'}) {
+		require String::ProgressBar;
+		String::ProgressBar->import();
+	}
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 
@@ -576,7 +580,9 @@ if($opts{'H'}) {
 		}
 		$fetcher = Data::Fetch->new();
 
-		$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
+		if(!$opts{'x'}) {
+			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
+		}
 
 		if($opts{'G'}) {
 			if($me->father() || $me->mother()) {
@@ -787,8 +793,13 @@ if($opts{'T'}) {
 	# if(my $oa = $ENV{'OPENADDR_HOME'}) {
 		# $g = Geo::Coder::Free::OpenAddresses->new(openaddr => $oa);
 	# }
+	print '"Location","People"', "\n" if($opts{'x'});
 	foreach my $place(sort keys %all_places) {
-		print "$place: ";
+		if($opts{'x'}) {
+			print "\"$place\",\"";
+		} else {
+			print "$place: ";
+		}
 		my $previous;
 		foreach my $person(@{$all_places{$place}}) {
 			if($previous && ($person eq $previous)) {
@@ -798,6 +809,7 @@ if($opts{'T'}) {
 				';';
 			$previous = $person;
 		}
+		print '"' if($opts{'x'});
 		print "\n";
 		# if($g && ($place =~ /USA|Canada/)) {
 			# my @locations = $g->geocode($place);
