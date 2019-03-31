@@ -1646,10 +1646,7 @@ sub print_person
 		}
 		my @occupations = $person->get_value('occupation');
 
-		my @children;
-		foreach my $f($person->fams()) {
-			@children = (@children, $f->children());
-		}
+		my @children = map { $_->children() } $person->fams();
 		my $numberofchildren = scalar(@children);
 
 		if($opts{'w'} && $numberofchildren) {
@@ -6652,10 +6649,7 @@ sub print_graphviz_generation
 
 	if($person->sex() eq 'M') {
 		# my @children = $person->children();
-		my @children;
-		foreach my $f($person->fams()) {
-			@children = (@children, $f->children());
-		}
+		my @children = map { $_->children() } $person->fams();
 		if(scalar(@children) > 0) {
 			# TODO: sort by date of birth
 			foreach my $child(@children) {
