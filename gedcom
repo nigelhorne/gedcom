@@ -5860,8 +5860,7 @@ sub getaddress {
 	return $rc;
 }
 
-sub notes
-{
+sub notes {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $record = $params{'record'};
@@ -5895,6 +5894,7 @@ sub notes
 					$rc .= "\t";
 				}
 			} elsif($rc) {
+				$rc =~ s/\.$//;
 				$rc .= '; ';
 			}
 			$rc .= "$note.";
