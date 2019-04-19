@@ -4269,11 +4269,14 @@ sub print_person
 				}
 				my $title = $citations{$citation}->title();
 				if(!defined($title)) {
-					complain({
-						person => $person,
-						warning => "[$citation]: no citation title"
-					});
-					next;
+					$title = notes(record => $citations{$citation});
+					if(!defined($title)) {
+						complain({
+							person => $person,
+							warning => "[$citation]: no citation title"
+						});
+						next;
+					}
 				}
 				if($opts{'B'}) {
 					if($bio) {
@@ -4286,7 +4289,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = '';
+						$bio = undef;
 					}
 				} else {
 					$bio =~ s/\s+$//;
@@ -4313,7 +4316,7 @@ sub print_person
 						if($opts{'w'}) {
 							$ufinder->find(\$note);
 						}
-						$bio .= " ($note)";
+						$bio .= " ($note)" unless($note eq $title);
 					}
 				}
 				if($citationnotes{$citation}) {
