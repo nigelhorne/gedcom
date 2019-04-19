@@ -2991,8 +2991,12 @@ sub print_person
 							$bio .= ' in hospital';
 						}
 
-						$bio .= $p;
-						$places_printed{$p} = 1;
+						if((!defined($prev_residence)) ||
+						   !places_are_the_same({ person => $person, first => $prev_residence, second => $residence })) {
+							# Actually prints the place here
+							$bio .= $p;
+							$places_printed{$p} = 1;
+						}
 					}
 					if($rdate && (my $rdate_dt = date_to_datetime($rdate))) {
 						my $year = $rdate_dt->year();
@@ -3479,7 +3483,12 @@ sub print_person
 									$bio .= $rdate;
 									$print_year_only = 0;
 								}
-								$bio .= ',';
+								$peek = $residencelist[$count + 2];
+								if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+									$bio .= ',';
+								} else {
+									$bio .= ' and';
+								}
 							}
 						} elsif(!$print_year_only) {
 							$bio =~ s/,$//;
