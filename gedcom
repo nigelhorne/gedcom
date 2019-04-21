@@ -1344,6 +1344,34 @@ sub print_person
 		}
 	}
 
+	if(0) {
+	if(($placeofbirth && ($placeofbirth =~ /USA$/)) ||
+	   ($placeofbirth && ($placeofdeath =~ /USA$/))) {
+		require Genealogy::ChroniclingAmerica;
+		Genealogy::ChroniclingAmerica->import();
+
+		my %params;
+		if($dateofdeath =~ /(\d{4})$/) {
+			$params{'date_of_death'} = $1;
+		}
+		if($dateofbirth =~ /(\d{4})$/) {
+			$params{'date_of_birth'} = $1;
+		}
+		if($firstname) {
+			$params{'firstname'} = $firstname;
+			if($lastname) {
+				$params{'lastname'} = $lastname;
+				# TODO: married and maiden names
+				# TODO: extract the state
+				my $loc = Genealogy::ChroniclingAmerica->new(\%params);
+				while(my $url = $loc->get_next_entry()) {
+					print $loc;
+				}
+			}
+		}
+	}
+	}
+
 	my %citations;
 	my $citationcount = 0;
 	my @birthcitations;
