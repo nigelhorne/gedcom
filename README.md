@@ -85,6 +85,7 @@ The options are:
     -D: only print anniversaries of deaths
     -f: treat warnings as fatals, implies -w
     -G: print everyone, in generation order
+    -g: prints a GML of the locations
     -H: Print an HTML calendar of this month
     -h: set the home person - useful for calculating relationships with -d
     -m: month for -H calendar
