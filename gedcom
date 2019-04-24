@@ -818,8 +818,10 @@ if($opts{'T'}) {
 				complain(warning => "$place not found");
 				next;
 			}
+			my $x_place = $place;
+			$x_place =~ s/&/&amp;/g;
 			print "\t<Placemark>\n",
-				"\t\t<name>$place</name>\n",
+				"\t\t<name>$x_place</name>\n",
 				"\t\t<description>";
 		} else {
 			print "$place: ";
