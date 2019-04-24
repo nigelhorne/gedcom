@@ -840,9 +840,9 @@ if($opts{'T'}) {
 			print "</description>\n",
 				"\t\t<Point>\n",
 				"\t\t\t<coordinates>",
-					$locations[0]->{geometry}{location}{lat},
-					',',
 					$locations[0]->{geometry}{location}{lng},
+					',',
+					$locations[0]->{geometry}{location}{lat},
 				"</coordinates>\n",
 				"\t\t</Point>\n",
 				"\t</Placemark>";
