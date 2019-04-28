@@ -1392,44 +1392,44 @@ sub print_person
 				$chronicling_params{'date_of_death'} = $1;
 			}
 		}
-		if($firstname) {
-			$chronicling_params{'firstname'} = $firstname;
-			if($lastname) {
-				$chronicling_params{'lastname'} = $lastname;
+		if($lastname) {
+			$chronicling_params{'lastname'} = $lastname;
+			if($firstname) {
+				$chronicling_params{'firstname'} = $firstname;
 			}
-		}
-		my $stateofbirth;
-		if($placeofbirth && (($placeofbirth =~ /USA$/) || ($placeofbirth =~ /United States$/)) && ($placeofbirth =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
-			$stateofbirth = uc($1);
-			if((!$us->{code2state}{$stateofbirth}) && !$us->{state2code}{$stateofbirth}) {
-				complain({ person => $params{'person'}, warning => "Unknown state '$stateofbirth' in birth place $placeofbirth" });
-			}
-			$chronicling_params{'state'} = ucfirst(lc($stateofbirth));
-
-			require Genealogy::ChroniclingAmerica;
-			Genealogy::ChroniclingAmerica->import();
-			if(my $loc = Genealogy::ChroniclingAmerica->new(\%chronicling_params)) {
-				while(my $url = $loc->get_next_entry()) {
-					complain({ person => $person, warning => "Check out $url" });
+			my $stateofbirth;
+			if($placeofbirth && (($placeofbirth =~ /USA$/) || ($placeofbirth =~ /United States$/)) && ($placeofbirth =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
+				$stateofbirth = uc($1);
+				if((!$us->{code2state}{$stateofbirth}) && !$us->{state2code}{$stateofbirth}) {
+					complain({ person => $params{'person'}, warning => "Unknown state '$stateofbirth' in birth place $placeofbirth" });
 				}
-			}
-		}
-		if($placeofdeath && (($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
-			my $stateofdeath = uc($1);
-			if((!$us->{code2state}{$stateofdeath}) && !$us->{state2code}{$stateofdeath}) {
-				complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
-			}
-			if((!defined($stateofbirth)) || ($stateofdeath ne $stateofbirth)) {
-				$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
+				$chronicling_params{'state'} = ucfirst(lc($stateofbirth));
 
 				require Genealogy::ChroniclingAmerica;
 				Genealogy::ChroniclingAmerica->import();
-
-				# TODO: married and maiden names, could be two searches
-
 				if(my $loc = Genealogy::ChroniclingAmerica->new(\%chronicling_params)) {
 					while(my $url = $loc->get_next_entry()) {
 						complain({ person => $person, warning => "Check out $url" });
+					}
+				}
+			}
+			if($placeofdeath && (($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
+				my $stateofdeath = uc($1);
+				if((!$us->{code2state}{$stateofdeath}) && !$us->{state2code}{$stateofdeath}) {
+					complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
+				}
+				if((!defined($stateofbirth)) || ($stateofdeath ne $stateofbirth)) {
+					$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
+
+					require Genealogy::ChroniclingAmerica;
+					Genealogy::ChroniclingAmerica->import();
+
+					# TODO: married and maiden names, could be two searches
+
+					if(my $loc = Genealogy::ChroniclingAmerica->new(\%chronicling_params)) {
+						while(my $url = $loc->get_next_entry()) {
+							complain({ person => $person, warning => "Check out $url" });
+						}
 					}
 				}
 			}
