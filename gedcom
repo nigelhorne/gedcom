@@ -16,7 +16,6 @@
 #	anything
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
-# TODO: add warning for 'bet 2000 and 1999'
 # TODO: note if a child was orphaned by both parents dying before they were 16
 # TOOO: note if close relatives by blood or marriage, or future spouses, live
 #	very close (say less than 100 yards) next to each other
@@ -6556,7 +6555,12 @@ sub date_to_datetime
 		}
 		if($date =~ /^bet (.+) and (.+)/i) {
 			if(wantarray) {
-				return date_to_datetime($1), date_to_datetime($2);
+				my $rc0 = date_to_datetime($1);
+				my $rc1 = date_to_datetime($2);
+				if($rc0 < $rc1) {
+					return ($rc0, $rc1);
+				}
+				complain("Invalid date range $date");
 			}
 			return;
 		}
