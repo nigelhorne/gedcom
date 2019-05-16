@@ -1259,6 +1259,10 @@ sub print_person
 		complain({ person => $person, warning => 'Trailing comma in birth location' });
 		$placeofbirth =~ s/\s*,\s*$//;
 	}
+	if($placeofbirth && ($placeofbirth =~ /^,/)) {
+		complain({ person => $person, warning => 'Leading comma in birth location' });
+		$placeofbirth =~ s/^,\s*//g;
+	}
 
 	if($placeofbirth && ($placeofbirth =~ /(.+[a-z]) USA$/)) {
 		complain({ person => $person, warning => "Comma missing before USA in birth location '$placeofbirth'" });
