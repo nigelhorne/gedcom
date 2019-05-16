@@ -1287,12 +1287,12 @@ sub print_person
 		} elsif($c eq 'NL') {
 			$birth_country = 'Netherlands';
 			complain({ person => $person, warning => 'Assuming country of birth is Netherlands' });
-		} elsif(($c eq 'Texas') || ($c eq 'New York') || ($c eq 'New Jersey')) {
-			$birth_country = 'United States';
-			complain({ person => $person, warning => 'Assuming country of birth is USA' });
 		} elsif(($c =~ /[A-Z]{2}/) && ($us->{code2state}{$c})) {
 			$birth_country = 'United States';
-			complain({ person => $person, warning => 'Assuming country of birth is USA' });
+			complain({ person => $person, warning => "$c: assuming country of birth is USA" });
+		} elsif($us->{state2code}{uc($c)}) {
+			$birth_country = 'United States';
+			complain({ person => $person, warning => "$c: assuming country of birth is USA" });
 		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			$birth_country = 'Canada';
 			complain({ person => $person, warning => 'Assuming country of birth is Canada' });
@@ -1343,11 +1343,11 @@ sub print_person
 			# $death_country = 'United States';
 		# } elsif($c eq 'Texas') {
 			# $death_country = 'United States';
-		} elsif(($c =~ /New York\s*/) || ($c eq 'California') || ($c eq 'Minnesota')) {
-			complain({ person => $person, warning => "Country 'USA' missing from death record" });
-			# $death_country = 'United States';
 		} elsif(($c =~ /[A-Z]{2}/) && ($us->{code2state}{$c})) {
-			complain({ person => $person, warning => 'Assuming country of death is USA' });
+			complain({ person => $person, warning => "$c: assuming country of death is USA" });
+			# $death_country = 'United States';
+		} elsif($us->{state2code}{uc($c)}) {
+			complain({ person => $person, warning => "$c: assuming country of death is USA" });
 			# $death_country = 'United States';
 		} elsif($c eq 'United States of America') {
 			# $death_country = 'United States';
