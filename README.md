@@ -95,6 +95,7 @@ The options are:
     -t: print tomorrow's information, don't use with -a
     -T: print a list of towns, useful for finding typos and inconsistencies
     -s: only print entries matching the home person's surname
+    -S: create an SQLite database from a Gedcom
     -v: verbose - for debugging
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -W: don't colorize warning output

@@ -91,8 +91,8 @@ use Config::Auto;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfGgh:Hm:lLp:stTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
+getopts('aAbB:cCdDfGgh:Hm:lLp:sStTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -318,6 +318,7 @@ my $pdf;
 my $pdfpage;
 my @tmpfiles;
 my $pr;
+my $dbh;
 
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
@@ -343,6 +344,9 @@ if($opts{'W'} && !$opts{'w'}) {
 if($opts{'A'} && $opts{'G'}) {
 	die '-A doesn\'t make sense with the -G option';
 }
+if($opts{'S'} && $opts{'B'}) {
+	die '-S doesn\'t make sense with the -B option';
+}
 
 if($opts{'B'}) {
 	require PDF::API2;
@@ -359,9 +363,29 @@ if($opts{'B'}) {
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
 	die '-s only makes sense with the -B option';
+} elsif($opts{'S'}) {
+	require DBI;
+	DBI->import();
+
+	# FIXME - use basename of .ged with .sql suffix
+	my $sqlite_file = 'out.sql';
+
+	if(-e $sqlite_file) {
+		unlink $sqlite_file;
+	}
+
+	$dbh = DBI->connect("dbi:SQLite:dbname=$sqlite_file", undef, undef, { RaiseError => 1, AutoCommit => 0, synchronous => 0, locking_mode => 'EXCLUSIVE' });
+	$dbh->do('PRAGMA cache_size = 65536');
+	$dbh->do('PRAGMA journal_mode = OFF');
+
+	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
+	my @everyone = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1)->individuals();
+	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
 }
 
-if($opts{'A'} || $opts{'G'}) {
+if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
 	$opts{'a'} = 1;
 }
 if($opts{'x'}) {
@@ -738,7 +762,8 @@ if($opts{'H'}) {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
-		generate(everyone => \@everyone);
+		die;
+		generate(everyone => \@everyone, dbh => $dbh);
 
 		if($opts{'B'}) {
 			$pdf->save();
@@ -885,6 +910,63 @@ sub generate {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		if($me && ($person eq $me) && !$opts{'a'}) {
 			$index++;
+			next;
+		}
+
+		if($opts{'S'}) {
+			my $xref = $person->xref();
+			my $mother = $person->mother() || 'NULL';
+			my $father = $person->father() || 'NULL';
+
+			my $name = $person->name();
+			$name =~ s/\///g;
+			$nameparser->parse($name);
+			my %name_components = $nameparser->components();
+			my $firstname = $name_components{'given_name_1'};
+			my $surname = $name_components{'surname_1'};
+			if($surname) {
+				$surname =~ s/\'/\\\'/g;
+			} else {
+				$surname = 'NULL';
+			}
+
+			print "$firstname, $surname\n";
+
+			my $query = "INSERT INTO people('xref', 'surname', 'mother', 'father') VALUES (?, ?, ?, ?);";
+			my $statement = $dbh->prepare($query);
+			print "$xref: $surname\n";
+			die unless($statement->execute($xref, $surname, $mother, $father) == 1);
+
+			my @siblings = $person->siblings();
+			if(scalar(@siblings)) {
+				$query = "INSERT INTO siblings('xref', 'sibling') VALUES (?, ?);";
+				$statement = $dbh->prepare($query);
+				foreach my $s(@siblings) {
+					print ">$xref: $surname: ", $s->xref(), "\n";
+					die unless($statement->execute($xref, $s->xref()) == 1);
+				}
+			}
+
+			my @children = $person->children();
+			if(scalar(@children)) {
+				$query = "INSERT INTO children('xref', 'child') VALUES (?, ?);";
+				$statement = $dbh->prepare($query);
+				foreach my $c(@children) {
+					print ">>$xref: $surname: ", $c->xref(), "\n";
+					die unless($statement->execute($xref, $c->xref()) == 1);
+				}
+			}
+
+			my @spouses = $person->spouse();
+			if(scalar(@spouses)) {
+				$query = "INSERT INTO spouses('xref', 'spouse') VALUES (?, ?);";
+				$statement = $dbh->prepare($query);
+				foreach my $s(@spouses) {
+					print ">>>$xref: $surname: ", $s->xref(), "\n";
+					print $s->as_string(), "\n";
+					die unless($statement->execute($xref, $s->xref()) == 1);
+				}
+			}
 			next;
 		}
 
