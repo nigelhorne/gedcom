@@ -762,7 +762,6 @@ if($opts{'H'}) {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
-		die;
 		generate(everyone => \@everyone, dbh => $dbh);
 
 		if($opts{'B'}) {
@@ -896,6 +895,11 @@ if($opts{'T'}) {
 	print "</Document>\n</kml>\n" if($opts{'g'});
 }
 
+if($opts{'S'}) {
+	$dbh->commit();
+	$dbh->disconnect();
+}
+
 sub generate {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
@@ -913,8 +917,11 @@ sub generate {
 			next;
 		}
 
+		my $xref = $person->xref();
+		next if($printed{$xref});
+		$printed{$xref} = 1;
+
 		if($opts{'S'}) {
-			my $xref = $person->xref();
 			my $mother = $person->mother() || 'NULL';
 			my $father = $person->father() || 'NULL';
 
@@ -970,79 +977,77 @@ sub generate {
 			next;
 		}
 
-		if(!$printed{$person->{'xref'}}) {
-			if($pr) {
-				$| = 1;
-				$pr->update($index++);
-				$pr->write();
-				$| = 0;
-			}
-			if($opts{'B'}) {
-				if($opts{'G'}) {
-					if(stepsabove($person, $me, 0) != $generation) {
-						# FIXME:  only do this if the generation contains dead people if the -l flag is not given
-						$pdfpage = PDFPage->new();
-						$generation = stepsabove($person, $me, 0);
+		if($pr) {
+			$| = 1;
+			$pr->update($index++);
+			$pr->write();
+			$| = 0;
+		}
+		if($opts{'B'}) {
+			if($opts{'G'}) {
+				if(stepsabove($person, $me, 0) != $generation) {
+					# FIXME:  only do this if the generation contains dead people if the -l flag is not given
+					$pdfpage = PDFPage->new();
+					$generation = stepsabove($person, $me, 0);
 
-						my $font = $pdf->corefont('Times-Bold');
-						my $text = $pdfpage->text();
-						$text->font($font, 18);
+					my $font = $pdf->corefont('Times-Bold');
+					my $text = $pdfpage->text();
+					$text->font($font, 18);
 
-						$text->translate(300, $pdfpage->newline());
+					$text->translate(300, $pdfpage->newline());
 
-						my $t;
+					my $t;
 
-						if($generation >= 5) {
-							$t = ($generation - 2) . ' times great-grandchildren';
-						} elsif($generation == 1) {
-							$t = 'Children';
-						} elsif($generation == 2) {
-							$t = 'Grandchildren';
-						} elsif($generation == 3) {
-							$t = 'Great-grandchilden';
-						} elsif($generation == 4) {
-							$t = 'Great-great-grandchildren';
-						} else {
-							# May have found a spouse with the same name, so it shouldn't be included
-							next unless($person->father() || $person->mother());
-							die $person->as_string(), '/', $me->as_string(), "; -G ($generation): Doesn't yet support ancestors";
-						}
-						$text->text_center($t);
-
-						$text->font($params{'font'}, 12);
+					if($generation >= 5) {
+						$t = ($generation - 2) . ' times great-grandchildren';
+					} elsif($generation == 1) {
+						$t = 'Children';
+					} elsif($generation == 2) {
+						$t = 'Grandchildren';
+					} elsif($generation == 3) {
+						$t = 'Great-grandchilden';
+					} elsif($generation == 4) {
+						$t = 'Great-great-grandchildren';
+					} else {
+						# May have found a spouse with the same name, so it shouldn't be included
+						next unless($person->father() || $person->mother());
+						die $person->as_string(), '/', $me->as_string(), "; -G ($generation): Doesn't yet support ancestors";
 					}
-				} else {
-					my $surname = $person->surname() || '?';
-					my $initial = substr $surname, 0, 1;
-					if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
-						$pdfpage = PDFPage->new();
-						$surname_initial = $initial;
-					}
+					$text->text_center($t);
+
+					$text->font($params{'font'}, 12);
+				}
+			} else {
+				my $surname = $person->surname() || '?';
+				my $initial = substr $surname, 0, 1;
+				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
+					$pdfpage = PDFPage->new();
+					$surname_initial = $initial;
 				}
 			}
+		}
 
-			$params{'person'} = $person;
-			print_person(\%params);
+		$params{'person'} = $person;
+		print_person(\%params);
 
-			if($opts{'v'}) {
-				my $log = $geocoder->log();
-				$geocoder->flush();
-				foreach my $l(@{$log}) {
-					if($l->{'line'}) {
-						print 'Line ', $l->{'line'}, ': ';
-					}
-					if($l->{'error'}) {
-						print $l->{'error'}, ', ';
-					}
-					if($l->{geocoder}) {
-						if($l->{error}) {
-							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
-						} else {
-							print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, "\n";
-						}
+		if($opts{'v'}) {
+			my $log = $geocoder->log();
+			$geocoder->flush();
+			foreach my $l(@{$log}) {
+				if($l->{'line'}) {
+					print 'Line ', $l->{'line'}, ': ';
+				}
+				if($l->{'error'}) {
+					print $l->{'error'}, ', ';
+				}
+				if($l->{geocoder}) {
+					if($l->{error}) {
+						print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
 					} else {
-						print $l->{location}, ": cached\n";
+						print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, "\n";
 					}
+				} else {
+					print $l->{location}, ": cached\n";
 				}
 			}
 		}
@@ -1236,7 +1241,7 @@ sub print_person
 		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
 		if(index($str, $person->as_string()) != -1) {
-			$printed{$person->{'xref'}} = 1;
+			# $printed{$person->{'xref'}} = 1;
 			return;
 		}
 		$str .= '<br>';
@@ -1263,7 +1268,7 @@ sub print_person
 		}
 
 		$table->setCell($row, $column, $str);
-		$printed{$person->{'xref'}} = 1;
+		# $printed{$person->{'xref'}} = 1;
 		return;
 	}
 	my $person2;
@@ -4810,7 +4815,7 @@ sub print_person
 			print "\n";
 		}
 	}
-	$printed{$person->{'xref'}} = 1;
+	# $printed{$person->{'xref'}} = 1;
 
 	if($opts{'B'}) {
 		my @images;
@@ -5398,7 +5403,7 @@ sub Gedcom::Individual::as_sort_key
 
 	if((!defined($rc)) && $opts{'w'}) {
 		if($opts{'f'}) {
-			die "\nCan't determine the name for record " . $self->{'xref'};
+			die "\nCan't determine the name for record ", $self->{'xref'};
 		}
 		red_warning({ "Can't determine the name for record " . $self->{'xref'} });
 		return '';
