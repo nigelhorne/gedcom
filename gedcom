@@ -378,11 +378,11 @@ if($opts{'B'}) {
 	$dbh->do('PRAGMA cache_size = 65536');
 	$dbh->do('PRAGMA journal_mode = OFF');
 
-	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (10), death CHAR (10), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (12), death CHAR (12), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
 	my @everyone = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1)->individuals();
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
-	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, marriage CHAR (12), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
 }
 
 if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
@@ -987,12 +987,21 @@ sub generate {
 
 			my @spouses = $person->spouse();
 			if(scalar(@spouses)) {
-				$query = "INSERT INTO spouses('xref', 'spouse') VALUES (?, ?);";
+				$query = "INSERT INTO spouses('xref', 'spouse', 'marriage') VALUES (?, ?, ?);";
 				$statement = $dbh->prepare($query);
-				foreach my $s(@spouses) {
-					print ">>>$xref: $surname: ", $s->xref(), "\n";
-					print $s->as_string(), "\n";
-					die unless($statement->execute($xref, $s->xref()) == 1);
+				foreach my $spouse(@spouses) {
+					my $date = get_value({ person => $spouse, value => 'marriage date' });
+					if(!defined($date)) {
+						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
+							$date = $marriage->date();
+						}
+					}
+					if(!defined($date)) {
+						$date = 'NULL';
+					}
+					print ">>>$xref: $surname, $date: ", $spouse->xref(), "\n";
+					print $spouse->as_string(), "\n";
+					die unless($statement->execute($xref, $spouse->xref(), $date) == 1);
 				}
 			}
 			next;
