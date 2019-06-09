@@ -368,7 +368,7 @@ if($opts{'B'}) {
 	DBI->import();
 
 	# FIXME - use basename of .ged with .sql suffix
-	my $sqlite_file = 'out.sql';
+	my $sqlite_file = 'gedcom.sql';
 
 	if(-e $sqlite_file) {
 		unlink $sqlite_file;
@@ -382,7 +382,7 @@ if($opts{'B'}) {
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
 	my @everyone = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1)->individuals();
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
-	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, marriage CHAR (12), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, dateofmarriage CHAR (12), placeofmarriage CHAR (30), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
 }
 
 if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
@@ -987,21 +987,40 @@ sub generate {
 
 			my @spouses = $person->spouse();
 			if(scalar(@spouses)) {
-				$query = "INSERT INTO spouses('xref', 'spouse', 'marriage') VALUES (?, ?, ?);";
+				$query = "INSERT INTO spouses('xref', 'spouse', 'dateofmarriage', 'placeofmarriage') VALUES (?, ?, ?, ?);";
 				$statement = $dbh->prepare($query);
 				foreach my $spouse(@spouses) {
 					my $date = get_value({ person => $spouse, value => 'marriage date' });
-					if(!defined($date)) {
-						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
-							$date = $marriage->date();
-						}
+					my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
+					if((!defined($date)) && $marriage) {
+						$date = $marriage->date();
 					}
 					if(!defined($date)) {
 						$date = 'NULL';
 					}
-					print ">>>$xref: $surname, $date: ", $spouse->xref(), "\n";
-					print $spouse->as_string(), "\n";
-					die unless($statement->execute($xref, $spouse->xref(), $date) == 1);
+					my $place = get_value({
+						person => $person,
+						value => 'marriage place',
+					});
+					if((!defined($place)) && $marriage) {
+						$place = $marriage->place();
+					}
+					if($place) {
+						$place = place({
+							person => $person,
+							record => $place,
+							nopreposition => 1
+						});
+						$place =~ s/^\s+//g;
+					} else {
+						$place = 'NULL';
+					}
+					print ">>>$xref: $surname, $date, $place: ",
+						$spouse->xref(),
+						"\n",
+						$spouse->as_string(),
+						"\n";
+					die unless($statement->execute($xref, $spouse->xref(), $date, $place) == 1);
 				}
 			}
 			next;
