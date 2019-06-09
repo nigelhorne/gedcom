@@ -378,7 +378,7 @@ if($opts{'B'}) {
 	$dbh->do('PRAGMA cache_size = 65536');
 	$dbh->do('PRAGMA journal_mode = OFF');
 
-	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (10), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (10), death CHAR (10), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
 	my @everyone = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1)->individuals();
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
@@ -949,10 +949,21 @@ sub generate {
 			} else {
 				$dateofbirth = 'NULL';
 			}
-			my $query = "INSERT INTO people('xref', 'surname', 'mother', 'father', 'birth') VALUES (?, ?, ?, ?, ?);";
+
+			my $death = $person->get_record('death');
+			my $dateofdeath = get_value({ person => $person, value => 'death date' });
+			if((!$dateofdeath) && $death) {
+				$dateofdeath = $death->date();
+			}
+			if($dateofdeath) {
+				$dateofdeath =~ tr/\//-/;
+			} else {
+				$dateofdeath = 'NULL';
+			}
+			my $query = "INSERT INTO people('xref', 'surname', 'mother', 'father', 'birth', 'death') VALUES (?, ?, ?, ?, ?, ?);";
 			my $statement = $dbh->prepare($query);
 			print "$xref: $surname\n";
-			die unless($statement->execute($xref, $surname, $mother, $father, $dateofbirth) == 1);
+			die unless($statement->execute($xref, $surname, $mother, $father, $dateofbirth, $dateofdeath) == 1);
 
 			my @siblings = $person->siblings();
 			if(scalar(@siblings)) {
