@@ -380,9 +380,9 @@ if($opts{'B'}) {
 
 	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (12), death CHAR (12), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
-	my @everyone = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1)->individuals();
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, dateofmarriage CHAR (12), placeofmarriage CHAR (30), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE residences(xref CHAR (6), date CHAR (12), place CHAR (30), FOREIGN KEY (xref) REFERENCES people(xref));');
 }
 
 if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
@@ -1021,6 +1021,27 @@ sub generate {
 						$spouse->as_string(),
 						"\n";
 					die unless($statement->execute($xref, $spouse->xref(), $date, $place) == 1);
+				}
+			}
+			my @residences = get_all_residences($person);
+			if(scalar(@residences)) {
+				$query = "INSERT INTO residences('xref', 'date', 'place') VALUES (?, ?, ?);";
+				$statement = $dbh->prepare($query);
+				foreach my $residence(@residences) {
+					my $date = $residence->date() || 'NULL';
+					my $place;
+					if($residence->place()) {
+						$place = place({
+							person => $person,
+							record => $residence,
+							nopreposition => 1
+						});
+						$place =~ s/^\s+//g;
+					} else {
+						$place = 'NULL';
+					}
+					print ">>>>$xref: $date, $place\n";
+					die unless($statement->execute($xref, $date, $place) == 1);
 				}
 			}
 			next;
