@@ -208,22 +208,22 @@ if($opts{'w'} || $opts{'B'}) {
 		Locale::US->import();
 
 		$us = Locale::US->new();
-
-		require LWP::UserAgent::Cached;
-		LWP::UserAgent::Cached->import();
-
-		if(my $e = $ENV{'CACHEDIR'}) {
-			$cachedir = File::Spec->catfile($e, 'lwp');
-		} else {
-			$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
-		}
-		mkdir $cachedir if(!-d $cachedir);
-		$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
-			agent => basename($0),
-			keep_alive => 1
-		);
-		$cached_browser->env_proxy(1);
 	}
+
+	require LWP::UserAgent::Cached;
+	LWP::UserAgent::Cached->import();
+
+	if(my $e = $ENV{'CACHEDIR'}) {
+		$cachedir = File::Spec->catfile($e, 'lwp');
+	} else {
+		$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+	}
+	mkdir $cachedir if(!-d $cachedir);
+	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
+		agent => basename($0),
+		keep_alive => 1
+	);
+	$cached_browser->env_proxy(1);
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
