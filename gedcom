@@ -222,6 +222,7 @@ if($opts{'w'} || $opts{'B'}) {
 			agent => basename($0),
 			keep_alive => 1
 		);
+		$cached_browser->env_proxy(1);
 	}
 }
 
@@ -4930,7 +4931,7 @@ sub print_person
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
 
-					my $resp = $browser->get($file);
+					my $resp = $cached_browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
 						$title = $file if(!defined($title));
 						my $tmp = File::Temp->new(UNLINK => 0);
