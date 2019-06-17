@@ -6232,7 +6232,7 @@ sub notes {
 			}
 			$note =~ s/\r//g;
 			if(!$paragraph) {
-				$note =~ tr/\n/ /;
+				$note =~ s/\n/; /g;
 			}
 			$note =~ s/\s+$//g;
 			$note =~ s/\.$//;
