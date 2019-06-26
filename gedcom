@@ -3231,7 +3231,6 @@ sub print_person
 
 			}
 			my $count = 0;
-			my $have_printed = 0;
 			my $prev_residence;
 			my $spdeath_dt;
 			if($spouses[0]) {
