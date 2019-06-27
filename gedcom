@@ -380,11 +380,12 @@ if($opts{'B'}) {
 	$dbh->do('PRAGMA cache_size = 65536');
 	$dbh->do('PRAGMA journal_mode = OFF');
 
-	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (12), death CHAR (12), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE people(xref CHAR(6) NOT NULL, givennames VARCHAR, surname VARCHAR, mother CHAR(6), father CHAR(6), birth CHAR (12), death CHAR (12), PRIMARY KEY (xref), FOREIGN KEY (mother) REFERENCES people(xref), FOREIGN KEY (father) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, dateofmarriage CHAR (12), placeofmarriage CHAR (30), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
-	$dbh->do('CREATE TABLE residences(xref CHAR (6), date CHAR (12), place CHAR (30), FOREIGN KEY (xref) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE locations(xref CHAR (6), date CHAR (12), place CHAR (30), FOREIGN KEY (xref) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE occupations(xref CHAR (6), occupation CHAR (20), FOREIGN KEY (xref) REFERENCES people(xref));');
 }
 
 if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
@@ -927,11 +928,23 @@ sub generate {
 			my $mother = $person->mother() || 'NULL';
 			my $father = $person->father() || 'NULL';
 
+			if($mother ne 'NULL') {
+				$mother = $mother->xref();
+			}
+			if($father ne 'NULL') {
+				$father = $father->xref();
+			}
+
 			my $name = $person->name();
 			$name =~ s/\///g;
 			$nameparser->parse($name);
 			my %name_components = $nameparser->components();
-			my $firstname = $name_components{'given_name_1'};
+			my $firstname = $person->given_names() // $name_components{'given_name_1'};
+			if($firstname) {
+				$firstname =~ s/\'/\\\'/g;
+			} else {
+				$firstname = 'NULL';
+			}
 			my $surname = $name_components{'surname_1'};
 			if($surname) {
 				$surname =~ s/\'/\\\'/g;
@@ -962,10 +975,10 @@ sub generate {
 			} else {
 				$dateofdeath = 'NULL';
 			}
-			my $query = "INSERT INTO people('xref', 'surname', 'mother', 'father', 'birth', 'death') VALUES (?, ?, ?, ?, ?, ?);";
+			my $query = "INSERT INTO people('xref', 'givennames', 'surname', 'mother', 'father', 'birth', 'death') VALUES (?, ?, ?, ?, ?, ?, ?);";
 			my $statement = $dbh->prepare($query);
-			print "$xref: $surname\n";
-			die unless($statement->execute($xref, $surname, $mother, $father, $dateofbirth, $dateofdeath) == 1);
+			print "$xref: $firstname $surname\n";
+			die unless($statement->execute($xref, $firstname, $surname, $mother, $father, $dateofbirth, $dateofdeath) == 1);
 
 			my @siblings = $person->siblings();
 			if(scalar(@siblings)) {
@@ -1027,7 +1040,7 @@ sub generate {
 			}
 			my @residences = get_all_residences($person);
 			if(scalar(@residences)) {
-				$query = "INSERT INTO residences('xref', 'date', 'place') VALUES (?, ?, ?);";
+				$query = "INSERT INTO locations('xref', 'date', 'place') VALUES (?, ?, ?);";
 				$statement = $dbh->prepare($query);
 				foreach my $residence(@residences) {
 					my $date = $residence->date() || 'NULL';
@@ -1046,6 +1059,27 @@ sub generate {
 					die unless($statement->execute($xref, $date, $place) == 1);
 				}
 			}
+			my @occupations = $person->get_value('occupation');
+			while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
+				shift @occupations;
+			}
+			while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
+				shift @occupations;
+			}
+			if(scalar(@occupations)) {
+				if($occupations[0] =~ /works? on (.+)/i) {
+					$occupations[0] = "$1 worker";
+				} elsif($occupations[0] eq 'Ag Lab') {
+					$occupations[0] = 'Agricultural Labourer';
+				}
+				$query = "INSERT INTO occupations('xref', 'occupation') VALUES (?, ?);";
+				$statement = $dbh->prepare($query);
+				foreach my $occupation(@occupations) {
+					print ">>>>>$xref: $occupation\n";
+					die unless($statement->execute($xref, $occupation) == 1);
+				}
+			}
+
 			next;
 		}
 
@@ -2000,14 +2034,16 @@ sub print_person
 		my $bio = "\t";
 
 		if($occupations[0]) {
+			if($occupations[0] =~ /^works on (.+)/i) {
+				$occupations[0] = "$1 worker";
+			} elsif($occupations[0] eq 'Ag Lab') {
+				$occupations[0] = 'Agricultural Labourer';
+			}
 			if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
 				$bio .= 'A';
-				if($occupations[0] =~ /^works on (.+)/i) {
-					$occupations[0] = "$1 worker";
-				}
 				if($occupations[0] =~ /^[aeiou]/i) {
 					$bio .= 'n';
 				}
@@ -4939,7 +4975,7 @@ sub print_person
 						$title = $file if(!defined($title));
 						my $tmp = File::Temp->new(UNLINK => 0);
 						$filename = $tmp->filename();
-						open(my $fh, '>', $tmp->filename());
+						open(my $fh, '>', $filename);
 						print $fh $resp->decoded_content();
 						close $fh;
 						$orig_filename = $filename;
