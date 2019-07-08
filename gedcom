@@ -1811,11 +1811,7 @@ sub print_person
 	$marriage_dt = date_to_datetime(date => $dateofmarriage);
 
 	if($birth_dt && $marriage_dt && $opts{'w'} && ($marriage_dt < ($birth_dt + $sixteenyears))) {
-		if($opts{'f'}) {
-			die $person->as_string(),
-				': married when less than 16 years old';
-		}
-		red_warning({
+		complain({
 			person => $person,
 			warning => 'married when less than 16 years old'
 		});
@@ -2618,6 +2614,22 @@ sub print_person
 				}
 			}
 		}
+
+		my @education = $person->education();
+
+		if(scalar(@education)) {
+			if($end_of_sentence) {
+				$bio .= " $pronoun";
+			} else {
+				$bio .= ' and';
+			}
+			# FIXME: do all schools
+			$bio .= ' went to '.
+				place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }) .
+				'. ';
+			$end_of_sentence = 1;
+		}
+
 		my @childrenunknownparent;
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
@@ -7118,7 +7130,7 @@ sub get_all_occupations
 
 	die "Usage: get_all_occupations(\$person')" unless($person);
 
-	my @occupations = $person->get_value('occupation');
+	my @occupations = get_value({ person => $person, value => 'occupation' });
 	while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
 		shift @occupations;
 	}
@@ -7128,7 +7140,7 @@ sub get_all_occupations
 	while($occupations[0] && ($occupations[0] =~ /Unpaid domestic duties/i)) {
 		shift @occupations;
 	}
-	if(scalar(@occupations)) {
+	if(scalar(@occupations) && defined($occupations[0])) {
 		if($occupations[0] =~ /works? on (.+)/i) {
 			$occupations[0] = "$1 worker";
 		} elsif(($occupations[0] eq 'Ag Lab') ||
