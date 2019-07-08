@@ -2624,7 +2624,7 @@ sub print_person
 				$bio .= ' and';
 			}
 			# FIXME: do all schools
-			$bio .= ' went to '.
+			$bio .= ' went to'.
 				place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }) .
 				'. ';
 			$end_of_sentence = 1;
@@ -7131,6 +7131,11 @@ sub get_all_occupations
 	die "Usage: get_all_occupations(\$person')" unless($person);
 
 	my @occupations = get_value({ person => $person, value => 'occupation' });
+
+	if((scalar(@occupations) == 1) && !defined($occupations[0])) {
+		return;
+	}
+
 	while($occupations[0] && ($occupations[0] =~ /^scho(ol|lar)/i)) {
 		shift @occupations;
 	}
@@ -7140,7 +7145,7 @@ sub get_all_occupations
 	while($occupations[0] && ($occupations[0] =~ /Unpaid domestic duties/i)) {
 		shift @occupations;
 	}
-	if(scalar(@occupations) && defined($occupations[0])) {
+	if(scalar(@occupations)) {
 		if($occupations[0] =~ /works? on (.+)/i) {
 			$occupations[0] = "$1 worker";
 		} elsif(($occupations[0] eq 'Ag Lab') ||
