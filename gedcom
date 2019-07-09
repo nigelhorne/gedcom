@@ -3755,11 +3755,9 @@ sub print_person
 									$residencestring .= '-';
 									$print_year_only = 1;
 								}
-							} else {
-								if($print_year_only && $rdate) {
-									$residencestring .= $rdate;
-									$print_year_only = 0;
-								}
+							} elsif($print_year_only && $rdate) {
+								$residencestring .= $rdate;
+								$print_year_only = 0;
 							}
 						}
 					} elsif($print_year_only) {
@@ -3798,6 +3796,7 @@ sub print_person
 					$bio .= 'During ' . lc($person->possessive()) . ' life';
 				}
 
+				# print Data::Dumper->new([\@residencestringarray])->Dump();
 				$bio .= ', ' . lcfirst($pronoun) . ' was living ' .
 					Lingua::EN::Inflect::WORDLIST(@residencestringarray, {final_sep => ''}) . '. ';
 
@@ -3819,16 +3818,10 @@ sub print_person
 				last;
 			}
 			if(!date_parser_cached(date => $date)) {
-				if($opts{'f'}) {
-					die $person->as_string(),
-						": Event has an invalid date of $date";
-				}
-				if($opts{'w'}) {
-					red_warning({
-						person => $person,
-						warning => "Event has an invalid date of $date"
-					});
-				}
+				complain({
+					person => $person,
+					warning => "Event has an invalid date of $date"
+				});
 				$all_events_have_date = 0;
 				last;
 			}
