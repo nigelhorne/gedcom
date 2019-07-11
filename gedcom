@@ -7341,7 +7341,6 @@ sub datecmp
 	return $left <=> $right;
 }
 
-
 # FIXME: once RT127603 has been fixed
 sub Geo::Coder::PlaceFinder::ua
 {
