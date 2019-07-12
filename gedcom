@@ -322,10 +322,20 @@ my @tmpfiles;
 my $pr;
 my $dbh;
 
+if($opts{'B'} || $opts{'a'}) {
+	memoize('Gedcom::Individual::as_string');
+	memoize('stepsabove');
+	memoize('normalize_name');	# Speeds up sort with -B a lot
+	memoize('date_to_datetime');
+}
+
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
 unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
-	@everyone = $ged->individuals();
+	# @everyone = sort {
+		# $a->as_string({ include_years => 1, middle_names => 1 }) cmp $b->as_string({ include_years => 1, middle_names => 1 })
+		# } $ged->individuals();
+	@everyone = $ged->indiciduals();
 }
 
 if($opts{'c'} && !$opts{'d'}) {
@@ -405,13 +415,6 @@ if($opts{'T'}) {
 		String::ProgressBar->import();
 	}
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
-}
-
-if($opts{'B'} || $opts{'a'}) {
-	memoize('Gedcom::Individual::as_string');
-	memoize('stepsabove');
-	memoize('normalize_name');	# Speeds up sort with -B a lot
-	memoize('date_to_datetime');
 }
 
 my $dot;
