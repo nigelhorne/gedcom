@@ -257,7 +257,6 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 		->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
 }
 
-
 $geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s],\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder })
 	->push(Geo::Coder::Free::Local->new());
 
