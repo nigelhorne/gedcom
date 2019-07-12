@@ -335,7 +335,7 @@ unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 	# @everyone = sort {
 		# $a->as_string({ include_years => 1, middle_names => 1 }) cmp $b->as_string({ include_years => 1, middle_names => 1 })
 		# } $ged->individuals();
-	@everyone = $ged->indiciduals();
+	@everyone = $ged->individuals();
 }
 
 if($opts{'c'} && !$opts{'d'}) {
