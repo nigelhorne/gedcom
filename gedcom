@@ -4285,7 +4285,7 @@ sub print_person
 					}
 				} else {
 					$bio .= " $pronoun " .
-						((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? 'est enterré ' :  'is buried ') .
+						((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? 'est enterré' :  'is buried') .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
