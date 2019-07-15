@@ -1917,6 +1917,9 @@ sub print_person
 		}
 
 		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');
+		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			$pronoun = ($pronoun eq 'He') ? 'Il' : 'Elle';
+		}
 		my $sex = $fetcher->get(object => $person, message => 'sex');
 
 		if($opts{'w'} && $firstname) {
@@ -4281,7 +4284,8 @@ sub print_person
 						$bio .= place({ person => $person, place => $placeofburial });
 					}
 				} else {
-					$bio .= " $pronoun is buried" .
+					$bio .= " $pronoun " .
+						((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? 'est enterré ' :  'is buried ') .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
@@ -4363,7 +4367,8 @@ sub print_person
 				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) && $burial->address() && (!$death->address())) {
 					$bio .= ' and is buried there at ' . $burial->address();
 				} else {
-					$bio .= ' and is buried' . place($opts);
+					$bio .= ((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? ' et est enterré ' :  ' and is buried ') .
+						place($opts);
 				}
 				if(my $b = notes({ record => $burial, paragraph => 0 })) {
 					$b =~ tr/\r//;
