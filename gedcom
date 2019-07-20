@@ -2162,7 +2162,7 @@ sub print_person
 							$bio .= 'n';
 						}
 						$bio .= ' ';
-						if(defined($ENV{'LANG'})) {
+						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
 							if($ENV{'LANG'} =~ /^en_US/) {
 								$bio .= Lingua::EN::ABC::b2a(lc($occupations[0]));
 							} elsif($ENV{'LANG'} =~ /^en_GB/) {
@@ -6391,7 +6391,7 @@ sub notes {
 	$rc =~ s/[\x91\x92]/'/g;
 	$rc =~ s/[\xc2\xe2]//g;
 
-	if(defined($ENV{'LANG'})) {
+	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
 		if($ENV{'LANG'} =~ /^en_US/) {
 			$rc = Lingua::EN::ABC::b2a($rc);
 		} elsif($ENV{'LANG'} =~ /^en_GB/) {
