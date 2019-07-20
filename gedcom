@@ -2483,10 +2483,7 @@ sub print_person
 					if($opts{'w'} && $yob && ($dateofbaptism =~ /(\d{3,4})$/)) {
 						# must_predate doesn't work when only years are known
 						if($1 < $yob) {
-							if($opts{'f'}) {
-								die $person->as_string(), ": Year of baptism $1 is before the year of birth $yob";
-							}
-							red_warning({
+							complain({
 								person => $person,
 								warning => "Year of baptism $1 is before the year of birth $yob"
 							});
@@ -2937,17 +2934,14 @@ sub print_person
 						# may be the case where someone married more than once,
 						# and has a child by a 3rd unknown (or unfound) person
 						if($opts{'w'}) {
-							if($opts{'f'}) {
-								die $person->as_string(), ': one of the parents of ', ($numberofchildren - $childrenseen), ' children is not known';
-							}
 							if(($numberofchildren - $childrenseen) == 1) {
 								if($unknown) {
-									red_warning({ person => $person, warning => 'One of the parents of ' . $unknown->as_string() . ' is not known'});
+									complain({ person => $person, warning => 'One of the parents of ' . $unknown->as_string() . ' is not known'});
 								} else {
-									red_warning({ person => $person, warning => 'One of the parents of 1 child is not known'});
+									complain({ person => $person, warning => 'One of the parents of 1 child is not known'});
 								}
 							} else {
-								red_warning({ person => $person, warning => 'One of the parents of ' . ($numberofchildren - $childrenseen) . ' children is not known'});
+								complain({ person => $person, warning => 'One of the parents of ' . ($numberofchildren - $childrenseen) . ' children is not known'});
 							}
 						}
 					} else {
@@ -3117,10 +3111,8 @@ sub print_person
 							$place = getaddress($address);
 						} elsif($place) {
 							$place = "$address, $place";
-						} elsif($opts{'f'}) {
-							die $person->string(), ": address set to $address but place is empty";
 						} else {
-							red_warning({
+							complain({
 								person => $person,
 								warning => "address set to $address but place is empty"
 							});
@@ -3889,22 +3881,12 @@ sub print_person
 				if(defined($departure->place())) {
 					$bio .= ' from ' . $departure->place();
 				} else {
-					if($opts{'f'}) {
-						die $person->as_string() . ': departure record has no location';
-					}
-					if($opts{'w'}) {
-						red_warning({ person => $person, warning => 'Departure record has no location' });
-					}
+					complain({ person => $person, warning => 'Departure record has no location' });
 				}
 				if(defined($arrival->place())) {
 					$bio .= ' to ' . $arrival->place();
 				} else {
-					if($opts{'f'}) {
-						die $person->as_string() . ': arrival record has no location';
-					}
-					if($opts{'w'}) {
-						red_warning({ person => $person, warning => 'Arrival record has no location' });
-					}
+					complain({ person => $person, warning => 'Arrival record has no location' });
 				}
 
 				if(defined($dod) && !$only_have_departure_year) {
@@ -4540,10 +4522,7 @@ sub print_person
 				if($opts{'w'}) {
 					my $u = URI->new($orig_uri);
 					if($u && (ref($u) ne 'URI::_generic') && !head($orig_uri)) {
-						if($opts{'f'}) {
-							die $person->as_string, ": $orig_uri: not found";
-						}
-						red_warning({ person => $person, warning => "$orig_uri: not found" });
+						complain({ person => $person, warning => "$orig_uri: not found" });
 					}
 				}
 				return $orig_uri;
@@ -5572,7 +5551,12 @@ sub Gedcom::Individual::relationship_up
 		if($person1 eq $other) {
 			# Direct ancestor
 			my $steps = stepsabove($self, $other, 0);
-			my $title = ($sex eq 'M') ? 'father' : 'mother';
+			my $title;
+			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				$title = ($sex eq 'M') ? 'père' : 'mère';
+			} else {
+				$title = ($sex eq 'M') ? 'father' : 'mother';
+			}
 			if($steps >= 5) {
 				$steps -= 2;
 				return "$steps times great-grand$title";
@@ -5620,7 +5604,7 @@ sub Gedcom::Individual::relationship_up
 				return if($steps2 > 23);
 
 				# TODO: It would be nice to do this as an algorithm
-				my %male_relationships = (
+				my %en_male_relationships = (
 					1 << 24 | 1 => 'brother',
 					1 << 24 | 2 => 'nephew',
 					1 << 24 | 3 => 'great-nephew',
@@ -5695,7 +5679,82 @@ sub Gedcom::Individual::relationship_up
 					17 << 24 | 1 => 'fifteen times great-uncle',
 					18 << 24 | 1 => 'sixteen times great-uncle',
 				);
-				my %female_relationships = (
+				my %fr_male_relationships = (
+					1 << 24 | 1 => 'frère',
+					1 << 24 | 2 => 'nephew',
+					1 << 24 | 3 => 'great-nephew',
+					1 << 24 | 4 => 'great-great-nephew',
+					2 << 24 | 1 => 'oncle',
+					2 << 24 | 2 => 'cousin',
+					2 << 24 | 3 => 'first cousin once-removed',
+					2 << 24 | 4 => 'first cousin twice-removed',
+					2 << 24 | 5 => 'first cousin three-times-removed',
+					3 << 24 | 1 => 'great-uncle',
+					3 << 24 | 2 => 'first cousin once-removed',
+					3 << 24 | 3 => 'second cousin',
+					3 << 24 | 4 => 'second cousin once-removed',
+					3 << 24 | 5 => 'second cousin twice-removed',
+					3 << 24 | 6 => 'second cousin three-times-removed',
+					4 << 24 | 1 => 'great-great-uncle',
+					4 << 24 | 2 => 'first cousin twice-removed',
+					4 << 24 | 3 => 'second cousin once-removed',
+					4 << 24 | 4 => 'third cousin',
+					4 << 24 | 5 => 'third cousin once-removed',
+					4 << 24 | 6 => 'third cousin twice-removed',
+					4 << 24 | 7 => 'third cousin three-times-removed',
+					5 << 24 | 1 => 'third times great-uncle',
+					5 << 24 | 2 => 'first cousin three-times-removed',
+					5 << 24 | 3 => 'second cousin twice-removed',
+					5 << 24 | 4 => 'third cousin once-removed',
+					5 << 24 | 5 => 'fourth cousin',
+					5 << 24 | 6 => 'fourth cousin once-removed',
+					5 << 24 | 7 => 'fourth cousin twice-removed',
+					6 << 24 | 1 => 'four times great-uncle',
+					6 << 24 | 2 => 'first cousin four-times-removed',
+					6 << 24 | 3 => 'second cousin three-times-removed',
+					6 << 24 | 4 => 'third cousin twice-removed',
+					6 << 24 | 5 => 'fourth cousin once-removed',
+					6 << 24 | 6 => 'fifth cousin',
+					6 << 24 | 7 => 'fifth cousin once-removed',
+					6 << 24 | 8 => 'fifth cousin twice-removed',
+					7 << 24 | 1 => 'fifth times great-uncle',
+					7 << 24 | 2 => 'first cousin five-times-removed',
+					7 << 24 | 3 => 'second cousin four-times-removed',
+					7 << 24 | 4 => 'third cousin three-times-removed',
+					7 << 24 | 5 => 'fourth cousin twice-removed',
+					7 << 24 | 6 => 'fifth cousin once-removed',
+					7 << 24 | 7 => 'sixth cousin',
+					7 << 24 | 8 => 'sixth cousin once-removed',
+					8 << 24 | 1 => 'six times great-uncle',
+					8 << 24 | 2 => 'first cousin six-times-removed',
+					8 << 24 | 3 => 'second cousin five-times-removed',
+					8 << 24 | 4 => 'third cousin four-times-removed',
+					9 << 24 | 1 => 'seven times great-uncle',
+					9 << 24 | 2 => 'first cousin seven-times-removed',
+					9 << 24 | 3 => 'second cousin six-times-removed',
+					9 << 24 | 4 => 'third cousin five-times-removed',
+					10 << 24 | 1 => 'eight times great-uncle',
+					10 << 24 | 2 => 'first cousin eight-times-removed',
+					10 << 24 | 3 => 'second cousin seven-times-removed',
+					10 << 24 | 4 => 'third cousin six-times-removed',
+					11 << 24 | 1 => 'nine times great-uncle',
+					11 << 24 | 2 => 'first cousin nine-times-removed',
+					11 << 24 | 3 => 'second cousin eight-times-removed',
+					11 << 24 | 4 => 'third cousin seven-times-removed',
+					11 << 24 | 5 => 'fourth cousin six-times-removed',
+					12 << 24 | 1 => 'ten times great-uncle',
+					12 << 24 | 2 => 'first cousin ten-times-removed',
+					12 << 24 | 3 => 'second cousin nine-times-removed',
+					12 << 24 | 4 => 'third cousin eight-times-removed',
+					12 << 24 | 5 => 'fourth cousin seven-times-removed',
+					13 << 24 | 1 => 'eleven times great-uncle',
+					14 << 24 | 1 => 'twelve times great-uncle',
+					15 << 24 | 1 => 'thirteen times great-uncle',
+					16 << 24 | 1 => 'fourteen times great-uncle',
+					17 << 24 | 1 => 'fifteen times great-uncle',
+					18 << 24 | 1 => 'sixteen times great-uncle',
+				);
+				my %en_female_relationships = (
 					1 << 24 | 1 => 'sister',
 					1 << 24 | 2 => 'niece',
 					1 << 24 | 3 => 'great-niece',
@@ -5770,10 +5829,92 @@ sub Gedcom::Individual::relationship_up
 					17 << 24 | 1 => 'fifteen times great-aunt',
 					18 << 24 | 1 => 'sixteen times great-aunt',
 				);
+				my %fr_female_relationships = (
+					1 << 24 | 1 => 'sœur',
+					1 << 24 | 2 => 'niece',
+					1 << 24 | 3 => 'great-niece',
+					1 << 24 | 4 => 'great-great-niece',
+					2 << 24 | 1 => 'aunt',
+					2 << 24 | 2 => 'cousin',
+					2 << 24 | 3 => 'first cousin once-removed',
+					2 << 24 | 4 => 'first cousin twice-removed',
+					2 << 24 | 5 => 'first cousin three-times-removed',
+					3 << 24 | 1 => 'great-aunt',
+					3 << 24 | 2 => 'first cousin once-removed',
+					3 << 24 | 3 => 'second cousin',
+					3 << 24 | 4 => 'second cousin once-removed',
+					3 << 24 | 5 => 'second cousin twice-removed',
+					3 << 24 | 6 => 'second cousin three-times-removed',
+					4 << 24 | 1 => 'great-great-aunt',
+					4 << 24 | 2 => 'first cousin twice-removed',
+					4 << 24 | 3 => 'second cousin once-removed',
+					4 << 24 | 4 => 'third cousin',
+					4 << 24 | 5 => 'third cousin once-removed',
+					4 << 24 | 6 => 'third cousin twice-removed',
+					4 << 24 | 7 => 'third cousin three-times-removed',
+					5 << 24 | 1 => 'third times great-aunt',
+					5 << 24 | 2 => 'first cousin three-times-removed',
+					5 << 24 | 3 => 'second cousin twice-removed',
+					5 << 24 | 4 => 'third cousin once-removed',
+					5 << 24 | 5 => 'fourth cousin',
+					5 << 24 | 6 => 'fourth cousin once-removed',
+					5 << 24 | 7 => 'fourth cousin twice-removed',
+					6 << 24 | 1 => 'four times great-aunt',
+					6 << 24 | 2 => 'first cousin four-times-removed',
+					6 << 24 | 3 => 'second cousin three-times-removed',
+					6 << 24 | 4 => 'third cousin twice-removed',
+					6 << 24 | 5 => 'fourth cousin once-removed',
+					6 << 24 | 6 => 'fifth cousin',
+					6 << 24 | 7 => 'fifth cousin once-removed',
+					6 << 24 | 8 => 'fifth cousin twice-removed',
+					7 << 24 | 1 => 'fifth times great-uncle',
+					7 << 24 | 2 => 'first cousin five-times-removed',
+					7 << 24 | 3 => 'second cousin four-times-removed',
+					7 << 24 | 4 => 'third cousin three-times-removed',
+					7 << 24 | 5 => 'fourth cousin twice-removed',
+					7 << 24 | 6 => 'fifth cousin once-removed',
+					7 << 24 | 7 => 'sixth cousin',
+					7 << 24 | 8 => 'sixth cousin once-removed',
+					8 << 24 | 1 => 'six times great-aunt',
+					8 << 24 | 2 => 'first cousin six-times-removed',
+					8 << 24 | 3 => 'second cousin five-times-removed',
+					8 << 24 | 4 => 'third cousin four-times-removed',
+					9 << 24 | 1 => 'seven times great-aunt',
+					9 << 24 | 2 => 'first cousin seven-times-removed',
+					9 << 24 | 3 => 'second cousin six-times-removed',
+					9 << 24 | 4 => 'third cousin five-times-removed',
+					10 << 24 | 1 => 'eight times great-aunt',
+					10 << 24 | 2 => 'first cousin eight-times-removed',
+					10 << 24 | 3 => 'second cousin seven-times-removed',
+					10 << 24 | 4 => 'third cousin six-times-removed',
+					11 << 24 | 1 => 'nine times great-aunt',
+					11 << 24 | 2 => 'first cousin nine-times-removed',
+					11 << 24 | 3 => 'second cousin eight-times-removed',
+					11 << 24 | 4 => 'third cousin seven-times-removed',
+					11 << 24 | 5 => 'fourth cousin six-times-removed',
+					12 << 24 | 1 => 'ten times great-aunt',
+					12 << 24 | 2 => 'first cousin ten-times-removed',
+					12 << 24 | 3 => 'second cousin nine-times-removed',
+					12 << 24 | 4 => 'third cousin eight-times-removed',
+					12 << 24 | 5 => 'fourth cousin seven-times-removed',
+					13 << 24 | 1 => 'eleven times great-aunt',
+					14 << 24 | 1 => 'twelve times great-aunt',
+					15 << 24 | 1 => 'thirteen times great-aunt',
+					16 << 24 | 1 => 'fourteen times great-aunt',
+					17 << 24 | 1 => 'fifteen times great-aunt',
+					18 << 24 | 1 => 'sixteen times great-aunt',
+				);
 
-				my $rc = ($sex eq 'M') ?
-					$male_relationships{($steps1 << 24) | $steps2} :
-					$female_relationships{($steps1 << 24) | $steps2};
+				my $rc;
+				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					$rc = ($sex eq 'M') ?
+						$fr_male_relationships{($steps1 << 24) | $steps2} :
+						$fr_female_relationships{($steps1 << 24) | $steps2};
+				} else {
+					$rc = ($sex eq 'M') ?
+						$en_male_relationships{($steps1 << 24) | $steps2} :
+						$en_female_relationships{($steps1 << 24) | $steps2};
+				}
 				if(defined($rc) && ($rc =~ /cousin/)) {
 					my $myfather = $self->father();
 					my $mymother = $self->mother();
@@ -5953,12 +6094,7 @@ sub year
 	if(($string =~ /^\d/) && ($string !~ /[a-z]$/i)) {
 		my $person = $params{'person'};
 		if($string =~ /^31 Nov/) {
-			if($opts{'f'}) {
-				die $person->as_string(), ": $string is invalid, there are only 30 days in November";
-			}
-			if($opts{'w'}) {
-				red_warning({ person => $person, warning => "$string is invalid, there are only 30 days in November" });
-			}
+			complain({ person => $person, warning => "$string is invalid, there are only 30 days in November" });
 			return;
 		}
 		if(my $d = date_parser_cached(date => $string)) {
@@ -6664,10 +6800,7 @@ sub must_predate
 	my $d2 = $dfn->parse_datetime($predate);
 
 	if($d1->year() > $d2->year()) {
-		if($opts{'f'}) {
-			die $person->as_string(), ": Something is wrong with the date $date which should be before $predate";
-		}
-		red_warning({
+		complain({
 			person => $person,
 			warning => "something is wrong with the date $date which should be before $predate"
 		});
@@ -6941,12 +7074,7 @@ sub print_graphviz
 		if(defined($gender)) {
 			$gender = $gender;
 		} else {
-			if($opts{'f'}) {
-				die "\n", $person->as_string(), ": unknown sex\n";
-			}
-			if($opts{'w'}) {
-				red_warning({ person => $person, warning => 'unknown sex' });
-			}
+			complain({ person => $person, warning => 'unknown sex' });
 			$gender = 'M';	# Avoid "Use of uninitialized value" in Tree::Family
 		}
 		$colour = ($gender eq 'M' ? '#093AB5' : '#C666B8');
