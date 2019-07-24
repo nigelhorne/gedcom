@@ -2209,6 +2209,9 @@ sub print_person
 				$bio .= ', ';
 				$printed_comma = 1;
 			}
+			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				$bio =~ s/^\tThe child of /\tL'enfant de /;
+			}
 		}
 
 		my $haveprintedspousename;
