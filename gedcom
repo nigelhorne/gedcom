@@ -7306,7 +7306,7 @@ sub get_all_occupations
 		} else {
 			complain({
 				person => $person,
-				warning => 'occupation is empty'
+				warning => 'Occupation is empty'
 			});
 			shift @occupations;
 		}
