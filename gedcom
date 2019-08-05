@@ -2343,10 +2343,19 @@ sub print_person
 			if($dateofbirth || $placeofbirth) {
 				$bio .= ',' if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
 
-				$bio .= ' was born';
+				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					$bio .= ' est ';
+					$bio .= ($sex eq 'M' ? 'né' : 'né');
+				} else {
+					$bio .= ' was born';
+				}
 				if($placeofbirth) {
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
-						$bio .= ' there';
+						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+							$bio .= ' là';
+						} else {
+							$bio .= ' there';
+						}
 					} else {
 						$bio .= place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
 					}
