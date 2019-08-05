@@ -2376,12 +2376,12 @@ sub print_person
 							if(($yob - $mumdateofbirth) <= 13) {
 								complain({
 									person => $person,
-									warning => "something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)"
+									warning => "Something is wrong with the date of birth which is less than 13 years after the mother was born ($mumdateofbirth)"
 								});
 							} elsif(($yob - $mumdateofbirth) >= 52) {
 								complain({
 									person => $person,
-									warning => "something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)"
+									warning => "Something is wrong with the date of birth which is more than 52 years after the mother was born ($mumdateofbirth)"
 								});
 							}
 						}
