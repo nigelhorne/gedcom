@@ -2161,7 +2161,11 @@ sub print_person
 					}
 				}
 				if($mother) {
-					$bio .= ' and';
+					if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+						$bio .= ' et';
+					} else {
+						$bio .= ' and';
+					}
 				} else {
 					$bio .= ', ';
 					$printed_comma = 1;
@@ -2331,7 +2335,7 @@ sub print_person
 
 				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
 					$bio .= ' est ';
-					$bio .= ($sex eq 'M' ? 'né' : 'né');
+					$bio .= ($sex eq 'M' ? 'né' : 'née');
 				} else {
 					$bio .= ' was born';
 				}
