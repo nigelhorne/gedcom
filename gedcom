@@ -2217,7 +2217,13 @@ sub print_person
 					}
 					$bio .= $person->as_string() . ' was ';
 				}
-				$bio .= 'your';
+				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					$bio .= 'votre';
+				} else {
+					$bio .= 'your';
+				}
+			} elsif(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				$bio .= 'Votre';
 			} else {
 				$bio .= 'Your';
 			}
@@ -2332,6 +2338,18 @@ sub print_person
 			$bio .= " $pronoun" if($aob || $aod);
 			if($dateofbirth || $placeofbirth) {
 				$bio .= ',' if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
+				my $birth_place;
+				if($placeofbirth) {
+					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
+						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+							$bio .= ' y';
+						} else {
+							$birth_place = ' there';
+						}
+					} else {
+						$birth_place = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
+					}
+				}
 
 				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
 					$bio .= ' est ';
@@ -2339,17 +2357,8 @@ sub print_person
 				} else {
 					$bio .= ' was born';
 				}
-				if($placeofbirth) {
-					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
-						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-							$bio .= ' là';
-						} else {
-							$bio .= ' there';
-						}
-					} else {
-						$bio .= place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
-					}
-				}
+				$bio .= $birth_place if($birth_place);
+
 				if($dateofbirth) {
 					my $y = year({
 						person => $person,
@@ -4435,7 +4444,15 @@ sub print_person
 				}
 				$bio .= $pronoun;
 			}
-			$bio .= ' died';
+			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($sex eq 'M') {
+					$bio .= ' est mort';
+				} else {
+					$bio .= ' est morte';
+				}
+			} else {
+				$bio .= ' died';
+			}
 			if($dateofdeath) {
 				if($dateofbirth && ($dateofdeath eq $dateofbirth)) {
 					$bio .= ' on the same day';
