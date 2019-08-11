@@ -3842,8 +3842,13 @@ sub print_person
 				}
 
 				# print Data::Dumper->new([\@residencestringarray])->Dump();
-				$bio .= ', ' . lcfirst($pronoun) . ' was living ' .
-					Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
+				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					$bio .= ', ' . lcfirst($pronoun) . ' habitait ' .
+						Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
+				} else {
+					$bio .= ', ' . lcfirst($pronoun) . ' was living ' .
+						Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
+				}
 
 				$end_of_sentence = 1;
 			}
@@ -5975,7 +5980,11 @@ sub Gedcom::Individual::relationship_up
 					my $mymother = $self->mother();
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							$rc .= " on your father's side";
+							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+								$rc .= " sur ton père's side";
+							} else {
+								$rc .= " on your father's side";
+							}
 						} else {
 							$rc .= ' on ' .
 								lcfirst($self->possessive()) .
@@ -5983,7 +5992,11 @@ sub Gedcom::Individual::relationship_up
 						}
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							$rc .= " on your mother's side";
+							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+								$rc .= " sur ta mère's side";
+							} else {
+								$rc .= " on your father's side";
+							}
 						} else {
 							$rc .= ' on ' .
 								lcfirst($self->possessive()) .
