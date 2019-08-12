@@ -4341,7 +4341,15 @@ sub print_person
 				} else {
 					$bio .= "\n\t";
 				}
-				$bio .= "$pronoun died";
+				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					if($sex eq 'M') {
+						$bio .= "$pronoun est mort";
+					} else {
+						$bio .= "$pronoun est morte";
+					}
+				} else {
+					$bio .= "$pronoun died";
+				}
 				if($dateofdeath) {
 					$bio .= ' ' . year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				}
