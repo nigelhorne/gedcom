@@ -6135,7 +6135,11 @@ sub year
 	}
 
 	if($string =~ /^\d{3,4}$/) {
-		return "in $string";
+		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			return "en $string";
+		} else {
+			return "in $string";
+		}
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
 		my $rc = $2;
@@ -6218,7 +6222,11 @@ sub year
 		return "on $string";
 	}
 	if($string =~ /^bef.? (\d{3,4})/i) {
-		return "before $1";
+		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			return "avant $1";
+		} else {
+			return "before $1";
+		}
 	}
 	if($string =~ /^by.? (\d{3,4})/i) {
 		return "by $1";
@@ -6229,10 +6237,17 @@ sub year
 		} else {
 			complain("says 'By' instead of 'Bef'");
 		}
-		return "before $1";
+		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			return "avant $1";
+		} else {
+			return "before $1";
+		}
 	}
 
 	$string = ucfirst(lc($string));
+	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+		return ($string =~ /\d$/) ? "en $string" : "le $string";
+	}
 	return ($string =~ /\d$/) ? "in $string" : "on $string";
 }
 
