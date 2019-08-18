@@ -2391,7 +2391,7 @@ sub print_person
 							if(($yob - $daddateofbirth) <= 13) {
 								complain({
 									person => $person,
-									warning => "something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)"
+									warning => "Something is wrong with the date of birth which is less than 13 years after the father was born ($daddateofbirth)"
 								});
 							}
 						}
@@ -2532,7 +2532,7 @@ sub print_person
 										if($d > ($yobaptism - 13)) {
 											complain({
 												person => $person,
-												warning => "something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
+												warning => "Something is wrong with the date of baptism which is less than 13 years after the mother was born ($d)"
 											});
 										}
 									}
@@ -6197,12 +6197,12 @@ sub year
 			if(my $must_postdate = $params{'must_postdate'}) {
 				complain({
 					person => $person,
-					warning => [ "something is wrong with the date $string which should be after ", $must_postdate->strftime('%x') ],
+					warning => [ "Something is wrong with the date $string which should be after ", $must_postdate->strftime('%x') ],
 					# stack_trace => 1,
 				}) if($d < $must_postdate);
 			}
 			if(my $must_predate = $params{'must_predate'}) {
-				complain({ person => $person, warning => "something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
+				complain({ person => $person, warning => "Something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 			}
 			return 'on ' . $d->strftime('%x');
 		}
@@ -6903,7 +6903,7 @@ sub must_predate
 	if($d1->year() > $d2->year()) {
 		complain({
 			person => $person,
-			warning => "something is wrong with the date $date which should be before $predate"
+			warning => "Something is wrong with the date $date which should be before $predate"
 		});
 	}
 }
