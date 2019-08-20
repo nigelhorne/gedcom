@@ -632,7 +632,7 @@ if($opts{'H'}) {
 		}
 		$fetcher = Data::Fetch->new();
 
-		if((!$opts{'x'}) && !$opts{'g'}) {
+		if((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
