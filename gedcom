@@ -3520,7 +3520,8 @@ sub print_person
 								my $p1 = place({ record => $l->{'residence'}, nopreposition => 1});
 								if($p1 eq $p2) {
 									if($p3) {
-										my $peek = (@{$all_locations{$year}})[$count];
+										# my $peek = (@{$all_locations{$year}})[$count];
+										my $peek = $sorted_locations[$count];
 										if($peek && (place({ record => $peek->{'residence'}, nopreposition => 1 }) eq $p3)) {
 											if((!defined($people_at_p3[0])) || ($people_at_p3[0]->{'person'} ne $l->{'person'})) {
 												push @people_at_p3, $l;
@@ -3541,7 +3542,8 @@ sub print_person
 									});
 								} elsif($distance->miles() < 1) {
 									if($p3) {
-										my $peek = (@{$all_locations{$year}})[$count];
+										# my $peek = (@{$all_locations{$year}})[$count];
+										my $peek = $sorted_locations[$count];
 										if($peek && (place({ record => $peek->{'residence'}, nopreposition => 1 }) eq $p3)) {
 											if((!defined($people_at_p3[0])) || ($people_at_p3[0]->{'person'} ne $l->{'person'})) {
 												push @people_at_p3, $l;
@@ -3551,7 +3553,11 @@ sub print_person
 									}
 									$p3 = $p1;
 									if($printed_person) {
-										$residencestring .= ' and ';
+										if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+											$residencestring .= ' et ';
+										} else {
+											$residencestring .= ' and ';
+										}
 									} else {
 										$residencestring .= ', less than a mile from ';
 									}
@@ -3569,14 +3575,26 @@ sub print_person
 											if(scalar(@people_at_p3)) {
 												$residencestring .= ',';
 											} else {
-												$residencestring .= ' and';
+												if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+													$residencestring .= ' et';
+												} else {
+													$residencestring .= ' and';
+												}
 											}
 											$residencestring .= " $relationship " .
 												$p->{'person'}->as_string();
 										}
-										$residencestring .= ' who were living';
+										if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+											$residencestring .= ' qui habitaient';
+										} else {
+											$residencestring .= ' who were living';
+										}
 									} else {
-										$residencestring .= ' who was living';
+										if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+											$residencestring .= ' qui habitait';
+										} else {
+											$residencestring .= ' who was living';
+										}
 									}
 									$residencestring .= place({ record => $l->{'residence'}, there => $p2 });
 									$printed_person = 1;
