@@ -3520,7 +3520,7 @@ sub print_person
 								my $distance = $gis->distance($l->{'latitude'}, $l->{'longitude'}, $latitude, $longitude);
 								my $p1 = place({ record => $l->{'residence'}, nopreposition => 1});
 								my $peek = $sorted_locations[$count];
-								next if($peek->{'person'} eq $l->{'person'});
+								next if($peek && ($peek->{'person'} eq $l->{'person'}));
 								if($p1 eq $p2) {
 									if($p3 && $peek && (place({ record => $peek->{'residence'}, nopreposition => 1 }) eq $p3)) {
 										if((!defined($people_at_p3[0])) || ($people_at_p3[0]->{'person'} ne $l->{'person'})) {
@@ -3880,6 +3880,7 @@ sub print_person
 		}
 		$bio =~ s/,;/;/g;
 		$bio =~ s/;$//;
+		$bio =~ s/,.$/./;
 
 		my $all_events_have_date = 1;
 		foreach my $event(@events) {

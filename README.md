@@ -137,7 +137,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2015-2018 Nigel Horne.
+Copyright 2015-2019 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)
