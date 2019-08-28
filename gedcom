@@ -1226,9 +1226,7 @@ sub print_person
 		}
 	}
 
-	unless($dob || $dod || $opts{'a'} || $opts{'p'}) {
-		return;
-	}
+	return unless($dob || $dod || $opts{'a'} || $opts{'p'});
 
 	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
 		# Assuming living if we don't have a date of death and
@@ -1368,15 +1366,11 @@ sub print_person
 		# $printed{$person->{'xref'}} = 1;
 		return;
 	}
-	my $person2;
-	if($ged2) {
-		$person2 = $ged2->get_individual($person->as_string());
-		if(!defined($person2)) {
-			complain({
-				person => $person,
-				warning => "not found in $ARGV[1]"
-			});
-		}
+	if($ged2 && !defined($ged2->get_individual($person->as_string()))) {
+		complain({
+			person => $person,
+			warning => "not found in $ARGV[1]"
+		});
 	}
 
 	my $args = {
@@ -1908,7 +1902,7 @@ sub print_person
 		}
 		my $sex = $fetcher->get(object => $person, message => 'sex');
 
-		if($opts{'w'} && $firstname) {
+		if($opts{'w'} && $firstname && $sex) {
 			# FIXME: This throws up a number of false positives
 			my $guess;
 			if($placeofbirth && ($placeofbirth =~ /, USA$/)) {
@@ -1916,7 +1910,7 @@ sub print_person
 			} else {
 				$guess = Text::Names::GB::guessGender($firstname);
 			}
-			if($sex && $guess && ($sex ne $guess)) {
+			if($guess && ($sex ne $guess)) {
 				my $error = 1;
 				if(my $middle_name = $name_components{'middle_name'}) {
 					if($placeofbirth && ($placeofbirth =~ /, USA$/)) {
@@ -7415,7 +7409,7 @@ sub get_all_occupations
 		}
 	}
 	while(scalar(@occupations) > 1) {
-		if(($occupations[0] =~ /labou?rer/i) && ($occupations[1] =~ /labou?rer/i)) {
+		if(($occupations[0] =~ /^labou?rer/i) && ($occupations[1] =~ /^labou?rer/i)) {
 			shift @occupations;
 		} elsif($occupations[0] eq $occupations[1]) {
 			shift @occupations;
