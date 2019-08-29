@@ -2136,22 +2136,16 @@ sub print_person
 				if(!$same_occupation_as_father) {
 					my @occupations = get_all_occupations(person => $father);
 					# TODO: print all occupations
-					if($occupations[0]) {
-						$bio .= ' (a';
-						if($occupations[0] =~ /^[aeiou]/i) {
-							$bio .= 'n';
-						}
-						$bio .= ' ';
+					if(my $occupation = $occupations[0]) {
+						$occupation = lc($occupation);
 						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
 							if($ENV{'LANG'} =~ /^en_US/) {
-								$bio .= Lingua::EN::ABC::b2a(lc($occupations[0]));
+								$occupation = Lingua::EN::ABC::b2a($occupation);
 							} elsif($ENV{'LANG'} =~ /^en_GB/) {
-								$bio .= Lingua::EN::ABC::a2b(lc($occupations[0]));
+								$occupation = Lingua::EN::ABC::a2b($occupation);
 							}
-						} else {
-							$bio .= lc($occupations[0]);
 						}
-						$bio .= ')';
+						$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
 					}
 				}
 				if($mother) {
