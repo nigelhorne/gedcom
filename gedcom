@@ -2679,7 +2679,7 @@ sub print_person
 							if(lc($soccupation) eq 'self-employed') {
 								$bio .= 'self-employed ';
 							} else {
-								$bio .= ' ' . Lingua::EN::Inflect::A(lc($soccupation)) . ' ';
+								$bio .= Lingua::EN::Inflect::A(lc($soccupation)) . ' ';
 							}
 						}
 					}
@@ -6006,7 +6006,7 @@ sub Gedcom::Individual::relationship_up
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
 							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-								$rc .= " sur ton père's side";
+								$rc .= " sur votre père's side";
 							} else {
 								$rc .= " on your father's side";
 							}
@@ -6018,7 +6018,7 @@ sub Gedcom::Individual::relationship_up
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
 							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-								$rc .= " sur ta mère's side";
+								$rc .= " sur votre mère's side";
 							} else {
 								$rc .= " on your father's side";
 							}
