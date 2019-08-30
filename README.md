@@ -30,13 +30,13 @@ It's a sort of lint for Gedcom files.
 
 For example:
 
-    gedcom -dawWl gedcom-file.ged > /dev/null
+    gedcom -dAwWl gedcom-file.ged > /dev/null
 
 Adding the -c option will add the checking of missing citations.
 
 To sort by error type
 
-    gedcom -dawWl gedcom-file.ged > /dev/null 2> /tmp/errs
+    gedcom -dAwWl gedcom-file.ged > /dev/null 2> /tmp/errs
     sort -t: -k2 /tmp/errs
 
 ## Genealogy Calendar
