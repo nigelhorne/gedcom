@@ -726,7 +726,7 @@ if($opts{'H'}) {
 				# print $top->as_string(), " $level, ", count_descendents_at_level($top, $level), "\n";
 			}
 
-			if(($top ne $me) && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
+			if(($top ne $me) && $dot && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
 			# if(open(my $fout, '|-', '/usr/bin/tee foo')) {
 				print $fout 'digraph family {',
 					'rotate = 90 subgraph main { rank="0"; ';
