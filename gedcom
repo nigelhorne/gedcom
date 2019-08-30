@@ -1576,7 +1576,7 @@ sub print_person
 		}
 	}
 
-	if($opts{'w'}) {
+	if($opts{'w'} && $firstname && $lastname) {
 		my %chronicling_params = ( ua => $cached_browser );
 		if($dateofbirth && ($dateofbirth =~ /(\d{4})$/)) {
 			if($1 <= 1789) {
@@ -1592,32 +1592,28 @@ sub print_person
 				$chronicling_params{'date_of_death'} = $1;
 			}
 		}
-		if($lastname) {
-			$chronicling_params{'lastname'} = $lastname;
-			if($firstname) {
-				$chronicling_params{'firstname'} = $firstname;
+		$chronicling_params{'lastname'} = $lastname;
+		$chronicling_params{'firstname'} = $firstname;
+		my $stateofbirth;
+		if($placeofbirth && (($placeofbirth =~ /USA$/) || ($placeofbirth =~ /United States$/)) && ($placeofbirth =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
+			$stateofbirth = uc($1);
+			if((!$us->{code2state}{$stateofbirth}) && !$us->{state2code}{$stateofbirth}) {
+				complain({ person => $params{'person'}, warning => "Unknown state '$stateofbirth' in birth place $placeofbirth" });
 			}
-			my $stateofbirth;
-			if($placeofbirth && (($placeofbirth =~ /USA$/) || ($placeofbirth =~ /United States$/)) && ($placeofbirth =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
-				$stateofbirth = uc($1);
-				if((!$us->{code2state}{$stateofbirth}) && !$us->{state2code}{$stateofbirth}) {
-					complain({ person => $params{'person'}, warning => "Unknown state '$stateofbirth' in birth place $placeofbirth" });
-				}
-				$chronicling_params{'state'} = ucfirst(lc($stateofbirth));
+			$chronicling_params{'state'} = ucfirst(lc($stateofbirth));
+			chronicling_america($person, \%chronicling_params);
+
+		}
+		if($placeofdeath && (($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
+			my $stateofdeath = uc($1);
+			if((!$us->{code2state}{$stateofdeath}) && !$us->{state2code}{$stateofdeath}) {
+				complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
+			}
+			if((!defined($stateofbirth)) || ($stateofdeath ne $stateofbirth)) {
+				$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
+
+				# TODO: married and maiden names, could be two searches
 				chronicling_america($person, \%chronicling_params);
-
-			}
-			if($placeofdeath && (($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
-				my $stateofdeath = uc($1);
-				if((!$us->{code2state}{$stateofdeath}) && !$us->{state2code}{$stateofdeath}) {
-					complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
-				}
-				if((!defined($stateofbirth)) || ($stateofdeath ne $stateofbirth)) {
-					$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
-
-					# TODO: married and maiden names, could be two searches
-					chronicling_america($person, \%chronicling_params);
-				}
 			}
 		}
 	}
