@@ -927,6 +927,7 @@ sub generate {
 		$printed{$xref} = 1;
 
 		if($opts{'S'}) {
+			# Create an SQLite database
 			my $mother = $person->mother() || 'NULL';
 			my $father = $person->father() || 'NULL';
 
@@ -1427,7 +1428,7 @@ sub print_person
 	$name =~ s/\///g;
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
-	my $firstname = $name_components{'given_name_1'};
+	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
 	my $lastname = $name_components{'surname_1'};
 
 	if($firstname && ($firstname =~ /\d/)) {
@@ -5280,7 +5281,7 @@ sub Gedcom::Individual::as_string
 	$nameparser->parse($name);
 
 	my %name_components = $nameparser->components();
-	my $first_name = $name_components{'given_name_1'};
+	my $first_name = $name_components{'given_name_1'} // $name_components{'initials_1'};
 	my $middle_name = $name_components{'middle_name'};
 	my $surname = $name_components{'surname_1'};
 	if($name_components{'surname_2'}) {
