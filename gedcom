@@ -3875,7 +3875,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = '';
+						$bio = undef;
 					} else {
 						$bio .= "\n\t";
 					}
@@ -3890,6 +3890,7 @@ sub print_person
 					$bio .= ', ' . lcfirst($pronoun) . ' was living ' .
 						Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
 				}
+				$bio =~ s/,\. $/. /;
 
 				$end_of_sentence = 1;
 			}
