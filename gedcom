@@ -3884,12 +3884,11 @@ sub print_person
 
 				# print Data::Dumper->new([\@residencestringarray])->Dump();
 				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-					$bio .= ', ' . lcfirst($pronoun) . ' habitait ' .
-						Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
+					$bio .= ', ' . lcfirst($pronoun) . ' habitait ';
 				} else {
-					$bio .= ', ' . lcfirst($pronoun) . ' was living ' .
-						Lingua::EN::Inflect::WORDLIST(@residencestringarray) . '. ';
+					$bio .= ', ' . lcfirst($pronoun) . ' was living ';
 				}
+				$bio .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
 				$bio =~ s/,\. $/. /;
 
 				$end_of_sentence = 1;
