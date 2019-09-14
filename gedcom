@@ -440,6 +440,13 @@ if($opts{'B'}) {
 	}
 }
 
+my $language;
+if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+	$language = 'French';
+} else {
+	$language = 'English';
+}
+
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
 	die '-a doesn\'t make sense with the -H option' if($opts{'a'});
@@ -1934,7 +1941,7 @@ sub print_person
 		}
 
 		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');
-		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+		if($language eq 'French') {
 			$pronoun = ($pronoun eq 'He') ? 'Il' : 'Elle';
 		}
 		my $sex = $fetcher->get(object => $person, message => 'sex');
@@ -2175,7 +2182,7 @@ sub print_person
 					# TODO: print all occupations
 					if(my $occupation = $occupations[0]) {
 						$occupation = lc($occupation);
-						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
+						if($language eq 'English') {
 							if($ENV{'LANG'} =~ /^en_US/) {
 								$occupation = Lingua::EN::ABC::b2a($occupation);
 							} elsif($ENV{'LANG'} =~ /^en_GB/) {
@@ -2186,7 +2193,7 @@ sub print_person
 					}
 				}
 				if($mother) {
-					if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					if($language eq 'French') {
 						$bio .= ' et';
 					} else {
 						$bio .= ' and';
@@ -2220,7 +2227,7 @@ sub print_person
 				$bio .= ', ';
 				$printed_comma = 1;
 			}
-			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			if($language eq 'French') {
 				$bio =~ s/^\tThe child of /\tL'enfant de /;
 			}
 		}
@@ -2238,12 +2245,12 @@ sub print_person
 					}
 					$bio .= $person->as_string() . ' was ';
 				}
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					$bio .= 'votre';
 				} else {
 					$bio .= 'your';
 				}
-			} elsif(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			} elsif($language eq 'French') {
 				$bio .= 'Votre';
 			} else {
 				$bio .= 'Your';
@@ -2321,10 +2328,17 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
-			$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
-				($opts{'t'} ? 'tomorrow' : 'today');
+			if($language eq 'French') {
+				$bio .= ' est ';
+				$bio .= ($sex eq 'M' ? 'né' : 'née');
+				$bio .= " $aob " . (($aob == 1) ? 'an' : 'ans') . ' depuis ' .
+					($opts{'t'} ? 'demain' : "aujourd'hui");
+			} else {
+				$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
+					($opts{'t'} ? 'tomorrow' : 'today');
+			}
 			if($placeofbirth) {
-				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed });
+				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
 				$bio .= $p;
 				$places_printed{$p} = 1;
 			}
@@ -2332,8 +2346,15 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aod) {
-			$bio .= " died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
-				($opts{'t'} ? 'tomorrow' : 'today');
+			if($language eq 'French') {
+				$bio .= ' est ';
+				$bio .= ($sex eq 'M' ? 'mort' : 'morte');
+				$bio .= " $aod " . (($aod == 1) ? 'an' : 'ans') . ' depuis ' .
+					($opts{'t'} ? 'demain' : "aujourd'hui");
+			} else {
+				$bio .= " died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
+					($opts{'t'} ? 'tomorrow' : 'today');
+			}
 			if($placeofdeath) {
 				$bio .= place({ person => $person, record => $death, places_printed => \%places_printed });
 			}
@@ -2362,7 +2383,7 @@ sub print_person
 				my $birth_place;
 				if($placeofbirth) {
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
-						if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+						if($language eq 'French') {
 							$bio .= ' y';
 						} else {
 							$birth_place = ' there';
@@ -2372,7 +2393,7 @@ sub print_person
 					}
 				}
 
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					$bio .= ' est ';
 					$bio .= ($sex eq 'M' ? 'né' : 'née');
 				} else {
@@ -3580,25 +3601,23 @@ sub print_person
 										while(my $p = pop(@people_at_p3)) {
 											if(scalar(@people_at_p3)) {
 												$residencestring .= ',';
+											} elsif($language eq 'French') {
+												$residencestring .= ' et';
 											} else {
-												if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-													$residencestring .= ' et';
-												} else {
-													$residencestring .= ' and';
-												}
+												$residencestring .= ' and';
 											}
 											$residencestring .= ' ' .
 												$person->relationship($p->{'person'}) .
 												' ' .
 												$p->{'person'}->as_string();
 										}
-										if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+										if($language eq 'French') {
 											$residencestring .= ' qui habitaient';
 										} else {
 											$residencestring .= ' who were living';
 										}
 									} else {
-										if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+										if($language eq 'French') {
 											$residencestring .= ' qui habitait';
 										} else {
 											$residencestring .= ' who was living';
@@ -3848,7 +3867,7 @@ sub print_person
 				}
 				if($residencestring) {
 					$residencestring =~ s/^\s//;
-					if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+					if($language eq 'French') {
 						$residencestring =~ s/(.+), (his|her) /$1 et $2 /;
 					} else {
 						$residencestring =~ s/(.+), (his|her) /$1 and $2 /;
@@ -3879,11 +3898,15 @@ sub print_person
 					} else {
 						$bio .= "\n\t";
 					}
-					$bio .= 'During ' . lc($person->possessive()) . ' life';
+					if($language eq 'French') {
+						$bio .= 'Pendant sa vie';
+					} else {
+						$bio .= 'During ' . lc($person->possessive()) . ' life';
+					}
 				}
 
 				# print Data::Dumper->new([\@residencestringarray])->Dump();
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					$bio .= ', ' . lcfirst($pronoun) . ' habitait ';
 				} else {
 					$bio .= ', ' . lcfirst($pronoun) . ' was living ';
@@ -4362,7 +4385,7 @@ sub print_person
 					}
 				} else {
 					$bio .= " $pronoun " .
-						((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? 'est enterré' :  'is buried') .
+						(($language eq 'French') ? 'est enterré' :  'is buried') .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
@@ -4384,7 +4407,7 @@ sub print_person
 				} else {
 					$bio .= "\n\t";
 				}
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					if($sex eq 'M') {
 						$bio .= "$pronoun est mort";
 					} else {
@@ -4452,7 +4475,7 @@ sub print_person
 				} elsif($placeofdeath && ($placeofburial eq $placeofdeath) && $burial->address() && (!$death->address())) {
 					$bio .= ' and is buried there at ' . $burial->address();
 				} else {
-					$bio .= ((defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) ? ' et est enterré' :  ' and is buried') .
+					$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
 						place($opts);
 				}
 				if(my $b = notes({ record => $burial, paragraph => 0 })) {
@@ -4500,7 +4523,7 @@ sub print_person
 				}
 				$bio .= $pronoun;
 			}
-			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			if($language eq 'French') {
 				if($sex eq 'M') {
 					$bio .= ' est mort';
 				} else {
@@ -5670,7 +5693,7 @@ sub Gedcom::Individual::relationship_up
 			# Direct ancestor
 			my $steps = stepsabove($self, $other, 0);
 			my $title;
-			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			if($language eq 'French') {
 				$title = ($sex eq 'M') ? 'père' : 'mère';
 			} else {
 				$title = ($sex eq 'M') ? 'father' : 'mother';
@@ -6024,7 +6047,7 @@ sub Gedcom::Individual::relationship_up
 				);
 
 				my $rc;
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					$rc = ($sex eq 'M') ?
 						$fr_male_relationships{($steps1 << 24) | $steps2} :
 						$fr_female_relationships{($steps1 << 24) | $steps2};
@@ -6038,7 +6061,7 @@ sub Gedcom::Individual::relationship_up
 					my $mymother = $self->mother();
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+							if($language eq 'French') {
 								$rc .= " sur votre père's side";
 							} else {
 								$rc .= " on your father's side";
@@ -6050,7 +6073,7 @@ sub Gedcom::Individual::relationship_up
 						}
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+							if($language eq 'French') {
 								$rc .= " sur votre mère's side";
 							} else {
 								$rc .= " on your father's side";
@@ -6106,29 +6129,29 @@ sub Gedcom::Individual::relationship_down
 				$steps -= 2;
 				return "$steps times great-grand$title";
 			} elsif($steps == 1) {
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					if($sex eq 'M') {
 						return 'fils';
 					}
 				}
 				return $title;
 			} elsif($steps == 2) {
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					if($sex eq 'M') {
 						return 'petit-fils';
 					}
 				}
 				return "grand$title";
 			} elsif($steps == 3) {
-				if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+				if($language eq 'French') {
 					if($sex eq 'M') {
 						return 'arrière-petit-fils';
 					}
 				}
+			} elsif($steps <= 0) {
 				return "great-grand$title";
 			} elsif($steps == 4) {
 				return "great-great-grand$title";
-			} elsif($steps <= 0) {
 				if(my $spouse = $other->spouse()) {
 					if(stepsabove($self, $spouse, 0)) {
 						# The caller should now check
@@ -6185,11 +6208,10 @@ sub year
 	}
 
 	if($string =~ /^\d{3,4}$/) {
-		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+		if($language eq 'French') {
 			return "en $string";
-		} else {
-			return "in $string";
 		}
+		return "in $string";
 	}
 	if($string =~ /^(Abt|ca?)\.?\s*(.+)/i) {
 		my $rc = $2;
@@ -6272,11 +6294,10 @@ sub year
 		return "on $string";
 	}
 	if($string =~ /^bef.? (\d{3,4})/i) {
-		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+		if($language eq 'French') {
 			return "avant $1";
-		} else {
-			return "before $1";
 		}
+		return "before $1";
 	}
 	if($string =~ /^by.? (\d{3,4})/i) {
 		return "by $1";
@@ -6287,15 +6308,14 @@ sub year
 		} else {
 			complain("says 'By' instead of 'Bef'");
 		}
-		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+		if($language eq 'French') {
 			return "avant $1";
-		} else {
-			return "before $1";
 		}
+		return "before $1";
 	}
 
 	$string = ucfirst(lc($string));
-	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+	if($language eq 'French') {
 		return ($string =~ /\d$/) ? "en $string" : "le $string";
 	}
 	return ($string =~ /\d$/) ? "in $string" : "on $string";
@@ -6365,6 +6385,8 @@ sub place {
 			if($place =~ /^(.+?),.+,/) {
 				if($params{'nopreposition'}) {
 					return " $address, $1";
+				} elsif($language eq 'French') {
+					return " à $address, $1";
 				} else {
 					return " at $address, $1";
 				}
@@ -6395,6 +6417,9 @@ sub place {
 			if($place =~ /(.+),(.+?),(.+?),(.+?),(.+?)$/) {
 				if($places_printed->{" in$3,$4,$5"}) {
 					$places_printed->{"in $1,$2,$3"} = 1;
+					if($language eq 'French') {
+						return " à $1,$2,$3";
+					}
 					return " at $1,$2,$3";
 				}
 			}
@@ -6402,16 +6427,24 @@ sub place {
 				$places_printed->{" in$2,$3,$4"} = 1;
 			}
 		}
+		if($language eq 'French') {
+			return " à $place";
+		}
 		return " at $place";
 	}
 
 	if($place eq 'USA') {
+		if($language eq 'French') {
+			return ' aux États-Unis';
+		}
 		return ' in the USA';
 	}
 
 	if($address) {
 		if($params{'nopreposition'}) {
 			$place = " $address, $place";
+		} elsif($language eq 'French') {
+			$place = " à $address, $place";
 		} else {
 			$place = " at $address, $place";
 		}
@@ -6460,7 +6493,7 @@ sub place {
 		$places_printed->{$place} = 1;
 	}
 	if(!defined($params{'encode'})) {
-		$params{'encode'} = 1;
+		$params{'encode'} = 0;
 	}
 	if($params{'encode'}) {
 		return HTML::Entities::encode($place);
@@ -6548,7 +6581,7 @@ sub notes {
 	$rc =~ s/[\x91\x92]/'/g;
 	$rc =~ s/[\xc2\xe2]//g;
 
-	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
+	if($language eq 'English') {
 		if($ENV{'LANG'} =~ /^en_US/) {
 			$rc = Lingua::EN::ABC::b2a($rc);
 		} elsif($ENV{'LANG'} =~ /^en_GB/) {
@@ -6632,7 +6665,7 @@ sub validate_place
 
 		# if(($place =~ /USA$/) || ($place =~ /United States$/)) {
 			# if(my $href = Geo::StreetAddress::US->parse_location($place)) {
-				# if($href->{'state'} && !$us->{code2state}{$href->{'state'}} && !$us->{state2code}{$href->{'state'}) {
+				# if($href->{'state'} && !$us->{code2state}{$href->{'state'}} && !$us->{state2code}{$href->{'state'}}) {
 				# die $href->{'state'};
 					# complain({ person => $params{'person'}, warning => "Unknown state in $place" });
 				# }
@@ -7661,7 +7694,7 @@ sub chronicling_america
 
 	if(my $loc = Genealogy::ChroniclingAmerica->new($chronicling_params)) {
 		while(my $url = $loc->get_next_entry()) {
-			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+			if($language eq 'French') {
 				complain({ person => $person, warning => "Visitez $url" });
 			} else {
 				complain({ person => $person, warning => "Check out $url" });
