@@ -82,6 +82,7 @@ use Sort::Key::DateTime;
 use Text::Names::GB;
 use Memoize;
 use Data::Fetch;
+# use Class::Simple::Cached;
 use Text::Soundex;
 use List::Util;
 use Locale::Object::Country;
@@ -106,9 +107,11 @@ my %all_places;
 my $pi = atan2(1,1) * 4;
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
+# $ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'Memory', datastore => {}));
 my $ged2;
 if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
+	# $ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'Memory', datastore => {}));
 }
 
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
