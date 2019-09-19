@@ -31,11 +31,12 @@ BEGIN {
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes');
 		system('cpan -i Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB Data::Fetch HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth');
+		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth');
 	}
 }
 
 use CHI;
+use Class::Simple::Cached 0.02;
 use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
@@ -81,8 +82,6 @@ use URI::Find::Schemeless;
 use Sort::Key::DateTime;
 use Text::Names::GB;
 use Memoize;
-use Data::Fetch;
-# use Class::Simple::Cached;
 use Text::Soundex;
 use List::Util;
 use Locale::Object::Country;
@@ -107,11 +106,11 @@ my %all_places;
 my $pi = atan2(1,1) * 4;
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
-# $ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'Memory', datastore => {}));
+$ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 my $ged2;
 if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
-	# $ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'Memory', datastore => {}));
+	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
 
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
@@ -317,7 +316,6 @@ my $oneday = DateTime::Duration->new(days => 1);
 my $tenmonths = DateTime::Duration->new(months => 10);
 my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fortyyears = DateTime::Duration->new(years => 40);
-my $fetcher;
 my $pdf;
 my $pdfpage;
 my @tmpfiles;
@@ -640,7 +638,6 @@ if($opts{'H'}) {
 				die '-s and -h must be given together';
 			}
 		}
-		$fetcher = Data::Fetch->new();
 
 		if((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
@@ -1172,8 +1169,6 @@ sub print_person
 
 	# Gather the information on this person
 	my $person = $params{'person'};
-
-	$fetcher = Data::Fetch->new();	# Throw away old values from the cache
 
 	my $dob = get_value({ person => $person, value => 'birth date' });
 
@@ -1847,8 +1842,6 @@ sub print_person
 	$death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'} || $opts{'B'}) {
-		# $fetcher->prime(object => $person, message => 'sex')->prime(object => $person, message => 'pronoun');
-
 		my $baptism = $person->get_record('baptism');
 		my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
 		if((!$dateofbaptism) && $baptism) {
@@ -1943,11 +1936,11 @@ sub print_person
 			}
 		}
 
-		my $pronoun = $fetcher->get(object => $person, message => 'pronoun');
+		my $pronoun = $person->pronoun();
 		if($language eq 'French') {
 			$pronoun = ($pronoun eq 'He') ? 'Il' : 'Elle';
 		}
-		my $sex = $fetcher->get(object => $person, message => 'sex');
+		my $sex = $person->sex();
 
 		if($opts{'w'} && $firstname && $sex) {
 			# FIXME: This throws up a number of false positives
@@ -6948,17 +6941,17 @@ sub get_value
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	if($fetcher) {
-		my $args = {
-			object => $params{'person'},
-			message => 'get_value',
-			arg => $params{'value'}
-		};
+	# if($fetcher) {
+		# my $args = {
+			# object => $params{'person'},
+			# message => 'get_value',
+			# arg => $params{'value'}
+		# };
 
-		# Doesn't use the prefetching feature, but will automatically cache which is nice
-		# $fetcher->prime($args);
-		return $fetcher->get($args);
-	}
+		# # Doesn't use the prefetching feature, but will automatically cache which is nice
+		# # $fetcher->prime($args);
+		# return $fetcher->get($args);
+	# }
 	return $params{'person'}->get_value($params{'value'});
 }
 
@@ -6966,15 +6959,16 @@ sub get_source
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $args = {
-		object => $params{'gedcom'},
-		message => 'get_source',
-		arg => $params{'source'}
-	};
+	# my $args = {
+		# object => $params{'gedcom'},
+		# message => 'get_source',
+		# arg => $params{'source'}
+	# };
 
-	# Doesn't use the prefetching feature, but will automatically cache which is nice
-	# $fetcher->prime($args);
-	return $fetcher->get($args);
+	# # Doesn't use the prefetching feature, but will automatically cache which is nice
+	# # $fetcher->prime($args);
+	# return $fetcher->get($args);
+	return $params{'gedcom'}->get_source($params{'source'});
 }
 
 sub must_predate
