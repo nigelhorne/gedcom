@@ -3263,13 +3263,12 @@ sub print_person
 			}
 			if($all_residences_have_date) {
 				@residencelist = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @residencelist;
-
 			}
 			my $count = 0;
 			my $prev_residence;
 			my $spdeath_dt;
-			if($spouses[0]) {
-				$spdeath_dt = date_to_datetime(date => get_value({ person => $spouses[0], value => 'death date' }));
+			if($spouses[0] && ($spdeath_dt = get_value({ person => $spouses[0], value => 'death date' }))) {
+				$spdeath_dt = date_to_datetime(date => $spdeath_dt);
 			}
 			my $print_year_only;	# used when printing a range, e.g. 1871-1891
 			my $printed_following_message;
@@ -3385,28 +3384,30 @@ sub print_person
 							}
 						}
 						# Check if spouse listed at all residences when we only know the year
-						my $spyod = get_value({ person => $spouses[0], value => 'death date' }) || ($yoe + 1);
-						if($spyod =~ /(\d{3,4})$/) {
-							$spyod = $1;
-						}
-						if(defined($dateofmarriage) &&
-						   ($dateofmarriage =~ /(\d{3,4})$/) &&
-						   (my $spouse = $spouses[0]) &&
-						   ($yoe < $spyod)) {
-							my $yom = $1;
-							if($yom < $yoe) {
-								my $found_spouse;
-								foreach my $residence(get_all_residences($spouse)) {
-									my $date = $residence->date();
-									if(defined($date) && ($date =~ /(\d{3,4})$/)) {
-										if($1 == $yoe) {
-											$found_spouse = $residence;
-											last;
+						if($spouses[0]) {
+							my $spyod = get_value({ person => $spouses[0], value => 'death date' }) || ($yoe + 1);
+							if($spyod =~ /(\d{3,4})$/) {
+								$spyod = $1;
+							}
+							if(defined($dateofmarriage) &&
+							   ($dateofmarriage =~ /(\d{3,4})$/) &&
+							   (my $spouse = $spouses[0]) &&
+							   ($yoe < $spyod)) {
+								my $yom = $1;
+								if($yom < $yoe) {
+									my $found_spouse;
+									foreach my $residence(get_all_residences($spouse)) {
+										my $date = $residence->date();
+										if(defined($date) && ($date =~ /(\d{3,4})$/)) {
+											if($1 == $yoe) {
+												$found_spouse = $residence;
+												last;
+											}
 										}
 									}
-								}
-								if(!$found_spouse) {
-									complain({ person => $person, warning => ["Listed in the residence for $rdate, but spouse ", $spouse->as_string(), ' is not'] });
+									if(!$found_spouse) {
+										complain({ person => $person, warning => ["Listed in the residence for $rdate, but spouse ", $spouse->as_string(), ' is not'] });
+									}
 								}
 							}
 						}
@@ -6956,6 +6957,14 @@ sub get_value
 		# # $fetcher->prime($args);
 		# return $fetcher->get($args);
 	# }
+	my $person = $params{'person'};
+	if(!defined($person)) {
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'BUG: person argument is mandatory';
+	}
 	return $params{'person'}->get_value($params{'value'});
 }
 
