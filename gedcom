@@ -106,13 +106,6 @@ my %all_places;
 my $pi = atan2(1,1) * 4;
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
-$ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'RawMemory', datastore => {}));
-my $ged2;
-if($ARGV[1]) {
-	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
-	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
-}
-
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 if($opts{h}) {
 	my @rc = $ged->get_individual($opts{h});
@@ -322,11 +315,18 @@ my @tmpfiles;
 my $pr;
 my $dbh;
 
-if($opts{'B'} || $opts{'a'}) {
-	memoize('Gedcom::Individual::as_string');
-	memoize('stepsabove');
-	memoize('normalize_name');	# Speeds up sort with -B a lot
-	memoize('date_to_datetime');
+# if($opts{'B'} || $opts{'a'}) {
+	# memoize('Gedcom::Individual::as_string');
+	# memoize('stepsabove');
+	# memoize('normalize_name');	# Speeds up sort with -B a lot
+	# memoize('date_to_datetime');
+# }
+
+$ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'RawMemory', datastore => {}));
+my $ged2;
+if($ARGV[1]) {
+	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
+	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
 
 my @everyone;
@@ -336,6 +336,7 @@ unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 		# $a->as_string({ include_years => 1, middle_names => 1 }) cmp $b->as_string({ include_years => 1, middle_names => 1 })
 		# } $ged->individuals();
 	@everyone = $ged->individuals();
+	# @everyone = map { Class::Simple::Cached->new(object => $_, cache => CHI->new(driver => 'RawMemory', datastore => {})) } $ged->individuals();
 }
 
 if($opts{'c'} && !$opts{'d'}) {
@@ -4564,10 +4565,15 @@ sub print_person
 			}
 			$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
 			# Print notes about the death, if any
-			if(defined($death) && (my $d = notes({ person => $person, record => $death, paragraph => 0 }))) {
-				$d =~ tr/\r//;
-				$d =~ s/\.$//;
-				$bio .= " ($d)";
+			if(defined($death) && (my $dn = notes({ person => $person, record => $death, paragraph => 0 }))) {
+				$dn =~ tr/\r//;
+				$dn =~ s/\.$//;
+				# FIXME: If the notes are so long they go over
+				#	a page split into more than one page
+				#	poperly rather than don't print, as now
+				if((!$opts{'B'}) || (length($dn) < 4000)) {
+					$bio .= " ($dn)";
+				}
 			}
 			if($bio =~ /\.$/) {
 				$end_of_sentence = 1;
@@ -4593,11 +4599,11 @@ sub print_person
 
 						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
-						die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
+						print STDERR "\n", length($bio), "\n", length($notes), "\n";
+						die "$bio: Print failure" if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 					}
 					$bio = '';
 				}
-
 			} else {
 				$bio .= "\n";
 			}
@@ -6527,6 +6533,7 @@ sub getaddress {
 	return $rc;
 }
 
+# paragraph => 1: ignore spacing and put it all into one paragraph
 sub notes {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
