@@ -37,7 +37,7 @@ BEGIN {
 
 use CHI;
 use Class::Simple::Cached 0.03;
-use Class::Simple::Readonly::Cached;
+use Class::Simple::Readonly::Cached 0.02;
 use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
 use Date::Parse;	# For strptime
@@ -336,8 +336,8 @@ unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 	# @everyone = sort {
 		# $a->as_string({ include_years => 1, middle_names => 1 }) cmp $b->as_string({ include_years => 1, middle_names => 1 })
 		# } $ged->individuals();
-	# @everyone = $ged->individuals();
-	@everyone = map { Class::Simple::Readonly::Cached->new(object => $_, cache => CHI->new(driver => 'RawMemory', datastore => {})) } $ged->individuals();
+	# @everyone = map { Class::Simple::Readonly::Cached->new(object => $_, cache => CHI->new(driver => 'RawMemory', datastore => {})) } $ged->individuals();
+	@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } $ged->individuals();
 }
 
 if($opts{'c'} && !$opts{'d'}) {
