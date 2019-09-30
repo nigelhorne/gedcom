@@ -657,7 +657,11 @@ if($opts{'H'}) {
 			my $png = '/tmp/njh.png';	# FIXME
 
 			my $maxrank = 2;
-			while(count_descendents_at_level($me, $maxrank + 1) <= 10) {
+			while(1) {
+				my $d = count_descendents_at_level($me, $maxrank + 1);
+				last if($d == 0);
+				last if($d >= 3);
+
 				$maxrank++;
 			}
 
