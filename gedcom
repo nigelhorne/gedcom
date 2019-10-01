@@ -1380,7 +1380,7 @@ sub print_person
 		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
 		if(index($str, $person->as_string()) != -1) {
-			# $printed{$person->{'xref'}} = 1;
+			# $printed{$person->xref()} = 1;
 			return;
 		}
 		$str .= '<br>';
@@ -1407,7 +1407,7 @@ sub print_person
 		}
 
 		$table->setCell($row, $column, $str);
-		# $printed{$person->{'xref'}} = 1;
+		# $printed{$person->xref()} = 1;
 		return;
 	}
 	if($ged2 && !defined($ged2->get_individual($person->as_string()))) {
@@ -5014,7 +5014,7 @@ sub print_person
 			print "\n";
 		}
 	}
-	# $printed{$person->{'xref'}} = 1;
+	# $printed{$person->xref()} = 1;
 
 	if($opts{'B'}) {
 		my @images;
@@ -5507,7 +5507,7 @@ sub Gedcom::Individual::as_string
 	}
 
 	if((!defined($rc)) && $opts{'w'}) {
-		complain({ warning => "Can't determine the name for record " . $self->{'xref'} });
+		complain({ warning => "Can't determine the name for record " . $self->xref() });
 		return '';
 	}
 
@@ -5597,9 +5597,9 @@ sub Gedcom::Individual::as_sort_key
 
 	if((!defined($rc)) && $opts{'w'}) {
 		if($opts{'f'}) {
-			die "\nCan't determine the name for record ", $self->{'xref'};
+			die "\nCan't determine the name for record ", $self->xref();
 		}
-		red_warning({ "Can't determine the name for record " . $self->{'xref'} });
+		red_warning({ "Can't determine the name for record " . $self->xref() });
 		return '';
 	}
 
@@ -7293,11 +7293,11 @@ sub print_graphviz
 		$colour = ($gender eq 'M' ? '#093AB5' : '#C666B8');
 	}
 
-	print $fout $person->{'xref'}, ' [shape=box,fontsize="10",',
+	print $fout $person->xref(), ' [shape=box,fontsize="10",',
 		"color=\"$colour\",";
 
 	# if($params{'format'} eq 'dynamic') {
-		# print $fout 'href="?page=people&entry=', $person->{'xref'}, '",';
+		# print $fout 'href="?page=people&entry=', $person->xref(), '",';
 	# } else {
 		# print $fout 'href="', make_filename_from_person(person => $person), '",';
 	# }
@@ -7373,7 +7373,7 @@ sub print_graphviz_generation
 	print_graphviz({ person => $person, fout => $fout, format => 'dynamic' });
 
 	if(($rank > 1) && (my $father = $person->father())) {
-		print $fout $father->{'xref'}, ' -> ', $person->{'xref'}, ";\n";
+		print $fout $father->xref(), ' -> ', $person->xref(), ";\n";
 	}
 
 	if($person->sex() eq 'M') {
