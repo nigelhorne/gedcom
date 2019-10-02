@@ -641,6 +641,10 @@ if($opts{'H'}) {
 			}
 		}
 
+		if(scalar(@everyone) == 0) {
+			die 'No matches found for ', $me->as_string(include_years => 1);
+		}
+
 		if((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
