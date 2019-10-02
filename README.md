@@ -84,6 +84,7 @@ The options are:
     -d: show the detailed lifetime information about the person
     -D: only print anniversaries of deaths
     -f: treat warnings as fatals, implies -w
+    -F: create a forefathers book
     -G: print everyone, in generation order
     -g: prints a GML of the locations
     -H: Print an HTML calendar of this month

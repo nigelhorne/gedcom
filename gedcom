@@ -93,8 +93,8 @@ use String::Compare;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfGgh:Hm:lLp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
+getopts('aAbB:cCdDfFGgh:Hm:lLp:sStTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -342,6 +342,9 @@ unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 
 if($opts{'c'} && !$opts{'d'}) {
 	die '-c only makes sense with the -d option';
+}
+if($opts{'F'} && !$opts{'B'}) {
+	die '-F only makes sense with the -B option';
 }
 if($opts{'m'} && !$opts{'H'}) {
 	die '-m only makes sense with the -H option';
@@ -623,13 +626,17 @@ if($opts{'H'}) {
 				# $image->height(32);
 				# $image->width(32);
 
-				@everyone = ($me, ancestors($me), descendents($me));
-				my @siblings = ($me->siblings(), $me->half_siblings());
-				foreach my $sibling(@siblings) {
-					# print $sibling->as_string(), "\n";
-					@everyone = descendents($sibling, \@everyone);
+				if($opts{'F'}) {
+					@everyone = ($me, ancestors($me));
+				} else {
+					@everyone = ($me, ancestors($me), descendents($me));
+					my @siblings = ($me->siblings(), $me->half_siblings());
+					foreach my $sibling(@siblings) {
+						# print $sibling->as_string(), "\n";
+						@everyone = descendents($sibling, \@everyone);
+					}
+					@everyone = (@everyone, @siblings);
 				}
-				@everyone = (@everyone, @siblings);
 
 				if($surname) {
 					my $nara = soundex_nara($surname);
@@ -645,7 +652,7 @@ if($opts{'H'}) {
 			die 'No matches found for ', $me->as_string(include_years => 1);
 		}
 
-		if((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'}) {
+		if($opts{'B'} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'})) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
