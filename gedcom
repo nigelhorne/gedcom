@@ -114,7 +114,7 @@ if($opts{h}) {
 		die "$0: Can't find '$opts{h}' in $ARGV[0]";
 	} elsif(scalar(@rc) == 1) {
 		$me = $rc[0];
-	} else {
+	} elsif(!$opts{'x'}) {
 		# Need top of family tree
 		@rc = map { ($_->father() || $_->mother()) ? () : $_ } @rc;
 		if(scalar(@rc) > 1) {
@@ -379,7 +379,7 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
-	die '-s only makes sense with the -B option';
+	die '-s only makes sense with the -B or -x options' unless($opts{'x'});
 } elsif($opts{'S'}) {
 	require DBI;
 	DBI->import();
@@ -408,7 +408,7 @@ if($opts{'A'} || $opts{'G'} || $opts{'S'}) {
 }
 if($opts{'x'}) {
 	if($opts{'g'}) {
-		die '-g and -x option are exlusive'
+		die '-g and -x option are exclusive'
 	}
 	$opts{'T'} = 1;
 } elsif($opts{'g'}) {
@@ -565,6 +565,15 @@ if($opts{'H'}) {
 	die '-p and -a should not be given together' if($opts{'p'});
 
 	if($opts{'A'} || $opts{'G'}) {
+		my $surname;
+
+		if($opts{'s'}) {
+			if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
+				$surname = $1;
+			} else {
+				$surname = $opts{'h'};
+			}
+		}
 		if($opts{'B'}) {
 			if($opts{'h'}) {
 				my $page = $pdf->page();
@@ -574,13 +583,7 @@ if($opts{'H'}) {
 				my $text = $page->text();
 				$text->font($font, 28);
 				$text->translate(300, 600);
-				my $surname;
 				if($opts{'s'}) {
-					if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
-						$surname = $1;
-					} else {
-						$surname = $opts{'h'};
-					}
 					$text->text_center("The Surname Book of $surname");
 				} else {
 					$text->text_center('The Family Tree of');
@@ -638,14 +641,15 @@ if($opts{'H'}) {
 					@everyone = (@everyone, @siblings);
 				}
 
-				if($surname) {
-					my $nara = soundex_nara($surname);
-					# @everyone = grep { $_->as_string() =~ /.*$surname$/i } @everyone;
-					@everyone = grep { ($_->as_string() =~ /$surname$/i) || ($_->surname() && (soundex_nara($_->surname()) eq $nara)) } @everyone;
-				}
 			} elsif($opts{'s'}) {
 				die '-s and -h must be given together';
 			}
+		}
+
+		if($surname) {
+			my $nara = soundex_nara($surname);
+			# @everyone = grep { $_->as_string() =~ /.*$surname$/i } @everyone;
+			@everyone = grep { ($_->as_string() =~ /$surname$/i) || ($_->surname() && (soundex_nara($_->surname()) eq $nara)) } @everyone;
 		}
 
 		if(scalar(@everyone) == 0) {
@@ -725,7 +729,7 @@ if($opts{'H'}) {
 			} @everyone;
 
 			die "BUG: sort hasn't worked" if($everyone[0] ne $me);
-		} elsif($opts{'h'}) {
+		} elsif($opts{'h'} && !$opts{'x'}) {
 			# Put a family tree going back a few generations on page 2
 			# Go back until it looks like it will be very small text
 			my $tmp = File::Temp->new();
@@ -877,6 +881,7 @@ if($opts{'T'}) {
 	foreach my $place(sort keys %all_places) {
 		my @locations;
 		if($opts{'x'}) {
+			$place =~ s/"//g;
 			print "\"$place\",\"";
 		} elsif($opts{'g'}) {
 			@locations = $geocoder->geocode($place);
