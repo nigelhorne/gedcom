@@ -53,7 +53,8 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
 You can produce a map of locations of all Smiths in your tree with
 	gedcom -xsh Smith gedcom-file-ged > smith.csv
 	Upload the csv file to Google Drive
-	Visit google.com/maps, on the 3 horizontal lines choose map, then maps
+	Visit google.com/maps, on the 3 horizontal lines choose 'your places',
+		then 'maps''
 	Click 'create map', choose "Location" as the position column and
 		"People" as the title column
 
