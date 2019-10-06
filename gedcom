@@ -6105,7 +6105,7 @@ sub Gedcom::Individual::relationship_up
 							if($language eq 'French') {
 								$rc .= " sur votre mère's side";
 							} else {
-								$rc .= " on your father's side";
+								$rc .= " on your mother's side";
 							}
 						} else {
 							$rc .= ' on ' .
