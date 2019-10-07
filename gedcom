@@ -6580,8 +6580,10 @@ sub notes {
 			if(!$paragraph) {
 				$note =~ s/\n+/; /g;
 			}
+			$note =~ s/\s\s+/ /g;
 			$note =~ s/\s+$//g;
 			$note =~ s/\.$//;
+			$note =~ s/\. /.  /g;
 			if($paragraph) {
 				if($rc) {
 					$rc .= "\n";
