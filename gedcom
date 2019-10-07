@@ -2360,6 +2360,8 @@ sub print_person
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
 				$bio .= $p;
 				$places_printed{$p} = 1;
+			} else {
+				complain({ person => $person, warning => 'Date of birth is known, but not place' });
 			}
 			$bio .= "[$_]" foreach(@birthcitations);
 			$bio .= '. ';
