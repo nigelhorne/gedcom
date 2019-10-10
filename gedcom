@@ -25,10 +25,10 @@ use autodie qw(:all);
 # use warnings::unused;
 
 BEGIN {
-	eval 'use Geo::Coder::List';
+	eval 'use Geo::Coder::List 0.26';
 	if($@) {
 		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare');
-		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes');
+		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth');
@@ -44,9 +44,10 @@ use Date::Parse;	# For strptime
 use File::Basename;
 use File::Spec;
 use Getopt::Std;
-use Geo::Coder::List 0.15;
-use Geo::Coder::Free 0.10;	# 0.11 really
+use Geo::Coder::List 0.26;	# maximum decoder support
+use Geo::Coder::Free 0.11;
 use Geo::Coder::Free::Local;
+use Geo::Coder::OpenCage;
 use Geo::Coder::Ovi;
 use Geo::Coder::RandMcnally;
 use Geo::Coder::US::Census;
@@ -272,6 +273,9 @@ $geocoder->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder:
 	->push(Geo::Coder::Ovi->new());
 	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
+if(my $key = $ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
+	$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
+}
 if(my $key = $ENV{'GMAP_KEY'}) {
 	$geocoder->push({ limit => 200, geocoder => Geo::Coder::GooglePlaces->new(key => $key, api_key => $key) });
 }
@@ -7762,6 +7766,16 @@ sub Geo::Coder::PlaceFinder::ua
 	}
 
 	return $self->{_ua};
+}
+
+# See https://github.com/OpenCageData/perl-Geo-Coder-OpenCage/issues/8
+sub Geo::Coder::OpenCage::ua {
+	my ($self, $ua) = @_;
+
+	if ($ua) {
+		$self->{ua} = $ua;
+	}
+	return $self->{ua};
 }
 
 1;
