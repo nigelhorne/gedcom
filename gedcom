@@ -375,7 +375,17 @@ if($opts{'B'}) {
 	PDF::API2->import();
 
 	$pdf = PDF::API2->new(-file => $opts{'B'});
-	if(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+	my $papersize;
+	if(open(my $fin, '<', '/etc/papersize')) {	# Linux
+		$papersize = <$fin>;
+		close $fin;
+		chomp $papersize;
+	} elsif(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+		$papersize = 'letter';
+	} else {
+		$papersize = 'A4';
+	}
+	if($papersize eq 'letter') {
 		$pdf->mediabox('Letter');
 		$Text::Wrap::columns = 105;
 	} else {
@@ -4627,7 +4637,7 @@ sub print_person
 
 						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
-						print STDERR "\n", length($bio), "\n", length($notes), "\n";
+						# print STDERR "\n", length($bio), "\n", length($notes), "\n";
 						die "$bio: Print failure" if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 					}
 					$bio = '';
