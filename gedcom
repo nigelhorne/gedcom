@@ -31,7 +31,7 @@ BEGIN {
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth');
+		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth Class::Simple::Cached Class::Simple::Readonly::Cached');
 	}
 }
 
@@ -288,6 +288,7 @@ if($browser) {
 		'nominatim.openstreetmap.org' => 1,
 		'geocode.xyz' => 2,
 		'geocoder.ca' => 1,
+		'opencagedata.com' => 1,
 		'api.postcodes.io' => 1,
 		'where.desktop.mos.svc.ovi.com' => 1,
 		'geocoding.geo.census.gov' => 1,
@@ -7770,11 +7771,11 @@ sub Geo::Coder::PlaceFinder::ua
 
 # See https://github.com/OpenCageData/perl-Geo-Coder-OpenCage/issues/8
 sub Geo::Coder::OpenCage::ua {
-	my ($self, $ua) = @_;
+	my $self = shift;
 
-	if ($ua) {
-		$self->{ua} = $ua;
-	}
+	# if(my $ua = shift) {
+		# $self->{ua} = $ua;
+	# }
 	return $self->{ua};
 }
 
