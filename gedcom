@@ -376,7 +376,7 @@ if($opts{'B'}) {
 
 	$pdf = PDF::API2->new(-file => $opts{'B'});
 	my $papersize;
-	if(open(my $fin, '<', '/etc/papersize')) {	# Linux
+	if((-r '/etc/papersize') && open(my $fin, '<', '/etc/papersize')) {	# Linux
 		$papersize = <$fin>;
 		close $fin;
 		chomp $papersize;
