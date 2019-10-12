@@ -1504,6 +1504,13 @@ sub print_person
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
 	my $lastname = $name_components{'surname_1'};
+	if((!defined($firstname)) && ($name =~ /(.+)\s(.+)/)) {
+		complain({ person => $person, warning => "Can't parse the name" });
+		$firstname = $1;
+		if(!defined($lastname)) {
+			$lastname = $2;
+		}
+	}
 
 	if($firstname && ($firstname =~ /\d/)) {
 		complain({ person => $person, warning => 'First name contains a digit' });
