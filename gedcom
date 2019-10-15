@@ -4473,12 +4473,12 @@ sub print_person
 				}
 				$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
 				# Print notes about the death, if any
-				if(my $d = notes({ person => $person, record => $death })) {
-					$d =~ tr/\r//;
-					$d =~ tr/\n/ /;
-					$d =~ s/\.$//;
-					$d = lcfirst($d) unless($d =~ /^[A-Z]{2}/);
-					$bio .= " ($d)";
+				if(my $notes = notes({ person => $person, record => $death })) {
+					$notes =~ tr/\r//;
+					$notes =~ tr/\n/ /;
+					$notes =~ s/\.$//;
+					$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+					$bio .= " ($notes)";
 				}
 				my $opts = {
 					person => $person,
@@ -4610,14 +4610,14 @@ sub print_person
 			}
 			$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
 			# Print notes about the death, if any
-			if(defined($death) && (my $dn = notes({ person => $person, record => $death, paragraph => 0 }))) {
-				$dn =~ tr/\r//;
-				$dn =~ s/\.$//;
+			if(defined($death) && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
+				$notes =~ tr/\r//;
+				$notes =~ s/\.$//;
 				# FIXME: If the notes are so long they go over
 				#	a page split into more than one page
 				#	poperly rather than don't print, as now
-				if((!$opts{'B'}) || (length($dn) < 4000)) {
-					$bio .= " ($dn)";
+				if((!$opts{'B'}) || (length($notes) < 4000)) {
+					$bio .= " ($notes)";
 				}
 			}
 			if($bio =~ /\.$/) {
@@ -4634,7 +4634,6 @@ sub print_person
 		# }
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
-			# print "\t", join("\n\t", @notes), "\n";
 			if($opts{'B'}) {
 				if($bio) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
