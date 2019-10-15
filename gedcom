@@ -2043,7 +2043,11 @@ sub print_person
 			$relationship = $me->relationship($person);
 			if((!$relationship) && scalar(@spouses)) {
 				if($person->spouse() eq $me) {
-					$relationship = ($sex eq 'F') ? 'wife' : 'husband';
+					if($language eq 'French') {
+						$relationship = ($sex eq 'F') ? 'femme' : 'mari';
+					} else {
+						$relationship = ($sex eq 'F') ? 'wife' : 'husband';
+					}
 				} else {
 					foreach my $s(@spouses) {
 						$spouserelationship = $me->relationship($s);
@@ -2305,23 +2309,35 @@ sub print_person
 				} else {
 					$bio .= $pronoun;
 				}
-				$bio .= ', the ';
+				$bio .= ', ';
 			} else {
 				$bio .= $person->as_string();
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-					$bio .= ', the ';
+					$bio .= ', ';
 				} elsif(is_alive(person => $person)) {
-					$bio .= ' is the ';
+					$bio .= ' is ';
 				} else {
-					$bio .= ' was the ';
+					$bio .= ' was ';
 				}
 			}
-			if($sex eq 'F') {
-				$bio .= 'wife';
+			if($language eq 'French') {
+				if($sex eq 'F') {
+					$bio .= 'la femme';
+				} else {
+					$bio .= 'le marie';
+				}
 			} else {
-				$bio .= 'husband';
+				if($sex eq 'F') {
+					$bio .= 'the wife';
+				} else {
+					$bio .= 'the husband';
+				}
 			}
-			$bio .= " of your $spouserelationship";
+			if($language eq 'French') {
+				$bio .= " de votre $spouserelationship";
+			} else {
+				$bio .= " of your $spouserelationship";
+			}
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
 				$bio .= " $s";
 			} else {
