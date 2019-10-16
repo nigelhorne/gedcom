@@ -49,3 +49,6 @@ requires 'Locale::Object::Country';
 requires 'Net::OAuth';
 requires 'Class::Simple::Cached';
 requires 'Class::Simple::Readonly::Cached';
+requires 'Data::ICal';
+requires 'Data::ICal::Entry::Event';
+requires 'Date::ICal';

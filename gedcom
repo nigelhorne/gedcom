@@ -31,7 +31,8 @@ BEGIN {
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached Net::OAuth Class::Simple::Cached Class::Simple::Readonly::Cached');
+		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
+		system('cpan -i LWP::UserAgent::Cached Net::OAuth Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal');
 	}
 }
 
@@ -40,6 +41,9 @@ use Class::Simple::Cached 0.03;
 use Class::Simple::Readonly::Cached 0.02;
 use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
+use Data::ICal;
+use Data::ICal::Entry::Event;
+use Date::ICal;
 use Date::Parse;	# For strptime
 use File::Basename;
 use File::Spec;
@@ -94,8 +98,8 @@ use String::Compare;
 no lib '.';
 
 my %opts;
-getopts('aAbB:cCdDfFGgh:Hm:lLp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
+getopts('aAbB:cCdDfFGgh:Hi:m:lLp:sStTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -i ics_file ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -321,13 +325,6 @@ my @tmpfiles;
 my $pr;
 my $dbh;
 
-# if($opts{'B'} || $opts{'a'}) {
-	# memoize('Gedcom::Individual::as_string');
-	# memoize('stepsabove');
-	# memoize('normalize_name');	# Speeds up sort with -B a lot
-	# memoize('date_to_datetime');
-# }
-
 $ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 my $ged2;
 if($ARGV[1]) {
@@ -435,6 +432,21 @@ if($opts{'T'}) {
 		String::ProgressBar->import();
 	}
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
+}
+my $ical;
+if($opts{'i'}) {
+	if($opts{'T'}) {
+		die '-i and -T are exclusive';
+	}
+	$ical = Data::ICal->new();
+	$ical->add_properties(
+		calscale => 'GREGORIAN',
+		method => 'PUBLISH',
+		'X-WR-CALNAME' => "$0 Family Calendar",
+	);
+	$opts{'A'} = $opts{'a'} = 1;
+	require String::ProgressBar;
+	String::ProgressBar->import();
 }
 
 my $dot;
@@ -671,7 +683,7 @@ if($opts{'H'}) {
 			die 'No matches found for ', $me->as_string(include_years => 1);
 		}
 
-		if($opts{'B'} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'})) {
+		if($opts{'B'} || $opts{i} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'})) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
@@ -945,7 +957,12 @@ if($opts{'T'}) {
 	print "</Document>\n</kml>\n" if($opts{'g'});
 }
 
-if($opts{'S'}) {
+if($ical) {
+	open(my $fout, '>', $opts{'i'});
+	print $fout $ical->as_string();
+	close $fout;
+	print "\n" if($pr);
+} elsif($opts{'S'}) {
 	$dbh->commit();
 	$dbh->disconnect();
 }
@@ -971,6 +988,12 @@ sub generate {
 		next if($printed{$xref});
 		$printed{$xref} = 1;
 
+		if($pr) {
+			$| = 1;
+			$pr->update($index++);
+			$pr->write();
+			$| = 0;
+		}
 		if($opts{'S'}) {
 			# Create an SQLite database
 			my $mother = $person->mother() || 'NULL';
@@ -1118,14 +1141,19 @@ sub generate {
 			}
 
 			next;
+		} elsif($ical) {
+			my $birth = $person->get_record('birth');
+			my $dateofbirth = get_value({ person => $person, value => 'birth date' });
+			if((!$dateofbirth) && $birth) {
+				$dateofbirth = $birth->date();
+			}
+			next unless($dateofbirth);
+			next unless($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/);
+			my $birth_dt = date_to_datetime(date => $dateofbirth);
+			add_to_ical(ical => $ical, datetime => $birth_dt, summary => $person->as_string() . ' date of birth');
+			next;
 		}
 
-		if($pr) {
-			$| = 1;
-			$pr->update($index++);
-			$pr->write();
-			$| = 0;
-		}
 		if($opts{'B'}) {
 			if($opts{'G'}) {
 				if(stepsabove($person, $me, 0) != $generation) {
@@ -7815,6 +7843,28 @@ sub Geo::Coder::OpenCage::ua {
 		# $self->{ua} = $ua;
 	# }
 	return $self->{ua};
+}
+
+sub add_to_ical {
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $ical = $params{'ical'};
+	my $datetime = $params{'datetime'};
+	my $summary = $params{'summary'};
+
+	my $event = Data::ICal::Entry::Event->new();
+
+	$event->add_properties(
+		summary => $summary,
+		dtstart => Date::ICal->new(
+			year => $datetime->year(),
+			month => $datetime->month(),
+			day => $datetime->day(),
+		)->ical(),
+		# dstart => Date::ICal->new($datetime),
+	);
+
+	$ical->add_entry($event);
 }
 
 1;
