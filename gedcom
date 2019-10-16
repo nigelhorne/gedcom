@@ -6503,7 +6503,13 @@ sub place {
 
 	if($place eq 'USA') {
 		if($language eq 'French') {
+			if($params{'nopreposition'}) {
+				return ' États-Unis';
+			}
 			return ' aux États-Unis';
+		}
+		if($params{'nopreposition'}) {
+			return ' USA';
 		}
 		return ' in the USA';
 	}
