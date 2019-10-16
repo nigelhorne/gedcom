@@ -1150,8 +1150,11 @@ sub generate {
 			}
 			next unless($dateofbirth);
 			next unless($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/);
-			my $birth_dt = date_to_datetime(date => $dateofbirth);
-			add_to_ical(ical => $ical, datetime => $birth_dt, summary => $person->as_string() . ' date of birth');
+			add_to_ical(
+				ical => $ical,
+				datetime => date_to_datetime(date => $dateofbirth),
+				summary => $person->as_string() . ' date of birth'
+			);
 			next;
 		}
 
@@ -7849,14 +7852,12 @@ sub Geo::Coder::OpenCage::ua {
 sub add_to_ical {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
-	my $ical = $params{'ical'};
 	my $datetime = $params{'datetime'};
-	my $summary = $params{'summary'};
 
 	my $event = Data::ICal::Entry::Event->new();
 
 	$event->add_properties(
-		summary => $summary,
+		summary => $params{'summary'},
 		dtstart => Date::ICal->new(
 			year => $datetime->year(),
 			month => $datetime->month(),
@@ -7865,7 +7866,7 @@ sub add_to_ical {
 		# dstart => Date::ICal->new($datetime),
 	);
 
-	$ical->add_entry($event);
+	$params{'ical'}->add_entry($event);
 }
 
 1;
