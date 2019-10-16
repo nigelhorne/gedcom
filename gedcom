@@ -112,6 +112,8 @@ my %all_locations;
 my %all_places;
 my $pi = atan2(1,1) * 4;
 
+binmode(STDOUT, ":utf8");
+
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
 if($opts{h}) {
@@ -1537,11 +1539,11 @@ sub print_person
 	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
 	my $lastname = $name_components{'surname_1'};
 	if((!defined($firstname)) && ($name =~ /(.+)\s(.+)/)) {
-		complain({ person => $person, warning => "Can't parse the name" });
 		$firstname = $1;
 		if(!defined($lastname)) {
 			$lastname = $2;
 		}
+		complain({ person => $person, warning => "Can't parse the name - assuming firstname $firstname lastname $lastname" });
 	}
 
 	if($firstname && ($firstname =~ /\d/)) {
