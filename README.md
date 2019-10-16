@@ -48,6 +48,10 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcom -dwlHm $i -y 2018 gedcom-file.ged > $i.html
     done
 
+Alternatively you can create an ICS file
+
+    gedcom -i /tmp/ics.ics gedcom-file.ged
+
 ## Produce a Google Map
 
 You can produce a map of locations of all Smiths in your tree with
@@ -99,6 +103,7 @@ The options are:
     -g: prints a GML of the locations
     -H: Print an HTML calendar of this month
     -h: set the home person - useful for calculating relationships with -d
+    -i: creates an ICS file
     -m: month for -H calendar
     -l: include living people
     -L: include ged2site hyperlinks with -H

@@ -17,6 +17,7 @@
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
 # TODO: note if a child was orphaned by both parents dying before they were 16
+# TODO: -i only creates a calendar for birthdays for the moment, add others
 
 use strict;
 use warnings;
