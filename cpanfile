@@ -46,3 +46,6 @@ requires 'GD';
 requires 'DateTime::Format::Genealogy';
 requires 'String::ProgressBar';
 requires 'Locale::Object::Country';
+requires 'Net::OAuth';
+requires 'Class::Simple::Cached';
+requires 'Class::Simple::Readonly::Cached';
