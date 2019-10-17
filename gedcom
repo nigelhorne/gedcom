@@ -122,7 +122,7 @@ my %all_locations;
 my %all_places;
 my $pi = atan2(1,1) * 4;
 
-binmode(STDOUT, ":utf8");
+# binmode(STDOUT, ":utf8");
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
@@ -2290,7 +2290,7 @@ sub print_person
 			}
 			if($mother) {
 				if(my $m = $mother->as_string(give_maidenname => 0)) {
-					$bio .=  " $m";
+					$bio .= " $m";
 				}
 				my @occupations = get_all_occupations($mother);
 				# TODO: print all occupations
@@ -2364,7 +2364,7 @@ sub print_person
 				if($sex eq 'F') {
 					$bio .= 'la femme';
 				} else {
-					$bio .= 'le marie';
+					$bio .= 'le mari';
 				}
 			} else {
 				if($sex eq 'F') {
@@ -2804,9 +2804,25 @@ sub print_person
 					}
 					$bio .= ' married ';
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
-					$bio .= ' is married to ';
+															if($language eq 'French') {
+																if($sex eq 'M') {
+																	$bio .= ' est mariée à';
+																} else {
+																	$bio .= ' est marié à';
+																}
+															} else {
+						$bio .= ' is married to ';
+					}
 				} else {
-					$bio .= ' was married to ';
+															if($language eq 'French') {
+																if($sex eq 'M') {
+																	$bio .= ' été mariée à';
+																} else {
+																	$bio .= ' été marié à';
+																}
+															} else {
+						$bio .= ' was married to ';
+					}
 				}
 				if($haveprintedspousename) {
 					$nameparser->parse($spouses[0]->name());
@@ -5760,7 +5776,11 @@ sub Gedcom::Individual::relationship {
 	if($self->mother() && $other->mother() && $self->father() && $other->father()) {
 		my $sex = get_value({ person => $other, value => 'sex' });
 		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
-			return ($sex eq 'M') ? 'brother' : 'sister';
+			if($language eq 'French') {
+				return ($sex eq 'M') ? 'frère' : 'sœur';
+			} else {
+				return ($sex eq 'M') ? 'brother' : 'sister';
+			}
 		}
 		if(($self->mother() eq $other->mother()) || ($self->father() eq $other->father())) {
 			return ($sex eq 'M') ? 'half-brother' : 'half-sister';
@@ -6080,11 +6100,11 @@ sub Gedcom::Individual::relationship_up
 				);
 				my %fr_female_relationships = (
 					1 << 24 | 1 => 'sœur',
-					1 << 24 | 2 => 'niece',
+					1 << 24 | 2 => 'nièce',
 					1 << 24 | 3 => 'great-niece',
 					1 << 24 | 4 => 'great-great-niece',
-					2 << 24 | 1 => 'aunt',
-					2 << 24 | 2 => 'cousin',
+					2 << 24 | 1 => 'tant',
+					2 << 24 | 2 => 'cousine',
 					2 << 24 | 3 => 'first cousin once-removed',
 					2 << 24 | 4 => 'first cousin twice-removed',
 					2 << 24 | 5 => 'first cousin three-times-removed',
