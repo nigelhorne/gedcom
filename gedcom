@@ -7866,6 +7866,7 @@ sub add_to_ical {
 
 	$event->start($datetime);
 	$event->all_day(1);
+	$event->add_properties(summary => $params{'summary'});
 
 	$params{'ical'}->add_entry($event);
 }
