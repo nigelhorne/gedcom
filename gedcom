@@ -35,6 +35,13 @@ BEGIN {
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
 		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal');
 	}
+
+	# FIXME
+	$SIG{__WARN__} = sub {
+		my $warning = shift;
+		warn $warning unless $warning =~ /Subroutine Geo::Coder::OpenCage::ua redefined at/;
+	};
+
 }
 
 use CHI;
