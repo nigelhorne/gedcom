@@ -1161,7 +1161,7 @@ sub generate {
 			add_to_ical(
 				ical => $ical,
 				datetime => date_to_datetime(date => $dateofbirth),
-				summary => $person->as_string() . ' date of birth'
+				summary => 'birth of ' . $person->as_string()
 			);
 			next;
 		}
