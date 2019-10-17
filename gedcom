@@ -33,7 +33,7 @@ BEGIN {
 		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
-		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal');
+		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::TimeZone');
 	}
 
 	# FIXME
@@ -50,7 +50,10 @@ use Class::Simple::Readonly::Cached 0.02;
 use Gedcom;
 use Genealogy::Gedcom::Date 2.01;
 use Data::ICal;
+use Data::ICal::DateTime;
 use Data::ICal::Entry::Event;
+use Data::ICal::TimeZone;
+use Date::ICal;
 use Date::ICal;
 use Date::Parse;	# For strptime
 use File::Basename;
@@ -243,6 +246,7 @@ my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn = DateTime::Format::Natural->new();
 my $dfg = DateTime::Format::Genealogy->new();
+my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
 # my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
 my $cachedir;
@@ -631,7 +635,7 @@ if($opts{'H'}) {
 				if(defined($ENV{'TZ'}) && ($ENV{'TZ'} !~ /^\//)) {
 					$args{'time_zone'} = $ENV{'TZ'};
 				} else {
-					$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
+					$args{'time_zone'} = $tz;
 				}
 				my $dt = DateTime->today(%args);
 				my $dtl = DateTime::Locale->load($ENV{'LANG'});
@@ -896,12 +900,7 @@ if($opts{'H'}) {
 	my($day, $month) = (localtime)[3,4];
 	generate(day => $day, month => $month, everyone => \@everyone);
 } else {
-	my %args = ();
-	if(defined($ENV{'TZ'})) {
-		$args{'time_zone'} = $ENV{'TZ'};
-	} else {
-		$args{'time_zone'} = DateTime::TimeZone->new(name => 'local');
-	}
+	my %args = ('time_zone' => $tz);
 	my $dt = DateTime->now(%args)->add(days => 1);
 	generate(day => $dt->day(), month => $dt->month() - 1, everyone => \@everyone);
 }
@@ -7865,15 +7864,8 @@ sub add_to_ical {
 
 	my $event = Data::ICal::Entry::Event->new();
 
-	$event->add_properties(
-		summary => $params{'summary'},
-		dtstart => Date::ICal->new(
-			year => $datetime->year(),
-			month => $datetime->month(),
-			day => $datetime->day(),
-		)->ical(),
-		# dstart => Date::ICal->new($datetime),
-	);
+	$event->start($datetime);
+	$event->all_day(1);
 
 	$params{'ical'}->add_entry($event);
 }
