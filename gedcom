@@ -30,10 +30,10 @@ BEGIN {
 	if($@) {
 		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
-		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
 		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::TimeZone');
+		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 	}
 
 	# FIXME
@@ -1034,9 +1034,8 @@ sub generate {
 
 			print "$firstname, $surname\n";
 
-			my $birth = $person->get_record('birth');
 			my $dateofbirth = get_value({ person => $person, value => 'birth date' });
-			if((!$dateofbirth) && $birth) {
+			if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
 				$dateofbirth = $birth->date();
 			}
 			if($dateofbirth) {
@@ -1045,9 +1044,8 @@ sub generate {
 				$dateofbirth = 'NULL';
 			}
 
-			my $death = $person->get_record('death');
 			my $dateofdeath = get_value({ person => $person, value => 'death date' });
-			if((!$dateofdeath) && $death) {
+			if((!defined($dateofdeath)) && (my $death = $person->get_record('death'))) {
 				$dateofdeath = $death->date();
 			}
 			if($dateofdeath) {
@@ -1151,18 +1149,28 @@ sub generate {
 
 			next;
 		} elsif($ical) {
-			my $birth = $person->get_record('birth');
 			my $dateofbirth = get_value({ person => $person, value => 'birth date' });
-			if((!$dateofbirth) && $birth) {
+			if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
 				$dateofbirth = $birth->date();
 			}
-			next unless($dateofbirth);
-			next unless($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/);
-			add_to_ical(
-				ical => $ical,
-				datetime => date_to_datetime(date => $dateofbirth),
-				summary => 'birth of ' . $person->as_string()
-			);
+			if($dateofbirth && ($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
+				add_to_ical(
+					ical => $ical,
+					datetime => date_to_datetime(date => $dateofbirth),
+					summary => 'birth of ' . $person->as_string()
+				);
+			}
+			my $dateofdeath = get_value({ person => $person, value => 'death date' });
+			if((!defined($dateofdeath)) && (my $death = $person->get_record('death'))) {
+				$dateofdeath = $death->date();
+			}
+			if($dateofdeath && ($dateofdeath =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
+				add_to_ical(
+					ical => $ical,
+					datetime => date_to_datetime(date => $dateofdeath),
+					summary => 'death of ' . $person->as_string()
+				);
+			}
 			next;
 		}
 
