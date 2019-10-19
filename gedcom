@@ -1161,6 +1161,17 @@ sub generate {
 					summary => 'birth of ' . $person->as_string()
 				);
 			}
+			my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
+			if((!$dateofbaptism) && (my $baptism = $person->get_record('baptism'))) {
+				$dateofbaptism = $baptism->date();
+			}
+			if($dateofbaptism && ($dateofbaptism =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
+				add_to_ical(
+					ical => $ical,
+					datetime => date_to_datetime(date => $dateofbaptism),
+					summary => 'baptism of ' . $person->as_string()
+				);
+			}
 			if(my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage')) {
 				if(my $dateofmarriage = $marriage->date()) {
 					if($dateofmarriage && ($dateofmarriage =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
@@ -3853,6 +3864,10 @@ sub print_person
 														(($ss->sex() eq 'F') ? 'sister-in-law, ' : 'brother-in-law, ') .
 														$ss->as_string();
 														$first = 0;
+												} elsif($language eq 'French') {
+													$residencestring .= ' et ' .
+														(($ss->sex() eq 'F') ? 'belle-sœer, ' : 'beau-frère, ') .
+														$ss->as_string();
 												} else {
 													# FIXME: If possible, should say
 													#	sisters-in-law or
