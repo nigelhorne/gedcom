@@ -28,7 +28,7 @@ use autodie qw(:all);
 BEGIN {
 	eval 'use Geo::Coder::List 0.26';
 	if($@) {
-		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare');
+		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -105,6 +105,7 @@ use Locale::Object::Country;
 use Module::Load;
 use Config::Auto;
 use String::Compare;
+# use Unicode::Diacritic::Strip;
 
 no lib '.';
 
@@ -1159,6 +1160,21 @@ sub generate {
 					datetime => date_to_datetime(date => $dateofbirth),
 					summary => 'birth of ' . $person->as_string()
 				);
+			}
+			if(my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage')) {
+				if(my $dateofmarriage = $marriage->date()) {
+					if($dateofmarriage && ($dateofmarriage =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
+						# FIXME: work with more than one spouse
+						my @spouses = $person->spouse();
+						if(scalar(@spouses) == 1) {
+							add_to_ical(
+								ical => $ical,
+								datetime => date_to_datetime(date => $dateofmarriage),
+								summary => 'marriage of ' . $person->as_string() . ' and ' . $spouses[0]->as_string()
+							);
+						}
+					}
+				}
 			}
 			my $dateofdeath = get_value({ person => $person, value => 'death date' });
 			if((!defined($dateofdeath)) && (my $death = $person->get_record('death'))) {
@@ -5474,6 +5490,16 @@ sub Gedcom::Individual::as_string
 	}
 
 	$name =~ s/\///g;
+
+	# FIXME: Correctly handle other names, relies on Lingua::EN::NameParse
+	#	too much
+
+	# Unicode::Diacritic::Strip::strip_diacritics($name);
+	# Unicode::Diacritic::Strip::fast_strip($name);
+	# $name =~ tr/čáň/can/;
+	$name =~ s/č/c/g;
+	$name =~ s/á/a/g;
+	$name =~ s/ň/n/g;
 	$nameparser->parse($name);
 
 	my %name_components = $nameparser->components();
