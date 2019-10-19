@@ -3746,7 +3746,11 @@ sub print_person
 									if($spouses[0] && ($l->{'person'} eq $spouses[0])) {
 										# FIXME: Only when before they married, though when
 										#	they are married it should be the same place, right?
-										$residencestring .= (($sex eq 'M') ? 'his future wife ' : 'her future husband ');
+										if($language eq 'French') {
+											$residencestring .= (($sex eq 'M') ? 'sa futur femme ' : 'son futur mari ');
+										} else {
+											$residencestring .= (($sex eq 'M') ? 'his future wife ' : 'her future husband ');
+										}
 									} else {
 										$residencestring .= ($sex eq 'M' ? 'his' : 'her') .
 											" $relationship ";
@@ -3961,9 +3965,15 @@ sub print_person
 									next if(!defined($sdate));
 									next if($sdate ne $rdate);
 									if(place({ person => $spouse, record => $sr }) eq $place) {
-										$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
-											($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
-											$spouse->given_names();
+										if($language eq 'French') {
+											$residencestring .= ($printed_sibling ? ' et ' : ' avec ') .
+												($person->pronoun() eq 'She' ? 'son futur mari, ' : 'sa futue femme, ') .
+												$spouse->given_names();
+										} else {
+											$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
+												($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
+												$spouse->given_names();
+										}
 										last;
 									}
 								}
