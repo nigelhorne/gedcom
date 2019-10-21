@@ -6335,10 +6335,10 @@ sub Gedcom::Individual::relationship_down
 						return 'arrière-petit-fils';
 					}
 				}
-			} elsif($steps <= 0) {
 				return "great-grand$title";
 			} elsif($steps == 4) {
 				return "great-great-grand$title";
+			} elsif($steps <= 0) {
 				if(my $spouse = $other->spouse()) {
 					if(stepsabove($self, $spouse, 0)) {
 						# The caller should now check
