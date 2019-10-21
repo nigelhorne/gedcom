@@ -22,6 +22,7 @@
 use strict;
 use warnings;
 use autodie qw(:all);
+use utf8;
 # use diagnostics;
 # use warnings::unused;
 
@@ -105,7 +106,7 @@ use Locale::Object::Country;
 use Module::Load;
 use Config::Auto;
 use String::Compare;
-# use Unicode::Diacritic::Strip;
+use Unicode::Diacritic::Strip;
 
 no lib '.';
 
@@ -1035,10 +1036,7 @@ sub generate {
 
 			print "$firstname, $surname\n";
 
-			my $dateofbirth = get_value({ person => $person, value => 'birth date' });
-			if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
-				$dateofbirth = $birth->date();
-			}
+			my $dateofbirth = dateofbirth($person);
 			if($dateofbirth) {
 				$dateofbirth =~ tr/\//-/;
 			} else {
@@ -5518,12 +5516,11 @@ sub Gedcom::Individual::as_string
 	# FIXME: Correctly handle other names, relies on Lingua::EN::NameParse
 	#	too much
 
-	# Unicode::Diacritic::Strip::strip_diacritics($name);
-	# Unicode::Diacritic::Strip::fast_strip($name);
+	$name = Unicode::Diacritic::Strip::strip_diacritics($name);
 	# $name =~ tr/čáň/can/;
-	$name =~ s/č/c/g;
-	$name =~ s/á/a/g;
-	$name =~ s/ň/n/g;
+	# $name =~ s/č/c/g;
+	# $name =~ s/á/a/g;
+	# $name =~ s/ň/n/g;
 	$nameparser->parse($name);
 
 	my %name_components = $nameparser->components();
