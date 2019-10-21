@@ -1596,10 +1596,9 @@ sub print_person
 
 	my ($marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
-	my $dateofbirth = get_value({ person => $person, value => 'birth date' });
-	if((!$dateofbirth) && $birth) {
-		$dateofbirth = $birth->date();
-	}
+
+	my $dateofbirth = dateofbirth($person);
+
 	my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 	if((!$placeofbirth) && $birth) {
 		$placeofbirth = $birth->place();
@@ -7948,6 +7947,27 @@ sub add_to_ical {
 	$event->add_properties(summary => $params{'summary'});
 
 	$params{'ical'}->add_entry($event);
+}
+
+sub dateofbirth {
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		$params{'person'} = shift;
+	}
+
+	my $person = $params{'person'};
+
+
+	my $dateofbirth = get_value({ person => $person, value => 'birth date' });
+	if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
+		return $birth->date();
+	}
+	return $dateofbirth;
 }
 
 1;
