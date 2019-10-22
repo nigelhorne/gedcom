@@ -3632,7 +3632,7 @@ sub print_person
 						} elsif($numberofchildren && ($rdate !~ /^bet\s/i)) {
 							# Look if a young child isn't with this parent
 							foreach my $child(@children) {
-								my $cyob = get_value({ person => $child, value => 'birth date' });
+								my $cyob = dateofbirth($child);
 								next if(!defined($cyob));
 								next if(datecmp($cyob, $rdate) >= 0);	# Child was not born yet
 								if($cyob =~ /(\d{3,4})\s*$/) {
@@ -4778,7 +4778,7 @@ sub print_person
 
 		if($opts{'C'}) {
 			foreach my $child(@children) {
-				if(my $dob = get_value({ person => $child, value => 'birth date' })) {
+				if(my $dob = getbirthdate($child)) {
 					unless($opts{'B'}) {
 						$bio .= "\n\t";
 					}
@@ -5118,7 +5118,7 @@ sub print_person
 	} else {
 		my ($dob, $dod);
 		eval {
-			$dob = $person->get_value('birth date');
+			$dob = dateofbirth($person);
 			$dod = $person->get_value('death date');
 		};
 		if($@) {
@@ -5622,7 +5622,7 @@ sub Gedcom::Individual::as_string
 	}
 
 	if($args{'include_years'}) {
-		my $dob = get_value({ person => $self, value => 'birth date' });
+		my $dob = dateofbirth($self);
 
 		my $yob;	# Year of birth
 		if($dob && ($dob =~ /.*?(\d{3,4})/)) {
@@ -7015,7 +7015,7 @@ sub print_sibling_baptism
 		}
 		if($allsamesex) {
 			foreach my $sibling(@onsameday) {
-				my $dateofsiblingbirth = get_value({ person => $sibling, value => 'birth date' });
+				my $dateofsiblingbirth = dateofbirth($sibling);
 				if($dateofsiblingbirth && $birthdate && ($dateofsiblingbirth eq $birthdate)) {
 					$allsamesex = 0;	# Fudge to force special twin handler
 				}
@@ -7041,7 +7041,7 @@ sub print_sibling_baptism
 			$rc .= ' and ';
 		}
 		$rc .= lcfirst($person->possessive()) . ' ';
-		my $dateofsiblingbirth = get_value({ person => $sibling, value => 'birth date' });
+		my $dateofsiblingbirth = dateofbirth($sibling);
 		if($dateofsiblingbirth && $birthdate && ($dateofsiblingbirth eq $birthdate)) {
 			$rc .= 'twin ';
 		}
@@ -7228,7 +7228,7 @@ sub is_alive
 	if($person->get_record('burial')) {
 		return 0;
 	}
-	my $dob = get_value({ person => $person, value => 'birth date' });
+	my $dob = dateofbirth($person);
 
 	if(!defined($dob)) {
 		return 0;	# Err on the side of caution
@@ -7491,7 +7491,7 @@ sub print_graphviz
 	# }
 
 	my $label = $person->as_string();
-	my $dob = get_value({ person => $person, value => 'birth date' });
+	my $dob = dateofbirth($person);
 	my $dod = get_value({ person => $person, value => 'death date' });
 
 	my $thumbnail;
@@ -7962,7 +7962,6 @@ sub dateofbirth {
 	}
 
 	my $person = $params{'person'};
-
 
 	my $dateofbirth = get_value({ person => $person, value => 'birth date' });
 	if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
