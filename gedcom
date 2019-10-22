@@ -1148,10 +1148,7 @@ sub generate {
 
 			next;
 		} elsif($ical) {
-			my $dateofbirth = get_value({ person => $person, value => 'birth date' });
-			if((!defined($dateofbirth)) && (my $birth = $person->get_record('birth'))) {
-				$dateofbirth = $birth->date();
-			}
+			my $dateofbirth = dateofbirth($person);
 			if($dateofbirth && ($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
 				add_to_ical(
 					ical => $ical,
@@ -1507,7 +1504,7 @@ sub print_person
 			$str .= $person->as_string();
 		}
 		if($aob) {
-			if(my $d = $dfg->parse_datetime(date => get_value({ person => $person, value => 'birth date' }))) {
+			if(my $d = $dfg->parse_datetime(date => dateofbirth($person))) {
 				$str .= ' b' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
@@ -1935,10 +1932,7 @@ sub print_person
 	my $birth_dt = date_to_datetime(date => $dateofbirth);
 
 	if($birth_dt && (my $spouse = $spouses[0])) {
-		my $sdob = get_value({ person => $spouse, value => 'birth date' });
-		if((!$sdob) && (my $sb = $spouse->get_record('birth'))) {
-			$sdob = $sb->date();
-		}
+		my $sdob = dateofbirth($spouse);
 		if($sdob && (my $sbirth_dt = date_to_datetime(date => $sdob))) {
 			if($sbirth_dt > ($birth_dt + $fortyyears)) {
 				complain({
@@ -2114,7 +2108,7 @@ sub print_person
 
 		if($dateofbirth && $opts{'w'} && scalar(@siblings)) {
 			foreach my $sibling(@siblings) {
-				my $siblingbirth = get_value({ person => $sibling, value => 'birth date' });
+				my $siblingbirth = dateofbirth($sibling);
 				if($siblingbirth && ($siblingbirth eq $dateofbirth) &&
 				  (($sibling->name() eq $person->name()) || Text::Names::samePerson($sibling->name(), $person->name()))) {
 					complain({ person => $sibling, warning => 'possible duplicate person' });
@@ -2184,7 +2178,7 @@ sub print_person
 		my @twins;
 		if($birth_dt) {
 			foreach my $s(@siblings) {
-				if(my $dob = get_value({ person => $s, value => 'birth date' })) {
+				if(my $dob = dateofbirth($s)) {
 					if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
 						my $d;
 						eval {
@@ -2226,7 +2220,7 @@ sub print_person
 					# If possible, sort siblings by date of birth
 					my $all_siblings_have_dob = 1;
 					foreach my $sibling(@siblings) {
-						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
+						if(my $dob = dateofbirth($sibling)) {
 							if(($dob !~ /^\d/) || ($dob =~ /[a-z]$/i) ||
 							   ($dob =~ /[\/\-]/) || !date_parser_cached(date => $dob)) {
 								$all_siblings_have_dob = 0;
@@ -2253,12 +2247,12 @@ sub print_person
 						}
 					}
 					if($all_siblings_have_dob) {
-						@siblings = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => get_value({ person => $_, value => 'birth date' }))}[0]->{'canonical'}) } @siblings;
+						@siblings = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => dateofbirth($_))}[0]->{'canonical'}) } @siblings;
 					}
 					my $age_index = 1;	# count of siblings born before $person + 1 (i.e. where $person is in the date order)
 					$print_sibling_count = 1;
 					foreach my $sibling(@siblings) {
-						if(my $dob = get_value({ person => $sibling, value => 'birth date' })) {
+						if(my $dob = dateofbirth($sibling)) {
 							if(my $d = date_parser_cached(date => $dob)) {
 								$d = $dfn->parse_datetime($d->{'canonical'});
 								if($opts{'w'} &&
@@ -2553,7 +2547,7 @@ sub print_person
 				}
 				$bio .= "[$_]" foreach(@birthcitations);
 				if($opts{'w'}) {
-					if($mother && $yob && (my $mumdateofbirth = get_value({ person => $mother, value => 'birth date' }))) {
+					if($mother && $yob && (my $mumdateofbirth = dateofbirth($mother))) {
 						if($mumdateofbirth =~ /.*?(\d{3,4})/) {
 							$mumdateofbirth = $1;
 							if(($yob - $mumdateofbirth) <= 13) {
@@ -2569,7 +2563,7 @@ sub print_person
 							}
 						}
 					}
-					if($father && $yob && (my $daddateofbirth = get_value({ person => $father, value => 'birth date' }))) {
+					if($father && $yob && (my $daddateofbirth = dateofbirth($father))) {
 						if($daddateofbirth =~ /.*?(\d{3,4})/) {
 							$daddateofbirth = $1;
 							if(($yob - $daddateofbirth) <= 13) {
@@ -2613,7 +2607,7 @@ sub print_person
 				} elsif($birth_dt) {
 					my @twins;
 					foreach my $s(@siblings) {
-						if(my $dob = get_value({ person => $s, value => 'birth date' })) {
+						if(my $dob = dateofbirth($s)) {
 							if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
 								my $d;
 								eval {
@@ -2706,8 +2700,7 @@ sub print_person
 					if($mother && $opts{'w'}) {
 						if($dateofbaptism =~ /.*?(\d{3,4})/) {
 							my $yobaptism = $1;
-							my $motherdob = get_value({ person => $mother, value => 'birth date' });
-							if($motherdob) {
+							if(my $motherdob = dateofbirth($mother)) {
 								my $d = $date_parser->parse(date => $motherdob);
 								if($d && (ref($d) eq 'ARRAY')) {
 									$d = @{$d}[0];
