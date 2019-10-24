@@ -4846,7 +4846,7 @@ sub print_person
 							person => $person,
 							warning => "[$citation]: no citation title"
 						});
-						next;
+						$title = 'No citation title';
 					}
 				}
 				if($opts{'B'}) {
