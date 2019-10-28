@@ -427,7 +427,8 @@ if($opts{'B'}) {
 	$dbh->do('CREATE TABLE siblings(xref CHAR(6), sibling CHAR(6) NOT NULL, PRIMARY KEY (xref, sibling), FOREIGN KEY (sibling) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE children(xref CHAR(6), child CHAR(6) NOT NULL, PRIMARY KEY (xref, child), FOREIGN KEY (child) REFERENCES people(xref));');
 	$dbh->do('CREATE TABLE spouses(xref CHAR(6), spouse CHAR(6) NOT NULL, dateofmarriage CHAR (12), placeofmarriage CHAR (30), PRIMARY KEY (xref, spouse), FOREIGN KEY (spouse) REFERENCES people(xref));');
-	$dbh->do('CREATE TABLE locations(xref CHAR (6), date CHAR (12), place CHAR (30), FOREIGN KEY (xref) REFERENCES people(xref));');
+	$dbh->do('CREATE TABLE locations(location CHAR (30), PRIMARY KEY (location));');
+	$dbh->do('CREATE TABLE residences(xref CHAR (6), date CHAR (12), location CHAR (30), FOREIGN KEY (xref) REFERENCES people(xref), FOREIGN KEY (location) REFERENCES locations(location));');
 	$dbh->do('CREATE TABLE occupations(xref CHAR (6), occupation CHAR (20), FOREIGN KEY (xref) REFERENCES people(xref));');
 }
 
@@ -987,6 +988,7 @@ sub generate {
 	}
 	my $index = 1;
 	my $generation = 0;
+	my %locations;
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
@@ -1115,7 +1117,7 @@ sub generate {
 			}
 			my @residences = get_all_residences($person);
 			if(scalar(@residences)) {
-				$query = "INSERT INTO locations('xref', 'date', 'place') VALUES (?, ?, ?);";
+				$query = "INSERT INTO residences('xref', 'date', 'location') VALUES (?, ?, ?);";
 				$statement = $dbh->prepare($query);
 				foreach my $residence(@residences) {
 					my $date = $residence->date() || 'NULL';
@@ -1127,6 +1129,7 @@ sub generate {
 							nopreposition => 1
 						});
 						$place =~ s/^\s+//g;
+						$locations{$place} = $residence;
 					} else {
 						$place = 'NULL';
 					}
@@ -1271,8 +1274,13 @@ sub generate {
 			}
 		}
 	}
-
-	if($opts{'B'}) {
+	if($opts{'S'}) {
+		my $query = "INSERT INTO locations('location') VALUES (?);";
+		my $statement = $dbh->prepare($query);
+		while(my($k, $v) = each(%locations)) {
+			die unless($statement->execute($k) == 1);
+		}
+	} elsif($opts{'B'}) {
 		print "\n";
 	}
 }
@@ -7677,6 +7685,8 @@ sub get_all_occupations
 			$occupations[0] = 'Farm Labourer';
 		} elsif($occupations[0] eq 'Poultry Farming') {
 			$occupations[0] = 'Poultry Farmer';
+		} elsif($occupations[0] =~ /(.+)([a-z])s\s+([a-z]+)$/i) {
+			$occupations[0] = "$1$2's $3";
 		}
 	}
 	while(scalar(@occupations) > 1) {
