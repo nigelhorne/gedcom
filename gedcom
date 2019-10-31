@@ -29,7 +29,10 @@ use utf8;
 my @modules;
 
 BEGIN {
-	@modules = ('Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date');
+	@modules = (
+		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
+		'Date::Parse',
+	);
 	my @needfull;
 	foreach my $module(@modules) {
 		eval "use $module";
@@ -40,7 +43,7 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i Date::Parse Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
+		system('cpan -i Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -75,19 +78,15 @@ foreach my $module(@modules) {
 use CHI;
 use Class::Simple::Cached 0.03;
 use Class::Simple::Readonly::Cached 0.02;
-use Gedcom;
-use Genealogy::Gedcom::Date 2.01;
 use Data::ICal;
 use Data::ICal::DateTime;
 use Data::ICal::Entry::Event;
 use Data::ICal::TimeZone;
 use Date::ICal;
 use Date::ICal;
-use Date::Parse;	# For strptime
 use File::Basename;
 use File::Spec;
 use Getopt::Std;
-# use Geo::Coder::List 0.26;	# maximum decoder support
 use Geo::Coder::Free 0.11;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
@@ -7731,8 +7730,8 @@ sub get_all_occupations
 
 	if(scalar(@occupations)) {
 		if($occupations[0]) {
-			if($occupations[0] =~ /works? on (.+)/i) {
-				$occupations[0] = "$1 worker";
+			if($occupations[0] =~ /works? (on|for) (.+)/i) {
+				$occupations[0] = "$2 worker";
 			}
 		} else {
 			complain({
