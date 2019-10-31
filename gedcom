@@ -26,10 +26,21 @@ use utf8;
 # use diagnostics;
 # use warnings::unused;
 
+my @modules;
+
 BEGIN {
-	eval 'use Geo::Coder::List 0.26';
-	if($@) {
-		system('cpan -i Gedcom Genealogy::Gedcom::Date Date::Parse Geo::Coder::List Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
+	@modules = ('Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date');
+	my @needfull;
+	foreach my $module(@modules) {
+		eval "use $module";
+		if($@) {
+			push @needfull, $module;
+		}
+	}
+	if(scalar(@needfull)) {
+		system('cpan -i ' . join(' ', @needfull));
+
+		system('cpan -i Date::Parse Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -43,6 +54,22 @@ BEGIN {
 		warn $warning unless $warning =~ /Subroutine Geo::Coder::OpenCage::ua redefined at/;
 	};
 
+}
+
+foreach my $module(@modules) {
+	my $version;
+	if($module =~ /(.+)\s(.+)$/) {
+		$module = $1;
+		$version = $2;
+	}
+	eval "require $module";
+	if($@) {
+		die $@;
+	}
+	$module->import();
+	# if($version && ($module::VERSION < $version)) {
+		# die "$module: need $version got ", $module::VERSIOn;
+	# }
 }
 
 use CHI;
@@ -60,7 +87,7 @@ use Date::Parse;	# For strptime
 use File::Basename;
 use File::Spec;
 use Getopt::Std;
-use Geo::Coder::List 0.26;	# maximum decoder support
+# use Geo::Coder::List 0.26;	# maximum decoder support
 use Geo::Coder::Free 0.11;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
@@ -7672,6 +7699,9 @@ sub get_all_occupations
 		shift @occupations;
 	}
 	while($occupations[0] && ($occupations[0] =~ /wife$/i)) {
+		shift @occupations;
+	}
+	while($occupations[0] && ($occupations[0] =~ /unemployed/i)) {
 		shift @occupations;
 	}
 	while($occupations[0] && ($occupations[0] =~ /Unpaid domestic duties/i)) {
