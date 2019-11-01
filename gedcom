@@ -31,7 +31,7 @@ my @modules;
 BEGIN {
 	@modules = (
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
-		'Date::Parse',
+		'Date::Parse', 'Geo::Coder::Free 0.11',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -43,7 +43,7 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i Geo::Coder::Free IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
+		system('cpan -i IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -87,7 +87,7 @@ use Date::ICal;
 use File::Basename;
 use File::Spec;
 use Getopt::Std;
-use Geo::Coder::Free 0.11;
+# use Geo::Coder::Free 0.11;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
 use Geo::Coder::Ovi;
@@ -2784,9 +2784,8 @@ sub print_person
 						place => $placeofbaptism,
 						places_printed => \%places_printed
 					};
-					my $address = $baptism->address();
-					if($address) {
-						$opts{'address'} = $address;
+					if(my $address = $baptism->address()) {
+						$opts->{'address'} = $address;
 					}
 					my $p = place($opts);
 					$bio .= $p;
