@@ -32,6 +32,7 @@ BEGIN {
 	@modules = (
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
+		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -43,7 +44,6 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -75,7 +75,6 @@ foreach my $module(@modules) {
 	# }
 }
 
-use CHI;
 use Class::Simple::Cached 0.03;
 use Class::Simple::Readonly::Cached 0.02;
 use Data::ICal;
@@ -87,10 +86,8 @@ use Date::ICal;
 use File::Basename;
 use File::Spec;
 use Getopt::Std;
-# use Geo::Coder::Free 0.11;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
-use Geo::Coder::Ovi;
 use Geo::Coder::RandMcnally;
 use Geo::Coder::US::Census;
 use Geo::Coder::OSM;
@@ -131,8 +128,6 @@ use List::Util;
 use Locale::Object::Country;
 use Module::Load;
 use Config::Auto;
-use String::Compare;
-use Unicode::Diacritic::Strip;
 
 no lib '.';
 
@@ -2005,14 +2000,30 @@ sub print_person
 			$placeofmarriage = $marriage->place();
 		}
 
-		my $burial = $person->get_record('burial');
-		my $dateofburial = get_value({ person => $person, value => 'burial date' });
-		if((!$dateofburial) && $burial) {
-			$dateofburial = $burial->date();
-		}
-		my $placeofburial = get_value({ person => $person, value => 'burial place' });
-		if((!$placeofburial) && $burial) {
-			$placeofburial = $burial->place();
+		my $burial;
+		my $dateofburial;
+		my $placeofburial;
+		my $cremation;
+		my $dateofcremation;
+		my $placeofcremation;
+		if($burial = $person->get_record('burial')) {
+			$dateofburial = get_value({ person => $person, value => 'burial date' });
+			if(!$dateofburial) {
+				$dateofburial = $burial->date();
+			}
+			my $placeofburial = get_value({ person => $person, value => 'burial place' });
+			if(!$placeofburial) {
+				$placeofburial = $burial->place();
+			}
+		} elsif($cremation = $person->get_record('cremation')) {
+			$dateofcremation = get_value({ person => $person, value => 'cremation date' });
+			if(!$dateofcremation) {
+				$dateofcremation = $cremation->date();
+			}
+			$placeofcremation = get_value({ person => $person, value => 'cremation place' });
+			if(!$placeofcremation) {
+				$placeofcremation = $cremation->place();
+			}
 		}
 
 		my $marriagecitation;
@@ -4527,12 +4538,16 @@ sub print_person
 			}
 		}
 
-		if($placeofburial || $dateofburial) {
+		if($placeofburial || $dateofburial || $placeofcremation || $dateofcremation) {
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
 				$bio .= '. ' if(!$end_of_sentence);
-				if($dateofburial) {
-					$bio .= " $pronoun was buried";
-					if($placeofburial) {
+				my $type = 'burial';
+				if($placeofcremation || $dateofcremation) {
+					$type = 'cremation';
+				}
+				if($dateofburial || $dateofcremation) {
+					$bio .= ($type eq 'burial' ) ? " $pronoun was buried" : " $pronoun was cremated";
+					if($placeofburial // $placeofcremation) {
 						if($placeofbirth && ($placeofburial eq $placeofbirth)) {
 							if(my $address = $burial->address()) {
 								$bio .= " at $address";
@@ -4540,28 +4555,45 @@ sub print_person
 							$bio .= ' in ' .
 								lcfirst($person->possessive()) .
 								' home town of ';
-							my $city = $placeofburial;
+							my $city = $placeofburial // $placeofcremation;
 							if($city =~ /^(.+?),/) {
 								$bio .= $1;
 							} else {
-								$bio .= place({ person => $person, place => $placeofburial });
+								$bio .= place({
+									person => $person,
+									place => $city
+								});
 							}
 						} else {
 							my $opts = {
 								person => $person,
-								place => $placeofburial,
 								there => $placeofdeath,
 								places_printed => \%places_printed,
 								must_postdate => $birth_dt
 							};
-							if(my $address = $burial->address()) {
-								$opts->{'address'} = $address;
+							if($type eq 'burial') {
+								$opts->{'place'} = $placeofburial;
+								if(my $address = $burial->address()) {
+									$opts->{'address'} = $address;
+								}
+							} else {
+								$opts->{'place'} = $placeofcremation;
+								if(my $address = $cremation->address()) {
+									$opts->{'address'} = $address;
+								}
 							}
 							$bio .= place($opts);
 						}
 					}
-					$bio .= ' ' . year({ person => $person, date => $dateofburial });
-					if(my $b = notes({ record => $burial, paragraph => 0 })) {
+					my $b;
+					if($type eq 'burial') {
+						$bio .= ' ' . year({ person => $person, date => $dateofburial });
+						$b = notes({ record => $burial, paragraph => 0 });
+					} else {
+						$bio .= ' ' . year({ person => $person, date => $dateofcremation });
+						$b = notes({ record => $cremation, paragraph => 0 });
+					}
+					if($b) {
 						$b =~ tr/\r//;
 						$bio .= " ($b)";
 					}
