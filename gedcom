@@ -31,7 +31,7 @@ my @modules;
 BEGIN {
 	@modules = (
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
-		'Date::Parse', 'Geo::Coder::Free 0.11',
+		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -43,7 +43,7 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i IPC::System::Simple Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
+		system('cpan -i Geo::Coder::Ovi CHI String::Compare Unicode::Diacritic::Strip');
 		system('cpan -i Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
@@ -7729,6 +7729,7 @@ sub get_all_occupations
 
 	if(scalar(@occupations)) {
 		if($occupations[0]) {
+			$occupations[0] =~ s/[\(\)]//g;
 			if($occupations[0] =~ /works? (on|for) (.+)/i) {
 				$occupations[0] = "$2 worker";
 			}
