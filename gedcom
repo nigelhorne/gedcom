@@ -1605,6 +1605,7 @@ sub print_person
 
 	my $name = $person->name();
 	$name =~ s/\///g;
+	print "Look at $name\n" if($opts{'v'});
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
