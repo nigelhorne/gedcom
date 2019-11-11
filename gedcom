@@ -34,6 +34,7 @@ BEGIN {
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
+		'Geo::Coder::OSM',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -45,7 +46,7 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
+		system('cpan -i Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
 		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
@@ -89,7 +90,6 @@ use File::Spec;
 use Getopt::Std;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
-use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
 use Geo::Coder::Postcodes;
@@ -6805,8 +6805,11 @@ sub notes {
 			}
 			$note =~ s/\s\s+/ /g;
 			$note =~ s/\s+$//g;
-			$note =~ s/\.$//;
 			$note =~ s/\. /.  /g;
+			$note =~ s/Dr\.\s\s/Dr. /g;
+			$note =~ s/Mrs\.\s\s/Mrs. /g;
+			$note =~ s/Rev\.\s\s/Rev. /g;
+			$note =~ s/([A-Z]\.\s)\s/$1/g;
 			if($paragraph) {
 				if($rc) {
 					$rc .= "\n";
@@ -6828,7 +6831,7 @@ sub notes {
 	if((!defined($rc)) || (length($rc) == 0)) {
 		return;
 	}
-	$rc =~ s/([\.:]); /$1 /g;
+	$rc =~ s/([\.:]); /$1  /g;
 	$rc =~ s/\s+$//;
 	$rc =~ s/\xe2\x80\x9c/"/g;	# left quotation
 	$rc =~ s/\xe2\x80\x9d/"/g;	# right quotation
