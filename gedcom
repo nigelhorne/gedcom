@@ -33,7 +33,7 @@ BEGIN {
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
-		'Geo::Coder::RandMcnally',
+		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -45,7 +45,7 @@ BEGIN {
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
 
-		system('cpan -i Geo::Coder::US::Census Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
+		system('cpan -i Geo::Coder::OSM Geo::Coder::XYZ Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
 		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
@@ -89,7 +89,6 @@ use File::Spec;
 use Getopt::Std;
 use Geo::Coder::Free::Local;
 use Geo::Coder::OpenCage;
-use Geo::Coder::US::Census;
 use Geo::Coder::OSM;
 use Geo::Coder::XYZ;
 use Geo::Coder::CA;
@@ -2012,7 +2011,7 @@ sub print_person
 			if(!$dateofburial) {
 				$dateofburial = $burial->date();
 			}
-			my $placeofburial = get_value({ person => $person, value => 'burial place' });
+			$placeofburial = get_value({ person => $person, value => 'burial place' });
 			if(!$placeofburial) {
 				$placeofburial = $burial->place();
 			}
@@ -2089,8 +2088,12 @@ sub print_person
 				} elsif($opts{'w'}) {
 					if($dateofburial) {
 						complain({ person => $person, warning => "Burial date ($dateofburial) has no citations" });
-					} else {
+					} elsif($dateofcremation) {
+						complain({ person => $person, warning => "Cremation date ($dateofcremation) has no citations" });
+					} elsif($placeofburial) {
 						complain({ person => $person, warning => "Burial place ($placeofburial) has no citations" });
+					} else {
+						complain({ person => $person, warning => "Cremation place ($placeofcremation) has no citations" });
 					}
 				}
 			}
