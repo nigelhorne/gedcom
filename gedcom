@@ -188,18 +188,49 @@ if($opts{'w'} || $opts{'B'}) {
 	$browser->conn_cache->total_capacity(undef);
 
 	# Cache calls to openstreetmap etc.
-	require HTTP::Cache::Transparent;
-	HTTP::Cache::Transparent->import();
+	my @modules = ('HTTP::Cache::Transparent');
 
 	if($opts{'B'}) {
-		require File::Temp;
-		File::Temp->import();
+		push @modules, 'File::Temp', 'Image::Resize',
+			'String::ProgressBar', 'PDF::API2',
+			'Image::Magick::Thumbnail',
+	} elsif($opts{'H'} {
+		push $modules, 'HTML::Table';
+	}
 
-		require Image::Resize;
-		Image::Resize->import();
+	my @needfull;
+	foreach my $module(@modules) {
+		eval "require $module";
+		if($@) {
+			push @needfull, $module;
+		} else {
+			$module->import();
+		}
+	}
+	if(scalar(@needfull)) {
+		system('cpan -i ' . join(' ', @needfull));
 
-		require String::ProgressBar;
-		String::ProgressBar->import();
+		system('cpan -i Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
+		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
+		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
+		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
+		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
+	}
+
+	foreach my $module(@modules) {
+		my $version;
+		if($module =~ /(.+)\s(.+)$/) {
+			$module = $1;
+			$version = $2;
+		}
+		eval "require $module";
+		if($@) {
+			die $@;
+		}
+		$module->import();
+		# if($version && ($module::VERSION < $version)) {
+			# die "$module: need $version got ", $module::VERSIOn;
+		# }
 	}
 
 	my $cachedir;
@@ -404,9 +435,6 @@ if($opts{'S'} && $opts{'B'}) {
 }
 
 if($opts{'B'}) {
-	require PDF::API2;
-	PDF::API2->import();
-
 	$pdf = PDF::API2->new(-file => $opts{'B'});
 	my $papersize;
 	if((-r '/etc/papersize') && open(my $fin, '<', '/etc/papersize')) {	# Linux
@@ -497,16 +525,9 @@ if($opts{'B'}) {
 	}
 
 	if(!defined($dot)) {
-		if($opts{'f'}) {
-			die 'Graphviz not found, no family trees';
-		}
-		if($opts{'w'}) {
-			red_warning(warning => 'Graphviz not found, no family trees');
-		}
-	} else {
-		require Image::Magick::Thumbnail;
-		Image::Magick::Thumbnail->import();
-		print "Using $dot\n" if($opts{'v'});
+		complain(warning => 'Graphviz not found, no family trees');
+	} elsif($opts{'v'}) {
+		print "Using $dot\n";
 	}
 }
 
