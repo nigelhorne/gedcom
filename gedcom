@@ -34,7 +34,7 @@ BEGIN {
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
-		'Geo::Coder::OSM', 'Geo::Coder::XYZ',
+		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::UserAgent::Cached',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -49,7 +49,7 @@ BEGIN {
 		system('cpan -i Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
 		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
 		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
-		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
+		system('cpan -i Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
 		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
 	}
 
@@ -177,6 +177,52 @@ if($opts{'f'}) {
 
 die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 
+@modules = ();
+
+if($opts{'B'}) {
+	push @modules, 'File::Temp', 'Image::Resize',
+		'String::ProgressBar', 'PDF::API2',
+		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
+} elsif($opts{'T'} || $opts{'i'}) {
+	push @modules, 'String::ProgressBar';
+} elsif($opts{'H'}) {
+	push @modules, 'HTML::Table';
+} elsif($opts{'S'}) {
+	push @modules, 'DBI';
+}
+if($opts{'w'}) {
+	push @modules, 'HTTP::Cache::Transparent', 'Locale::US', 'Genealogy::ChroniclingAmerica';
+}
+
+my @needfull;
+foreach my $module(@modules) {
+	eval "require $module";
+	if($@) {
+		push @needfull, $module;
+	} else {
+		$module->import();
+	}
+}
+if(scalar(@needfull)) {
+	system('cpan -i ' . join(' ', @needfull));
+}
+
+foreach my $module(@modules) {
+	my $version;
+	if($module =~ /(.+)\s(.+)$/) {
+		$module = $1;
+		$version = $2;
+	}
+	eval "require $module";
+	if($@) {
+		die $@;
+	}
+	$module->import();
+	# if($version && ($module::VERSION < $version)) {
+		# die "$module: need $version got ", $module::VERSIOn;
+	# }
+}
+
 my $browser;
 my $cached_browser;
 my $us;
@@ -188,51 +234,6 @@ if($opts{'w'} || $opts{'B'}) {
 	$browser->conn_cache->total_capacity(undef);
 
 	# Cache calls to openstreetmap etc.
-	my @modules = ('HTTP::Cache::Transparent');
-
-	if($opts{'B'}) {
-		push @modules, 'File::Temp', 'Image::Resize',
-			'String::ProgressBar', 'PDF::API2',
-			'Image::Magick::Thumbnail',
-	} elsif($opts{'H'} {
-		push $modules, 'HTML::Table';
-	}
-
-	my @needfull;
-	foreach my $module(@modules) {
-		eval "require $module";
-		if($@) {
-			push @needfull, $module;
-		} else {
-			$module->import();
-		}
-	}
-	if(scalar(@needfull)) {
-		system('cpan -i ' . join(' ', @needfull));
-
-		system('cpan -i Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
-		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
-		system('cpan -i LWP::UserAgent::Cached Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
-		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
-	}
-
-	foreach my $module(@modules) {
-		my $version;
-		if($module =~ /(.+)\s(.+)$/) {
-			$module = $1;
-			$version = $2;
-		}
-		eval "require $module";
-		if($@) {
-			die $@;
-		}
-		$module->import();
-		# if($version && ($module::VERSION < $version)) {
-			# die "$module: need $version got ", $module::VERSIOn;
-		# }
-	}
-
 	my $cachedir;
 	if(my $e = $ENV{'CACHEDIR'}) {
 		$cachedir = File::Spec->catfile($e, 'http-cache-transparent');
@@ -272,14 +273,8 @@ if($opts{'w'} || $opts{'B'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
 
-		require Locale::US;
-		Locale::US->import();
-
 		$us = Locale::US->new();
 	}
-
-	require LWP::UserAgent::Cached;
-	LWP::UserAgent::Cached->import();
 
 	if(my $e = $ENV{'CACHEDIR'}) {
 		$cachedir = File::Spec->catfile($e, 'lwp');
@@ -457,9 +452,6 @@ if($opts{'B'}) {
 } elsif($opts{'s'}) {
 	die '-s only makes sense with the -B or -x options' unless($opts{'x'});
 } elsif($opts{'S'}) {
-	require DBI;
-	DBI->import();
-
 	# FIXME - use basename of .ged with .sql suffix
 	my $sqlite_file = 'gedcom.sql';
 
@@ -492,10 +484,6 @@ if($opts{'x'}) {
 	$opts{'T'} = 1;
 }
 if($opts{'T'}) {
-	if((!$opts{'x'}) && !$opts{'g'}) {
-		require String::ProgressBar;
-		String::ProgressBar->import();
-	}
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 my $ical;
@@ -510,8 +498,6 @@ if($opts{'i'}) {
 		'X-WR-CALNAME' => "$0 Family Calendar",
 	);
 	$opts{'A'} = $opts{'a'} = 1;
-	require String::ProgressBar;
-	String::ProgressBar->import();
 }
 
 my $dot;
@@ -544,8 +530,6 @@ if($opts{'H'}) {
 	die '-h doesn\'t make sense with the -H option' if($opts{'h'});
 	die '-p doesn\'t make sense with the -H option' if($opts{'p'});
 	die '-H doesn\'t support citations' if($opts{'c'});
-
-	require HTML::Table;
 
 	my $dtl = DateTime::Locale->load($ENV{'LANG'});
 
@@ -7983,9 +7967,6 @@ sub chronicling_america
 	my ($person, $chronicling_params) = @_;
 
 	return unless($opts{'w'});
-
-	require Genealogy::ChroniclingAmerica;
-	Genealogy::ChroniclingAmerica->import();
 
 	if(!defined($chronicling_params->{'firstname'})) {
 		my $i = 0;
