@@ -21,10 +21,6 @@
 
 use strict;
 use warnings;
-use autodie qw(:all);
-use utf8;
-# use diagnostics;
-# use warnings::unused;
 
 my @modules;
 
@@ -32,6 +28,7 @@ BEGIN {
 	@modules = (
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
+		'Geo::Coder::Free::Local',
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
 		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::UserAgent::Cached',
@@ -47,7 +44,9 @@ BEGIN {
 		'Data::ICal::TimeZone', 'Data::ICal::DateTime',
 		'Net::OAuth', 'Geo::Coder::GooglePlaces', 'Geo::Coder::Bing',
 		# 'Geo::GeoNames', 'Geo-Coder-PlaceFinder-0.1.tar.gz'
-		'Geo::GeoNames',
+		'Geo::GeoNames', 'Getopt::Std', 'File::Basename',
+		'LWP::UserAgent::Throttled', 'Term::ANSIColor',
+		'Locale::Object::Country',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -92,56 +91,11 @@ foreach my $module(@modules) {
 	# }
 }
 
-use Class::Simple::Cached 0.03;
-use Class::Simple::Readonly::Cached 0.02;
-use Data::ICal;
-use Data::ICal::DateTime;
-use Data::ICal::Entry::Event;
-use Data::ICal::TimeZone;
-use Date::ICal;
-use Date::ICal;
-use File::Basename;
-use File::Spec;
-use Getopt::Std;
-use Geo::Coder::Free::Local;
-use Geo::Coder::OpenCage;
-use Geo::Coder::XYZ;
-use Geo::Coder::CA;
-use Geo::Coder::Postcodes;
-use Geo::Coder::GooglePlaces;
-use Geo::Coder::Bing;
-use Geo::Coder::DataScienceToolkit;
-use Geo::GeoNames;
-use Geo::Coder::PlaceFinder;
-# use Geo::Coder::GeocodeFarm;
-use GIS::Distance;
-use Term::ANSIColor;
-use Lingua::EN::NameCase;
-use Lingua::EN::NameParse;
-use Lingua::EN::Numbers::Ordinate;
-use Lingua::EN::ABC;
-use Lingua::EN::Inflect;
-# use Lingua::EN::AddressParse;
-use Geo::StreetAddress::US;
-# use Geo::Parser::Text;
-use Locale::US;
-use DateTime::Duration;
-use DateTime::Format::Natural;
-use DateTime::Format::Genealogy;
-use Text::Wrap;
-use LWP::Simple;
-use LWP::UserAgent::Throttled;
-use LWP::ConnCache;
-use URI;
-use URI::Find::Schemeless;
-use Sort::Key::DateTime;
-use Text::Names::GB;
-use Memoize;
-use Text::Soundex;
-use List::Util;
-use Locale::Object::Country;
-use Module::Load;
-use Config::Auto;
+# use IPC::System::Simple;
+use autodie qw(:all);
+use utf8;
+# use diagnostics;
+# use warnings::unused;
 
 no lib '.';
 
@@ -197,11 +151,14 @@ die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
 if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize',
 		'String::ProgressBar', 'PDF::API2',
+		'Text::Soundex', 'Text::Wrap',
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
 } elsif($opts{'T'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
 } elsif($opts{'H'}) {
 	push @modules, 'HTML::Table';
+} elsif($opts{'x'}) {
+	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
 }
