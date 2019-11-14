@@ -35,6 +35,19 @@ BEGIN {
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
 		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::UserAgent::Cached',
+		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
+		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
+		'Lingua::EN::Numbers::Ordinate', 'Lingua::EN::ABC',
+		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
+		'DateTime::Format::Genealogy', 'URI::Find::Schemeless',
+		'Sort::Key::DateTime', 'Text::Names::GB',
+		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
+		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
+		'Data::ICal', 'Data::ICal::Entry::Event', 'Date::ICal',
+		'Data::ICal::TimeZone', 'Data::ICal::DateTime',
+		'Net::OAuth', 'Geo::Coder::GooglePlaces', 'Geo::Coder::Bing',
+		# 'Geo::GeoNames', 'Geo-Coder-PlaceFinder-0.1.tar.gz'
+		'Geo::GeoNames',
 	);
 	my @needfull;
 	foreach my $module(@modules) {
@@ -45,12 +58,12 @@ BEGIN {
 	}
 	if(scalar(@needfull)) {
 		system('cpan -i ' . join(' ', @needfull));
+	}
 
-		system('cpan -i Geo::Coder::CA Geo::Coder::Postcodes Geo::Coder::OpenCage');
-		system('cpan -i Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Lingua::EN::ABC Lingua::EN::Inflect DateTime::Format::Natural');
-		system('cpan -i DateTime::Format::Genealogy URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB HTTP::Cache::Transparent Geo::Coder::DataScienceToolkit');
-		system('cpan -i Class::Simple::Cached Class::Simple::Readonly::Cached Data::ICal Data::ICal::Entry::Event Date::ICal Data::ICal::TimeZone Data::ICal::DateTime');
-		system('cpan -i Net::OAuth Geo::Coder::GooglePlaces Geo::Coder::Bing Geo::GeoNames F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz');
+	# Fix for this module not being found
+	eval "use Geo::Coder::PlaceFinder";
+	if($@) {
+		push @needfull, 'F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz'
 	}
 
 	# FIXME
@@ -58,7 +71,6 @@ BEGIN {
 		my $warning = shift;
 		warn $warning unless $warning =~ /Subroutine Geo::Coder::OpenCage::ua redefined at/;
 	};
-
 }
 
 foreach my $module(@modules) {
@@ -66,6 +78,9 @@ foreach my $module(@modules) {
 	if($module =~ /(.+)\s(.+)$/) {
 		$module = $1;
 		$version = $2;
+	}
+	if($module =~ /.+\/(.+)/) {
+		$module = $1;
 	}
 	eval "require $module";
 	if($@) {
