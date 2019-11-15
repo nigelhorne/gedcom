@@ -22,6 +22,8 @@
 use strict;
 use warnings;
 
+no lib '.';
+
 my @modules;
 
 # Install Pre-requisites
@@ -100,8 +102,6 @@ use autodie qw(:all);
 use utf8;
 # use diagnostics;
 # use warnings::unused;
-
-no lib '.';
 
 my %opts;
 getopts('aAbB:cCdDfFGgh:Hi:m:lLp:sStTwWxvy:', \%opts);
