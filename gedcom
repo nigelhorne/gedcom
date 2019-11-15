@@ -61,7 +61,7 @@ BEGIN {
 	}
 
 	# Fix for this module not being found
-	eval "use Geo::Coder::PlaceFinder";
+	eval 'use Geo::Coder::PlaceFinder';
 	if($@) {
 		push @needfull, 'F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz'
 	}
@@ -69,7 +69,10 @@ BEGIN {
 	# FIXME
 	$SIG{__WARN__} = sub {
 		my $warning = shift;
-		warn $warning unless $warning =~ /Subroutine Geo::Coder::OpenCage::ua redefined at/;
+		if(($warning !~ /Subroutine Geo::Coder::OpenCage::ua redefined at/) &&
+		   ($warning !~ /Subroutine Gedcom::Individual::relationship redefined at/)) {
+			warn $warning;
+		}
 	};
 }
 
