@@ -6825,7 +6825,8 @@ sub notes {
 				$rc =~ s/\.$//;
 				$rc .= '; ';
 			}
-			$rc .= "$note.";
+			$rc .= $note;
+			$rc .= '.' if($note !~ /\.$/);
 		} else {
 			complain('Notes field is empty');
 		}
