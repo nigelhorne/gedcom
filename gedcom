@@ -1075,7 +1075,9 @@ sub generate {
 				$query = "INSERT INTO children('xref', 'child') VALUES (?, ?);";
 				$statement = $dbh->prepare($query);
 				foreach my $c(@children) {
-					print ">>$xref: $surname: ", $c->xref(), "\n";
+					print ">>$xref: $surname: ",
+						$c->xref(), ': ',
+						$c->given_names(), "\n";
 					die unless($statement->execute($xref, $c->xref()) == 1);
 				}
 			}
