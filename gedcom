@@ -839,6 +839,7 @@ if($opts{'H'}) {
 				my $y = $pdfpage->y() - $image->height();
 				$pdfpage->page()->gfx()->image($image, $x, $y);
 			}
+			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
@@ -1298,8 +1299,8 @@ sub print_person
 
 	# ACOM starts approximate dates with "Abt." instead of "ABT".
 	if(defined($dob) && length($dob) && ($dob ne '?')) {
-		$dob =~ s/[\.\-]/ /g;
-		$dob =~ s/\s{2,}/ /g;
+		$dob =~ tr/\.\-/  /;
+		$dob =~ s/\s{2,}/ /gs;
 		# FIXME: ../../../gedcoms/gl120368.ged puts dates *inside*
 		#	brackets
 		$dob =~ s/\(.+$//;	# some people put information in brackets after the date
@@ -6567,6 +6568,9 @@ sub year
 	}
 
 	$string = ucfirst(lc($string));
+	if($params{'nopreposition'}) {
+		return $string;
+	}
 	if($language eq 'French') {
 		return ($string =~ /\d$/) ? "en $string" : "le $string";
 	}
@@ -7825,11 +7829,10 @@ sub journey
 		}
 	}
 	if($dod) {
+		$rc = $person->pronoun();
 		if($yod && $yoa && ($yod == $yoa)) {
-			$rc = " In $yod, " . lc($person->pronoun());
-		} else {
-			$rc = $person->pronoun();
-
+			$rc = " In $yod, " . lc($rc);
+		# } else {
 			# $yod = year({ person => $person, record => $departure });
 			# $yoa = year({ person => $person, record => $arrival });
 		}
