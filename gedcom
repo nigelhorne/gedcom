@@ -994,12 +994,12 @@ sub generate {
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
-		if($me && ($person eq $me) && !$opts{'a'}) {
+		my $xref = $person->xref();
+		if($me && ($xref eq $me->xref()) && !$opts{'a'}) {
 			$index++;
 			next;
 		}
 
-		my $xref = $person->xref();
 		next if($printed{$xref});
 		$printed{$xref} = 1;
 
@@ -1274,6 +1274,7 @@ sub generate {
 					print $l->{location}, ": cached\n";
 				}
 			}
+			# print Data::Dumper->new([$person->state()])->Dump();
 		}
 	}
 	if($opts{'S'}) {
