@@ -765,15 +765,16 @@ if($opts{'H'}) {
 				$pdfpage = PDFPage->new();
 			}
 
-			# FIXME: This sorting only works when all people are descendents of $me, there are no
-			# ancestors involved
+			# FIXME: This sorting only works when all people are descendents of $me,
+			# there are no ancestors involved
+			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
 			@everyone = sort {
 				(stepsabove($a, $me, 0) == stepsabove($b, $me, 0)) ?
 					$a->as_sort_key() cmp $b->as_sort_key() :
 					stepsabove($a, $me, 0) <=> stepsabove($b, $me, 0);
 			} @everyone;
 
-			die "BUG: sort hasn't worked" if($everyone[0] ne $me);
+			die "BUG: sort hasn't worked" if($everyone[0]->xref() ne $me->xref());
 		} elsif($opts{'h'} && !$opts{'x'}) {
 			# Put a family tree going back a few generations on page 2
 			# Go back until it looks like it will be very small text
@@ -800,7 +801,7 @@ if($opts{'H'}) {
 				# print $top->as_string(), " $level, ", count_descendents_at_level($top, $level), "\n";
 			}
 
-			if(($top ne $me) && $dot && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
+			if(($top->xref() ne $me->xref()) && $dot && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
 			# if(open(my $fout, '|-', '/usr/bin/tee foo')) {
 				print $fout 'digraph family {',
 					'rotate = 90 subgraph main { rank="0"; ';
@@ -2141,7 +2142,7 @@ sub print_person
 			}
 		}
 
-		if($me && ($person ne $me) && !$opts{'G'}) {
+		if($me && ($person->xref() ne $me->xref()) && !$opts{'G'}) {
 			$relationship = $me->relationship($person);
 			if((!$relationship) && scalar(@spouses)) {
 				if($person->spouse() eq $me) {
