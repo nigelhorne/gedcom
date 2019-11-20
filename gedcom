@@ -1274,7 +1274,6 @@ sub generate {
 					print $l->{location}, ": cached\n";
 				}
 			}
-			# print Data::Dumper->new([$person->state()])->Dump();
 		}
 	}
 	if($opts{'S'}) {
@@ -5560,6 +5559,7 @@ sub print_person
 			}
 		}
 	}
+	print Data::Dumper->new([$person->state()])->Dump() if($opts{'v'});
 }
 
 sub Gedcom::Individual::as_string
