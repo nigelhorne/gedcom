@@ -4896,7 +4896,7 @@ sub print_person
 
 				if($opts{'w'}) {
 					my $u = URI->new($orig_uri);
-					if($u && (ref($u) ne 'URI::_generic') && !head($orig_uri)) {
+					if($u && (ref($u) ne 'URI::_generic') && !$browser->head($orig_uri)) {
 						complain({ person => $person, warning => "$orig_uri: not found" });
 					}
 				}
