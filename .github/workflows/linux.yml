@@ -30,8 +30,6 @@ jobs:
       - name: Install Dependencies
         run: |
           cpanm -iq File::Spec ExtUtils::MakeMaker
-          cpanm -v warnings
-          cpanm -v DateTime::Format::Genealogy
           cpanm -n Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Geo::Coder::XYZ Term::ANSIColor Lingua::EN::NameParse Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Tie::Static DateTime::Format::Natural B::Lint LWP::UserAgent::Throttled LWP::Simple URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB autodie IPC::System::Simple Memoize Lingua::EN::ABC warnings::unused Lingua::EN::Inflect WWW::Scrape::FindaGrave Geo::Coder::List Geo::Coder::CA Geo::StreetAddress::US Locale::US Geo::Coder::Postcodes List::Util File::Fetch~0.56 Geo::Coder::Free Geo::Coder::Ovi Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::Bing Geo::Coder::GooglePlaces Geo::GeoNames HTML::Table Net::OAuth HTTP::Cache::Transparent DateTime::Format::Genealogy Locale::Object::Country Config::Auto Module::Load Geo::Coder::DataScienceToolkit GIS::Distance LWP::UserAgent::Cached F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz String::Compare Class::Simple::Cached Class::Simple::Readonly::Cached Geo::Coder::OpenCage Date::ICal Data::ICal Data::ICal::Entry::Event Data::ICal::DateTime Data::ICal::TimeZone Unicode::Diacritic::Strip
       - name: Run Tests
         run: |
