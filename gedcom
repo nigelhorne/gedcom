@@ -4845,7 +4845,7 @@ sub print_person
 
 		if($opts{'C'}) {
 			foreach my $child(@children) {
-				if(my $dob = getbirthdate($child)) {
+				if(my $dob = dateofbirth($child)) {
 					unless($opts{'B'}) {
 						$bio .= "\n\t";
 					}
