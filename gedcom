@@ -4296,7 +4296,7 @@ sub print_person
 					if($date && ($date !~ /^from /i)) {
 						$bio .= ' ' . ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military';
 					} else {
-						$bio .= " $pronoun served in the military";
+						$bio .= " $pronoun was serving in the military";
 					}
 					if(my $place = place({ person => $person, record => $event })) {
 						$bio .= $place;
