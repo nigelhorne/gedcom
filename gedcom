@@ -2376,7 +2376,8 @@ sub print_person
 				$printed_comma = 1;
 			}
 			if($language eq 'French') {
-				$bio =~ s/^\tThe child of /\tL'enfant de /;
+				$bio =~ s/^\tThe child of\s/\tL'enfant de /;
+				$bio =~ s/\sand the child of\s/ et l'enfant de /;
 			}
 		}
 
