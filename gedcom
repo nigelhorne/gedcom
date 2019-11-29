@@ -2338,6 +2338,8 @@ sub print_person
 						if($language eq 'English') {
 							if($ENV{'LANG'} =~ /^en_US/) {
 								$occupation = Lingua::EN::ABC::b2a($occupation);
+							} elsif($ENV{'LANG'} =~ /^en_CA/) {
+								$occupation = Lingua::EN::ABC::b2c($occupation);
 							} elsif($ENV{'LANG'} =~ /^en_GB/) {
 								$occupation = Lingua::EN::ABC::a2b($occupation);
 							}
@@ -6860,6 +6862,8 @@ sub notes {
 	if($language eq 'English') {
 		if($ENV{'LANG'} =~ /^en_US/) {
 			$rc = Lingua::EN::ABC::b2a($rc);
+		} elsif($ENV{'LANG'} =~ /^en_CA/) {
+			$rc = Lingua::EN::ABC::b2c($rc);
 		} elsif($ENV{'LANG'} =~ /^en_GB/) {
 			$rc = Lingua::EN::ABC::a2b($rc);
 		}
