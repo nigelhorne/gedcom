@@ -4117,9 +4117,11 @@ sub print_person
 				} else {
 					$bio .= ', ' . lcfirst($pronoun) . ' was living ';
 				}
-				my $list .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
+				my $list;
 				if($language eq 'French') {
-					$list =~ s/ and / et /g;
+					$list = Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => 'et'}) . '. ';
+				} else {
+					$list = Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
 				}
 				$list =~ s/,\. $/. /;
 				$bio .= $list;
