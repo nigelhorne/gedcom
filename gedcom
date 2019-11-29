@@ -7767,6 +7767,8 @@ sub get_all_occupations
 			$occupations[0] = 'Poultry Farmer';
 		} elsif($occupations[0] eq 'Platelayer Railway') {
 			$occupations[0] = 'Railway Platelayer';
+		} elsif($occupations[0] eq 'General Servant Domestic') {
+			$occupations[0] = 'Domestic Servant';
 		} elsif($occupations[0] =~ /(.+)([a-z])s\s+([a-z]+)$/i) {
 			$occupations[0] = "$1$2's $3";
 		}
