@@ -6823,6 +6823,7 @@ sub notes {
 			$note =~ s/Dr\.\s\s/Dr. /g;
 			$note =~ s/Mrs\.\s\s/Mrs. /g;
 			$note =~ s/Rev\.\s\s/Rev. /g;
+			$note =~ s/St\.\s\s/St. /g;
 			$note =~ s/([A-Z]\.\s)\s/$1/g;
 			if($paragraph) {
 				if($rc) {
@@ -7771,6 +7772,8 @@ sub get_all_occupations
 			$occupations[0] = 'Railway Platelayer';
 		} elsif($occupations[0] eq 'General Servant Domestic') {
 			$occupations[0] = 'Domestic Servant';
+		} elsif($occupations[0] eq 'Lorry Driver Heavy Worker') {
+			$occupations[0] = 'Lorry Driver';
 		} elsif($occupations[0] =~ /(.+)([a-z])s\s+([a-z]+)$/i) {
 			$occupations[0] = "$1$2's $3";
 		}
