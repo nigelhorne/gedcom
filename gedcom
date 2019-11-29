@@ -119,7 +119,7 @@ my %all_locations;
 my %all_places;
 my $pi = atan2(1,1) * 4;
 
-# binmode(STDOUT, ":utf8");
+binmode(STDOUT, ':utf8');
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
@@ -4117,8 +4117,12 @@ sub print_person
 				} else {
 					$bio .= ', ' . lcfirst($pronoun) . ' was living ';
 				}
-				$bio .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
-				$bio =~ s/,\. $/. /;
+				my $list .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
+				if($language eq 'French') {
+					$list =~ s/ and / et /g;
+				}
+				$list =~ s/,\. $/. /;
+				$bio .= $list;
 
 				$end_of_sentence = 1;
 			}
