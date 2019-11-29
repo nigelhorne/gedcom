@@ -59,7 +59,9 @@ BEGIN {
 		}
 	}
 	if(scalar(@needfull)) {
-		system('cpan -i ' . join(' ', @needfull));
+		my $list = join(' ', @needfull);
+		print "Installing $list\n";
+		system("cpan -i $list");
 	}
 
 	# Fix for this module not being found
