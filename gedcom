@@ -38,7 +38,7 @@ BEGIN {
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
 		'Lingua::EN::Numbers::Ordinate', 'Lingua::EN::ABC',
-		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
+		'Lingua::EN::Inflect', 'DateTime::Locale', 'DateTime::Format::Natural',
 		'DateTime::Format::Genealogy', 'URI::Find::Schemeless',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
@@ -268,9 +268,24 @@ if($opts{'w'} || $opts{'B'}) {
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
+my $language;
+my $dtl = DateTime::Locale->load($ENV{'LANG'});
+if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+	$language = 'French';
+} else {
+	$language = 'English';
+}
 
 my $date_parser = Genealogy::Gedcom::Date->new();
-my $dfn = DateTime::Format::Natural->new();
+my $dfn;
+if($language eq 'French') {
+	# $dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy', lang => 'fr');	 # not supported
+	$dfn = DateTime::Format::Natural->new(format => 'dd/md/yy');
+} elsif(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+	$dfn = DateTime::Format::Natural->new();
+} else {
+	$dfn = DateTime::Format::Natural->new(format => 'dd/md/yy');
+}
 my $dfg = DateTime::Format::Genealogy->new();
 my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
@@ -493,13 +508,6 @@ if($opts{'B'}) {
 	} elsif($opts{'v'}) {
 		print "Using $dot\n";
 	}
-}
-
-my $language;
-if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-	$language = 'French';
-} else {
-	$language = 'English';
 }
 
 if($opts{'H'}) {
