@@ -75,7 +75,7 @@ BEGIN {
 		my $warning = shift;
 		if(($warning !~ /Subroutine Geo::Coder::OpenCage::ua redefined at/) &&
 		   ($warning !~ /Subroutine Gedcom::Individual::relationship redefined at/)) {
-			die $warning;
+			warn $warning;
 		}
 	};
 }
