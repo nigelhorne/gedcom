@@ -1968,7 +1968,9 @@ sub print_person
 	if((!$dateofmarriage) && $marriage) {
 		$dateofmarriage = $marriage->date();
 	}
-	$marriage_dt = date_to_datetime(date => $dateofmarriage);
+	if($dateofmarriage && ($dateofmarriage =~ /\d$/)) {
+		$marriage_dt = date_to_datetime(date => $dateofmarriage);
+	}
 
 	if($birth_dt && $marriage_dt && $opts{'w'} && ($marriage_dt < ($birth_dt + $sixteenyears))) {
 		complain({
@@ -7393,6 +7395,13 @@ sub date_parser_cached
 	if($all_dates{$date}) {
 		print "$date is already known\n" if($opts{'v'});
 		return $all_dates{$date};
+	}
+	if($date !~ /\d$/) {
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'BUG: illegal date should have been trapped by now';
 	}
 	print "Parse date $date\n" if($opts{'v'});
 	my $d;
