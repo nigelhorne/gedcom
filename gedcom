@@ -4736,9 +4736,9 @@ sub print_person
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
 					$bio .= ' and is buried there at ' . $burial->address();
-				} else {
+				} elsif(my $b = place($opts)) {
 					$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
-						place($opts);
+						$b;
 				}
 				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
 					$b =~ tr/\r//;
