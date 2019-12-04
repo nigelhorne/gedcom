@@ -299,8 +299,7 @@ if(my $e = $ENV{'CACHEDIR'}) {
 } else {
 	$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
 }
-my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'File', root_dir => $cachedir));
-$geocoder->push(Geo::Coder::Free::Local->new());
+my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'File', root_dir => $cachedir))->push(Geo::Coder::Free::Local->new());
 my $textgeocoder;
 
 if(my $oa = $ENV{'OPENADDR_HOME'}) {
@@ -6978,19 +6977,15 @@ sub validate_place
 			}
 		}
 
-		my $town = $place;
-		if($place =~ /,\s*(.+,.+,.+,.+)$/) {
-			# Use only the town part
-			$town = $1;
-		}
 		if($opts{'w'}) {
 			# Strange locations in censuses
-			if($town =~ /Royal Navy/) {
+			if($place =~ /Royal Navy/) {
 				return 0;
 			}
+			print "Look up location $place\n", if($opts{'v'});
 			# Force wantarray for improved caching in
 			# G:C:L
-			my @locations = $geocoder->geocode($town);
+			my @locations = $geocoder->geocode($place);
 			if(scalar(@locations) == 0) {
 				# Don't die because there are many
 				# false positives as locations
@@ -7010,11 +7005,9 @@ sub validate_place
 					}
 				}
 				$places{$place} = 0;
-				$places{$town} = 0;
 				return 0;
 			}
 		}
-		$places{$town} = 1;
 	}
 	$places{$place} = 1;
 	return 1;
