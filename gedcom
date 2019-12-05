@@ -172,7 +172,7 @@ if($opts{'B'}) {
 	push @modules, 'DBI';
 }
 if($opts{'w'}) {
-	push @modules, 'HTTP::Cache::Transparent', 'Locale::US', 'Genealogy::ChroniclingAmerica';
+	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica';
 }
 
 my @needfull;
@@ -206,7 +206,7 @@ foreach my $module(@modules) {
 
 my $browser;
 my $cached_browser;
-my $us;
+my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'}) {
@@ -254,7 +254,6 @@ if($opts{'w'} || $opts{'B'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
 
-		$us = Locale::US->new();
 	}
 
 	if(my $e = $ENV{'CACHEDIR'}) {
