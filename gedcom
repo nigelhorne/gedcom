@@ -7915,7 +7915,7 @@ sub journey
 			$rc .= ", departing $dod and";
 		}
 
-		$rc .= " arriving $doa";
+		return "$rc arriving $doa";
 	}
 
 	return $rc;
