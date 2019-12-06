@@ -21,6 +21,7 @@
 
 use strict;
 use warnings;
+use utf8;
 
 no lib '.';
 
@@ -103,7 +104,6 @@ foreach my $module(@modules) {
 
 # use IPC::System::Simple;
 use autodie qw(:all);
-use utf8;
 # use diagnostics;
 # use warnings::unused;
 
@@ -5580,7 +5580,7 @@ sub print_person
 				}
 				my $x = 300 - (length($title) / 2);
 				if(!pdfprint(string => $title, pdfpage => $pdfpage, x => $x, centre => 1)) {
-					die "Didn't make enough room for '$title'; y = " . $pdfpage->y();
+					die "Didn't make enough room for '$title'; y = ", $pdfpage->y();
 				}
 				# $text->textend();
 			}
@@ -8140,7 +8140,7 @@ sub newline
 		while((my @call_details = (caller($i++)))) {
 			print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
 		}
-		die 'BUG: fallen too low vertically; y = ' . $self->{'y'};
+		die 'BUG: fallen too low vertically; y = ', $self->{'y'};
 	}
 
 	return $self->{'y'};
