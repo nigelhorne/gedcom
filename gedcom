@@ -43,14 +43,13 @@ BEGIN {
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
-		'Data::ICal', 'Data::ICal::Entry::Event', 'Date::ICal',
-		'Data::ICal::TimeZone', 'Data::ICal::DateTime',
 		'Net::OAuth', 'Geo::Coder::GooglePlaces', 'Geo::Coder::Bing',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Geo::GeoNames', 'Getopt::Std', 'File::Basename',
 		'LWP::UserAgent::Throttled', 'Term::ANSIColor',
 		'Locale::Object::Country',
 	);
+
 	my @needfull;
 	foreach my $module(@modules) {
 		eval "use $module";
@@ -164,6 +163,11 @@ if($opts{'B'}) {
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
 } elsif($opts{'T'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
+	if($opts{'i'}) {
+		push @modules, 'Data::ICal', 'Date::ICal',
+			'Data::ICal::Entry::Event',
+			'Data::ICal::TimeZone', 'Data::ICal::DateTime';
+	}
 } elsif($opts{'H'}) {
 	push @modules, 'HTML::Table';
 } elsif($opts{'x'}) {
