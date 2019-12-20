@@ -1,6 +1,7 @@
 # gedcom
 
 A general purpose utility for gedcom files.
+This program does a lot of different things with a gedcom file.
 
 ## Print today's family anniversaries
 
@@ -24,7 +25,8 @@ or
 
 ## Gedcom validation
 
-Gedcom also includes rudimentary santity checking of your Gedcom file.
+Gedcom also includes santity checking of your Gedcom file, including missing,
+impossible and inconsistent information.
 You can enable this mode with -w, which will print warnings of anything it finds.
 It's a sort of lint for Gedcom files.
 
@@ -134,8 +136,11 @@ That will be fixed.
 
 ## Pre-Requisites
 
-This program uses many CPAN modules. Running the program for the first time with no
-arguments should install them.
+This program uses many CPAN modules.
+Running the program for the first time with no
+arguments should install them,
+of course that will fail if you don't have the privilege,
+in which case you'll need to add them by hand.
 To ensure you'll be installing them in a directory you can use either use local::lib
 or perlbrew.
 
