@@ -18,6 +18,8 @@
 # TODO: write a post-processor to sort errors by type
 # TODO: note if a child was orphaned by both parents dying before they were 16
 # TODO: -i only creates a calendar for birthdays for the moment, add others
+# TODO: look at census records to note the different places that a person's children
+#	were born and note if the residences of the person don't include those places
 
 use strict;
 use warnings;
@@ -250,7 +252,7 @@ if($opts{'w'} || $opts{'B'}) {
 			} else {
 				autoload $grave_modules;
 			}
-		} else {
+		# } else {
 			# require WWW::Scrape::FindaGrave;
 			# WWW::Scrape::FindaGrave->import();
 		}
