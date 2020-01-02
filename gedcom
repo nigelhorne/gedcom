@@ -4572,16 +4572,15 @@ sub print_person
 					$type = 'cremation';
 				}
 				if($dateofburial || $dateofcremation) {
-					$bio .= ($type eq 'burial' ) ? " $pronoun was buried" : " $pronoun was cremated";
-					if($placeofburial // $placeofcremation) {
-						if($placeofbirth && ($placeofburial eq $placeofbirth)) {
+					$bio .= ($type eq 'burial') ? " $pronoun was buried" : " $pronoun was cremated";
+					if(my $city = ($placeofburial // $placeofcremation)) {
+						if($placeofbirth && ($city eq $placeofbirth)) {
 							if(my $address = $burial->address()) {
 								$bio .= " at $address";
 							}
 							$bio .= ' in ' .
 								lcfirst($person->possessive()) .
 								' home town of ';
-							my $city = $placeofburial // $placeofcremation;
 							if($city =~ /^(.+?),/) {
 								$bio .= $1;
 							} else {
