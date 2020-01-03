@@ -4726,7 +4726,7 @@ sub print_person
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
-					$bio .= ' and is buried there at ' . $burial->address();
+					$bio .= (($language eq 'French') ? ' et est y enterré' : ' and is buried there at ') . $burial->address();
 				} elsif(my $b = place($opts)) {
 					$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
 						$b;
@@ -4744,15 +4744,26 @@ sub print_person
 				# die 'foo';
 			# }
 			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
-				if($end_of_sentence) {
-					$bio .= ' That';
+				if($language eq 'French') {
+					if($end_of_sentence) {
+						$bio .= " C'est";
+					} else {
+						$bio .= ', qui est';
+					}
+					$bio .= ' aussi où ' . lcfirst($pronoun);
 				} else {
-					$bio .= ', which';
+					if($end_of_sentence) {
+						$bio .= ' That';
+					} else {
+						$bio .= ', which';
+					}
+					$bio .= ' is also where ' . lcfirst($pronoun);
 				}
-				$bio .= ' is also where ' . lcfirst($pronoun);
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				if($end_of_sentence) {
 					$bio .= " $pronoun";
+				} elsif($language eq 'French') {
+					$bio .= ' et';
 				} else {
 					$bio .= ' and';
 				}
