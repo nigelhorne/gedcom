@@ -2891,9 +2891,9 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 															if($language eq 'French') {
 																if($sex eq 'M') {
-																	$bio .= ' est mariée à';
+																	$bio .= ' est mariée à ';
 																} else {
-																	$bio .= ' est marié à';
+																	$bio .= ' est marié à ';
 																}
 															} else {
 						$bio .= ' is married to ';
@@ -2901,9 +2901,9 @@ sub print_person
 				} else {
 															if($language eq 'French') {
 																if($sex eq 'M') {
-																	$bio .= ' été mariée à';
+																	$bio .= ' été mariée à ';
 																} else {
-																	$bio .= ' été marié à';
+																	$bio .= ' été marié à ';
 																}
 															} else {
 						$bio .= ' was married to ';
@@ -7806,6 +7806,10 @@ sub get_all_occupations
 			$occupations[0] = "$1's Shop Assistant";
 		} elsif($occupations[0] =~ /Clerk (.*)/) {
 			$occupations[0] = "$1 Clerk";
+		} elsif($occupations[0] =~ /Salesman (.*)/i) {
+			$occupations[0] = "$1 Salesman";
+		} elsif($occupations[0] =~ /Foreman (.*)/i) {
+			$occupations[0] = "$1 Foreman";
 		} elsif($occupations[0] =~ /Labourer Gas Stoker/) {
 			$occupations[0] = 'Gas Stoker';
 		} elsif($occupations[0] eq 'Plate Glass Cutter') {
