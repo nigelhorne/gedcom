@@ -178,7 +178,7 @@ if($opts{'B'}) {
 	push @modules, 'DBI';
 }
 if($opts{'w'}) {
-	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica';
+	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica', 'Locale::Country';
 }
 
 my @needfull;
@@ -7009,7 +7009,16 @@ sub validate_place
 				}
 				$places{$place} = 0;
 				return 0;
+			} elsif(($place !~ /,/) && (!country2code($place))) {
+				if(my $person = $params{'person'}) {
+					complain({ person => $person, warning => "Country not included in country, or misspelt country '$place'" });
+				} else {
+					complain("Country not included in country, or misspelt country '$place'");
+				}
+				$places{$place} = 0;
+				return 0;
 			}
+
 		}
 	}
 	$places{$place} = 1;
