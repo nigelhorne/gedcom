@@ -2877,9 +2877,9 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if((!$end_of_sentence) && (scalar(@residences) > 0)) {
-															if($language eq 'French') {
-																$bio .= ' et';
-															} else {
+					if($language eq 'French') {
+						$bio .= ' et';
+					} else {
 						$bio .= ' and';
 					}
 				}
@@ -2889,23 +2889,23 @@ sub print_person
 					}
 					$bio .= ' married ';
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
-															if($language eq 'French') {
-																if($sex eq 'M') {
-																	$bio .= ' est mariée à ';
-																} else {
-																	$bio .= ' est marié à ';
-																}
-															} else {
+					if($language eq 'French') {
+						if($sex eq 'M') {
+							$bio .= ' est mariée à ';
+						} else {
+							$bio .= ' est marié à ';
+						}
+					} else {
 						$bio .= ' is married to ';
 					}
 				} else {
-															if($language eq 'French') {
-																if($sex eq 'M') {
-																	$bio .= ' été mariée à ';
-																} else {
-																	$bio .= ' été marié à ';
-																}
-															} else {
+					if($language eq 'French') {
+						if($sex eq 'M') {
+							$bio .= ' été mariée à ';
+						} else {
+							$bio .= ' été marié à ';
+						}
+					} else {
 						$bio .= ' was married to ';
 					}
 				}
@@ -2981,12 +2981,16 @@ sub print_person
 						if($numberofchildrenwiththisspouse == 1) {
 							if($all_children_are_alive) {
 								$bio .= '1 surviving child, ';
+							} elsif($language eq 'French') {
+								$bio .= '1 enfant, ';
 							} else {
 								$bio .= '1 child, ';
 							}
 						} else {
 							if($all_children_are_alive) {
 								$bio .= "$numberofchildrenwiththisspouse surviving children: ";
+							} elsif($language eq 'French') {
+								$bio .= "$numberofchildrenwiththisspouse enfants: ";
 							} else {
 								$bio .= "$numberofchildrenwiththisspouse children: ";
 							}
@@ -3221,6 +3225,8 @@ sub print_person
 					} else {
 						if($all_children_are_alive) {
 							$bio .= "$numberofchildren surviving children";
+						} elsif($language eq 'French') {
+							$bio .= "$numberofchildren enfants";
 						} else {
 							$bio .= "$numberofchildren children";
 						}
