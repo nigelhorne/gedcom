@@ -6994,6 +6994,9 @@ sub validate_place
 			print "Look up location $place\n", if($opts{'v'});
 			# Force wantarray for improved caching in
 			# G:C:L
+			if(($place eq 'England') || ($place eq 'Scotland')) {
+				$place = 'United Kingdom';
+			}
 			my @locations = $geocoder->geocode($place);
 			if(scalar(@locations) == 0) {
 				# Don't die because there are many
