@@ -6538,6 +6538,9 @@ sub year
 		my $to = year({ %params, string => $2 });
 		$from =~ s/^(in|on|c.) //;
 		$to =~ s/^(in|on|c.) //;
+		if($language eq 'French') {
+			return "de $from à $to";
+		}
 		return "from $from to $to";
 	}
 
