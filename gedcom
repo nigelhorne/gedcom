@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2019, Nigel Horne
+# Copyright (C) 2015-2020, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -3048,7 +3048,11 @@ sub print_person
 				if(!$end_of_sentence) {
 					$bio .= ' and';
 				}
-				$bio .= ' was married ';
+				if(is_alive(person => $person)) {
+					$bio .= ' has been married ';
+				} else {
+					$bio .= ' was married ';
+				}
 				if(scalar(@spouses) == 2) {
 					if($spouses[0] eq $spouses[1]) {
 						complain({ person => $person, warning => [ 'Married twice to ', $spouses[0]->as_string() ] });
