@@ -2651,6 +2651,8 @@ sub print_person
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0) && !($opts{'a'} || $opts{'p'})) {
 						$bio .= ', was';
+					} elsif($language eq 'French') {
+						$bio .= ' et';
 					} else {
 						$bio .= ' and';
 					}
@@ -2859,6 +2861,8 @@ sub print_person
 		if(scalar(@education)) {
 			if($end_of_sentence) {
 				$bio .= " $pronoun";
+			} elsif($language eq 'French') {
+				$bio .= ' et';
 			} else {
 				$bio .= ' and';
 			}
@@ -3046,7 +3050,11 @@ sub print_person
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 			} else {
 				if(!$end_of_sentence) {
-					$bio .= ' and';
+					if($language eq 'French') {
+						$bio .= ' et';
+					} else {
+						$bio .= ' and';
+					}
 				}
 				if(is_alive(person => $person)) {
 					$bio .= ' has been married ';
@@ -3934,7 +3942,11 @@ sub print_person
 												}
 												$printed_sibling = 1;
 												# May be removed later
-												$residencestring .= ' and';
+		if($language eq 'French') {
+													$residencestring .= ' et';
+												} else {
+													$residencestring .= ' and';
+												}
 												last;
 											}
 										}
@@ -3995,7 +4007,11 @@ sub print_person
 										($person->pronoun() eq 'She' ? 'her' : 'his');
 								} else {
 									$residencestring =~ s/,$//;
-									$residencestring .= ' and';
+									if($language eq 'French') {
+										$residencestring .= ' et';
+									} else {
+										$residencestring .= ' and';
+									}
 								}
 								$printed_sibling = 1;
 								$first = 0;
