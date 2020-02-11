@@ -6771,6 +6771,8 @@ sub place {
 		}
 	} elsif($params{'nopreposition'}) {
 		$place = " $place";
+	} elsif($place =~ /^Isle of /) {
+		$place = " on the $place";
 	} else {
 		$place = " in $place";
 	}
