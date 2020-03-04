@@ -1689,6 +1689,9 @@ sub print_person
 			complain({ person => $person, warning => 'Assuming country of birth is UK' });
 		} elsif($c =~ 'England,?\sUK') {
 			$birth_country = 'United Kingdom';
+		} elsif($c eq 'Scot') {
+			complain({ person => $person, warning => "$c: birth country should be Scotland'" });
+			$birth_country = 'United Kingdom';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			$birth_country = $b->code_alpha2();
 		} else {
@@ -1739,6 +1742,9 @@ sub print_person
 		} elsif($c eq 'U.S.A.') {
 			# $death_country = 'United States';
 		} elsif($c eq 'Scotland') {
+			# $death_country = 'United Kingdom';
+		} elsif($c eq 'Scot') {
+			complain({ person => $person, warning => "$c: death country should be Scotland'" });
 			# $death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
 			# $death_country = 'United Kingdom';
@@ -2604,7 +2610,7 @@ sub print_person
 						date => $dateofbirth,
 						must_predate => $death_dt
 					});
-					if($y =~ /^from (.+) to (.)/i) {
+					if($y =~ /^fro?m (.+) to (.+)/i) {
 						$y = "between $1 and $2";
 					}
 					$bio .= " $y" if($y);
@@ -4710,7 +4716,7 @@ sub print_person
 				}
 				if($dateofdeath) {
 					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^from (.+) to (.)/i) {
+					if($y =~ /^fro?m (.+) to (.+)/i) {
 						$y = "between $1 and $2";
 					}
 					$bio .= " $y";
@@ -4845,7 +4851,7 @@ sub print_person
 					$bio .= ' on the same day';
 				} elsif($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^from (.+) to (.)/i) {
+					if($y =~ /^fro?m (.+) to (.+)/i) {
 						$y = "between $1 and $2";
 					}
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
@@ -4853,7 +4859,7 @@ sub print_person
 						year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} else {
 					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^from (.+) to (.)/i) {
+					if($y =~ /^fro?m (.+) to (.+)/i) {
 						$y = "between $1 and $2";
 					}
 					$bio .= " $y";
