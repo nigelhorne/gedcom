@@ -2007,6 +2007,13 @@ sub print_person
 		if((!$placeofmarriage) && $marriage) {
 			$placeofmarriage = $marriage->place();
 		}
+		if($placeofmarriage && ($placeofmarriage =~ /.+,\s?(.+)$/)) {
+			my $c = $1;
+			if($c eq 'Scot') {
+				complain({ person => $person, warning => "$c: marriage country should be Scotland'" });
+				$placeofmarriage .= 'land';
+			}
+		}
 
 		my $burial;
 		my $dateofburial;
@@ -2597,6 +2604,9 @@ sub print_person
 						date => $dateofbirth,
 						must_predate => $death_dt
 					});
+					if($y =~ /^from (.+) to (.)/i) {
+						$y = "between $1 and $2";
+					}
 					$bio .= " $y" if($y);
 				}
 				$bio .= "[$_]" foreach(@birthcitations);
