@@ -4665,6 +4665,7 @@ sub print_person
 						$b = notes({ record => $cremation, paragraph => 0 });
 					}
 					if($b) {
+						$b =~ s/\.$//;
 						$b =~ tr/\r//;
 						$bio .= " ($b)";
 					}
@@ -4782,6 +4783,7 @@ sub print_person
 						$b;
 				}
 				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
+					$b =~ s/\.$//;
 					$b =~ tr/\r//;
 					$bio .= " ($b)";
 				}
