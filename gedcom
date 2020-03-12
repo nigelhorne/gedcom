@@ -2902,7 +2902,8 @@ sub print_person
 			$bio .= " $pronoun" if($end_of_sentence);
 
 			if(scalar(@spouses) == 1) {
-				if((!$end_of_sentence) && (scalar(@residences) > 0)) {
+				if((!$end_of_sentence) &&
+				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
 					if($language eq 'French') {
 						$bio .= ' et';
 					} else {
@@ -2910,7 +2911,8 @@ sub print_person
 					}
 				}
 				if($placeofmarriage || $dateofmarriage) {
-					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism)) {
+					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
+					   !$end_of_sentence) {
 						$bio .= ' also';
 					}
 					$bio .= ' married ';
@@ -4667,6 +4669,7 @@ sub print_person
 						$b = notes({ record => $cremation, paragraph => 0 });
 					}
 					if($b) {
+						$b =~ s/\.$//;
 						$b =~ tr/\r//;
 						$bio .= " ($b)";
 					}
@@ -4784,6 +4787,7 @@ sub print_person
 						$b;
 				}
 				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
+					$b =~ s/\.$//;
 					$b =~ tr/\r//;
 					$bio .= " ($b)";
 				}
