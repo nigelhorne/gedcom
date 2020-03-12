@@ -421,6 +421,8 @@ if($opts{'L'} && !$opts{'H'}) {
 }
 if($opts{'W'} && !$opts{'w'}) {
 	warn '-W only makes sense with the -w option';
+} elsif($opts{'w'} && !defined($ENV{'CLICOLOR'})) {
+	$opts{'W'} = 1;
 }
 if($opts{'A'} && $opts{'G'}) {
 	die '-A doesn\'t make sense with the -G option';
