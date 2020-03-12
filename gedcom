@@ -2909,7 +2909,8 @@ sub print_person
 					}
 				}
 				if($placeofmarriage || $dateofmarriage) {
-					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism)) {
+					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
+					   !$end_of_sentence) {
 						$bio .= ' also';
 					}
 					$bio .= ' married ';
