@@ -2434,7 +2434,11 @@ sub print_person
 					if($opts{'p'} || $opts{'a'}) {
 						$bio .= ', ' unless($printed_comma);
 					}
-					$bio .= $person->as_string() . ' was ';
+					if($language eq 'French') {
+						$bio .= $person->as_string() . ' était ';
+					} else {
+						$bio .= $person->as_string() . ' was ';
+					}
 				}
 				if($language eq 'French') {
 					$bio .= 'votre';
@@ -2461,9 +2465,17 @@ sub print_person
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$bio .= ', ';
 				} elsif(is_alive(person => $person)) {
-					$bio .= ' is ';
+					if($language eq 'French') {
+						$bio .= ' est ';
+					} else {
+						$bio .= ' is ';
+					}
 				} else {
-					$bio .= ' was ';
+					if($language eq 'French') {
+						$bio .= ' était ';
+					} else {
+						$bio .= ' was ';
+					}
 				}
 			}
 			if($language eq 'French') {
@@ -2672,7 +2684,11 @@ sub print_person
 				}
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0) && !($opts{'a'} || $opts{'p'})) {
-						$bio .= ', was';
+						if($language eq 'French') {
+							$bio .= ', était';
+						} else {
+							$bio .= ', was';
+						}
 					} elsif($language eq 'French') {
 						$bio .= ' et';
 					} else {
@@ -2720,7 +2736,11 @@ sub print_person
 			if($dateofbaptism || $placeofbaptism) {
 				$bio .= ' ';
 				unless($dateofbirth || $placeofbirth) {
-					$bio .= 'was ';
+					if($language eq 'French') {
+						$bio .= 'était ';
+					} else {
+						$bio .= 'was ';
+					}
 				}
 				if($ENV{'LANG'} =~ /^en_US/) {
 					$bio .= 'baptized';
@@ -2807,7 +2827,11 @@ sub print_person
 				$end_of_sentence = 1;
 			}
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
-			$bio .= " $pronoun was ";
+			if($language eq 'French') {
+				$bio .= " $pronoun était ";
+			} else {
+				$bio .= " $pronoun was ";
+			}
 
 			if($ENV{'LANG'} =~ /^en_US/) {
 				$bio .= 'baptized';
@@ -4248,8 +4272,10 @@ sub print_person
 				}
 			}
 			if($departure || !$doa) {
+				my $during;
 				if($yod && $yoa && ($yod == $yoa)) {
 					$bio .= "During $yod " . lc($person->pronoun());
+					$during = 1;
 				} else {
 					$bio .= $person->pronoun();
 
@@ -4257,7 +4283,9 @@ sub print_person
 					# $yoa = year({ person => $person, record => $arrival });
 				}
 
-				if($ENV{'LANG'} =~ /^en_US/) {
+				if($during && ($language eq 'French')) {
+					$bio .= ' voyagait';
+				} elsif($ENV{'LANG'} =~ /^en_US/) {
 					$bio .= ' traveled';
 				} else {
 					$bio .= ' travelled';
@@ -7971,15 +7999,20 @@ sub journey
 		}
 	}
 	if($dod) {
+		my $during;
+
 		$rc = $person->pronoun();
 		if($yod && $yoa && ($yod == $yoa)) {
 			$rc = " In $yod, " . lc($rc);
+			$during = 1;
 		# } else {
 			# $yod = year({ person => $person, record => $departure });
 			# $yoa = year({ person => $person, record => $arrival });
 		}
 
-		if($ENV{'LANG'} =~ /^en_US/) {
+		if($during && ($language eq 'French')) {
+			$rc .= ' voyagait';
+		} elsif($ENV{'LANG'} =~ /^en_US/) {
 			$rc .= ' traveled';
 		} else {
 			$rc .= ' travelled';
