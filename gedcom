@@ -6669,6 +6669,9 @@ sub year
 				red_warning({ person => $person, warning => $@ });
 			}
 		}
+		if($language eq 'French') {
+			return "en $string";
+		}
 		return "on $string";
 	}
 	if($string =~ /^bef.? (\d{3,4})/i) {
@@ -6692,6 +6695,9 @@ sub year
 		return "before $1";
 	}
 	if($string =~ /^aft.? (\d{3,4})/i) {
+		if($language eq 'French') {
+			return "après $1";
+		}
 		return "after $1";
 	}
 
