@@ -50,7 +50,7 @@ BEGIN {
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Geo::GeoNames', 'Getopt::Std', 'File::Basename',
 		'LWP::UserAgent::Throttled', 'Term::ANSIColor',
-		'Locale::Object::Country',
+		'Locale::Object::Country', 'Locale::Country::Multilingual',
 	);
 
 	my @needfull;
@@ -386,8 +386,8 @@ my $pdfpage;
 my @tmpfiles;
 my $pr;
 my $dbh;
-
-$ged = Class::Simple::Cached->new(object => $ged, cache => CHI->new(driver => 'RawMemory', datastore => {}));
+$ged = Class::Simple::Cached->new(object => $ged,
+	cache => CHI->new(driver => 'RawMemory', datastore => {}));
 my $ged2;
 if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
@@ -518,6 +518,9 @@ if($opts{'B'}) {
 		print "Using $dot\n";
 	}
 }
+
+my $lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
+	 cache => CHI->new(driver => 'RawMemory', datastore => {}));
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
@@ -6889,6 +6892,17 @@ sub place {
 	}
 	if(!defined($params{'encode'})) {
 		$params{'encode'} = 0;
+	}
+	if($ENV{'LANG'}) {
+		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
+			if(my $code = $lcm->country2code($2)) {
+				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
+			}
+		} elsif($place !~ /,/) {
+			if(my $code = $lcm->country2code($place)) {
+				$place = $lcm->code2country($code, $ENV{'LANG'});
+			}
+		}
 	}
 	if($params{'encode'}) {
 		return HTML::Entities::encode($place);
