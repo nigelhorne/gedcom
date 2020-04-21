@@ -2919,7 +2919,9 @@ sub print_person
 				$bio .= ' and';
 			}
 			if($language eq 'French') {
-				$bio .= ' est' . (($sex eq 'M' ? 'allé' : 'allée')) . ' au';
+				# FIXME: remove space after à l'
+				$bio .= ' est' . (($sex eq 'M' ? 'allé' : 'allée')) .
+					(($education[0] =~ /^[aehiou]/i) ? ' à l' : ' au');
 			} else {
 				$bio .= ' went to';
 			}
