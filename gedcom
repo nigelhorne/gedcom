@@ -2918,9 +2918,13 @@ sub print_person
 			} else {
 				$bio .= ' and';
 			}
+			if($language eq 'French') {
+				$bio .= ' est' . (($sex eq 'M' ? 'allé' : 'allée')) . ' au';
+			} else {
+				$bio .= ' went to';
+			}
 			# FIXME: do all schools
-			$bio .= ' went to'.
-				place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }) .
+			$bio .= place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }) .
 				'. ';
 			$end_of_sentence = 1;
 		}
