@@ -7990,7 +7990,9 @@ sub get_all_occupations
 			}
 			$occupations[0] =~ s/[\(\)]//g;
 			if($occupations[0] =~ /works? (on|for) (.+)/i) {
-				$occupations[0] = "$2 worker";
+				$occupations[0] = "$2 Worker";
+			} else {
+				$occupations[0] = ucfirst($occupations[0]);
 			}
 		} else {
 			complain({
