@@ -2553,8 +2553,14 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif($aob) {
 			if($language eq 'French') {
-				$bio .= " naît $aob " . (($aob == 1) ? 'an' : 'ans') . ' depuis ' .
-					($opts{'t'} ? 'demain' : "aujourd'hui");
+				$bio .= ' est né';
+				if($sex eq 'F') {
+					$bio .= 'e';
+				}
+				$bio .= " il y a $aob " . (($aob == 1) ? 'an' : 'ans');
+				if($opts{'t'}) {
+					$bio .= ' demain';
+				}
 			} else {
 				$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today');
@@ -2571,8 +2577,14 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif($aod) {
 			if($language eq 'French') {
-				$bio .= " meurt $aod " . (($aod == 1) ? 'an' : 'ans') . ' depuis ' .
-					($opts{'t'} ? 'demain' : "aujourd'hui");
+				$bio .= ' est mort';
+				if($sex eq 'F') {
+					$bio .= 'e';
+				}
+				$bio .= " il y a $aod " . (($aod == 1) ? 'an' : 'ans');
+				if($opts{'t'}) {
+					$bio .= ' demain';
+				}
 			} else {
 				$bio .= " died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today');
@@ -2951,7 +2963,15 @@ sub print_person
 					   !$end_of_sentence) {
 						$bio .= ' also';
 					}
-					$bio .= ' married ';
+					if($language eq 'French') {
+						$bio .= ' est marié';
+						if($sex eq 'F') {
+							$bio .= 'e';
+						}
+						$bio .= ' ';
+					} else {
+						$bio .= ' married ';
+					}
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					if($language eq 'French') {
 						if($sex eq 'M') {
