@@ -279,8 +279,8 @@ if($opts{'w'} || $opts{'B'}) {
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
-my $language;
 my $dtl = DateTime::Locale->load($ENV{'LANG'});
+my $language;
 if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
 	$language = 'French';
 } else {
@@ -2387,7 +2387,7 @@ sub print_person
 								$occupation = Lingua::EN::ABC::b2a($occupation);
 							} elsif($ENV{'LANG'} =~ /^en_CA/) {
 								$occupation = Lingua::EN::ABC::b2c($occupation);
-							} elsif($ENV{'LANG'} =~ /^en_GB/) {
+							} else {
 								$occupation = Lingua::EN::ABC::a2b($occupation);
 							}
 						}
@@ -7038,7 +7038,7 @@ sub notes {
 			$rc = Lingua::EN::ABC::b2a($rc);
 		} elsif($ENV{'LANG'} =~ /^en_CA/) {
 			$rc = Lingua::EN::ABC::b2c($rc);
-		} elsif($ENV{'LANG'} =~ /^en_GB/) {
+		} else {
 			$rc = Lingua::EN::ABC::a2b($rc);
 		}
 	}
@@ -8002,7 +8002,7 @@ sub get_all_occupations
 
 	if(scalar(@occupations)) {
 		if($occupations[0]) {
-			if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^en/)) {
+			if($language eq 'English') {
 				if($ENV{'LANG'} =~ /^en_US/) {
 					$occupations[0] = Lingua::EN::ABC::b2a($occupations[0]);
 				} elsif($ENV{'LANG'} =~ /^en_CA/) {
