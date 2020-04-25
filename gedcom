@@ -3301,12 +3301,18 @@ sub print_person
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
 							$bio .= '1 surviving child';
+						} elsif($language eq 'French') {
+							$bio .= '1 enfant';
 						} else {
 							$bio .= '1 child';
 						}
 						if($childrenseen >= $numberofchildren) {
 							if($parentofall) {
-								$bio .= ' with ' . $parentofall->as_string();
+								if($language eq 'French') {
+									$bio .= ' avec ' . $parentofall->as_string();
+								} else {
+									$bio .= ' with ' . $parentofall->as_string();
+								}
 							} else {
 								complain({ person => $person, warning => 'BUG: parentofall not set when only one child' });
 							}
@@ -4843,7 +4849,7 @@ sub print_person
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
-					$bio .= (($language eq 'French') ? ' et est y enterré' : ' and is buried there at ') . $burial->address();
+					$bio .= (($language eq 'French') ? ' et est y enterré à' : ' and is buried there at ') . $burial->address();
 				} elsif(my $b = place($opts)) {
 					$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
 						$b;
@@ -6883,6 +6889,8 @@ sub place {
 		$place = " $place";
 	} elsif($place =~ /^Isle of /) {
 		$place = " on the $place";
+	} elsif(($language eq 'French') && ($place =~ /,/)) {
+		$place = " à $place";
 	} else {
 		$place = " in $place";
 	}
@@ -6932,6 +6940,8 @@ sub place {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
 			if(my $code = $lcm->country2code($2)) {
 				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
+			} elsif(($2 eq 'England') && ($language eq 'French')) {
+				$place = "$1, Angleterre";
 			}
 		} elsif($place !~ /,/) {
 			if(my $code = $lcm->country2code($place)) {
