@@ -1621,13 +1621,15 @@ sub print_person
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
 	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
-	my $lastname = $name_components{'surname_1'};
+	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
+	my $lastname = ucfirst(lc($person->surname())); # RT109786
+
 	if((!defined($firstname)) && ($name =~ /(.+)\s(.+)/)) {
 		$firstname = $1;
 		if(!defined($lastname)) {
 			$lastname = $2;
 		}
-		complain({ person => $person, warning => "Can't parse the name - assuming firstname $firstname lastname $lastname" });
+		complain({ person => $person, warning => "Can't parse the name - assuming first name: $firstname, last name: $lastname" });
 	}
 
 	if($firstname && ($firstname =~ /\d/)) {
