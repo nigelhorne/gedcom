@@ -2985,9 +2985,9 @@ sub print_person
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' été mariée à ';
+							$bio .= ' était mariée à ';
 						} else {
-							$bio .= ' été marié à ';
+							$bio .= ' était marié à ';
 						}
 					} else {
 						$bio .= ' was married to ';
