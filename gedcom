@@ -3969,9 +3969,9 @@ sub print_person
 											lcfirst($person->pronoun()) .
 											' was living with ' .
 											lcfirst($person->possessive()) .
-											(($child->sex() eq 'F') ? ' daughter ' : ' son ') .
+											(($child->sex() eq 'F') ? ' daughter, ' : ' son, ') .
 											$child->given_names() .
-											' following the death of ' .
+											', following the death of ' .
 											(($sex eq 'M') ? 'his wife ' : 'her husband ') .
 											year(date => dateofdeath($spouses[0]));
 										$spdeath_dt = undef;
