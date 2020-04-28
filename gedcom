@@ -4315,6 +4315,8 @@ sub print_person
 			}
 			if($departure || !$doa) {
 				my $during;
+				# FIXME:  use journey()
+				die "FIXME";
 				if($yod && $yoa && ($yod == $yoa)) {
 					$bio .= "During $yod " . lc($person->pronoun());
 					$during = 1;
@@ -4326,7 +4328,7 @@ sub print_person
 				}
 
 				if($during && ($language eq 'French')) {
-					$bio .= ' voyagait';
+					$bio .= ' a voyagé';
 				} elsif($ENV{'LANG'} =~ /^en_US/) {
 					$bio .= ' traveled';
 				} else {
@@ -4334,12 +4336,22 @@ sub print_person
 				}
 
 				if(defined($departure->place())) {
-					$bio .= ' from ' . $departure->place();
+					if($language eq 'French') {
+						$bio .= ' de ';
+					} else {
+						$bio .= ' from ';
+					}
+					$bio .= $departure->place();
 				} else {
 					complain({ person => $person, warning => 'Departure record has no location' });
 				}
 				if(defined($arrival->place())) {
-					$bio .= ' to ' . $arrival->place();
+					if($language eq 'French') {
+						$bio .= ' à ';
+					} else {
+						$bio .= ' to ';
+					}
+					$bio .= $arrival->place();
 				} else {
 					complain({ person => $person, warning => 'Arrival record has no location' });
 				}
@@ -8084,8 +8096,15 @@ sub journey
 		my $during;
 
 		$rc = $person->pronoun();
+		if($language eq 'French') {
+			$rc = ($rc eq 'He') ? 'Il' : 'Elle';
+		}
 		if($yod && $yoa && ($yod == $yoa)) {
-			$rc = " In $yod, " . lc($rc);
+			if($language eq 'French') {
+				$rc = " En $yod, " . lc($rc);
+			} else {
+				$rc = " In $yod, " . lc($rc);
+			}
 			$during = 1;
 		# } else {
 			# $yod = year({ person => $person, record => $departure });
@@ -8093,7 +8112,7 @@ sub journey
 		}
 
 		if($during && ($language eq 'French')) {
-			$rc .= ' voyagait';
+			$rc .= ' a voyagé';
 		} elsif($ENV{'LANG'} =~ /^en_US/) {
 			$rc .= ' traveled';
 		} else {
@@ -8101,7 +8120,7 @@ sub journey
 		}
 
 		if(defined($departure->place())) {
-			$rc .= ' from' . place({ person => $person, record => $departure, nopreposition => 1 });
+			$rc .= (($language eq 'French') ? ' de' : ' from') . place({ person => $person, record => $departure, nopreposition => 1 });
 			if(my $notes = notes(record => $departure)) {
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 				$notes =~ s/\.$//;
@@ -8111,7 +8130,7 @@ sub journey
 			complain({ person => $person, warning => 'Departure record has no location' });
 		}
 		if(defined($arrival->place())) {
-			$rc .= ' to' . place({ person => $person, record => $arrival, nopreposition => 1 });
+			$rc .= (($language eq 'French') ? ' à' : ' to') . place({ person => $person, record => $arrival, nopreposition => 1 });
 			if(my $notes = notes(record => $arrival)) {
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 				$notes =~ s/\.$//;
