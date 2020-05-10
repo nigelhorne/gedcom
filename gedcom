@@ -5352,6 +5352,9 @@ sub print_person
 			if($bio eq "\t.") {
 				complain({ person => $person, warning => "couldn't extract a biography" });
 			}
+			if($language eq 'English') {
+				utf8::decode($bio);
+			}
 			print "$bio\n", '-' x 80, "\n";
 		}
 	} else {
