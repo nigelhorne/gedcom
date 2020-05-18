@@ -42,6 +42,7 @@ BEGIN {
 		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
 		'Lingua::EN::Numbers::Ordinate', 'Lingua::EN::ABC',
 		'Lingua::EN::Inflect', 'DateTime::Locale', 'DateTime::Format::Natural',
+		'Locale::CA', 'Locale::US',
 		'DateTime::Format::Genealogy', 'URI::Find::Schemeless',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
