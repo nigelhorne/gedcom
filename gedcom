@@ -20,6 +20,7 @@
 # TODO: -i only creates a calendar for birthdays for the moment, add others
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
+# TODO: add an option for -Aw to create output as a CSV
 
 use strict;
 use warnings;
