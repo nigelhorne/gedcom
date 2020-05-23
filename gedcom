@@ -7939,9 +7939,12 @@ sub get_all_occupations
 			$occupations[0] = "$1 worker";
 		} elsif(($occupations[0] eq 'Ag Lab') ||
 			($occupations[0] eq 'Ag Labourer') ||
+			($occupations[0] eq 'Ag Labourer Pauper') ||
+			($occupations[0] eq 'Farm Labourer') ||
+			($occupations[0] eq 'Agricultural Farm Labourer') ||
 			($occupations[0] eq 'work on farm') ||
 			($occupations[0] eq 'Labourer (Ag)')) {
-			$occupations[0] = 'Farm Labourer';
+			$occupations[0] = 'Agricultural Labourer';
 		} elsif($occupations[0] eq 'Poultry Farming') {
 			$occupations[0] = 'Poultry Farmer';
 		} elsif($occupations[0] eq 'Platelayer Railway') {
@@ -7965,6 +7968,8 @@ sub get_all_occupations
 			$occupations[0] = 'Gas Stoker';
 		} elsif($occupations[0] eq 'Under Gardener Domestic') {
 			$occupations[0] = 'Domestic Gardener';
+		} elsif($occupations[0] eq "Brewer's Labourer") {
+			$occupations[0] = 'Brewery Labourer';
 		} elsif($occupations[0] eq 'Plate Glass Cutter') {
 		} elsif($occupations[0] =~ /(.+)([a-z])s\s+([a-z]+)$/i) {
 			# Don't change Bus Driver to Bu's Driver
