@@ -3116,7 +3116,11 @@ sub print_person
 							# my $childnames = join(', ', map { $_->given_names() } @children);
 							# substr($childnames, rindex($childnames, ', '), 2, ' and ');
 							# print $childnames;
-							$bio .= Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => ''});
+							if($language eq 'French') {
+								$bio .= Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => '', conj => 'et'});
+							} else {
+								$bio .= Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => ''});
+							}
 						}
 					}
 				} else {
