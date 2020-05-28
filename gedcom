@@ -2657,6 +2657,8 @@ sub print_person
 					} else {
 						$birth_place = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
 					}
+				} else {
+					complain({ person => $person, warning => 'Date of birth is known, but not place' });
 				}
 
 				if($language eq 'French') {
