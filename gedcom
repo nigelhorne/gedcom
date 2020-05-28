@@ -3388,11 +3388,22 @@ sub print_person
 				$end_of_sentence = 0;
 			}
 		} elsif($numberofchildren) {
+			# Neither date nor place of marriage is known
 			if($end_of_sentence) {
 				$bio .= " $pronoun";
+			} elsif(scalar(@residences) == 0) {
+				if($language eq 'French') {
+					$bio .= ' et';
+				} else {
+					$bio .= ' and';
+				}
 			}
-			$bio .= ' had ' .
-				(($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ");
+			$bio .= ' had ';
+			if($language eq 'French') {
+				$bio .= (($numberofchildren == 1) ? '1 enfant, ' : "$numberofchildren enfants, ");
+			} else {
+				$bio .= (($numberofchildren == 1) ? '1 child, ' : "$numberofchildren children, ");
+			}
 			if($numberofchildren == 1) {
 				$bio .= $children[0]->given_names();
 			} else {
