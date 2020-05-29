@@ -4267,7 +4267,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = undef;
+						$bio = ' ';;
 					} else {
 						$bio .= "\n\t";
 					}
@@ -4756,7 +4756,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = '';
+						$bio = ' ';
 					}
 				} else {
 					$bio .= "\n\t";
@@ -4976,7 +4976,7 @@ sub print_person
 						# print STDERR "\n", length($bio), "\n", length($notes), "\n";
 						die "$bio: Print failure" if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 					}
-					$bio = '';
+					$bio = ' ';
 				}
 			} else {
 				$bio .= "\n";
