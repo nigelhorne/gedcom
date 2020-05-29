@@ -22,3 +22,6 @@ install:
 script:
   - perl -MO=Lint ./gedcom
   - perl -c -Mwarnings::unused ./gedcom
+
+after_failure:
+  - cat /home/travis/.cpanm/work/*/build.log
