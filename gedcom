@@ -4887,7 +4887,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = '';
+						$bio = ' ';
 					}
 				} else {
 					$bio .= "\n\t";
