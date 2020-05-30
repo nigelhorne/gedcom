@@ -2260,7 +2260,11 @@ sub print_person
 		my $bio = "\t";
 
 		if($occupations[0]) {
-			if($father && $father->occupation() && ($occupations[0] eq $father->occupation())) {
+			my @foccupations;
+			if($father) {
+				@foccupations = get_all_occupations(person => $father);
+			}
+			if(scalar(@foccupations) && ($occupations[0] eq $foccupations[0])) {
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
@@ -3481,6 +3485,8 @@ sub print_person
 			}
 		}
 
+		my $diedathome;
+
 		if(scalar(@residences)) {
 			# FIXME: handle duplicate locations better
 			my @residencelist;
@@ -4290,15 +4296,42 @@ sub print_person
 				} else {
 					$bio .= ', ' . lcfirst($pronoun) . ' was living ';
 				}
-				my $list;
 				if($language eq 'French') {
-					$list = Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => 'et'}) . '. ';
+					$bio .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => 'et'});
 				} else {
-					$list = Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '}) . '. ';
+					$bio .= Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; '});
 				}
-				$list =~ s/,\. $/. /;
-				$bio .= $list;
 
+				if($placeofdeath && !$aod) {
+					my $lastresidence = $residencelist[scalar(@residencelist) - 1];
+					my $deathplace = place({ person => $person, record => $death });
+					my $lastdate = $lastresidence->date();
+					$lastresidence = place({ person => $person, record => $lastresidence });
+					if($deathplace eq $lastresidence) {
+						my $p = lcfirst($pronoun);
+						$bio .= " which is where $p died";
+						if($dateofdeath) {
+							my $date = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+							$lastdate =~ s/^.*(\d{4})$/$1/;
+							$date =~ /, (\d{3,4})$/;
+							if($lastdate == $yod) {
+								$date =~ s/, (\d{3,4})$//;
+							}
+							$bio .= " $date";
+						}
+						$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
+						# Print notes about the death, if any
+						if(my $notes = notes({ person => $person, record => $death })) {
+							$notes =~ tr/\r//;
+							$notes =~ tr/\n/ /;
+							$notes =~ s/\.$//;
+							$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+							$bio .= " ($notes)";
+						}
+						$diedathome = 1;
+					}
+				}
+				$bio .= '. ';
 				$end_of_sentence = 1;
 			}
 		}
@@ -4490,11 +4523,11 @@ sub print_person
 							complain({ person => $person, warning => 'Arrival record without destination' });
 							next;
 						}
-						if($events[$index] && (ref($events[$index]) eq 'Gedcom::Record') && ($events[$index]->type() eq 'Departure') && $event->date()) {
-							if($events[$index]->date()) {
+						if(my $e = $events[$index]) {
+							if(ref($e) && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
 								$previous = $event;
-								$prev_type = 'Arrival';
-								# FIXME: not all notes will be printed
+								$prev_type = 'Departure';
+								# FIXME: not all locations will be noted or notes printed
 								next;
 							}
 						}
@@ -4767,34 +4800,36 @@ sub print_person
 				} else {
 					$bio .= "\n\t";
 				}
-				if($language eq 'French') {
-					if($sex eq 'M') {
-						$bio .= "$pronoun est mort";
+				if(!$diedathome) {
+					if($language eq 'French') {
+						if($sex eq 'M') {
+							$bio .= "$pronoun est mort";
+						} else {
+							$bio .= "$pronoun est morte";
+						}
 					} else {
-						$bio .= "$pronoun est morte";
+						$bio .= "$pronoun died";
 					}
-				} else {
-					$bio .= "$pronoun died";
-				}
-				if($dateofdeath) {
-					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^fro?m (.+) to (.+)/i) {
-						$y = "between $1 and $2";
+					if($dateofdeath) {
+						my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
+						if($y =~ /^fro?m (.+) to (.+)/i) {
+							$y = "between $1 and $2";
+						}
+						$bio .= " $y";
 					}
-					$bio .= " $y";
-				}
-				if($placeofdeath && (my $p = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
-					$bio .= $p;
-					$places_printed{$p} = 1;
-				}
-				$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
-				# Print notes about the death, if any
-				if(my $notes = notes({ person => $person, record => $death })) {
-					$notes =~ tr/\r//;
-					$notes =~ tr/\n/ /;
-					$notes =~ s/\.$//;
-					$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-					$bio .= " ($notes)";
+					if($placeofdeath && (my $p = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
+						$bio .= $p;
+						$places_printed{$p} = 1;
+					}
+					$bio .= "[$_]" foreach(List::Util::uniq(sort @deathcitations));
+					# Print notes about the death, if any
+					if(my $notes = notes({ person => $person, record => $death })) {
+						$notes =~ tr/\r//;
+						$notes =~ tr/\n/ /;
+						$notes =~ s/\.$//;
+						$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+						$bio .= " ($notes)";
+					}
 				}
 				my $opts = {
 					person => $person,
@@ -4808,7 +4843,11 @@ sub print_person
 					$opts->{'address'} = $address;
 				}
 				if($dateofburial) {
-					$bio .= ' and was buried';
+					if($diedathome) {
+						$bio .= "$pronoun was buried";
+					} else {
+						$bio .= ' and was buried';
+					}
 					if($placeofburial) {
 						if(defined($placeofdeath) && ($placeofburial eq $placeofdeath) && !$death->address()) {
 							$bio .= ' there';
@@ -4840,8 +4879,14 @@ sub print_person
 				   $burial->address() && !$death->address()) {
 					$bio .= (($language eq 'French') ? ' et est y enterré à' : ' and is buried there at ') . $burial->address();
 				} elsif(my $b = place($opts)) {
-					$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
-						$b;
+					if($diedathome) {
+						$bio .= "$pronoun ";
+						$bio .= (($language eq 'French') ? ' est enterré' :  ' is buried') .
+							$b;
+					} else {
+						$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
+							$b;
+					}
 				}
 				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
 					$b =~ s/\.$//;
