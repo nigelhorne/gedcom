@@ -19,3 +19,4 @@ nytprof.out
 *.bs
 .*.swp
 local/
+pdf/
