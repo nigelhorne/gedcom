@@ -4053,7 +4053,7 @@ sub print_person
 									}
 									if($living_with_mother || $living_with_father) {
 										$residencestring .= ', when ' . lcfirst($pronoun) .
-													' was living in the same road as ' .
+													' was living on the same road as ' .
 													($person->pronoun() eq 'She' ? 'her' : 'his');
 										if($living_with_mother && $living_with_father) {
 											$residencestring .= ' parents';
