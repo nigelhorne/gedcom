@@ -21,6 +21,9 @@
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
 # TODO: add an option for -Aw to create output as a CSV
+# TODO: use a set static map of locations in a particular decades
+#	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
+#	to produce an animated gif of migration
 
 use strict;
 use warnings;
@@ -175,7 +178,7 @@ if($opts{'B'}) {
 	}
 } elsif($opts{'H'}) {
 	push @modules, 'HTML::Table';
-} elsif($opts{'x'}) {
+} elsif($opts{'x'} || $opts{'g'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
@@ -460,7 +463,7 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
-	die '-s only makes sense with the -B or -x options' unless($opts{'x'});
+	die '-s only makes sense with the -B, -g or -x options' unless($opts{'x'} || $opts{'g'});
 } elsif($opts{'S'}) {
 	# FIXME - use basename of .ged with .sql suffix
 	my $sqlite_file = 'gedcom.sql';
