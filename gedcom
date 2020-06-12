@@ -3653,26 +3653,14 @@ sub print_person
 							nopreposition => 1,
 						});
 						if($place) {
-							$place =~ s/^\s(at|in)\s//;
-							my @locations = $geocoder->geocode($place);
-							if(my $location = shift @locations) {
-								my $lat;
-								my $long;
-								if(ref($location) eq 'Geo::Location::Point') {
-									if(ref($location) eq 'Geo::Location::Point') {
-										$lat = $location->lat();
-										$long = $location->long();
-									} else {
-										$lat = $location->{geometry}{location}{lat};
-										$long = $location->{geometry}{location}{lng};
-									}
-								}
+							$place =~ s/^\s+//;
+							if(my $location = get_location($place)) {
 								push @{$all_locations{$year}}, {
 									'residence' => $residence,
 									'person' => $person,
 									'date' => $strftime,
-									'latitude' => $lat,
-									'longitude' => $long,
+									'latitude' => $location->lat(),
+									'longitude' => $location->long()
 								};
 							}
 						}
@@ -8446,47 +8434,36 @@ sub dump_places {
 	my %printed;
 	my $url;
 	foreach my $place(sort keys %{$all_places}) {
-		my @locations;
+		my $location;
 		if($opts{'x'}) {
 			$place =~ s/"//g;
 			print "\"$place\",\"";
 		} elsif($opts{'g'}) {
-			@locations = $geocoder->geocode($place);
-			if(scalar(@locations) == 0) {
+			if($location = get_location($place)) {
+				my $x_place = $place;
+				$x_place =~ s/&/&amp;/g;
+				print "\t<Placemark>\n",
+					"\t\t<name>$x_place</name>\n",
+					"\t\t<description>";
+			} else {
 				# warn "'$place' not found";
 				next;
 			}
-			my $x_place = $place;
-			$x_place =~ s/&/&amp;/g;
-			print "\t<Placemark>\n",
-				"\t\t<name>$x_place</name>\n",
-				"\t\t<description>";
 		} elsif($opts{'M'}) {
-			@locations = $geocoder->geocode($place);
-			my $long;
-			my $lat;
-			if(my $location = shift @locations) {
-				if(ref($location) eq 'Geo::Location::Point') {
-					$long = $location->long();
-					$lat = $location->lat();
-				} else {
-					$long = $location->{geometry}{location}{lng};
-					$lat = $location->{geometry}{location}{lat};
+			if(my $location = get_location($place)) {
+				my $lat = $location->lat();
+				my $long = $location->long();
+				if(!defined($printed{$long}{$lat})) {
+					if($url) {
+						$url .= '~';
+					} else {
+						$url = 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450&pt=';
+					}
+					$url .= "$long,$lat,round";
+					$printed{$long}{$lat} = 1;
 				}
 			} else {
 				warn "'$place' not found";
-				print scalar(@locations), "\n";
-				print Data::Dumper->new([\@locations])->Dump();
-				next;
-			}
-			if(!defined($printed{$long}{$lat})) {
-				if($url) {
-					$url .= '~';
-				} else {
-					$url = 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450&pt=';
-				}
-				$url .= "$long,$lat,round";
-				$printed{$long}{$lat} = 1;
 			}
 			next;
 		} else {
@@ -8503,23 +8480,12 @@ sub dump_places {
 		}
 		print '"' if($opts{'x'});
 		if($opts{'g'}) {
-			my $long;
-			my $lat;
-			if(my $location = shift @locations) {
-				if(ref($location) eq 'Geo::Location::Point') {
-					$long = $location->long();
-					$lat = $location->lat();
-				} else {
-					$long = $location->{geometry}{location}{lng};
-					$lat = $location->{geometry}{location}{lat};
-				}
-			}
 			print "</description>\n",
 				"\t\t<Point>\n",
 				"\t\t\t<coordinates>",
-					$long,
+					$location->long(),
 					',',
-					$lat,
+					$location->lat(),
 				"</coordinates>\n",
 				"\t\t</Point>\n",
 				"\t</Placemark>\n";
@@ -8543,6 +8509,21 @@ sub dump_places {
 				print $fout $resp->decoded_content();
 			}
 		}
+	}
+}
+
+# Given a place return its latitude and longitude
+sub get_location {
+	my @locations = $geocoder->geocode(shift);	# Use array to improve caching
+
+	if(my $location = shift @locations) {
+		if(ref($location) eq 'Geo::Location::Point') {
+			return $location;
+		}
+		my $rc = Class::Simple->new();
+		$rc->long($location->{geometry}{location}{lng});
+		$rc->lat($location->{geometry}{location}{lat});
+		return $rc;
 	}
 }
 
