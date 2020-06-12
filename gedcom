@@ -892,7 +892,7 @@ if($opts{'H'}) {
 				%printed = ();
 			}
 			system("apngasm output.png frame*.png 3 4; apng2gif output.png output.gif");
-			unlink output.png;
+			unlink 'output.png';
 			# unlink frame*.png;
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
