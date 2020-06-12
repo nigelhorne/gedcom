@@ -3650,6 +3650,7 @@ sub print_person
 						my $place = place({
 							person => $person,
 							record => $residence,
+							nopreposition => 1,
 						});
 						if($place) {
 							$place =~ s/^\s(at|in)\s//;
