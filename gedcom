@@ -227,7 +227,7 @@ my $ca = Locale::CA->new();
 my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
-if($opts{'w'} || $opts{'B'}) {
+if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1);
 	$browser->env_proxy(1);
 	$browser->conn_cache->total_capacity(undef);
@@ -884,12 +884,16 @@ if($opts{'H'}) {
 		}
 
 		if($opts{'M'}) {
-			foreach my $year(-150..50) {
+			foreach my $year(-130..70) {
 				generate(everyone => \@everyone, year => $year);
-				dump_places(\%all_places);
-				%all_places = ();
+				if(($year % 10) == 0) {
+					dump_places(\%all_places, ($year/10)+13);
+				}
 				%printed = ();
 			}
+			system("apngasm output.png frame*.png 3 4; apng2gif output.png output.gif");
+			unlink output.png;
+			# unlink frame*.png;
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
 			dump_places(\%all_places);
@@ -3650,15 +3654,24 @@ sub print_person
 						if($place) {
 							$place =~ s/^\s(at|in)\s//;
 							my @locations = $geocoder->geocode($place);
-							if(defined($locations[0]->{geometry}{location}{lat}) && !defined($locations[0]->{'error'})) {
-								$latitude = $locations[0]->{geometry}{location}{lat};
-								$longitude = $locations[0]->{geometry}{location}{lng};
+							if(my $location = shift @locations) {
+								my $lat;
+								my $long;
+								if(ref($location) eq 'Geo::Location::Point') {
+									if(ref($location) eq 'Geo::Location::Point') {
+										$lat = $location->lat();
+										$long = $location->long();
+									} else {
+										$lat = $location->{geometry}{location}{lat};
+										$long = $location->{geometry}{location}{lng};
+									}
+								}
 								push @{$all_locations{$year}}, {
 									'residence' => $residence,
 									'person' => $person,
 									'date' => $strftime,
-									'latitude' => $latitude,
-									'longitude' => $longitude,
+									'latitude' => $lat,
+									'longitude' => $long,
 								};
 							}
 						}
@@ -8417,6 +8430,7 @@ sub dateofdeath {
 
 sub dump_places {
 	my $all_places = shift;
+	my $year = shift;
 
 	return if(scalar(keys(%{$all_places})) == 0);
 
@@ -8428,8 +8442,8 @@ sub dump_places {
 	print '<?xml version="1.0" encoding="UTF-8"?>', "\n",
 		'<kml xmlns="http://www.opengis.net/kml/2.2">', "\n",
 		"<Document>\n" if($opts{'g'});
-	my $printed;
 	my %printed;
+	my $url;
 	foreach my $place(sort keys %{$all_places}) {
 		my @locations;
 		if($opts{'x'}) {
@@ -8437,7 +8451,7 @@ sub dump_places {
 			print "\"$place\",\"";
 		} elsif($opts{'g'}) {
 			@locations = $geocoder->geocode($place);
-			if((scalar(@locations) == 0) || !defined($locations[0]->{geometry}{location}{lat})) {
+			if(scalar(@locations) == 0) {
 				# warn "'$place' not found";
 				next;
 			}
@@ -8448,22 +8462,30 @@ sub dump_places {
 				"\t\t<description>";
 		} elsif($opts{'M'}) {
 			@locations = $geocoder->geocode($place);
-			if((scalar(@locations) == 0) || !defined($locations[0]->{geometry}{location}{lat})) {
-				# warn "'$place' not found";
+			my $long;
+			my $lat;
+			if(my $location = shift @locations) {
+				if(ref($location) eq 'Geo::Location::Point') {
+					$long = $location->long();
+					$lat = $location->lat();
+				} else {
+					$long = $location->{geometry}{location}{lng};
+					$lat = $location->{geometry}{location}{lat};
+				}
+			} else {
+				warn "'$place' not found";
+				print scalar(@locations), "\n";
+				print Data::Dumper->new([\@locations])->Dump();
 				next;
 			}
-			if($printed) {
-				print '~';
-			} else {
-				print 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450&pt=' if($opts{'M'});
-				$printed = 1;
-			}
-			my $lng = $locations[0]->{geometry}{location}{lng};
-			my $lat = $locations[0]->{geometry}{location}{lat};
-			if(!defined($printed{$lng}{$lat})) {
-				print "$lng,$lat,round";
-				$printed = 1;
-				$printed{$lng}{$lat} = 1;
+			if(!defined($printed{$long}{$lat})) {
+				if($url) {
+					$url .= '~';
+				} else {
+					$url = 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450&pt=';
+				}
+				$url .= "$long,$lat,round";
+				$printed{$long}{$lat} = 1;
 			}
 			next;
 		} else {
@@ -8480,12 +8502,23 @@ sub dump_places {
 		}
 		print '"' if($opts{'x'});
 		if($opts{'g'}) {
+			my $long;
+			my $lat;
+			if(my $location = shift @locations) {
+				if(ref($location) eq 'Geo::Location::Point') {
+					$long = $location->long();
+					$lat = $location->lat();
+				} else {
+					$long = $location->{geometry}{location}{lng};
+					$lat = $location->{geometry}{location}{lat};
+				}
+			}
 			print "</description>\n",
 				"\t\t<Point>\n",
 				"\t\t\t<coordinates>",
-					$locations[0]->{geometry}{location}{lng},
+					$long,
 					',',
-					$locations[0]->{geometry}{location}{lat},
+					$lat,
 				"</coordinates>\n",
 				"\t\t</Point>\n",
 				"\t</Placemark>\n";
@@ -8501,7 +8534,15 @@ sub dump_places {
 		# }
 	}
 	print "</Document>\n</kml>\n" if($opts{'g'});
-	print "\n" if($opts{'M'} && $printed);
+	if($opts{'M'} && $url) {
+		my $resp = $cached_browser->get($url);
+		if($resp->is_success()) {
+			my $filename = sprintf("frame%02d.png", $year);
+			if(open(my $fout, '>', $filename)) {
+				print $fout $resp->decoded_content();
+			}
+		}
+	}
 }
 
 1;
