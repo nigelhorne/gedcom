@@ -23,6 +23,7 @@
 # TODO: add an option for -Aw to create output as a CSV
 # TODO: use a set static map of locations in a particular decades
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
+#	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450
 #	to produce an animated gif of migration
 
 use strict;
@@ -116,8 +117,8 @@ use autodie qw(:all);
 # use warnings::unused;
 
 my %opts;
-getopts('aAbB:cCdDfFGgh:Hi:m:lLp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -i ics_file ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
+getopts('aAbB:cCdDfFGgh:Hi:m:M:lLp:sStTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
 
 my $me;
 my @myancestors;
@@ -160,7 +161,7 @@ if($opts{'f'}) {
 	$opts{'w'} = 1;
 }
 
-die '-w option needs -d option' if($opts{'w'} && !$opts{'d'});
+die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'d'});
 
 @modules = ();
 
@@ -178,7 +179,7 @@ if($opts{'B'}) {
 	}
 } elsif($opts{'H'}) {
 	push @modules, 'HTML::Table';
-} elsif($opts{'x'} || $opts{'g'}) {
+} elsif($opts{'x'} || $opts{'g'} || $opts{'M'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
@@ -332,7 +333,7 @@ if(my $oa = $ENV{'OPENADDR_HOME'}) {
 		->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
 }
 
-$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s],\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
+$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s]+,\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
 
 if(my $username = $ENV{'GEONAMES_USER'}) {
 	$geocoder->push(Geo::GeoNames->new(username => $username));
@@ -463,7 +464,7 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
-	die '-s only makes sense with the -B, -g or -x options' unless($opts{'x'} || $opts{'g'});
+	die '-s only makes sense with the -B, -g or -x options' unless($opts{'x'} || $opts{'g'} || $opts{'M'});
 } elsif($opts{'S'}) {
 	# FIXME - use basename of .ged with .sql suffix
 	my $sqlite_file = 'gedcom.sql';
@@ -492,8 +493,11 @@ if($opts{'x'}) {
 	if($opts{'g'}) {
 		die '-g and -x option are exclusive'
 	}
+	if($opts{'M'}) {
+		die '-g and -x option are exclusive'
+	}
 	$opts{'T'} = 1;
-} elsif($opts{'g'}) {
+} elsif($opts{'g'} || $opts{'M'}) {
 	$opts{'T'} = 1;
 }
 if($opts{'T'}) {
@@ -737,7 +741,7 @@ if($opts{'H'}) {
 			die 'No matches found for ', $me->as_string(include_years => 1);
 		}
 
-		if($opts{'B'} || $opts{i} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'})) {
+		if($opts{'B'} || $opts{i} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'} && !$opts{'M'})) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
@@ -879,7 +883,17 @@ if($opts{'H'}) {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
-		generate(everyone => \@everyone, dbh => $dbh);
+		if($opts{'M'}) {
+			foreach my $year(-150..50) {
+				generate(everyone => \@everyone, year => $year);
+				dump_places(\%all_places);
+				%all_places = ();
+				%printed = ();
+			}
+		} else {
+			generate(everyone => \@everyone, dbh => $dbh);
+			dump_places(\%all_places);
+		}
 
 		if($opts{'B'}) {
 			$pdf->save();
@@ -945,67 +959,6 @@ if($opts{'H'}) {
 	my %args = ('time_zone' => $tz);
 	my $dt = DateTime->now(%args)->add(days => 1);
 	generate(day => $dt->day(), month => $dt->month() - 1, everyone => \@everyone);
-}
-
-if($opts{'T'}) {
-	# my $g;
-	# if(my $oa = $ENV{'OPENADDR_HOME'}) {
-		# $g = Geo::Coder::Free::OpenAddresses->new(openaddr => $oa);
-	# }
-	print '"Location","People"', "\n" if($opts{'x'});
-	print '<?xml version="1.0" encoding="UTF-8"?>', "\n",
-		'<kml xmlns="http://www.opengis.net/kml/2.2">', "\n",
-		"<Document>\n" if($opts{'g'});
-	foreach my $place(sort keys %all_places) {
-		my @locations;
-		if($opts{'x'}) {
-			$place =~ s/"//g;
-			print "\"$place\",\"";
-		} elsif($opts{'g'}) {
-			@locations = $geocoder->geocode($place);
-			if((scalar(@locations) == 0) || !defined($locations[0]->{geometry}{location}{lat})) {
-				complain(warning => "$place not found");
-				next;
-			}
-			my $x_place = $place;
-			$x_place =~ s/&/&amp;/g;
-			print "\t<Placemark>\n",
-				"\t\t<name>$x_place</name>\n",
-				"\t\t<description>";
-		} else {
-			print "$place: ";
-		}
-		my $previous;
-		foreach my $person(@{$all_places{$place}}) {
-			if($previous && ($person eq $previous)) {
-				next;
-			}
-			print $person->as_string({ include_years => 1, middle_names => 1, nee => 1 }),
-				';';
-			$previous = $person;
-		}
-		print '"' if($opts{'x'});
-		if($opts{'g'}) {
-			print "</description>\n",
-				"\t\t<Point>\n",
-				"\t\t\t<coordinates>",
-					$locations[0]->{geometry}{location}{lng},
-					',',
-					$locations[0]->{geometry}{location}{lat},
-				"</coordinates>\n",
-				"\t\t</Point>\n",
-				"\t</Placemark>";
-		}
-		print "\n";
-		# if($g && ($place =~ /USA|Canada/)) {
-			# my @locations = $g->geocode($place);
-			# if(scalar(@locations) == 0) {
-				# # complain(person => $person, warning => "$place not found in Geo::Coder::Free");
-				# warn colored(['red'], "$place not found in Geo::Coder::Free");
-			# }
-		# }
-	}
-	print "</Document>\n</kml>\n" if($opts{'g'});
 }
 
 if($ical) {
@@ -1599,6 +1552,23 @@ sub print_person
 		$text->text($person->as_string($args));
 
 		$text->font($params{'font'}, 12);
+	} elsif($opts{'M'}) {
+		return if((!defined($yob)) || ($yob != $year));
+		my $p;
+		if(my $r = $person->get_record('birth')) {
+			$p = place({ person => $person, record => $r, places_printed => \%places_printed, nopreposition => 1 });
+			$p = $r->place();
+		} elsif($p = get_value({ person => $person, value => 'birth place' })) {
+			$p = place({ person => $person, place => $p, places_printed => \%places_printed, nopreposition => 1 });
+			$p = $r->place();
+		}
+		if($p) {
+			$p =~ s/^\s//;
+			if($p =~ /Kent, England$/) {
+				push @{$all_places{$p}}, $person;
+			}
+		}
+		return;
 	} elsif($opts{'T'}) {
 		foreach my $place(get_all_residences($person)) {
 			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
@@ -8443,6 +8413,95 @@ sub dateofdeath {
 		return;
 	}
 	return $dateofdeath;
+}
+
+sub dump_places {
+	my $all_places = shift;
+
+	return if(scalar(keys(%{$all_places})) == 0);
+
+	# my $g;
+	# if(my $oa = $ENV{'OPENADDR_HOME'}) {
+		# $g = Geo::Coder::Free::OpenAddresses->new(openaddr => $oa);
+	# }
+	print '"Location","People"', "\n" if($opts{'x'});
+	print '<?xml version="1.0" encoding="UTF-8"?>', "\n",
+		'<kml xmlns="http://www.opengis.net/kml/2.2">', "\n",
+		"<Document>\n" if($opts{'g'});
+	my $printed;
+	my %printed;
+	foreach my $place(sort keys %{$all_places}) {
+		my @locations;
+		if($opts{'x'}) {
+			$place =~ s/"//g;
+			print "\"$place\",\"";
+		} elsif($opts{'g'}) {
+			@locations = $geocoder->geocode($place);
+			if((scalar(@locations) == 0) || !defined($locations[0]->{geometry}{location}{lat})) {
+				# warn "'$place' not found";
+				next;
+			}
+			my $x_place = $place;
+			$x_place =~ s/&/&amp;/g;
+			print "\t<Placemark>\n",
+				"\t\t<name>$x_place</name>\n",
+				"\t\t<description>";
+		} elsif($opts{'M'}) {
+			@locations = $geocoder->geocode($place);
+			if((scalar(@locations) == 0) || !defined($locations[0]->{geometry}{location}{lat})) {
+				# warn "'$place' not found";
+				next;
+			}
+			if($printed) {
+				print '~';
+			} else {
+				print 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450&pt=' if($opts{'M'});
+				$printed = 1;
+			}
+			my $lng = $locations[0]->{geometry}{location}{lng};
+			my $lat = $locations[0]->{geometry}{location}{lat};
+			if(!defined($printed{$lng}{$lat})) {
+				print "$lng,$lat,round";
+				$printed = 1;
+				$printed{$lng}{$lat} = 1;
+			}
+			next;
+		} else {
+			print "$place: ";
+		}
+		my $previous;
+		foreach my $person(@{$all_places->{$place}}) {
+			if($previous && ($person eq $previous)) {
+				next;
+			}
+			print $person->as_string({ include_years => 1, middle_names => 1, nee => 1 }),
+				';';
+			$previous = $person;
+		}
+		print '"' if($opts{'x'});
+		if($opts{'g'}) {
+			print "</description>\n",
+				"\t\t<Point>\n",
+				"\t\t\t<coordinates>",
+					$locations[0]->{geometry}{location}{lng},
+					',',
+					$locations[0]->{geometry}{location}{lat},
+				"</coordinates>\n",
+				"\t\t</Point>\n",
+				"\t</Placemark>\n";
+		} else {
+			print "\n";
+		}
+		# if($g && ($place =~ /USA|Canada/)) {
+			# my @locations = $g->geocode($place);
+			# if(scalar(@locations) == 0) {
+				# # complain(person => $person, warning => "$place not found in Geo::Coder::Free");
+				# warn colored(['red'], "$place not found in Geo::Coder::Free");
+			# }
+		# }
+	}
+	print "</Document>\n</kml>\n" if($opts{'g'});
+	print "\n" if($opts{'M'} && $printed);
 }
 
 1;

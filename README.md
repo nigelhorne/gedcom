@@ -111,6 +111,7 @@ The options are:
     -h: set the home person - useful for calculating relationships with -d
     -i: creates an ICS file
     -m: month for -H calendar
+    -M: produce a map of a place (currently only Kent is supported)
     -l: include living people
     -L: include ged2site hyperlinks with -H
     -p: print the biography of the given person
