@@ -21,10 +21,9 @@
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
 # TODO: add an option for -Aw to create output as a CSV
-# TODO: use a set static map of locations in a particular decades
+# TODO:	remove date_to_datetime
+# TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
-#	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0.68,51.20&z=9&l=map&size=650,450
-#	to produce an animated gif of migration
 
 use strict;
 use warnings;
@@ -7674,6 +7673,8 @@ sub date_to_datetime
 	} else {
 		$params{'date'} = shift;
 	}
+
+	return $dfg->parse_datetime(%params);
 
 	if(my $date = $params{'date'}) {
 		if($date =~ /^\s*(\d{3,4})\s*\-\s*(\d{3,4})\s*$/) {
