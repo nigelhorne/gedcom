@@ -3067,9 +3067,17 @@ sub print_person
 							$bio .= ' (';
 							$parentheses = 1;
 						}
-						$bio .= 'with whom ' . lcfirst($pronoun);
+						if($language eq 'French') {
+							$bio .= "avec qu'" . lcfirst($pronoun);
+						} else {
+							$bio .= 'with whom ' . lcfirst($pronoun);
+						}
 						if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
-							$bio .= ' had ';
+							if($language eq 'French') {
+								$bio .= ' a eu ';
+							} else {
+								$bio .= ' had ';
+							}
 						} elsif((!$dateofdeath) && (!$dateofburial) && ($spouses[0]) && !$spouses[0]->death()) {
 							$bio .= ' has had ';
 						} else {
