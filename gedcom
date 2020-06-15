@@ -6195,6 +6195,9 @@ sub Gedcom::Individual::relationship_up
 			} elsif($steps == 2) {
 				return "grand$title";
 			} elsif($steps == 3) {
+				if($language eq 'French') {
+					return "arrière-grand-$title";
+				}
 				return "great-grand$title";
 			} elsif($steps == 4) {
 				return "great-great-grand$title";
