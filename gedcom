@@ -2300,9 +2300,17 @@ sub print_person
 
 		if($father || $mother) {
 			if(scalar(@occupations) || scalar(@twins)) {
-				$bio .= ' and the ';
+				if($language eq 'French') {
+					$bio .= ' et le ';
+				} else {
+					$bio .= ' and the ';
+				}
 			} else {
-				$bio .= 'The ';
+				if($language eq 'French') {
+					$bio .= 'Le ';
+				} else {
+					$bio .= 'The ';
+				}
 			}
 
 			if($birth_dt) {
@@ -2373,7 +2381,11 @@ sub print_person
 						} else {
 							$bio .= ordinate($age_index);
 						}
-						$bio .= ' of ' . (scalar(@siblings) + 1) . ' children';
+						if($language eq 'French') {
+							$bio .= ' de ' . (scalar(@siblings) + 1) . ' enfants';
+						} else {
+							$bio .= ' of ' . (scalar(@siblings) + 1) . ' children';
+						}
 					} else {
 						$bio .= 'child';
 					}
@@ -2385,7 +2397,11 @@ sub print_person
 				$bio .= 'child';
 			}
 
-			$bio .= ' of';
+			if($language eq 'French') {
+				$bio .= ' de';
+			} else {
+				$bio .= ' of';
+			}
 
 			if($father) {
 				$bio .= ' ' . $father->as_string();
