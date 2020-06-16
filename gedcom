@@ -883,16 +883,16 @@ if($opts{'H'}) {
 		}
 
 		if($opts{'M'}) {
+			my @files;
 			foreach my $year(-130..70) {
 				generate(everyone => \@everyone, year => $year);
 				if(($year % 10) == 0) {
-					dump_places(\%all_places, ($year/10)+13);
+					push @files, dump_places(\%all_places, ($year/10)+13);
 				}
 				%printed = ();
 			}
-			system("apngasm output.png frame*.png 3 4; apng2gif output.png output.gif");
-			unlink 'output.png';
-			# unlink frame*.png;
+			system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+			unlink 'output.png', @files;
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
 			dump_places(\%all_places);
@@ -8536,6 +8536,7 @@ sub dump_places {
 			if(open(my $fout, '>', $filename)) {
 				print $fout $resp->decoded_content();
 			}
+			return $filename;
 		}
 	}
 }
