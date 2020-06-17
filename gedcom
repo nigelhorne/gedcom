@@ -3190,7 +3190,7 @@ sub print_person
 					$bio .= ' was married ';
 				}
 				if(scalar(@spouses) == 2) {
-					if($spouses[0] eq $spouses[1]) {
+					if($spouses[0]->xref() eq $spouses[1]->xref()) {
 						complain({ person => $person, warning => [ 'Married twice to ', $spouses[0]->as_string() ] });
 					} else {
 						$bio .= 'twice';
@@ -3285,13 +3285,21 @@ sub print_person
 					}
 					$names .= ')' if($printed_bracket);
 					if($spouse_number == (scalar(@spouses) - 1)) {
-						$names .= ' and ';
+						if($language eq 'French') {
+							$names .= ' et ';
+						} else {
+							$names .= ' and ';
+						}
 					} elsif($spouse_number < (scalar(@spouses) - 1)) {
 						$names .= ', ';
 					}
 				}
 				# substr($names, rindex($names, ', '), 2, ' and ');
-				$bio .= ", to $names";
+				if($language eq 'French') {
+					$bio .= ", à $names";
+				} else {
+					$bio .= ", to $names";
+				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 
 				# Determine if all the children are from one marriage, since that's
