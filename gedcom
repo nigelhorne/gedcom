@@ -2301,13 +2301,13 @@ sub print_person
 		if($father || $mother) {
 			if(scalar(@occupations) || scalar(@twins)) {
 				if($language eq 'French') {
-					$bio .= ' et le ';
+					$bio .= ' et l';
 				} else {
 					$bio .= ' and the ';
 				}
 			} else {
 				if($language eq 'French') {
-					$bio .= 'Le ';
+					$bio .= 'L';
 				} else {
 					$bio .= 'The ';
 				}
@@ -2374,6 +2374,9 @@ sub print_person
 						}
 					}
 					if($all_siblings_have_dob) {
+						if($language eq 'French') {
+							$bio .= 'e ';
+						}
 						if(scalar(@siblings) && ($age_index == (scalar(@siblings) + 1))) {
 							$bio .= ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
 						} elsif(scalar(@siblings) && ($age_index == 1)) {
@@ -2387,14 +2390,27 @@ sub print_person
 							$bio .= ' of ' . (scalar(@siblings) + 1) . ' children';
 						}
 					} else {
-						$bio .= 'child';
+						if($language eq 'French') {
+							$bio .= "'enfant";
+						} else {
+							$bio .= 'child';
+						}
 					}
 				} else {
 					# print ' only child of';
 					$bio .= 'child';
+					if($language eq 'French') {
+						$bio .= "' enfant";
+					} else {
+						$bio .= 'child';
+					}
 				}
 			} else {
-				$bio .= 'child';
+				if($language eq 'French') {
+					$bio .= 'enfant';
+				} else {
+					$bio .= 'child';
+				}
 			}
 
 			if($language eq 'French') {
@@ -2991,7 +3007,11 @@ sub print_person
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   !$end_of_sentence) {
-						$bio .= ' also';
+						if($language eq 'French') {
+							$bio .= ' aussi';
+						} else {
+							$bio .= ' also';
+						}
 					}
 					if($language eq 'French') {
 						$bio .= ' est marié';
