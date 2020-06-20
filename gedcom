@@ -4913,22 +4913,25 @@ sub print_person
 				}
 				$end_of_sentence = 0;
 			} elsif($dateofdeath || $placeofdeath) {
-				$bio .= '.' if(!$end_of_sentence);
-				if($opts{'B'}) {
-					if($bio) {
-						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$text->textend();
+				if((!$placeofburial) && !$diedathome) {
+					$bio .= '.' if(!$end_of_sentence);
+					$end_of_sentence = 0;
+					if($opts{'B'}) {
+						if($bio) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+								$text->textend();
 
-							$pdfpage = PDFPage->new();
+								$pdfpage = PDFPage->new();
 
-							$text = $pdfpage->text();
-							$text->font($params{'font'}, 12);
-							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
+								$text = $pdfpage->text();
+								$text->font($params{'font'}, 12);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
+							}
+							$bio = ' ';
 						}
-						$bio = ' ';
+					} else {
+						$bio .= "\n\t";
 					}
-				} else {
-					$bio .= "\n\t";
 				}
 				if(!$diedathome) {
 					if($language eq 'French') {
@@ -5007,7 +5010,14 @@ sub print_person
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
-					$bio .= (($language eq 'French') ? ' et est y enterré à' : ' and is buried there at ') . $burial->address();
+				   	if($end_of_sentence) {
+						$bio .= " $pronoun";
+					} elsif($language eq 'French') {
+						$bio .= ' et';
+					} else {
+						$bio .= ' and';
+					}
+					$bio .= (($language eq 'French') ? ' est y enterré à' : ' is buried there at ') . $burial->address();
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$bio .= "$pronoun ";
