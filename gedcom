@@ -166,8 +166,7 @@ die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'
 
 if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize',
-		'String::ProgressBar', 'PDF::API2',
-		'Text::Soundex', 'Text::Wrap',
+		 'PDF::API2', 'Text::Soundex', 'Text::Wrap',
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
 } elsif($opts{'T'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
@@ -182,6 +181,9 @@ if($opts{'B'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
+}
+if($opts{'B'} || $opts{i} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'} && !$opts{'M'})) {
+	push @modules, 'String::ProgressBar';
 }
 if($ENV{'LANG'}) {
 	push @modules, 'Locale::Country::Multilingual';
