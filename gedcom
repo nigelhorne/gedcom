@@ -169,7 +169,6 @@ if($opts{'B'}) {
 		 'PDF::API2', 'Text::Soundex', 'Text::Wrap',
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
 } elsif($opts{'T'} || $opts{'i'}) {
-	push @modules, 'String::ProgressBar';
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
 			'Data::ICal::Entry::Event',
@@ -182,7 +181,7 @@ if($opts{'B'}) {
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
 }
-if($opts{'B'} || $opts{i} || ((!$opts{'x'}) && (!$opts{'A'}) && !$opts{'g'} && !$opts{'M'})) {
+if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
 }
 if($ENV{'LANG'}) {
@@ -5037,7 +5036,7 @@ sub print_person
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
-				   	if($end_of_sentence) {
+					if($end_of_sentence) {
 						$bio .= " $pronoun";
 					} elsif($language eq 'French') {
 						$bio .= ' et';
