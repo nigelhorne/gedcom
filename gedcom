@@ -2399,7 +2399,6 @@ sub print_person
 					}
 				} else {
 					# print ' only child of';
-					$bio .= 'child';
 					if($language eq 'French') {
 						$bio .= "' enfant";
 					} else {
