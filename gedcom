@@ -25,9 +25,13 @@
 # TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
 
+use utf8;
 use strict;
 use warnings;
-use utf8;
+use open qw(:std :utf8);
+# no feature qw(indirect);
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
 
 no lib '.';
 
