@@ -284,6 +284,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
 	}
 	mkdir $cachedir if(!-d $cachedir);
+	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
 		agent => basename($0),
 		keep_alive => 1
@@ -5669,6 +5670,7 @@ sub print_person
 				}
 				if(($file =~ /^https?:\/\//) && ($file !~ /\.jpe?g$/) && ($file !~ /ancestry.com.*image.*guid=/)) {
 					$file =~ s/%2f/\//gi;
+					print "Download $file\n" if($opts{'v'});
 
 					my $resp = $cached_browser->get($file);
 					if($resp->is_success() && ($resp->content_type() eq 'image/jpeg')) {
@@ -5679,6 +5681,8 @@ sub print_person
 						print $fh $resp->decoded_content();
 						close $fh;
 						$orig_filename = $filename;
+						print "Resize $filename\n" if($opts{'v'});
+
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
 						my $height = $resize->height();
