@@ -6792,7 +6792,7 @@ sub Gedcom::Individual::relationship_down
 						return 'fils';
 					}
 				} elsif($language eq 'Latin') {
-					return ($sex eq 'M') ? 'filius' : 'filia';
+					return ($sex eq 'M') ? 'mater' : 'pater';
 				}
 				return $title;
 			} elsif($steps == 2) {
