@@ -297,6 +297,8 @@ my $dtl = DateTime::Locale->load($ENV{'LANG'});
 my $language;
 if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
 	$language = 'French';
+} elsif(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^la/)) {
+	$language = 'Latin';
 } else {
 	$language = 'English';
 }
@@ -6302,9 +6304,10 @@ sub Gedcom::Individual::relationship {
 		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
 			if($language eq 'French') {
 				return ($sex eq 'M') ? 'frère' : 'sœur';
-			} else {
-				return ($sex eq 'M') ? 'brother' : 'sister';
+			} elsif($language eq 'Latin') {
+				return ($sex eq 'M') ? 'frater' : 'soros';
 			}
+			return ($sex eq 'M') ? 'brother' : 'sister';
 		}
 		if(($self->mother() eq $other->mother()) || ($self->father() eq $other->father())) {
 			return ($sex eq 'M') ? 'half-brother' : 'half-sister';
@@ -6788,6 +6791,8 @@ sub Gedcom::Individual::relationship_down
 					if($sex eq 'M') {
 						return 'fils';
 					}
+				} elsif($language eq 'Latin') {
+					return ($sex eq 'M') ? 'filius' : 'filia';
 				}
 				return $title;
 			} elsif($steps == 2) {
