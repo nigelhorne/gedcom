@@ -25,6 +25,8 @@
 # TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
 
+# dnf install langpacks-fr glibc-all-langpacks -y
+
 use utf8;
 use strict;
 use warnings;
@@ -4894,7 +4896,15 @@ sub print_person
 					$type = 'cremation';
 				}
 				if($dateofburial || $dateofcremation) {
-					$bio .= ($type eq 'burial') ? " $pronoun was buried" : " $pronoun was cremated";
+					$bio .= " $pronoun ";
+					if($language eq 'French') {
+						$bio .= 'est enterré';
+						if($sex eq 'F') {
+							$bio .= 'e';
+						}
+					} else {
+						$bio .= ($type eq 'burial') ? 'was buried' : 'was cremated';
+					}
 					if(my $city = ($placeofburial // $placeofcremation)) {
 						if($placeofbirth && ($city eq $placeofbirth)) {
 							if(my $address = $burial->address()) {
@@ -4960,7 +4970,7 @@ sub print_person
 					}
 				} else {
 					$bio .= " $pronoun " .
-						(($language eq 'French') ? 'est enterré' :  'is buried') .
+						(($language eq 'French') ? 'est enterré' : 'is buried') .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
