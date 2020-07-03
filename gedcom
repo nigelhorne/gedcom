@@ -48,8 +48,8 @@ BEGIN {
 		'Geo::Coder::Free::Local',
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
-		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::UserAgent::Cached',
-		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
+		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::Simple',
+		'LWP::UserAgent::Cached', 'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
 		'Lingua::EN::Numbers::Ordinate', 'Lingua::EN::ABC',
 		'Lingua::EN::Inflect', 'DateTime::Locale', 'DateTime::Format::Natural',
@@ -5760,6 +5760,7 @@ sub print_person
 					my $tmp = File::Temp->new(UNLINK => 0);
 					$filename = $tmp->filename();
 					$orig_filename = $filename;
+					# LWP::Simple
 					if(is_success($rc = getstore($file, $filename))) {
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
