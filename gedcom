@@ -5760,8 +5760,7 @@ sub print_person
 					my $tmp = File::Temp->new(UNLINK => 0);
 					$filename = $tmp->filename();
 					$orig_filename = $filename;
-					# LWP::Simple
-					if(is_success($rc = getstore($file, $filename))) {
+					if(is_success($rc = LWP::Simple::getstore($file, $filename))) {
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
 						my $height = $resize->height();
