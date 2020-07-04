@@ -4238,8 +4238,19 @@ sub print_person
 							}
 							if($with_mother || $with_father) {
 								if($first) {
-									$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
-										($person->pronoun() eq 'She' ? 'her' : 'his');
+									if($language eq 'French') {
+										$residencestring .= ($printed_sibling ? ' et ' : ' avec ');
+										if($with_mother && $with_father) {
+											$residencestring .= 'ses';
+										} elsif($with_mother) {
+											$residencestring .= 'sa';
+										} else {
+											$residencestring .= 'son';
+										}
+									} else {
+										$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
+											($person->pronoun() eq 'She' ? 'her' : 'his');
+									}
 								} else {
 									$residencestring =~ s/,$//;
 									if($language eq 'French') {
@@ -4298,7 +4309,7 @@ sub print_person
 									if(place({ person => $spouse, record => $sr }) eq $place) {
 										if($language eq 'French') {
 											$residencestring .= ($printed_sibling ? ' et ' : ' avec ') .
-												($person->pronoun() eq 'She' ? 'son futur mari, ' : 'sa futue femme, ') .
+												($person->pronoun() eq 'She' ? 'son futur mari, ' : 'sa futur femme, ') .
 												$spouse->given_names();
 										} else {
 											$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
