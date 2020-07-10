@@ -5340,23 +5340,30 @@ sub print_person
 
 			my %census_years;
 			my $burialrecord;
-			foreach my $citation(1..$citationcount) {
-				if(!$citations{$citation}) {
+			foreach my $index(1..$citationcount) {
+				my $citation = $citations{$index};
+				if(!$citation) {
 					complain({
 						person => $person,
 						warning => "[$citation]: empty citation"
 					});
 					next;
 				}
-				my $title = $citations{$citation}->title();
+				my $title = $citation->title();
 				if(!defined($title)) {
-					$title = notes(record => $citations{$citation});
+					$title = notes(record => $citation);
 					if(!defined($title)) {
-						complain({
-							person => $person,
-							warning => "[$citation]: no citation title"
-						});
-						$title = 'No citation title';
+						# For example, FMP 'web' source
+						if($citation->items()) {
+							my @items = $citation->items();
+							$title = $items[0]->{'value'};
+						} else {
+							complain({
+								person => $person,
+								warning => "[$index]: no citation title"
+							});
+							$title = 'No citation title';
+						}
 					}
 				}
 				if($opts{'B'}) {
@@ -5376,18 +5383,18 @@ sub print_person
 					$bio =~ s/\s+$//;
 					$bio .= "\n\t";
 				}
-				$bio .= "[$citation]: $title";
-				# if(defined(my $publication = $citations{$citation}->publication())) {
+				$bio .= "[$index]: $title";
+				# if(defined(my $publication = $citation->publication())) {
 					# print " $publication";
-					# if(defined(my $continuation = $citations{$citation}->cont())) {
+					# if(defined(my $continuation = $citation->cont())) {
 						# print $continuation;
 					# }
 				# }
-				if(defined(my $page = $citations{$citation}->page())) {
+				if(defined(my $page = $citation->page())) {
 					$bio .= " $page";
 				}
 
-				my @notes = $citations{$citation}->note();
+				my @notes = $citation->note();
 				foreach my $note(@notes) {
 					if(ref($note) eq 'Gedcom::Record') {
 						$note = $note->note();
@@ -5400,9 +5407,9 @@ sub print_person
 						$bio .= " ($note)" unless($note eq $title);
 					}
 				}
-				if($citationnotes{$citation}) {
-					$citationnotes{$citation} =~ s/\.$//;
-					$bio .= " ($citationnotes{$citation})";
+				if($citationnotes{$index}) {
+					$citationnotes{$index} =~ s/\.$//;
+					$bio .= " ($citationnotes{$index})";
 				}
 
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
