@@ -4557,7 +4557,7 @@ sub print_person
 			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
 			if($events[0]->type() ne $events[1]->type()) {
 				# Simple case - one journey made
-				$bio .= journey({ person => $person, arrival => $arrival, departure => $departure }) . '.  ';
+				$bio .= journey({ person => $person, arrival => $arrival, departure => $departure }) . '. ';
 			} else {
 				my $date1 = year(record => $events[0]);
 				my $date2 = year(record => $events[1]);
@@ -8359,10 +8359,10 @@ sub journey
 	my $doa = $arrival->date();
 	my $only_have_departure_year;
 
-	if($doa && ($doa =~ /(\d{3,4})/)) {
+	if($doa && ($doa =~ /(\d{3,4})$/)) {
 		$yoa = $1;
 		$doa =~ s/\s?\d{3,4}//;
-		if($dod && ($dod =~ /(\d{3,4})/)) {
+		if($dod && ($dod =~ /(\d{3,4})$/)) {
 			$yod = $1;
 			$dod =~ s/\s?\d{3,4}//;
 			if($dod =~ /^\d/) {
@@ -8426,7 +8426,7 @@ sub journey
 	}
 
 	if(defined($dod) && !$only_have_departure_year) {
-		return "$rc, departing $dod and";
+		return "$rc, departing $dod";
 	}
 
 	return "$rc arriving $doa";
