@@ -2991,6 +2991,58 @@ sub print_person
 			}
 		}
 
+		# Is/was this person an orphan?
+		if($mother && $father && $yob) {
+			if((my $mdod = dateofdeath($mother)) &&
+			   (my $fdod = dateofdeath($father))) {
+				my $myod;
+				my $fyod;
+				if(($fdod =~ /.*?(\d{3,4})/)) {
+					$fyod = $1;
+				}
+				if(($mdod =~ /.*?(\d{3,4})/)) {
+					$myod = $1;
+				}
+				if((!defined($fyod)) || (!defined($myod))) {
+					die "BUG: !fyod || !myod";
+				}
+				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
+					if($end_of_sentence) {
+						$bio .= " $pronoun";
+					} else {
+						$bio .= ', and';
+					}
+					$bio .= ' was orphaned in ';
+					if($myod == $fyod) {
+						$bio .= "$myod by the death of both parents in that year.";
+					} else {
+						$bio .= (($myod > $fyod) ? $myod : $fyod) .
+							' following the death of ' .
+							($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+							($myod > $fyod) ? 'mother. ' : 'father.';
+					}
+					if($opts{'B'}) {
+						if($bio) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+								$text->textend();
+
+								$pdfpage = PDFPage->new();
+
+								$text = $pdfpage->text();
+								$text->font($params{'font'}, 12);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
+							}
+							$bio = ' ';
+						}
+					} else {
+						$bio .= "\n\t";
+					}
+					$end_of_sentence = 1;
+				}
+			}
+		}
+
+
 		my $all_children_are_alive = 1;
 
 		if($yob && ($year >= $yob + 150)) {
@@ -3548,52 +3600,6 @@ sub print_person
 							complain({ person => $person, warning => 'Census information not used to approximate a date of birth' });
 						}
 					}
-				}
-			}
-		}
-
-		# Is/was this person an orphan?
-		if($mother && $father && $yob) {
-			if((my $mdod = dateofdeath($mother)) &&
-			   (my $fdod = dateofdeath($father))) {
-				my $myod;
-				my $fyod;
-				if(($fdod =~ /.*?(\d{3,4})/)) {
-					$fyod = $1;
-				}
-				if(($mdod =~ /.*?(\d{3,4})/)) {
-					$myod = $1;
-				}
-				if((!defined($fyod)) || (!defined($myod))) {
-					die "BUG: !fyod || !myod";
-				}
-				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
-					$bio .= " $pronoun was orphaned in ";
-					if($myod == $fyod) {
-						$bio .= "$myod by the death of both parents in that year.";
-					} else {
-						$bio .= (($myod > $fyod) ? $myod : $fyod) .
-							' following the death of ' .
-							($person->pronoun() eq 'She' ? 'her ' : 'his ') .
-							($myod > $fyod) ? 'mother. ' : 'father.';
-					}
-					if($opts{'B'}) {
-						if($bio) {
-							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-								$text->textend();
-
-								$pdfpage = PDFPage->new();
-
-								$text = $pdfpage->text();
-								$text->font($params{'font'}, 12);
-								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
-							}
-							$bio = ' ';
-						}
-					} else {
-						$bio .= "\n\t";
-					}
-					$end_of_sentence = 1;
 				}
 			}
 		}
