@@ -25,6 +25,7 @@
 # TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
 # TODO: use DateTime::Locale in year() to translate the month
+# TODO: add extract_year_from_date - given a string or various record types
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -3548,6 +3549,29 @@ sub print_person
 							complain({ person => $person, warning => 'Census information not used to approximate a date of birth' });
 						}
 					}
+				}
+			}
+		}
+
+		# Is/was this person an orphan?
+		my $orphaned_year;
+		if($mother && $father && $yob) {
+			if((my $mdod = dateofdeath($mother)) &&
+			   (my $fdod = dateofdeath($father))) {
+				my $myod;
+				my $fyod;
+				if(($fdod =~ /.*?(\d{3,4})/)) {
+					$fyod = $1;
+				}
+				if(($mdod =~ /.*?(\d{3,4})/)) {
+					$myod = $1;
+				}
+				if((!defined($fyod)) || (!defined($myod))) {
+					die "BUG: !fyod || !myod";
+				}
+				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
+					$orphaned_year = ($myod > $fyod) ? $myod : $fyod;
+					warn 'TODO: mention that ', $person->as_string(), " person became an orphan in $orphaned_year";
 				}
 			}
 		}
