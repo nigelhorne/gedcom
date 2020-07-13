@@ -16,7 +16,6 @@
 #	anything
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
-# TODO: note if a child was orphaned by both parents dying before they were 16
 # TODO: -i only creates a calendar for birthdays for the moment, add others
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
@@ -3554,7 +3553,6 @@ sub print_person
 		}
 
 		# Is/was this person an orphan?
-		my $orphaned_year;
 		if($mother && $father && $yob) {
 			if((my $mdod = dateofdeath($mother)) &&
 			   (my $fdod = dateofdeath($father))) {
@@ -3570,8 +3568,32 @@ sub print_person
 					die "BUG: !fyod || !myod";
 				}
 				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
-					$orphaned_year = ($myod > $fyod) ? $myod : $fyod;
-					warn 'TODO: mention that ', $person->as_string(), " person became an orphan in $orphaned_year";
+					$bio .= " $pronoun was orphaned in ";
+					if($myod == $fyod) {
+						$bio .= "$myod by the death of both parents in that year.";
+					} else {
+						$bio .= (($myod > $fyod) ? $myod : $fyod) .
+							' following the death of ' .
+							($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+							($myod > $fyod) ? 'mother. ' : 'father.';
+					}
+					if($opts{'B'}) {
+						if($bio) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+								$text->textend();
+
+								$pdfpage = PDFPage->new();
+
+								$text = $pdfpage->text();
+								$text->font($params{'font'}, 12);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
+							}
+							$bio = ' ';
+						}
+					} else {
+						$bio .= "\n\t";
+					}
+					$end_of_sentence = 1;
 				}
 			}
 		}
