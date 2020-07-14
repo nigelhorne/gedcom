@@ -3017,7 +3017,7 @@ sub print_person
 					} else {
 						$bio .= (($myod > $fyod) ? $myod : $fyod) .
 							' following the death of ' .
-							($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+							(($person->pronoun() eq 'She') ? 'her ' : 'his ') .
 							($myod > $fyod) ? 'mother. ' : 'father.';
 					}
 					if($opts{'B'}) {
