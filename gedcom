@@ -5181,7 +5181,7 @@ sub print_person
 						$bio .= (($language eq 'French') ? 'est enterré' :  'is buried') .
 							$b;
 					} else {
-						$bio .= (($language eq 'French') ? 'et est enterré' :  'and is buried') .
+						$bio .= (($language eq 'French') ? ' et est enterré' :  ' and is buried') .
 							$b;
 					}
 				}
