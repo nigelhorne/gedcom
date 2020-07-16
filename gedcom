@@ -31,7 +31,7 @@
 use utf8;
 use strict;
 use warnings;
-# use open qw(:std :utf8);	# Do not use, it breaks printing	
+# use open qw(:std :utf8);	# Do not use, it breaks printing
 	# HTTP::Response->decoded_content() to a file
 # no feature qw(indirect);
 use feature qw(signatures);
@@ -334,7 +334,7 @@ my $gopts = {
 if($opts{'v'}) {
 	$gopts->{'debug'} = 1;
 }
-	
+
 my $geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 my $textgeocoder;
 
@@ -8020,8 +8020,10 @@ sub date_to_datetime
 		$params{'date'} = shift;
 	}
 
-	if($params{'date'}) {
-		return $dfg->parse_datetime(%params);
+	if(my $date = $params{'date'}) {
+		if($date !~ /^bef.?\s/i) {
+			return $dfg->parse_datetime(%params);
+		}
 	}
 }
 
