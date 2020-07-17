@@ -900,6 +900,8 @@ if($opts{'H'}) {
 			}
 			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
+		} elsif($opts{'A'}) {
+			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		}
 
 		if($opts{'M'}) {
