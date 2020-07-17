@@ -3210,7 +3210,11 @@ sub print_person
 						} elsif((!$dateofdeath) && (!$dateofburial) && ($spouses[0]) && !$spouses[0]->death()) {
 							$bio .= ' has had ';
 						} else {
-							$bio .= $dateofdeath || $dateofburial ? ' had ' : ' has ';
+							if($language eq 'French') {
+								$bio .= $dateofdeath || $dateofburial ? ' a eu ' : ' a ';
+							} else {
+								$bio .= $dateofdeath || $dateofburial ? ' had ' : ' has ';
+							}
 						}
 
 						if($numberofchildrenwiththisspouse == 1) {
