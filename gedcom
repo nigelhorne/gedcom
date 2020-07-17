@@ -1312,38 +1312,38 @@ sub print_person
 	# Gather the information on this person
 	my $person = $params{'person'};
 
-	my $dob = dateofbirth($person);
+	my $dateofbirth = dateofbirth($person);
 
 	# ACOM starts approximate dates with "Abt." instead of "ABT".
-	if(defined($dob) && length($dob) && ($dob ne '?')) {
-		$dob =~ tr/\.\-/  /;
-		$dob =~ s/\s{2,}/ /gs;
+	if(defined($dateofbirth) && length($dateofbirth) && ($dateofbirth ne '?')) {
+		$dateofbirth =~ tr/\.\-/  /;
+		$dateofbirth =~ s/\s{2,}/ /gs;
 		# FIXME: ../../../gedcoms/gl120368.ged puts dates *inside*
 		#	brackets
-		$dob =~ s/\(.+$//;	# some people put information in brackets after the date
-		if($dob =~ /^About[:\s](.+)/i) {
-			$dob = "ABT$1";
-		} elsif($dob =~ /^Bet\s[a-z]{3}.+([a-z]{3}\s+.*)/i) {	# Bet Jun-Jul 1860
-			$dob = "ABT $1";
-		} elsif($dob =~ /^(.+)\s*\?/i) {
-			$dob = "ABT$1";
+		$dateofbirth =~ s/\(.+$//;	# some people put information in brackets after the date
+		if($dateofbirth =~ /^About[:\s](.+)/i) {
+			$dateofbirth = "ABT$1";
+		} elsif($dateofbirth =~ /^Bet\s[a-z]{3}.+([a-z]{3}\s+.*)/i) {	# Bet Jun-Jul 1860
+			$dateofbirth = "ABT $1";
+		} elsif($dateofbirth =~ /^(.+)\s*\?/i) {
+			$dateofbirth = "ABT$1";
 		}
-		if(length($dob) && ($dob !~ /^[\d\sA-Z\/]+$/i) && ($dob !~ /^Abt\./)) {
-			if($dob =~ /(\d{4})\s*(.+)/) {
+		if(length($dateofbirth) && ($dateofbirth !~ /^[\d\sA-Z\/]+$/i) && ($dateofbirth !~ /^Abt\./)) {
+			if($dateofbirth =~ /(\d{4})\s*(.+)/) {
 				my $d = $1;
 				my $t = $2;
 				# Allow 1914-1918
 				if($t !~ /\d{3,4}$/) {
-					$dob = "ABT$d";
+					$dateofbirth = "ABT$d";
 					if(place({ person => $person, place => $t })) {
 						complain({ person => $person, warning => "Unexpected text ($t) after the date $d - should be in the location record" });
 					} else {
 						complain({ person => $person, warning => "Unexpected text ($t) after the date $d - should be in the note field" });
 					}
 				}
-			} elsif($dob !~ /\d{1,2}$/) {	# Dates can begin with a letter in the US
-				complain({ person => $person, warning => "Invalid character in date of birth '$dob'" });
-				$dob = undef;
+			} elsif($dateofbirth !~ /\d{1,2}$/) {	# Dates can begin with a letter in the US
+				complain({ person => $person, warning => "Invalid character in date of birth '$dateofbirth'" });
+				$dateofbirth = undef;
 			}
 		}
 	}
@@ -1353,30 +1353,30 @@ sub print_person
 
 	die "BUG: onlydeaths and onlybirths given" if($onlydeaths && $onlybirthdays);
 
-	return if($onlybirthdays && !defined($dob));
+	return if($onlybirthdays && !defined($dateofbirth));
 
-	my $dod = dateofdeath($person);
+	my $dateofdeath = dateofdeath($person);
 
-	return if($onlydeaths && !defined($dod));
+	return if($onlydeaths && !defined($dateofdeath));
 
 	my $yod;	# Year of death
-	if($dod && ($dod =~ /.*?(\d{3,4})/)) {
+	if($dateofdeath && ($dateofdeath =~ /.*?(\d{3,4})/)) {
 		$yod = $1;
 	}
 
 	my $yob;	# Year of birth
-	if($dob && ($dob =~ /.*?(\d{3,4})/)) {
+	if($dateofbirth && ($dateofbirth =~ /.*?(\d{3,4})/)) {
 		$yob = $1;
-	} elsif($dob) {
-		if(($dob eq 'UNKNOWN') || ($dob eq '?')) {
-			$dob = undef;
+	} elsif($dateofbirth) {
+		if(($dateofbirth eq 'UNKNOWN') || ($dateofbirth eq '?')) {
+			$dateofbirth = undef;
 		} elsif($opts{'w'} && !$warned{$person}) {
-			complain({ person => $person, warning => "Invalid date of birth $dob" });
+			complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
 			$warned{$person} = 1;
 		}
 	}
 
-	return unless($dob || $dod || $opts{'a'} || $opts{'p'});
+	return unless($dateofbirth || $dateofdeath || $opts{'a'} || $opts{'p'});
 
 	if((!defined($opts{l})) && (!defined($yod)) && defined($yob) && ($yob > 1900)) {
 		# Assuming living if we don't have a date of death and
@@ -1393,8 +1393,8 @@ sub print_person
 	my $month = $params{'month'};
 
 	if($day) {
-		if($dob && ($dob !~ /^\d{3,4}$/)) {
-			my @btime = strptime("$dob 12:00");
+		if($dateofbirth && ($dateofbirth !~ /^\d{3,4}$/)) {
+			my @btime = strptime("$dateofbirth 12:00");
 			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
 				$print = 1;
 				if(!$opts{a}) {
@@ -1407,8 +1407,8 @@ sub print_person
 		}
 		return if($onlybirthdays && !defined($aob));
 
-		if($dod && ($dod !~ /^\d{3,4}$/)) {
-			my @dtime = strptime("$dod 12:00");
+		if($dateofdeath && ($dateofdeath !~ /^\d{3,4}$/)) {
+			my @dtime = strptime("$dateofdeath 12:00");
 			if(defined($dtime[3]) && ($dtime[3] == $day) && ($dtime[4] == $month) && $dtime[5]) {
 				$print = 1;
 				if(!$opts{a}) {
@@ -1530,14 +1530,14 @@ sub print_person
 			if(my $d = $dfg->parse_datetime(date => dateofbirth($person))) {
 				$str .= ' b' . $d->strftime('%Y');
 			} else {
-				red_warning({ person => $person, warning => "Can't parse date of birth '$dob'" });
+				red_warning({ person => $person, warning => "Can't parse date of birth '$dateofbirth'" });
 			}
 		}
 		if($aod) {
 			if(my $d = $dfg->parse_datetime(date => dateofdeath($person))) {
 				$str .= ' d' . $d->strftime('%Y');
 			} else {
-				red_warning({ person => $person, warning => "Can't parse date of death '$dod'" });
+				red_warning({ person => $person, warning => "Can't parse date of death '$dateofdeath'" });
 			}
 		}
 
@@ -1646,8 +1646,6 @@ sub print_person
 	my ($marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
 
-	my $dateofbirth = dateofbirth($person);
-
 	my $placeofbirth = get_value({ person => $person, value => 'birth place' });
 	if((!$placeofbirth) && $birth) {
 		$placeofbirth = $birth->place();
@@ -1736,7 +1734,6 @@ sub print_person
 	}
 
 	my $death = $person->get_record('death');
-	my $dateofdeath = dateofdeath($person);
 	my $placeofdeath = get_value({ person => $person, value => 'death place' });
 	if((!$placeofdeath) && $death) {
 		$placeofdeath = $death->place();
@@ -3089,7 +3086,7 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if((!$end_of_sentence) &&
-				   ($dob || $dod) &&
+				   ($dateofbirth || $dateofdeath) &&
 				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
 					if($language eq 'French') {
 						$bio .= ' et';
@@ -3652,7 +3649,7 @@ sub print_person
 					}
 					if(defined($place)) {
 						if(my $dor = $residence->date()) {
-							if($placeofbirth && $dob && ($dor eq $dob)) {
+							if($placeofbirth && $dateofbirth && ($dor eq $dateofbirth)) {
 								next;
 							}
 							if($placeofmarriage && $dateofmarriage && ($dor eq $dateofmarriage)) {
@@ -3765,7 +3762,7 @@ sub print_person
 				my $longitude;
 				my $residencestring;
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
-					if($birth && $dob && $rdate && ($rdate eq $dob) &&
+					if($birth && $dateofbirth && $rdate && ($rdate eq $dateofbirth) &&
 					   places_are_the_same({ person => $person, first => $birth, second => $residence})) {
 						# This residence record is for the place of birth, which is
 						# printed elsewhere
@@ -6550,6 +6547,18 @@ sub Gedcom::Individual::relationship_up
 								return 'amita māgna';	# paternal great-aunt
 							}
 							return 'mātereta māgna';	# maternal great-aunt
+						}
+					} elsif(($steps1 == 4) && ($steps2 == 1)) {
+						if($sex eq 'M') {
+							if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
+								return 'patruus māior';	# paternal great-great-uncle
+							}
+							return 'avunculus māior';	# maternal great-great-uncle
+						} else {
+							if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
+								return 'amita māior';	# paternal great-great-aunt
+							}
+							return 'matertera māior';	# maternal great-great-aunt
 						}
 					}
 				}
