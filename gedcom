@@ -3089,6 +3089,7 @@ sub print_person
 
 			if(scalar(@spouses) == 1) {
 				if((!$end_of_sentence) &&
+				   ($dob || $dod) &&
 				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
 					if($language eq 'French') {
 						$bio .= ' et';
