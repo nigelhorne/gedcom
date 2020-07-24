@@ -4784,6 +4784,7 @@ sub print_person
 				}
 				if(ref($event) eq 'Gedcom::Record') {
 					my $type = $event->type();
+					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
 							$bio .= '. ' if(!$end_of_sentence);
@@ -4809,7 +4810,7 @@ sub print_person
 							next;
 						}
 						if(my $e = $events[$index]) {
-							if(ref($e) && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
+							if(ref($e) && ($e->type() eq 'Departure') && $event->date() && $e->date()) {
 								$previous = $event;
 								$prev_type = $event->type();
 								# FIXME: not all locations will be noted or notes printed
@@ -4887,11 +4888,11 @@ sub print_person
 							complain({ person => $person, warning => 'Departure record without destination' });
 							next;
 						}
-						if($events[$index] && (ref($events[$index]) eq 'Gedcom::Record') && ($events[$index]->type() eq 'Arrival') && $event->date()) {
-							if($events[$index]->date()) {
+						if(my $e = $events[$index]) {
+							if(ref($e) && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
 								$previous = $event;
 								$prev_type = $event->type();
-								# FIXME: not all notes will be printed
+								# FIXME: not all locations will be noted or notes printed
 								next;
 							}
 						}
