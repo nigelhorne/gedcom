@@ -7029,6 +7029,8 @@ sub Gedcom::Individual::relationship_down
 					if($sex eq 'M') {
 						return 'petit-fils';
 					}
+				} elsif($language eq 'Latin') {
+					return ($sex eq 'M') ? 'nepos' : 'neptis';
 				}
 				return "grand$title";
 			} elsif($steps == 3) {
