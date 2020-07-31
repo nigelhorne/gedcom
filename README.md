@@ -50,7 +50,7 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcom -dwlHm $i -y 2018 gedcom-file.ged > $i.html
     done
 
-Alternatively you can create an ICS file
+Alternatively you can create an ICS file to import to Google Calendar
 
     gedcom -i /tmp/ics.ics gedcom-file.ged
 
@@ -112,7 +112,7 @@ The options are:
     -i: creates an ICS file
     -m: month for -H calendar
     -M: produce a map of a place (currently only Kent is supported) as
-    	an animated gif of births into $surname.gif
+	an animated gif of births into $surname.gif
     -l: include living people
     -L: include ged2site hyperlinks with -H
     -p: print the biography of the given person

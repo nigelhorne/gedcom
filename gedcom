@@ -16,7 +16,8 @@
 #	anything
 # TODO: add option to print in generations order rather than date order.
 # TODO: write a post-processor to sort errors by type
-# TODO: -i only creates a calendar for birthdays for the moment, add others
+# TODO: -i restrict to selectable types of anniversaries - currently does
+#	all BMD, baptism and burials
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
 # TODO: add an option for -Aw to create output as a CSV
@@ -1174,7 +1175,7 @@ sub generate {
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofbirth),
-					summary => 'birth of ' . $person->as_string()
+					summary => 'Birth of ' . $person->as_string()
 				);
 			}
 			my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
@@ -1185,7 +1186,7 @@ sub generate {
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofbaptism),
-					summary => 'baptism of ' . $person->as_string()
+					summary => 'Baptism of ' . $person->as_string()
 				);
 			}
 			if(my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage')) {
@@ -1197,7 +1198,7 @@ sub generate {
 							add_to_ical(
 								ical => $ical,
 								datetime => date_to_datetime(date => $dateofmarriage),
-								summary => 'marriage of ' . $person->as_string() . ' and ' . $spouses[0]->as_string()
+								summary => 'Marriage of ' . $person->as_string() . ' and ' . $spouses[0]->as_string()
 							);
 						}
 					}
@@ -1208,7 +1209,7 @@ sub generate {
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofdeath),
-					summary => 'death of ' . $person->as_string()
+					summary => 'Death of ' . $person->as_string()
 				);
 			}
 			my $dateofburial = get_value({ person => $person, value => 'burial date' });
@@ -1219,7 +1220,7 @@ sub generate {
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofburial),
-					summary => 'burial of ' . $person->as_string()
+					summary => 'Burial of ' . $person->as_string()
 				);
 			}
 			next;
