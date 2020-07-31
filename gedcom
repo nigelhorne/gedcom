@@ -6543,7 +6543,7 @@ sub Gedcom::Individual::relationship_up
 				# die 'match found';
 			# }
 
-			if($person1 eq $person2) {
+			if($person1->xref() eq $person2->xref()) {
 				# Common ancestor is $person2
 				my $steps1 = stepsabove($self, $person1, 0);
 				# die $steps1 if($steps1 > 23);
@@ -8890,7 +8890,7 @@ sub dump_places {
 		}
 		my $previous;
 		foreach my $person(@{$all_places->{$place}}) {
-			if($previous && ($person eq $previous)) {
+			if($previous && ($person->xref() eq $previous->xref())) {
 				next;
 			}
 			print $person->as_string({ include_years => 1, middle_names => 1, nee => 1 }),
