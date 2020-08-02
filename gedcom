@@ -2452,7 +2452,7 @@ sub print_person
 				}
 			} else {
 				if($language eq 'French') {
-					$bio .= 'enfant';
+					$bio .= "'enfant";
 				} else {
 					$bio .= 'child';
 				}
@@ -3128,9 +3128,9 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' est mariée à ';
-						} else {
 							$bio .= ' est marié à ';
+						} else {
+							$bio .= ' est mariée à ';
 						}
 					} else {
 						$bio .= ' is married to ';
@@ -3138,9 +3138,9 @@ sub print_person
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' était mariée à ';
-						} else {
 							$bio .= ' était marié à ';
+						} else {
+							$bio .= ' était mariée à ';
 						}
 					} else {
 						$bio .= ' was married to ';
@@ -6766,8 +6766,8 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 4 => 'third cousin three-times-removed',
 					7 << 24 | 5 => 'fourth cousin twice-removed',
 					7 << 24 | 6 => 'fifth cousin once-removed',
-					7 << 24 | 7 => 'sixth cousin',
-					7 << 24 | 8 => 'sixth cousin once-removed',
+					7 << 24 | 7 => 'sixième cousin',
+					7 << 24 | 8 => 'sixième cousin once-removed',
 					8 << 24 | 1 => 'six times great-uncle',
 					8 << 24 | 2 => 'first cousin six-times-removed',
 					8 << 24 | 3 => 'second cousin five-times-removed',
@@ -6916,8 +6916,8 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 4 => 'third cousin three-times-removed',
 					7 << 24 | 5 => 'fourth cousin twice-removed',
 					7 << 24 | 6 => 'fifth cousin once-removed',
-					7 << 24 | 7 => 'sixth cousin',
-					7 << 24 | 8 => 'sixth cousin once-removed',
+					7 << 24 | 7 => 'sixième cousin',
+					7 << 24 | 8 => 'sixième cousin once-removed',
 					8 << 24 | 1 => 'six times great-aunt',
 					8 << 24 | 2 => 'first cousin six-times-removed',
 					8 << 24 | 3 => 'second cousin five-times-removed',
@@ -7460,7 +7460,9 @@ sub place {
 			if(my $code = $lcm->country2code($2)) {
 				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
 			} elsif(($2 eq 'England') && ($language eq 'French')) {
-				$place = "$1, Angleterre";
+				my $town = $1;
+				$town =~ s/London$/Londres/;
+				$place = "$town, Angleterre";
 			}
 		} elsif($place !~ /,/) {
 			if(my $code = $lcm->country2code($place)) {
