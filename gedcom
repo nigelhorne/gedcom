@@ -2629,6 +2629,7 @@ sub print_person
 		}
 
 		my $end_of_sentence = 0;
+		my $start_of_paragraph = 0;
 		if($aob && $aod) {
 			if($aob == $aod) {
 				$bio .= " was born and died $aod years ago ";
@@ -2688,6 +2689,7 @@ sub print_person
 				$bio .= " ($notes).";
 				if(length($notes) > 160) {
 					$bio .= "\n\t";
+					$start_of_paragraph = 1;
 				} else {
 					$bio .= ' ';
 				}
@@ -2701,7 +2703,10 @@ sub print_person
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			$bio .= " $pronoun" if($aob || $aod);
+			if($aob || $aod) {
+				$bio .= ' ' unless($start_of_paragraph);
+				$bio .= $pronoun;
+			}
 			if($dateofbirth || $placeofbirth) {
 				$bio .= ',' if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
 				my $birth_place;
@@ -3001,7 +3006,7 @@ sub print_person
 			}
 		}
 
-		my $start_of_paragraph = 0;
+		$start_of_paragraph = 0;
 		# Is/was this person an orphan?
 		if($mother && $father && $yob) {
 			if((my $mdod = dateofdeath($mother)) &&
