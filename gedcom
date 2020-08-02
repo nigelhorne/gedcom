@@ -131,7 +131,6 @@ die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] 
 my $me;
 my @myancestors;
 my @mydescendents;
-my %warned;
 my %printed;
 my %places;
 my %all_locations;
@@ -1362,19 +1361,22 @@ sub print_person
 	return if($onlydeaths && !defined($dateofdeath));
 
 	my $yod;	# Year of death
-	if($dateofdeath && ($dateofdeath =~ /.*?(\d{3,4})/)) {
-		$yod = $1;
+	if($dateofdeath) {
+		$yod = get_year_from_date($dateofdeath);
+		if(!defined($yod)) {
+			complain({ person => $person, warning => "Invalid date of death $dateofdeath" });
+		}
 	}
 
 	my $yob;	# Year of birth
-	if($dateofbirth && ($dateofbirth =~ /.*?(\d{3,4})/)) {
-		$yob = $1;
-	} elsif($dateofbirth) {
+	if($dateofbirth) {
 		if(($dateofbirth eq 'UNKNOWN') || ($dateofbirth eq '?')) {
 			$dateofbirth = undef;
-		} elsif($opts{'w'} && !$warned{$person}) {
-			complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
-			$warned{$person} = 1;
+		} else {
+			$yob = get_year_from_date($dateofbirth);
+			if(!defined($yob)) {
+				complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
+			}
 		}
 	}
 
@@ -2932,7 +2934,6 @@ sub print_person
 								person => $person,
 								warning => "invalid date of baptism $dateofbaptism"
 							});
-							$warned{$person} = 1;
 						}
 					}
 				}
@@ -9027,6 +9028,14 @@ sub issister
 		}
 	}
 	return 0;
+}
+
+sub get_year_from_date
+{
+	my $date = shift;
+	if($date =~ /(\d{3,4})\s*$/) {
+		return $1;
+	}
 }
 
 1;
