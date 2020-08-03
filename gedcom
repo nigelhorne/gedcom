@@ -486,8 +486,10 @@ if($opts{'B'}) {
 } elsif($opts{'s'}) {
 	die '-s only makes sense with the -B, -g or -x options' unless($opts{'x'} || $opts{'g'} || $opts{'M'});
 } elsif($opts{'S'}) {
-	# FIXME - use basename of .ged with .sql suffix
-	my $sqlite_file = 'gedcom.sql';
+	# Use basename of .ged with .sql suffix
+	my $sqlite_file = $ARGV[0];
+	$sqlite_file =~ s/\.ged$//;
+	$sqlite_file .= '.sqlite';
 
 	if(-e $sqlite_file) {
 		unlink $sqlite_file;
@@ -1643,8 +1645,12 @@ sub print_person
 	if($firstname && ($firstname =~ /\d/)) {
 		complain({ person => $person, warning => 'First name contains a digit' });
 	}
-	if($lastname && ($lastname =~ /\d/)) {
-		complain({ person => $person, warning => 'Last name contains a digit' });
+	if($lastname) {
+		if($lastname =~ /\d/) {
+			complain({ person => $person, warning => 'Last name contains a digit' });
+		} elsif($mother && $father && ($mother->surname() ne $lastname) && ($father->surname() ne $lastname)) {
+			complain({ person => $person, warning => 'Neither parent has the same surname is this person' });
+		}
 	}
 
 	my ($marriage_dt, $death_dt);
