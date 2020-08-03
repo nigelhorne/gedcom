@@ -2488,7 +2488,11 @@ sub print_person
 								$occupation = Lingua::EN::ABC::a2b($occupation);
 							}
 						}
-						$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
+						if($language eq 'English') {
+							$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
+						} else {
+							$bio .= " ($occupation)";
+						}
 					}
 				}
 				if($mother) {
