@@ -40,11 +40,11 @@ no warnings qw(experimental::signatures);
 
 no lib '.';
 
-my @modules;
+my @needfull;
 
 # Install Pre-requisites
 BEGIN {
-	@modules = (
+	my @modules = (
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 		'Geo::Coder::Free::Local',
@@ -67,7 +67,6 @@ BEGIN {
 		'Locale::Object::Country',
 	);
 
-	my @needfull;
 	foreach my $module(@modules) {
 		eval "use $module";
 		if($@) {
@@ -100,7 +99,7 @@ BEGIN {
 	};
 }
 
-foreach my $module(@modules) {
+foreach my $module(@needfull) {
 	my $version;
 	if($module =~ /(.+)\s(.+)$/) {
 		$module = $1;
@@ -170,7 +169,8 @@ if($opts{'f'}) {
 
 die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'d'});
 
-@modules = ();
+@needfull = ();
+my @modules;
 
 if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize',
@@ -199,7 +199,6 @@ if($opts{'w'}) {
 	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica', 'Locale::Country';
 }
 
-my @needfull;
 foreach my $module(@modules) {
 	eval "require $module";
 	if($@) {
@@ -242,9 +241,10 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser->conn_cache->total_capacity(undef);
 
 	# Cache calls to openstreetmap etc.
-	my $cachedir;
-	if(my $e = $ENV{'CACHEDIR'}) {
-		$cachedir = File::Spec->catfile($e, 'http-cache-transparent');
+	my $cachedir = $ENV{'CACHEDIR'};
+	if($cachedir) {
+		mkdir $cachedir if(!-d $cachedir);
+		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
 		$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
 	}
