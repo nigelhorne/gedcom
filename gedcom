@@ -5130,6 +5130,8 @@ sub print_person
 						}
 					} else {
 						$bio .= "\n\t";
+						$end_of_sentence = 1;
+						$start_of_paragraph = 1;
 					}
 				}
 				if(!$diedathome) {
@@ -5141,7 +5143,9 @@ sub print_person
 							$bio .= " $pronoun est morte";
 						}
 					} else {
-						$bio .= " $pronoun died";
+						$bio .= ' ' unless($start_of_paragraph);
+						$bio .= "$pronoun died";
+						$start_of_paragraph = 0;
 					}
 					if($dateofdeath) {
 						my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
