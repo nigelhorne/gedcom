@@ -21,7 +21,7 @@ anniversaries of their death along with information about their life.
 
 or
 
-    20 5 * * * gedcom -dth 'Your Full Name' gedcom-file.ged
+    22 5 * * * gedcom -dth 'Your Full Name' gedcom-file.ged
 
 ## Gedcom validation
 
@@ -36,7 +36,7 @@ For example:
 
 Adding the -c option will add the checking of missing citations.
 
-To sort by error type
+To sort by error type:
 
     gedcom -dAwWl gedcom-file.ged > /dev/null 2> /tmp/errs
     sort -t: -k2 /tmp/errs
@@ -50,22 +50,23 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
         gedcom -dwlHm $i -y 2018 gedcom-file.ged > $i.html
     done
 
-Alternatively you can create an ICS file to import to Google Calendar
+Alternatively you can create an ICS file to import to Google Calendar:
 
     gedcom -i /tmp/ics.ics gedcom-file.ged
 
 ## Produce a Google Map
 
 You can produce a map of locations of all Smiths in your tree with
-	gedcom -xsh Smith gedcom-file-ged > smith.csv
-	Upload the csv file to Google Drive
-	Visit google.com/maps, on the 3 horizontal lines choose "your places",
-		then "maps"
-	Click "create map", choose "import" and upload your file,
-		choose "Location" as the position column and
-		"People" as the title column
-	You may see that a number of rows can't be seen in the map, this is an
-		opportunity to find locations in your map that are incorrect
+
+   gedcom -xsh Smith gedcom-file-ged > smith.csv
+
+* Upload the csv file to Google Drive
+* Visit google.com/maps, on the 3 horizontal lines choose "your places", then "maps"
+* Click "create map", choose "import" and upload your file,
+	choose "Location" as the position column and
+	"People" as the title column
+* You may see that a number of rows can't be seen in the map,
+this is an opportunity to find locations in your map that are incorrect
 
 ## Family History Book
 
@@ -162,7 +163,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2015-2019 Nigel Horne.
+Copyright 2015-2020 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)
