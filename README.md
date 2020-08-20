@@ -58,13 +58,13 @@ Alternatively you can create an ICS file to import to Google Calendar:
 
 You can produce a map of locations of all Smiths in your tree with
 
-   gedcom -xsh Smith gedcom-file-ged > smith.csv
+    gedcom -xsh Smith gedcom-file-ged > smith.csv
 
 * Upload the csv file to Google Drive
 * Visit google.com/maps, on the 3 horizontal lines choose "your places", then "maps"
 * Click "create map", choose "import" and upload your file,
-	choose "Location" as the position column and
-	"People" as the title column
+choose "Location" as the position column and
+"People" as the title column
 * You may see that a number of rows can't be seen in the map,
 this is an opportunity to find locations in your map that are incorrect
 
