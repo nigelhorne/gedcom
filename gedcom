@@ -56,7 +56,7 @@ BEGIN {
 		'LWP::UserAgent::Cached', 'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
 		'Lingua::EN::Numbers::Ordinate', 'Lingua::EN::ABC',
-		'Lingua::EN::Inflect', 'DateTime::Locale', 'DateTime::Format::Natural',
+		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'DateTime::Format::Genealogy', 'URI::Find::Schemeless',
 		'Sort::Key::DateTime', 'Text::Names::GB',
@@ -136,7 +136,7 @@ my %printed;
 my %places;
 my %all_locations;
 my %all_places;
-my $pi = atan2(1,1) * 4;
+# my $pi = atan2(1,1) * 4;
 
 binmode(STDOUT, ':utf8');
 
@@ -190,6 +190,9 @@ if($opts{'B'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
+}
+if($opts{'H'} || ($opts{'B'} && $opts{'h'})) {
+	push @modules, 'DateTime::Locale';
 }
 if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
@@ -300,7 +303,6 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
-my $dtl = DateTime::Locale->load($ENV{'LANG'});
 my $language;
 if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
 	$language = 'French';
@@ -8389,7 +8391,7 @@ sub print_graphviz
 		$thumb->Write($thumbnail);
 
 		# FIXME: TABLE isn't supported by Graphviz
-		print $fout "label=<<TABLE border=\"0\" cellborder=\"0\"><TR><TD><IMG SRC=\"thumbs/$thumbname[0]\" scale=\"true\"/></TD></TR><TR><TD>$label</TD></TR>$dob$dod</TABLE>>",
+		print $fout "label=<<TABLE border=\"0\" cellborder=\"0\"><TR><TD><IMG SRC=\"thumbs/$thumbname[0]\" scale=\"true\" width=\"$x\" height=\"$y\"/></TD></TR><TR><TD>$label</TD></TR>$dob$dod</TABLE>>",
 			",labelloc=b";
 
 		# print $fout ",image=\"$profile_image\",labelloc=b";
