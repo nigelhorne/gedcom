@@ -2425,7 +2425,7 @@ sub print_person
 								  ($d > ($birth_dt - $tenmonths))) {
 									complain({
 										person => $sibling,
-										warning => 'Born less than 10 months before sibling ' . $person->as_string()
+										warning => 'Born less than 10 months before sibling ' . $person->as_string(middle_names => 1)
 									});
 								}
 								$age_index++ if($d && ($d < $birth_dt));
