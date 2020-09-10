@@ -8891,6 +8891,8 @@ sub datecmp($$)
 			# die join('<=>', @_);
 		# }
 		my @r = $dfg->parse_datetime($right);
+		# TODO: throw an error that we can catch
+		die $right if(!defined($r[0]));
 		$right = $r[0];
 	}
 	if((!ref($left)) && ref($right)) {
