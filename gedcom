@@ -2310,18 +2310,22 @@ sub print_person
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
-				$bio .= 'A';
-				if($occupations[0] =~ /^[aeiou]/i) {
-					$bio .= 'n';
-				}
-				$bio .= ' ';
-				if($occupations[1]) {
-					# my $alloccupations = join(', ', @occupations);
-					# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
-					# print lc($alloccupations);
-					$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
+				if($language eq 'French') {
+					$bio = 'Un ' . lc($occupations[0]);
 				} else {
-					$bio .= lc($occupations[0]);
+					$bio .= 'A';
+					if($occupations[0] =~ /^[aeiou]/i) {
+						$bio .= 'n';
+					}
+					$bio .= ' ';
+					if($occupations[1]) {
+						# my $alloccupations = join(', ', @occupations);
+						# substr($alloccupations, rindex($alloccupations, ', '), 2, ' and ');
+						# print lc($alloccupations);
+						$bio .= lc(Lingua::EN::Inflect::WORDLIST(@occupations, {final_sep => ''}));
+					} else {
+						$bio .= lc($occupations[0]);
+					}
 				}
 				if(!($father || $mother || $spouserelationship)) {
 					$bio .= ', ';
@@ -8626,7 +8630,11 @@ sub get_all_occupations
 			($occupations[0] eq 'Labourer (Ag)')) {
 			$occupations[0] = 'Agricultural Labourer';
 		} elsif($occupations[0] eq 'Poultry Farming') {
-			$occupations[0] = 'Poultry Farmer';
+			if($language eq 'French') {
+				$occupations[0] = 'Agriculteur de poulet';
+			} else {
+				$occupations[0] = 'Poultry Farmer';
+			}
 		} elsif($occupations[0] eq 'Platelayer Railway') {
 			$occupations[0] = 'Railway Platelayer';
 		} elsif($occupations[0] eq 'General Servant Domestic') {
@@ -8693,8 +8701,8 @@ sub get_all_occupations
 			} elsif($language eq 'French') {
 				if($occupations[0] eq 'Postman') {
 					$occupations[0] = (($person->sex() eq 'M') ? 'Facteur' : 'Factrisse');
-				} elsif($occupations[0] eq 'Farmer') {
-					$occupations[0] = 'un Agriculteur';
+				} elsif($occupations[0] =~ /(.+)\sFarmer/) {
+					$occupations[0] = "Agriculteur $1";
 				}
 			}
 			$occupations[0] =~ s/[\(\)]//g;
