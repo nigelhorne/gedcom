@@ -2988,7 +2988,11 @@ sub print_person
 			}
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
 			if($language eq 'French') {
-				$bio .= " $pronoun était ";
+				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+					$bio .= " $pronoun y était ";
+				} else {
+					$bio .= " $pronoun était ";
+				}
 			} else {
 				$bio .= " $pronoun was ";
 			}
@@ -3004,6 +3008,10 @@ sub print_person
 						$bio .= ' in ' .
 							lcfirst($person->possessive()) .
 							' home town';
+					} elsif($language eq 'French') {
+						if(my $address = $baptism->address()) {
+							$bio .= " à $address";
+						}
 					} else {
 						$bio .= ' there';
 						if(my $address = $baptism->address()) {
