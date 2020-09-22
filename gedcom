@@ -2461,7 +2461,11 @@ sub print_person
 							$bio .= 'e ';
 						}
 						if(scalar(@siblings) && ($age_index == (scalar(@siblings) + 1))) {
-							$bio .= ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
+							if($language eq 'French') {
+								$bio .= ($sex eq 'M') ? 'dernier' : 'dernière';
+							} else {
+								$bio .= ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
+							}
 						} elsif(scalar(@siblings) && ($age_index == 1)) {
 							$bio .= ((scalar(@siblings) > 1) ? 'eldest' : 'older');
 						} elsif($language eq 'French') {
