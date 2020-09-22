@@ -27,6 +27,7 @@
 # TODO: use DateTime::Locale in year() to translate the month
 # TODO: add extract_year_from_date - given a string or various record types
 # TODO: flag if census locations are XYX and Y is more than (say) 50 miles from X
+# TODO:  Cornwall = la Coronouaille in French
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
