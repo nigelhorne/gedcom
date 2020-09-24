@@ -68,6 +68,7 @@ BEGIN {
 		'Geo::GeoNames', 'Getopt::Std', 'File::Basename',
 		'LWP::UserAgent::Throttled', 'Term::ANSIColor',
 		'Locale::Object::Country',
+		# 'Devel::FIXME',
 	);
 
 	foreach my $module(@modules) {
@@ -100,6 +101,7 @@ BEGIN {
 		print "Installing $list\n";
 		system("cpan -i $list");
 	}
+	# $Devel::FIXME::REPAIR_INC = 1;
 
 	# FIXME
 	$SIG{__WARN__} = sub {
@@ -2526,7 +2528,7 @@ sub print_person
 						if($language eq 'English') {
 							$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
 						} else {
-							$bio .= " ($occupation)";
+							$bio .= " (un $occupation)";
 						}
 					}
 				}
@@ -7586,23 +7588,26 @@ sub place {
 		}
 		$places_printed->{$place} = 1;
 	}
-	if(!defined($params{'encode'})) {
-		$params{'encode'} = 0;
-	}
 	if($ENV{'LANG'}) {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
 			if(my $code = $lcm->country2code($2)) {
 				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
-			} elsif(($2 eq 'England') && ($language eq 'French')) {
+			} elsif(($language eq 'French') && ($2 eq 'England')) {
 				my $town = $1;
 				$town =~ s/London$/Londres/;
 				$place = "$town, Angleterre";
+			} elsif(($language eq 'French') && ($2 eq 'Scotland')) {
+				my $town = $1;
+				$place = "$town, Ecosse";
 			}
 		} elsif($place !~ /,/) {
 			if(my $code = $lcm->country2code($place)) {
 				$place = $lcm->code2country($code, $ENV{'LANG'});
 			}
 		}
+	}
+	if(!defined($params{'encode'})) {
+		$params{'encode'} = 1;
 	}
 	if($params{'encode'}) {
 		return HTML::Entities::encode($place);
