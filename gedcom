@@ -7588,7 +7588,7 @@ sub place {
 		}
 		$places_printed->{$place} = 1;
 	}
-	if($ENV{'LANG'}) {
+	if($lcm) {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
 			if(my $code = $lcm->country2code($2)) {
 				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
@@ -7607,7 +7607,7 @@ sub place {
 		}
 	}
 	if(!defined($params{'encode'})) {
-		$params{'encode'} = 1;
+		$params{'encode'} = 0;
 	}
 	if($params{'encode'}) {
 		return HTML::Entities::encode($place);
