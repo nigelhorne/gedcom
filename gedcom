@@ -2314,7 +2314,7 @@ sub print_person
 				@occupations = ();
 			} else {
 				if($language eq 'French') {
-					$bio = 'Un ' . lc($occupations[0]);
+					$bio .= 'Un ' . lc($occupations[0]);
 				} else {
 					$bio .= 'A';
 					if($occupations[0] =~ /^[aeiou]/i) {
@@ -3383,7 +3383,7 @@ sub print_person
 				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 			} else {
-				if(!$end_of_sentence) {
+				if($dateofbaptism && !$end_of_sentence) {
 					if($language eq 'French') {
 						$bio .= ' et';
 					} else {
