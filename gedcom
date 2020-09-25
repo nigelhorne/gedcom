@@ -24,7 +24,6 @@
 # TODO:	remove date_to_datetime
 # TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
-# TODO: use DateTime::Locale in year() to translate the month
 # TODO: add extract_year_from_date - given a string or various record types
 # TODO: flag if census locations are XYX and Y is more than (say) 50 miles from X
 # TODO:  Cornwall = la Coronouaille in French
@@ -592,7 +591,7 @@ if($opts{'H'}) {
 	die '-p doesn\'t make sense with the -H option' if($opts{'p'});
 	die '-H doesn\'t support citations' if($opts{'c'});
 
-	my $dtl = DateTime::Locale->load($ENV{'LC_ALL'});
+	my $dtl = DateTime::Locale->load($ENV{'LC_TIME'} // $ENV{'LC_ALL'} // $ENV{'LANG'});
 
 	my @dow = @{$dtl->day_format_wide()};
 	if($dtl->first_day_of_week() eq 7) {
