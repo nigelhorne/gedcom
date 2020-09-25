@@ -84,7 +84,7 @@ BEGIN {
 	}
 
 	# Apparently it's "unauthorized", but there's no other module with the same name
-	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+	if(defined($ENV{'LC_ALL'}) && ($ENV{'LC_ALL'} =~ /^fr/)) {
 		eval 'use Lingua::FR::Numbers::Ordinate';
 		if($@) {
 			push @needfull, 'N/NH/NHORNE/Lingua-FR-Numbers-Ordinate-0.03.tar.gz';
@@ -213,7 +213,7 @@ if($opts{'H'} || ($opts{'B'} && $opts{'h'})) {
 if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
 }
-if($ENV{'LANG'}) {
+if($ENV{'LC_ALL'}) {
 	push @modules, 'Locale::Country::Multilingual';
 }
 if($opts{'w'}) {
@@ -320,9 +320,9 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 my $language;
-if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
+if(defined($ENV{'LC_ALL'}) && ($ENV{'LC_ALL'} =~ /^fr/)) {
 	$language = 'French';
-} elsif(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^la/)) {
+} elsif(defined($ENV{'LC_ALL'}) && ($ENV{'LC_ALL'} =~ /^la/)) {
 	$language = 'Latin';
 } else {
 	$language = 'English';
@@ -332,11 +332,12 @@ my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn;
 if($language eq 'French') {
 	# $dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy', lang => 'fr');	 # not supported
-	$dfn = DateTime::Format::Natural->new(format => 'dd/md/yy');
-} elsif(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+	$dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy');
+} elsif((defined($ENV{'LC_TIME'}) && ($ENV{'LC_TIME'} =~ /^en_US/)) ||
+	((defined($ENV{'LC_ALL'}) && ($ENV{'LC_ALL'} =~ /^en_US/)))) {
 	$dfn = DateTime::Format::Natural->new();
 } else {
-	$dfn = DateTime::Format::Natural->new(format => 'dd/md/yy');
+	$dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy');
 }
 my $dfg = DateTime::Format::Genealogy->new();
 my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
@@ -490,7 +491,9 @@ if($opts{'B'}) {
 		$papersize = <$fin>;
 		close $fin;
 		chomp $papersize;
-	} elsif(defined($ENV{'LANG'}) &&($ENV{'LANG'} =~ /^en_US/)) {
+	} elsif(defined($ENV{'LC_ALL'}) &&($ENV{'LC_ALL'} =~ /^en_US/)) {
+		$papersize = 'letter';
+	} elsif(defined($ENV{'LC_PAPER'}) &&($ENV{'LC_PAPER'} =~ /^en_US/)) {
 		$papersize = 'letter';
 	} else {
 		$papersize = 'A4';
@@ -577,7 +580,7 @@ if($opts{'B'}) {
 }
 
 my $lcm;
-if($ENV{'LANG'}) {
+if($ENV{'LC_ALL'}) {
 	$lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
 		cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
@@ -589,7 +592,7 @@ if($opts{'H'}) {
 	die '-p doesn\'t make sense with the -H option' if($opts{'p'});
 	die '-H doesn\'t support citations' if($opts{'c'});
 
-	my $dtl = DateTime::Locale->load($ENV{'LANG'});
+	my $dtl = DateTime::Locale->load($ENV{'LC_ALL'});
 
 	my @dow = @{$dtl->day_format_wide()};
 	if($dtl->first_day_of_week() eq 7) {
@@ -724,7 +727,7 @@ if($opts{'H'}) {
 					$args{'time_zone'} = $tz;
 				}
 				my $dt = DateTime->today(%args);
-				my $dtl = DateTime::Locale->load($ENV{'LANG'});
+				my $dtl = DateTime::Locale->load($ENV{'LC_TIME'} // $ENV{'LC_ALL'} // $ENV{'LANG'});
 				if($opts{'s'}) {
 					$text->translate(300, 525);
 				} else {
@@ -4809,7 +4812,7 @@ sub print_person
 					$bio .= '. ';
 				} elsif($type eq 'Departure') {
 					$bio .= ' ' . $person->pronoun();
-					if($ENV{'LANG'} =~ /^en_US/) {
+					if($ENV{'LC_ALL'} =~ /^en_US/) {
 						$bio .= ' traveled';
 					} else {
 						$bio .= ' travelled';
@@ -5034,7 +5037,7 @@ sub print_person
 							$previous = undef;
 						} else {
 							$bio .= ' ' . $person->pronoun();
-							if($ENV{'LANG'} =~ /^en_US/) {
+							if($ENV{'LC_ALL'} =~ /^en_US/) {
 								$bio .= ' traveled';
 							} else {
 								$bio .= ' travelled';
@@ -7316,6 +7319,11 @@ sub year
 			if(my $must_predate = $params{'must_predate'}) {
 				complain({ person => $person, warning => "Something is wrong with the date $string which should be before " . $must_predate->strftime('%x') }) if($d > $must_predate);
 			}
+			if($ENV{'LC_TIME'}) {
+				$d->set_locale($ENV{'LC_TIME'});
+			} elsif($ENV{'LC_ALL'}) {
+				$d->set_locale($ENV{'LC_ALL'});
+			}
 			if($language eq 'French') {
 				my $rc = $d->strftime('%x');
 				if($rc =~ /^[AEIOU]/) {
@@ -7597,7 +7605,7 @@ sub place {
 	if($lcm) {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
 			if(my $code = $lcm->country2code($2)) {
-				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
+				$place = "$1, " . $lcm->code2country($code, $ENV{'LC_ALL'});
 			} elsif(($language eq 'French') && ($2 eq 'England')) {
 				my $town = $1;
 				$town =~ s/London$/Londres/;
@@ -7608,7 +7616,7 @@ sub place {
 			}
 		} elsif($place !~ /,/) {
 			if(my $code = $lcm->country2code($place)) {
-				$place = $lcm->code2country($code, $ENV{'LANG'});
+				$place = $lcm->code2country($code, $ENV{'LC_ALL'});
 			}
 		}
 	}
