@@ -515,7 +515,7 @@ if($opts{'B'}) {
 	}
 	if($papersize eq 'letter') {
 		$pdf->mediabox('Letter');
-		$Text::Wrap::columns = 100;
+		$Text::Wrap::columns = 95;
 	} else {
 		$pdf->mediabox('A4');
 		$Text::Wrap::columns = 105;
