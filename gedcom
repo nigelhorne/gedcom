@@ -14,7 +14,7 @@
 
 # FIXME: -a Goes through the entire file once for each day without remembering
 #	anything
-# TODO: add option to print in generations order rather than date order.
+# TODO: add option to print in generations order rather than date order
 # TODO: write a post-processor to sort errors by type
 # TODO: -i restrict to selectable types of anniversaries - currently does
 #	all BMD, baptism and burials
@@ -53,20 +53,18 @@ BEGIN {
 		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
 		'Geo::Coder::OSM', 'Geo::Coder::XYZ', 'LWP::Simple',
-		'LWP::UserAgent::Cached', 'Geo::Coder::CA', 'Geo::Coder::Postcodes',
-		'Geo::Coder::OpenCage', 'Lingua::EN::NameCase',
+		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
+		'Lingua::EN::NameCase',
 		'Lingua::EN::ABC',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
-		'DateTime::Format::Genealogy', 'URI::Find::Schemeless',
+		'DateTime::Format::Genealogy',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
-		'Net::OAuth', 'Geo::Coder::GooglePlaces', 'Geo::Coder::Bing',
+		'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
-		'Geo::GeoNames', 'Getopt::Std', 'File::Basename',
-		'LWP::UserAgent::Throttled', 'Term::ANSIColor',
-		'Locale::Object::Country',
+		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		# 'Devel::FIXME',
 	);
 
@@ -212,11 +210,29 @@ if($opts{'H'} || ($opts{'B'} && $opts{'h'})) {
 if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
 }
+if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
+	push @modules, 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
+}
 if($ENV{'LANG'}) {
 	push @modules, 'Locale::Country::Multilingual';
 }
 if($opts{'w'}) {
 	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica', 'Locale::Country';
+}
+if($opts{'c'}) {
+	push @modules, 'URI::Find::Schemeless';
+}
+if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
+	push @modules, 'Geo::Coder::OpenCage';
+}
+if($ENV{'GMAP_KEY'}) {
+	push @modules, 'Geo::Coder::GooglePlaces';
+}
+if($ENV{BMAP_KEY}) {
+	push @modules, 'Geo::Coder::Bing';
+}
+if($ENV{'GEONAMES_USER'}) {
+	push @modules, 'Geo::GeoNames';
 }
 
 foreach my $module(@modules) {
@@ -499,10 +515,10 @@ if($opts{'B'}) {
 	}
 	if($papersize eq 'letter') {
 		$pdf->mediabox('Letter');
-		$Text::Wrap::columns = 105;
+		$Text::Wrap::columns = 100;
 	} else {
 		$pdf->mediabox('A4');
-		$Text::Wrap::columns = 110;
+		$Text::Wrap::columns = 105;
 	}
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
