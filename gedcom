@@ -7338,6 +7338,8 @@ sub year
 				$d->set_locale($ENV{'LC_TIME'});
 			} elsif($ENV{'LC_ALL'}) {
 				$d->set_locale($ENV{'LC_ALL'});
+			} elsif($ENV{'LANG'}) {
+				$d->set_locale($ENV{'LANG'});
 			}
 			if($language eq 'French') {
 				my $rc = $d->strftime('%x');
