@@ -1008,8 +1008,8 @@ if($opts{'H'}) {
 	die '-p and -D should not be given together' if($opts{'D'});
 	die '-p and -b should not be given together' if($opts{'b'});
 
-	my @people = $ged->get_individual($opts{p});
-	if(@people) {
+	my @people = $ged->get_individual($opts{'p'});
+	if(scalar(@people)) {
 		my($day, $month) = (localtime)[3,4];
 
 		foreach my $person(@people) {
