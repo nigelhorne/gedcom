@@ -27,6 +27,8 @@
 # TODO: add extract_year_from_date - given a string or various record types
 # TODO: flag if census locations are XYX and Y is more than (say) 50 miles from X
 # TODO:  Cornwall = la Coronouaille in French
+# TODO: If someone lives in a place smaller than, say 1,000 inhabitants, say it's
+#	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
