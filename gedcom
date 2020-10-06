@@ -62,7 +62,7 @@ BEGIN {
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'DateTime::Format::Genealogy',
 		'Sort::Key::DateTime', 'Text::Names::GB',
-		'HTTP::Cache::Transparent', 'Geo::Coder::DataScienceToolkit',
+		'Geo::Coder::DataScienceToolkit',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
 		'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
