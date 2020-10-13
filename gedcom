@@ -49,6 +49,7 @@ my @needfull;
 # Install Pre-requisites
 BEGIN {
 	my @modules = (
+		'Date::Manip', 'Parse::RecDescent', 'Roman',
 		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'Geo::Coder::Free 0.11', 'IPC::System::Simple',
 		'Geo::Coder::Free::Local',
