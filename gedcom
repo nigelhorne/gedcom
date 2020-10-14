@@ -216,13 +216,13 @@ if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 	push @modules, 'String::ProgressBar';
 }
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	push @modules, 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
+	push @modules, 'HTTP::Cache::Transparent', 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
 }
 if($ENV{'LANG'}) {
 	push @modules, 'Locale::Country::Multilingual';
 }
 if($opts{'w'}) {
-	push @modules, 'HTTP::Cache::Transparent', 'Genealogy::ChroniclingAmerica', 'Locale::Country';
+	push @modules, 'Genealogy::ChroniclingAmerica', 'Locale::Country';
 }
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
@@ -9235,6 +9235,7 @@ sub get_location {
 			return $location;
 		}
 		if(defined($location->{geometry}{location}{lat}) && defined($location->{geometry}{location}{lng})) {
+			# print Data::Dumper->new([$location])->Dump();
 			my $rc = Class::Simple->new();
 			$rc->long($location->{geometry}{location}{lng});
 			$rc->lat($location->{geometry}{location}{lat});
