@@ -51,20 +51,15 @@ my @needfull;
 BEGIN {
 	my @modules = (
 		'Date::Manip', 'Parse::RecDescent', 'Roman',
-		'Geo::Coder::List 0.26', 'Gedcom', 'Genealogy::Gedcom::Date',
-		'Date::Parse', 'Geo::Coder::Free', 'IPC::System::Simple',
-		'Geo::Coder::Free::Local',
-		'Geo::Coder::Ovi', 'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
-		'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
-		'Geo::Coder::OSM', 'Geo::Coder::XYZ',
-		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
-		'Lingua::EN::NameCase',
+		'Gedcom', 'Genealogy::Gedcom::Date',
+		'Date::Parse', 'IPC::System::Simple',
+		'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
+		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'DateTime::Format::Genealogy',
 		'Sort::Key::DateTime', 'Text::Names::GB',
-		'Geo::Coder::DataScienceToolkit',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
 		'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
@@ -143,6 +138,8 @@ use autodie qw(:all);
 # use diagnostics;
 # use warnings::unused;
 
+sub get_location($);
+
 my %opts;
 getopts('aAbB:cCdDfFGgh:Hi:m:M:lLp:sStTwWxvy:', \%opts);
 die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]\n" unless($ARGV[0]);
@@ -208,6 +205,13 @@ if($opts{'B'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
+}
+unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
+	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
+		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
+		'Geo::Coder::DataScienceToolkit',
+		'Geo::Coder::Ovi', 'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
+		'Geo::Coder::OSM', 'Geo::Coder::XYZ';
 }
 if($opts{'H'} || ($opts{'B'} && $opts{'h'})) {
 	push @modules, 'DateTime::Locale';
@@ -377,76 +381,79 @@ if($opts{'v'}) {
 	$gopts->{'debug'} = 1;
 }
 
-my $geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
+my $geocoder;
 my $textgeocoder;
+unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
+	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
-if(my $oa = $ENV{'OPENADDR_HOME'}) {
-	$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
-	# $geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
-	# US, Canada and Australia are full
-	# Counties and towns in the UK are full
-	$geocoder->push({ regex => qr/,\s*(USA|US|United States|Canada|Australia)\s*$/, geocoder => $textgeocoder })
-		->push({ regex => qr/^([\w\s]+,)?\s*[\w\s]+,\s*[\w\s]+\s*$/, geocoder => $textgeocoder });
-} else {
-	$textgeocoder = Geo::Coder::Free->new();
-	$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder })
-		# E.g. 'Nebraska, USA'
-		->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
-}
+	if(my $oa = $ENV{'OPENADDR_HOME'}) {
+		$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
+		# $geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
+		# US, Canada and Australia are full
+		# Counties and towns in the UK are full
+		$geocoder->push({ regex => qr/,\s*(USA|US|United States|Canada|Australia)\s*$/, geocoder => $textgeocoder })
+			->push({ regex => qr/^([\w\s]+,)?\s*[\w\s]+,\s*[\w\s]+\s*$/, geocoder => $textgeocoder });
+	} else {
+		$textgeocoder = Geo::Coder::Free->new();
+		$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder })
+			# E.g. 'Nebraska, USA'
+			->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
+	}
 
-$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s]+,\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
+	$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s]+,\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
 
-if(my $username = $ENV{'GEONAMES_USER'}) {
-	$geocoder->push(Geo::GeoNames->new(username => $username));
-}
+	if(my $username = $ENV{'GEONAMES_USER'}) {
+		$geocoder->push(Geo::GeoNames->new(username => $username));
+	}
 
-# DST isn't that good for the UK
-# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
-$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
-	->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
-	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
-	->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England|Wales)$/i, geocoder => Geo::Coder::Postcodes->new() })
-	->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
-	->push(Geo::Coder::OSM->new())
-	# ->push({ limit => 200, geocoder => Geo::Coder::XYZ->new()})
-	->push(Geo::Coder::Ovi->new());
-	# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
+	# DST isn't that good for the UK
+	# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
+	$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
+		->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
+		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
+		->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England|Wales)$/i, geocoder => Geo::Coder::Postcodes->new() })
+		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
+		->push(Geo::Coder::OSM->new())
+		# ->push({ limit => 200, geocoder => Geo::Coder::XYZ->new()})
+		->push(Geo::Coder::Ovi->new());
+		# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
 
-if(my $key = $ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
-	$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
-}
-if(my $key = $ENV{'GMAP_KEY'}) {
-	$geocoder->push({ limit => 200, geocoder => Geo::Coder::GooglePlaces->new(key => $key, api_key => $key) });
-}
-if(my $key = $ENV{BMAP_KEY}) {
-	$geocoder->push(Geo::Coder::Bing->new(key => $key));
-}
+	if(my $key = $ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
+		$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
+	}
+	if(my $key = $ENV{'GMAP_KEY'}) {
+		$geocoder->push({ limit => 200, geocoder => Geo::Coder::GooglePlaces->new(key => $key, api_key => $key) });
+	}
+	if(my $key = $ENV{BMAP_KEY}) {
+		$geocoder->push(Geo::Coder::Bing->new(key => $key));
+	}
 
-if($browser) {
-	$browser->throttle({
-		'nominatim.openstreetmap.org' => 1,
-		'geocode.xyz' => 2,
-		'geocoder.ca' => 1,
-		'opencagedata.com' => 1,
-		'api.postcodes.io' => 1,
-		'where.desktop.mos.svc.ovi.com' => 1,
-		'geocoding.geo.census.gov' => 1,
-		'a2ageo.rmservers.com' => 1,
-		'dev.virtualearth.net' => 1,	# Bing
-		'api.geonames.org' => 1,
-		'yboss.yahooapis.com' => 1,	# Geo::Coder::PlaceFinder
-	});
-	# G::C::GooglePlaces
-	$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
-	$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
-	$geocoder->ua($browser);
+	if($browser) {
+		$browser->throttle({
+			'nominatim.openstreetmap.org' => 1,
+			'geocode.xyz' => 2,
+			'geocoder.ca' => 1,
+			'opencagedata.com' => 1,
+			'api.postcodes.io' => 1,
+			'where.desktop.mos.svc.ovi.com' => 1,
+			'geocoding.geo.census.gov' => 1,
+			'a2ageo.rmservers.com' => 1,
+			'dev.virtualearth.net' => 1,	# Bing
+			'api.geonames.org' => 1,
+			'yboss.yahooapis.com' => 1,	# Geo::Coder::PlaceFinder
+		});
+		# G::C::GooglePlaces
+		$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
+		$browser->ssl_opts(verify_hostname => 0);	# prevent "Can't connect to geocode.xyz:443 (certificate verify failed)"
+		$geocoder->ua($browser);
 
-	# $textgeocoder = Geo::Parser::Text->new('https://geocoder.ca');
-	# $textgeocoder = Geo::Parser::Text->new('https://geocode.xyz');
+		# $textgeocoder = Geo::Parser::Text->new('https://geocoder.ca');
+		# $textgeocoder = Geo::Parser::Text->new('https://geocode.xyz');
 
-	# Geo::Coder::PlaceFinder doesn't support the ua() method
-	if((my $ckey = $ENV{'YAHOO_CONSUMER'}) && (my $skey = $ENV{'YAHOO_SECRET'})) {
-		$geocoder->push(Geo::Coder::PlaceFinder->new(consumer_key => $ckey, secret_key => $skey, ua => $browser));
+		# Geo::Coder::PlaceFinder doesn't support the ua() method
+		if((my $ckey = $ENV{'YAHOO_CONSUMER'}) && (my $skey = $ENV{'YAHOO_SECRET'})) {
+			$geocoder->push(Geo::Coder::PlaceFinder->new(consumer_key => $ckey, secret_key => $skey, ua => $browser));
+		}
 	}
 }
 
@@ -1317,28 +1324,7 @@ sub generate {
 		$params{'person'} = $person;
 		print_person(\%params);
 
-		if($opts{'v'}) {
-			my $log = $geocoder->log();
-			$geocoder->flush();
-			print Data::Dumper->new([$log])->Dump() if($log);
-			foreach my $l(@{$log}) {
-				if($l->{'line'}) {
-					print 'Line ', $l->{'line'}, ': ';
-				}
-				if($l->{'error'}) {
-					print $l->{'error'}, ', ';
-				}
-				if($l->{geocoder}) {
-					if($l->{error}) {
-						print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
-					} else {
-						print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, "\n";
-					}
-				} else {
-					print $l->{location}, ": cached\n";
-				}
-			}
-		}
+		dump_geocoder_log();
 	}
 	if($opts{'S'}) {
 		my $query = "INSERT INTO locations('location') VALUES (?);";
@@ -1648,6 +1634,9 @@ sub print_person
 		foreach my $place(get_all_residences($person)) {
 			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
 				$p =~ s/^\s//;
+				if($opts{'v'}) {
+					get_location($p);
+				}
 				push @{$all_places{$p}}, $person;
 			}
 		}
@@ -1660,9 +1649,15 @@ sub print_person
 			}
 			if($p) {
 				$p =~ s/^\s//;
+				if($opts{'v'}) {
+					get_location($p);
+				}
 				push @{$all_places{$p}}, $person;
 			}
 		}
+
+		dump_geocoder_log();
+
 		return;
 	} else {
 		print $person->as_string($args), "\n";
@@ -9223,7 +9218,8 @@ sub dump_places {
 }
 
 # Given a place return its latitude and longitude
-sub get_location {
+sub get_location($)
+{
 	my $place = shift;
 
 	return unless(defined($geocoder));
@@ -9244,6 +9240,33 @@ sub get_location {
 		print Data::Dumper->new([\$location])->Dump();
 		print Data::Dumper->new([\@locations])->Dump();
 		die "Probable bug in Geo::Coder::List with '$place'";
+	}
+}
+
+sub dump_geocoder_log
+{
+	return unless($opts{'v'});
+	return unless(defined($geocoder));
+
+	my $log = $geocoder->log();
+	$geocoder->flush();
+	print Data::Dumper->new([$log])->Dump() if($log);
+	foreach my $l(@{$log}) {
+		if($l->{'line'}) {
+			print 'Line ', $l->{'line'}, ': ';
+		}
+		if($l->{'error'}) {
+			print $l->{'error'}, ', ';
+		}
+		if($l->{geocoder}) {
+			if($l->{error}) {
+				print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, '(', $l->{error}, ")\n";
+			} else {
+				print $l->{location}, ': ', $l->{timetaken}, 's with ', $l->{geocoder}, "\n";
+			}
+		} else {
+			print $l->{location}, ": cached\n";
+		}
 	}
 }
 
