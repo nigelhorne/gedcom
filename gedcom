@@ -222,7 +222,7 @@ if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'HTTP::Cache::Transparent', 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
 }
-if($ENV{'LANG'}) {
+if(get_language()) {
 	push @modules, 'Locale::Country::Multilingual';
 }
 if($opts{'w'}) {
@@ -343,14 +343,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
-my $language;
-if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
-	$language = 'French';
-} elsif(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^la/)) {
-	$language = 'Latin';
-} else {
-	$language = 'English';
-}
+my $language = get_language();
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn;
@@ -422,7 +415,14 @@ unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 		$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
 	}
 	if(my $key = $ENV{'GMAP_KEY'}) {
-		$geocoder->push({ limit => 200, geocoder => Geo::Coder::GooglePlaces->new(key => $key, api_key => $key) });
+		my %gp_args = (apiver => 3);
+		my $l = $ENV{'LANG'};
+		if(defined($l) && ($l =~ /^([a-z]{2})/i)) {
+			$gp_args{'language'} = lc($1);
+		}
+		$gp_args{'key'} = $key;
+		$gp_args{'api_key'} = $key;
+		$geocoder->push({ limit => 100, geocoder => Geo::Coder::GooglePlaces->new(%gp_args) });
 	}
 	if(my $key = $ENV{BMAP_KEY}) {
 		$geocoder->push(Geo::Coder::Bing->new(key => $key));
@@ -607,7 +607,7 @@ if($opts{'B'}) {
 }
 
 my $lcm;
-if($ENV{'LANG'}) {
+if($language) {
 	$lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
 		cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
@@ -9334,6 +9334,39 @@ sub get_year_from_date($)
 	my $date = shift;
 	if($date =~ /(\d{3,4})\s*$/) {
 		return $1;
+	}
+}
+
+# https://www.gnu.org/software/gettext/manual/html_node/Locale-Environment-Variables.html
+# https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
+sub get_language
+{
+	if($ENV{'LANGUAGE'}) {
+		foreach my $language(split/:/, $ENV{'LANGUAGE'}) {
+			if($language eq 'en') {
+				return 'English';
+			}
+			if($language eq 'fr') {
+				return 'French';
+			}
+			if($language eq 'la') {
+				return 'Latin';
+			}
+		}
+	}
+	foreach my $variable('LC_ALL', 'LC_MESSAGES', 'LANG') {
+		my $val = $ENV{$variable};
+		next unless(defined($val));
+
+		if($val =~ /^en/) {
+			return 'English';
+		}
+		if($val =~ /^fr/) {
+			return 'French';
+		}
+		if($val =~ /^la/) {
+			return 'Latin';
+		}
 	}
 }
 
