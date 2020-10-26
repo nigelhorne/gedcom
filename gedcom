@@ -333,10 +333,10 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	}
 
 	if(my $e = $ENV{'CACHEDIR'}) {
-		$cachedir = File::Spec->catfile($e, 'lwp');
+		$cachedir = File::Spec->catfile($e, 'lwp-cache');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp')
+		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
 	mkdir $cachedir if(!-d $cachedir);
 	print "Cachedir $cachedir\n" if($opts{'v'});
