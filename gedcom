@@ -61,6 +61,7 @@ BEGIN {
 		'DateTime::Format::Genealogy',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
+		'File::Spec', 'File::HomeDir',
 		'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
@@ -292,7 +293,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
-		$cachedir = File::Spec->catfile(File::Spec->HomeDir->my_home(), '.cache', 'http-cache-transparent');
+		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'http-cache-transparent');
 	}
 
 	HTTP::Cache::Transparent::init({
