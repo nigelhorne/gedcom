@@ -191,7 +191,7 @@ my @modules;
 
 if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize',
-		'LWP::Simple', 'PDF::API2', 'Text::Soundex', 'Text::Wrap',
+		'LWP::Simple::WithCache', 'PDF::API2', 'Text::Soundex', 'Text::Wrap',
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
 } elsif($opts{'T'} || $opts{'i'}) {
 	if($opts{'i'}) {
@@ -6052,7 +6052,7 @@ sub print_person
 					my $tmp = File::Temp->new(UNLINK => 0);
 					$filename = $tmp->filename();
 					$orig_filename = $filename;
-					if(is_success($rc = LWP::Simple::getstore($file, $filename))) {
+					if(LWP::Simple::WithCache::is_success($rc = LWP::Simple::WithCache::getstore($file, $filename))) {
 						my $resize = Image::Resize->new($filename);
 						my $width = $resize->width();
 						my $height = $resize->height();
