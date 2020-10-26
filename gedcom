@@ -61,8 +61,7 @@ BEGIN {
 		'DateTime::Format::Genealogy',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
-		'File::Spec', 'File::HomeDir',
-		'Net::OAuth',
+		'File::Spec', 'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		# 'Devel::FIXME',
@@ -243,6 +242,9 @@ if($ENV{BMAP_KEY}) {
 }
 if($ENV{'GEONAMES_USER'}) {
 	push @modules, 'Geo::GeoNames';
+}
+if(!$ENV{'CACHEDIR'}) {
+	push @modules, 'File::HomeDir';
 }
 
 foreach my $module(@modules) {
