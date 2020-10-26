@@ -291,7 +291,8 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		mkdir $cachedir if(!-d $cachedir);
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
-		$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
+		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
+		$cachedir = File::Spec->catfile(File::Spec->HomeDir->my_home(), '.cache', 'http-cache-transparent');
 	}
 
 	HTTP::Cache::Transparent::init({
@@ -331,7 +332,8 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	if(my $e = $ENV{'CACHEDIR'}) {
 		$cachedir = File::Spec->catfile($e, 'lwp');
 	} else {
-		$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp')
 	}
 	mkdir $cachedir if(!-d $cachedir);
 	print "Cachedir $cachedir\n" if($opts{'v'});
@@ -364,7 +366,8 @@ my $cachedir;
 if(my $e = $ENV{'CACHEDIR'}) {
 	$cachedir = File::Spec->catfile($e, basename($0));
 } else {
-	$cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
+	# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
+	$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
 }
 
 my $gopts = {
