@@ -26,7 +26,7 @@
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
 # TODO: add extract_year_from_date - given a string or various record types
 # TODO: flag if census locations are XYX and Y is more than (say) 50 miles from X
-# TODO:  Cornwall = la Coronouaille in French
+# TODO:	Cornwall = la Coronouaille in French
 # TODO: If someone lives in a place smaller than, say 1,000 inhabitants, say it's
 #	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 # TODO: investigate Locale::Geocode
@@ -7903,7 +7903,7 @@ sub validate_place
 				}
 				$places{$place} = 0;
 				return 0;
-			} elsif(($place !~ /,/) && (!country2code($place))) {
+			} elsif(($place !~ /,/) && !Locale::Country::country2code($place)) {
 				if(my $person = $params{'person'}) {
 					complain({ person => $person, warning => "Country not included in country, or misspelt country '$place'" });
 				} else {
