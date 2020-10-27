@@ -2845,6 +2845,30 @@ sub print_person
 							}
 						}
 					}
+					if($birth_dt || ($dateofbirth && ($dateofbirth=~ /^\d{3,4}$/))) {
+						# TODO: Add more checking
+						my $yob;
+						if($birth_dt) {
+							$yob = $birth_dt->year();
+						} elsif($dateofbirth =~ /^(\d{3,4})$/) {
+							$yob = $1;
+						} else {
+							die "BUG: Impossible case";
+						}
+						foreach my $dc(@deathcitations) {
+							my $citation = $citations{$dc};
+							if(my $title = $citation->title()) {
+								if($title =~ /^(\d{3,4})\s/) {
+									if($1 < $yob) {
+										complain({
+											person => $person,
+											warning => "Year of citation of $title is before the birth year of $yob"
+										});
+									}
+								}
+							}
+						}
+					}
 					if($death_dt || ($dateofdeath && ($dateofdeath =~ /^\d{3,4}$/))) {
 						# TODO: Add more checking
 						my $yod;
@@ -7640,7 +7664,6 @@ sub place {
 	}
 	if($lcm) {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
-			# TODO: Swansea in Welsh is Abertawe
 			if(my $code = $lcm->country2code($2)) {
 				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
 			} elsif(($language eq 'French') && ($2 eq 'England')) {
