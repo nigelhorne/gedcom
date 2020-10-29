@@ -275,6 +275,8 @@ foreach my $module(@modules) {
 	# }
 }
 
+umask(0077);	# Don't let PII become publically readable
+
 my $browser;
 my $cached_browser;
 my $au = Locale::AU->new();
