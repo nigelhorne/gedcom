@@ -293,7 +293,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	# Cache calls to openstreetmap etc.
 	my $cachedir = $ENV{'CACHEDIR'};
 	if($cachedir) {
-		mkdir $cachedir if(!-d $cachedir);
+		mkdir $cachedir, 0700 if(!-d $cachedir);
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
@@ -340,7 +340,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
 		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
-	mkdir $cachedir if(!-d $cachedir);
+	mkdir $cachedir, 0700 if(!-d $cachedir);
 	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
 		agent => basename($0),
