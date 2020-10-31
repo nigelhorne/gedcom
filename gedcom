@@ -30,6 +30,7 @@
 # TODO: If someone lives in a place smaller than, say 1,000 inhabitants, say it's
 #	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 # TODO: investigate Locale::Geocode
+# FIXME: with a US state you use 'en' not à
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
