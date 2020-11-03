@@ -30,6 +30,7 @@
 # TODO: If someone lives in a place smaller than, say 1,000 inhabitants, say it's
 #	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 # TODO: investigate Locale::Geocode
+# FIXME: with a US state you use 'en' not à
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -275,6 +276,8 @@ foreach my $module(@modules) {
 	# }
 }
 
+umask(0077);	# Don't let PII become publically readable
+
 my $browser;
 my $cached_browser;
 my $au = Locale::AU->new();
@@ -291,7 +294,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	# Cache calls to openstreetmap etc.
 	my $cachedir = $ENV{'CACHEDIR'};
 	if($cachedir) {
-		mkdir $cachedir if(!-d $cachedir);
+		mkdir $cachedir, 0700 if(!-d $cachedir);
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
@@ -338,7 +341,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
 		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
-	mkdir $cachedir if(!-d $cachedir);
+	mkdir $cachedir, 0700 if(!-d $cachedir);
 	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
 		agent => basename($0),
@@ -9283,9 +9286,11 @@ sub get_location($)
 			$rc->lat($location->{geometry}{location}{lat});
 			return $rc;
 		}
-		print Data::Dumper->new([\$location])->Dump();
-		print Data::Dumper->new([\@locations])->Dump();
-		die "Probable bug in Geo::Coder::List with '$place'";
+		if($opts{'w'}) {
+			print Data::Dumper->new([\$location])->Dump();
+			print Data::Dumper->new([\@locations])->Dump();
+			complain("Probable bug in Geo::Coder::List with '$place'");
+		}
 	}
 }
 
