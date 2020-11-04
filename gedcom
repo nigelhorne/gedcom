@@ -35,7 +35,7 @@
 # dnf install langpacks-fr glibc-all-langpacks -y
 
 use 5.020;
-use utf8;
+use utf8::all;
 use strict;
 use warnings;
 # use open qw(:std :utf8);	# Do not use, it breaks printing
@@ -7549,8 +7549,7 @@ sub place {
 		my $town = $1;
 		my $province = $3;
 		# FIXME: doesn't work because none of this code properly handles UTF-8 which is needed for Québec
-		my $p = $ca_en->{province2code}{uc($province)} || $ca_fr->{province2code}{uc($province)};
-		if(defined($p)) {
+		if(defined(my $p = $ca_en->{province2code}{uc($province)} || $ca_fr->{province2code}{uc($province)})) {
 			my $ca;
 			if($language eq 'French') {
 				$ca = $ca_fr;
@@ -7575,6 +7574,8 @@ sub place {
 	if($birth_country && (!$opts{'T'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
 		$place = $1;
 	}
+
+	utf8::decode($place);
 
 	if((!$opts{'T'}) && ($place =~ /^\d/)) {
 		if(my $places_printed = $params{'places_printed'}) {
