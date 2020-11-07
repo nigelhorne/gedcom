@@ -9270,6 +9270,7 @@ sub dump_places {
 		if($resp->is_success()) {
 			my $filename = sprintf("frame%02d.png", $year);
 			if(open(my $fout, '>', $filename)) {
+				binmode($fout);
 				print $fout $resp->decoded_content();
 			}
 			return $filename;
