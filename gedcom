@@ -6030,9 +6030,8 @@ sub print_person
 						$title = $file if(!defined($title));
 						my $tmp = File::Temp->new(UNLINK => 0);
 						$filename = $tmp->filename();
-						# FIXME: breaks with
-						# use open qw(:std :utf8);
 						open(my $fh, '>', $filename);
+						binmode($fh);
 						print $fh $resp->decoded_content();
 						close $fh;
 						$orig_filename = $filename;
