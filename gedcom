@@ -8956,7 +8956,7 @@ sub journey
 		return "$rc, departing $dod";
 	}
 
-	return "$rc arriving $doa";
+	return "$rc, arriving $doa";
 }
 
 sub count_descendents_at_level
