@@ -5917,6 +5917,8 @@ sub print_person
 				# utf8::decode($bio);
 			# }
 			if(!utf8::is_utf8($bio)) {
+				# This fixes some OS/X funnies with iTerm and iTerm2
+				# But there is the issue of why $bio is encoded sometimes and not others
 				utf8::decode($bio);
 				utf8::downgrade($bio);
 			}
