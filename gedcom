@@ -3218,6 +3218,7 @@ sub print_person
 			$bio .= " $pronoun" if($end_of_sentence);
 
 			if(scalar(@spouses) == 1) {
+				my $printed_and = 0;
 				if((!$end_of_sentence) &&
 				   ($dateofbirth || $dateofdeath) &&
 				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
@@ -3226,6 +3227,7 @@ sub print_person
 					} else {
 						$bio .= ' and';
 					}
+					$printed_and = 1;
 				}
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
@@ -3259,6 +3261,13 @@ sub print_person
 						$bio .= ' is married to ';
 					}
 				} else {
+					if($dateofbaptism && (!$end_of_sentence) && !$printed_and) {
+						if($language eq 'French') {
+							$bio .= ' et';
+						} else {
+							$bio .= ' and';
+						}
+					}
 					if($language eq 'French') {
 						if($sex eq 'M') {
 							$bio .= " est mari\N{U+00E9} \N{U+00E0} ";
