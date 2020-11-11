@@ -2958,6 +2958,7 @@ sub print_person
 				unless($dateofbirth || $placeofbirth) {
 					if($language eq 'French') {
 						$bio .= 'était ';
+						utf8::decode($bio);
 					} else {
 						$bio .= 'was ';
 					}
@@ -3049,7 +3050,7 @@ sub print_person
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 					$bio .= " $pronoun y était ";
 				} else {
-					$bio .= " $pronoun était ";
+					$bio .= " $pronoun \N{U+00E9}tait "; # $bio .= " $pronoun était ";
 				}
 			} else {
 				$bio .= " $pronoun was ";
@@ -3068,7 +3069,7 @@ sub print_person
 							' home town';
 					} elsif($language eq 'French') {
 						if(my $address = $baptism->address()) {
-							$bio .= " à $address";
+							$bio .= " \N{U+00E0} $address";
 						}
 					} else {
 						$bio .= ' there';
@@ -3201,7 +3202,7 @@ sub print_person
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
 				$bio .= ' est' . (($sex eq 'M' ? 'allé' : 'allée')) .
-					(($education[0] =~ /^[aehiou]/i) ? ' à l' : ' au');
+					(($education[0] =~ /^[aehiou]/i) ? ' \N{U+00E0} l' : ' au');
 			} else {
 				$bio .= ' went to';
 			}
@@ -3251,9 +3252,9 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' est marié à ';
+							$bio .= ' est marié \N{U+00E0} ';
 						} else {
-							$bio .= ' est mariée à ';
+							$bio .= ' est mariée \N{U+00E0} ';
 						}
 					} else {
 						$bio .= ' is married to ';
@@ -3261,9 +3262,9 @@ sub print_person
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' ést marié à ';
+							$bio .= ' ést marié \N{U+00E0} ';
 						} else {
-							$bio .= ' ést mariée à ';
+							$bio .= ' ést mariée \N{U+00E0} ';
 						}
 					} else {
 						$bio .= ' was married to ';
@@ -3556,7 +3557,7 @@ sub print_person
 				}
 				# substr($names, rindex($names, ', '), 2, ' and ');
 				if($language eq 'French') {
-					$bio .= ", à $names";
+					$bio .= ", \N{U+00E0} $names";
 				} else {
 					$bio .= ", to $names";
 				}
@@ -5053,7 +5054,7 @@ sub print_person
 										if($sex eq 'F') {
 											$bio .= 'e';
 										}
-										$bio .= ' à';
+										$bio .= ' \N{U+00E0}';
 										$place =~ s/^ in//;
 										$bio .= $place;
 									} else {
@@ -5069,7 +5070,7 @@ sub print_person
 										if($sex eq 'F') {
 											$bio .= 'e';
 										}
-										$bio .= ' à';
+										$bio .= ' \N{U+00E0}';
 										$place =~ s/^ in//;
 										$bio .= $place;
 									} else {
@@ -5406,7 +5407,7 @@ sub print_person
 						if($sex eq 'F') {
 							$bio .= 'e';
 						}
-						$bio .= ' à ' . $burial->address();
+						$bio .= ' \N{U+00E0} ' . $burial->address();
 					} else {
 						$bio .= ' is buried there at ' . $burial->address();
 					}
@@ -5916,12 +5917,12 @@ sub print_person
 			# if($language eq 'English') {
 				# utf8::decode($bio);
 			# }
-			if(!utf8::is_utf8($bio)) {
-				# This fixes some OS/X funnies with iTerm and iTerm2
-				# But there is the issue of why $bio is encoded sometimes and not others
-				utf8::decode($bio);
-				utf8::downgrade($bio);
-			}
+			# if(!utf8::is_utf8($bio)) {
+				# # This fixes some OS/X funnies with iTerm and iTerm2
+				# # But there is the issue of why $bio is encoded sometimes and not others
+				# utf8::decode($bio);
+				# utf8::downgrade($bio);
+			# }
 			print "$bio\n", '-' x 80, "\n";
 			# print ">>>>>>>>>>>", utf8::is_utf8($bio), "\n";
 		}
@@ -7174,6 +7175,7 @@ sub Gedcom::Individual::relationship_up
 						if($me && ($self eq $me)) {
 							if($language eq 'French') {
 								$rc .= " sur votre père's side";
+								utf8::decode($rc);
 							} else {
 								$rc .= " on your father's side";
 							}
@@ -7368,7 +7370,7 @@ sub year
 		$from =~ s/^(in|on|c.) //;
 		$to =~ s/^(in|on|c.) //;
 		if($language eq 'French') {
-			return "de $from à $to";
+			return "de $from \N{U+00E0} $to";
 		}
 		return "from $from to $to";
 	}
@@ -7542,7 +7544,7 @@ sub place {
 				if($params{'nopreposition'}) {
 					return " $address, $1";
 				} elsif($language eq 'French') {
-					return " à $address, $1";
+					return " \N{U+00E0} $address, $1";
 				} else {
 					return " at $address, $1";
 				}
@@ -7596,7 +7598,7 @@ sub place {
 				if($places_printed->{" in$3,$4,$5"}) {
 					$places_printed->{"in $1,$2,$3"} = 1;
 					if($language eq 'French') {
-						return " à $1,$2,$3";
+						return " \N{U+00E0} $1,$2,$3";
 					}
 					return " at $1,$2,$3";
 				}
@@ -7606,7 +7608,7 @@ sub place {
 			}
 		}
 		if($language eq 'French') {
-			return " à $place";
+			return " \N{U+00E0} $place";
 		}
 		return " at $place";
 	}
@@ -7628,7 +7630,7 @@ sub place {
 		if($params{'nopreposition'}) {
 			$place = " $address, $place";
 		} elsif($language eq 'French') {
-			$place = " à $address, $place";
+			$place = " \N{U+00E0} $address, $place";
 		} elsif($on_road && ($address =~ /^[a-z]+\s+[a-z]+$/i)) {
 			# e.g on Appleby Street
 			$place = " on $address, $place";
@@ -7640,7 +7642,7 @@ sub place {
 	} elsif($place =~ /^Isle of /) {
 		$place = " on the $place";
 	} elsif(($language eq 'French') && ($place =~ /,/)) {
-		$place = " à $place";
+		$place = " \N{U+00E0} $place";
 	} else {
 		$place = " in $place";
 	}
@@ -7868,7 +7870,7 @@ sub validate_place
 
 	$place =~ s/^\s+//;
 	if($language eq 'French') {
-		$place =~ s/^à\s+//;
+		$place =~ s/^\N{U+00E0}\s+//;
 	} else {
 		$place =~ s/^at\s+//;
 	}
@@ -8949,7 +8951,7 @@ sub journey
 		complain({ person => $person, warning => 'Departure record has no location' });
 	}
 	if(defined($arrival->place())) {
-		$rc .= (($language eq 'French') ? ' à' : ' to') . place({ person => $person, record => $arrival, nopreposition => 1 });
+		$rc .= (($language eq 'French') ? " \N{U+00E0}" : ' to') . place({ person => $person, record => $arrival, nopreposition => 1 });
 		if(my $notes = notes(record => $arrival)) {
 			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 			$notes =~ s/\.$//;
