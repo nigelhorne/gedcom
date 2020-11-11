@@ -2395,7 +2395,7 @@ sub print_person
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= 'Le jumeau frère de';
+							$bio .= "Le jumeau fr\N{U+00E8}re de";
 						} else {
 							$bio .= 'La jumelle sœer de';
 						}
@@ -2491,7 +2491,7 @@ sub print_person
 						}
 						if(scalar(@siblings) && ($age_index == (scalar(@siblings) + 1))) {
 							if($language eq 'French') {
-								$bio .= ($sex eq 'M') ? 'dernier' : 'dernière';
+								$bio .= ($sex eq 'M') ? 'dernier' : "derni\N{U+00E8}re";
 							} else {
 								$bio .= ((scalar(@siblings) > 1) ? 'youngest' : 'younger');
 							}
@@ -2609,7 +2609,7 @@ sub print_person
 						$bio .= ', ' unless($printed_comma);
 					}
 					if($language eq 'French') {
-						$bio .= $person->as_string() . ' était ';
+						$bio .= $person->as_string() . " \N{U+00E9}tait ";
 					} else {
 						$bio .= $person->as_string() . ' was ';
 					}
@@ -2646,7 +2646,7 @@ sub print_person
 					}
 				} else {
 					if($language eq 'French') {
-						$bio .= ' était ';
+						$bio .= " \N{U+00E9}tait ";
 					} else {
 						$bio .= ' was ';
 					}
@@ -2719,7 +2719,7 @@ sub print_person
 			$end_of_sentence = 1;
 		} elsif($aob) {
 			if($language eq 'French') {
-				$bio .= ' est né';
+				$bio .= " est n\N{U+00E9}";
 				if($sex eq 'F') {
 					$bio .= 'e';
 				}
@@ -2802,7 +2802,7 @@ sub print_person
 
 				if($language eq 'French') {
 					$bio .= ' est ';
-					$bio .= ($sex eq 'M' ? 'né' : 'née');
+					$bio .= ($sex eq 'M' ? "n\N{U+00E9}" : "n\N{U+00E9}e");
 				} else {
 					$bio .= ' was born';
 				}
@@ -2900,7 +2900,7 @@ sub print_person
 				if($dateofbaptism || $placeofbaptism) {
 					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0) && !($opts{'a'} || $opts{'p'})) {
 						if($language eq 'French') {
-							$bio .= ', était';
+							$bio .= ", \N{U+00E9}tait";
 						} else {
 							$bio .= ', was';
 						}
@@ -2943,7 +2943,7 @@ sub print_person
 						}
 						my $ssex = $sibling->sex();
 						if($language eq 'French') {
-							$bio .= ($ssex eq 'M' ? 'son jumeau frère ' : 'sa jumelle sœer ');
+							$bio .= ($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : 'sa jumelle sœer ');
 						} else {
 							$bio .= ($sex eq 'M' ? 'his' : 'her') . ' twin ' .
 								(($ssex eq 'F') ? 'sister ' : 'brother ');
@@ -2957,8 +2957,7 @@ sub print_person
 				$bio .= ' ';
 				unless($dateofbirth || $placeofbirth) {
 					if($language eq 'French') {
-						$bio .= 'était ';
-						utf8::decode($bio);
+						$bio .= "\N{U+00E9}tait ";
 					} else {
 						$bio .= 'was ';
 					}
@@ -3048,7 +3047,7 @@ sub print_person
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
 			if($language eq 'French') {
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-					$bio .= " $pronoun y était ";
+					$bio .= " $pronoun y \N{U+00E9}tait ";
 				} else {
 					$bio .= " $pronoun \N{U+00E9}tait "; # $bio .= " $pronoun était ";
 				}
@@ -3201,7 +3200,7 @@ sub print_person
 			}
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
-				$bio .= ' est' . (($sex eq 'M' ? 'allé' : 'allée')) .
+				$bio .= ' est' . (($sex eq 'M' ? 'all\N{U+00E9}' : 'all\N{U+00E9}e')) .
 					(($education[0] =~ /^[aehiou]/i) ? ' \N{U+00E0} l' : ' au');
 			} else {
 				$bio .= ' went to';
@@ -3241,7 +3240,7 @@ sub print_person
 						if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism)) {
 							$bio .= ' y';
 						}
-						$bio .= ' est marié';
+						$bio .= " est mari\N{U+00E9}";
 						if($sex eq 'F') {
 							$bio .= 'e';
 						}
@@ -3252,9 +3251,9 @@ sub print_person
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' est marié \N{U+00E0} ';
+							$bio .= " est mari\N{U+00E9} \N{U+00E0} ";
 						} else {
-							$bio .= ' est mariée \N{U+00E0} ';
+							$bio .= " est mari\N{U+00E9}e \N{U+00E0} ";
 						}
 					} else {
 						$bio .= ' is married to ';
@@ -3262,9 +3261,9 @@ sub print_person
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= ' ést marié \N{U+00E0} ';
+							$bio .= " est mari\N{U+00E9} \N{U+00E0} ";
 						} else {
-							$bio .= ' ést mariée \N{U+00E0} ';
+							$bio .= " est mari\N{U+00E9}e \N{U+00E0} ";
 						}
 					} else {
 						$bio .= ' was married to ';
@@ -3730,8 +3729,8 @@ sub print_person
 		if($same_occupation_as_father) {
 			$bio .= '. ' if(!$end_of_sentence);
 			if($language eq 'French') {
-				$bio .= ' Comme son père, ' . lcfirst($pronoun) .
-					(is_alive(person => $person) ? ' est' : ' était') . ' un';
+				$bio .= " Comme son p\N{U+00E8}re, " . lcfirst($pronoun) .
+					(is_alive(person => $person) ? ' est' : " \N{U+00E9}tait") . ' un';
 				if($same_occupation_as_father =~ /^[AEIOU]/) {
 					$bio .= 'e';
 				}
@@ -4377,7 +4376,7 @@ sub print_person
 														$first = 0;
 												} elsif($language eq 'French') {
 													$residencestring .= ' et ' .
-														(($ss->sex() eq 'F') ? 'belle-sœer, ' : 'beau-frère, ') .
+														(($ss->sex() eq 'F') ? 'belle-sœer, ' : "beau-fr\N{U+00E8}re, ") .
 														$ss->as_string();
 												} else {
 													# FIXME: If possible, should say
@@ -5050,7 +5049,7 @@ sub print_person
 									}
 									$bio .= ' ' . lcfirst($pronoun) . ' ';
 									if($language eq 'French') {
-										$bio .= 'est arrivé';
+										$bio .= 'est arriv\N{U+00E9}';
 										if($sex eq 'F') {
 											$bio .= 'e';
 										}
@@ -5066,7 +5065,7 @@ sub print_person
 									}
 									$bio .= "$pronoun ";
 									if($language eq 'French') {
-										$bio .= 'est arrivé';
+										$bio .= 'est arriv\N{U+00E9}';
 										if($sex eq 'F') {
 											$bio .= 'e';
 										}
@@ -5208,7 +5207,7 @@ sub print_person
 				if($dateofburial || $dateofcremation) {
 					$bio .= " $pronoun ";
 					if($language eq 'French') {
-						$bio .= 'est enterré';
+						$bio .= "est enterr\N{U+00E9}";
 						if($sex eq 'F') {
 							$bio .= 'e';
 						}
@@ -5280,7 +5279,7 @@ sub print_person
 					}
 				} else {
 					$bio .= " $pronoun " .
-						(($language eq 'French') ? 'est enterré' : 'is buried') .
+						(($language eq 'French') ? "est enterr\N{U+00E9}" : 'is buried') .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
@@ -5358,7 +5357,7 @@ sub print_person
 						$bio .= "$pronoun was buried";
 					} else {
 						if($language eq 'French') {
-							$bio .= ' et a été enterré';
+							$bio .= " et a \N{U+00E9}t\N{U+00E9} enterr\N{U+00E9}";
 							if($sex eq 'F') {
 								$bio .= 'e';
 							}
@@ -5403,21 +5402,21 @@ sub print_person
 						$bio .= ' and';
 					}
 					if($language eq 'French') {
-						$bio .= ' est y enterré';
+						$bio .= " est y enterr\N{U+00E9}";
 						if($sex eq 'F') {
 							$bio .= 'e';
 						}
-						$bio .= ' \N{U+00E0} ' . $burial->address();
+						$bio .= " \N{U+00E0} " . $burial->address();
 					} else {
 						$bio .= ' is buried there at ' . $burial->address();
 					}
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$bio .= " $pronoun ";
-						$bio .= (($language eq 'French') ? 'est enterré' : 'is buried') .
+						$bio .= (($language eq 'French') ? "est enterr\N{U+00E9}" : 'is buried') .
 							$b;
 					} else {
-						$bio .= (($language eq 'French') ? ' et est enterré' : ' and is buried') .
+						$bio .= (($language eq 'French') ? " et est enterr\N{U+00E9}" : ' and is buried') .
 							$b;
 					}
 				}
@@ -5914,17 +5913,7 @@ sub print_person
 			if($bio eq "\t.") {
 				complain({ person => $person, warning => "couldn't extract a biography" });
 			}
-			# if($language eq 'English') {
-				# utf8::decode($bio);
-			# }
-			# if(!utf8::is_utf8($bio)) {
-				# # This fixes some OS/X funnies with iTerm and iTerm2
-				# # But there is the issue of why $bio is encoded sometimes and not others
-				# utf8::decode($bio);
-				# utf8::downgrade($bio);
-			# }
 			print "$bio\n", '-' x 80, "\n";
-			# print ">>>>>>>>>>>", utf8::is_utf8($bio), "\n";
 		}
 	} else {
 		my ($dob, $dod);
@@ -6654,7 +6643,7 @@ sub Gedcom::Individual::relationship {
 		my $sex = get_value({ person => $other, value => 'sex' });
 		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
 			if($language eq 'French') {
-				return ($sex eq 'M') ? 'frère' : 'sœur';
+				return ($sex eq 'M') ? "fr\N{U+00E8}re" : 'sœur';
 			} elsif($language eq 'Latin') {
 				return ($sex eq 'M') ? 'frāter' : 'soror';
 			}
@@ -6703,7 +6692,7 @@ sub Gedcom::Individual::relationship_up
 			my $steps = stepsabove($self, $other, 0);
 			my $title;
 			if($language eq 'French') {
-				$title = ($sex eq 'M') ? 'père' : 'mère';
+				$title = ($sex eq 'M') ? "p\N{U+00E8}re" : "m\N{U+00E8}re";
 			} elsif($language eq 'Latin') {
 				return ($sex eq 'M') ? 'mater' : 'pater';
 			} else {
@@ -6729,7 +6718,7 @@ sub Gedcom::Individual::relationship_up
 				return "grand$title";
 			} elsif($steps == 3) {
 				if($language eq 'French') {
-					return "arrière-grand-$title";
+					return "arri\N{U+00E8}re-grand-$title";
 				} elsif($language eq 'Latin') {
 					return ($sex eq 'M') ? 'proavus' : 'proavia';
 				}
@@ -6933,7 +6922,7 @@ sub Gedcom::Individual::relationship_up
 					18 << 24 | 1 => 'sixteen times great-uncle',
 				);
 				my %fr_male_relationships = (
-					1 << 24 | 1 => 'frère',
+					1 << 24 | 1 => "fr\N{U+00E8}re",
 					1 << 24 | 2 => 'neveu',
 					1 << 24 | 3 => 'great-nephew',
 					1 << 24 | 4 => 'great-great-nephew',
@@ -6976,8 +6965,8 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 4 => 'third cousin three-times-removed',
 					7 << 24 | 5 => 'fourth cousin twice-removed',
 					7 << 24 | 6 => 'fifth cousin once-removed',
-					7 << 24 | 7 => 'sixième cousin',
-					7 << 24 | 8 => 'sixième cousin once-removed',
+					7 << 24 | 7 => "sixi\N{U+00E8}me cousin",
+					7 << 24 | 8 => "sixi\N{U+00E8}me cousin once-removed",
 					8 << 24 | 1 => 'six times great-uncle',
 					8 << 24 | 2 => 'first cousin six-times-removed',
 					8 << 24 | 3 => 'second cousin five-times-removed',
@@ -7084,7 +7073,7 @@ sub Gedcom::Individual::relationship_up
 				);
 				my %fr_female_relationships = (
 					1 << 24 | 1 => 'sœur',
-					1 << 24 | 2 => 'nièce',
+					1 << 24 | 2 => "ni\N{U+00E8}ce",
 					1 << 24 | 3 => 'great-niece',
 					1 << 24 | 4 => 'great-great-niece',
 					2 << 24 | 1 => 'tant',
@@ -7126,8 +7115,8 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 4 => 'third cousin three-times-removed',
 					7 << 24 | 5 => 'fourth cousin twice-removed',
 					7 << 24 | 6 => 'fifth cousin once-removed',
-					7 << 24 | 7 => 'sixième cousin',
-					7 << 24 | 8 => 'sixième cousin once-removed',
+					7 << 24 | 7 => "sixi\N{U+00E8}me cousin",
+					7 << 24 | 8 => "sixi\N{U+00E8}me cousin once-removed",
 					8 << 24 | 1 => 'six times great-aunt',
 					8 << 24 | 2 => 'first cousin six-times-removed',
 					8 << 24 | 3 => 'second cousin five-times-removed',
@@ -7174,8 +7163,7 @@ sub Gedcom::Individual::relationship_up
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
 							if($language eq 'French') {
-								$rc .= " sur votre père's side";
-								utf8::decode($rc);
+								$rc .= " sur votre p\N{U+00E8}re's side";
 							} else {
 								$rc .= " on your father's side";
 							}
@@ -7187,7 +7175,7 @@ sub Gedcom::Individual::relationship_up
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
 							if($language eq 'French') {
-								$rc .= " sur votre mère's side";
+								$rc .= " sur votre m\N{U+00E8}re's side";
 							} else {
 								$rc .= " on your mother's side";
 							}
@@ -7262,7 +7250,7 @@ sub Gedcom::Individual::relationship_down
 			} elsif($steps == 3) {
 				if($language eq 'French') {
 					if($sex eq 'M') {
-						return 'arrière-petit-fils';
+						return "arri\N{U+00E8}re-petit-fils";
 					}
 				} elsif($language eq 'Latin') {
 					return ($sex eq 'M') ? 'prōnepōs' : 'prōneptis';
@@ -7456,7 +7444,7 @@ sub year
 	}
 	if($string =~ /^aft.? (\d{3,4})/i) {
 		if($language eq 'French') {
-			return "après $1";
+			return "apr\N{U+00E8}s $1";
 		}
 		return "after $1";
 	}
@@ -8933,7 +8921,7 @@ sub journey
 	}
 
 	if($language eq 'French') {
-		$rc .= ' a voyagé';
+		$rc .= " a voyag\N{U+00E9}";
 	} elsif($ENV{'LANG'} =~ /^en_US/) {
 		$rc .= ' traveled';
 	} else {
