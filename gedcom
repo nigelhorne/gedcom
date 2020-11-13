@@ -3200,7 +3200,7 @@ sub print_person
 			}
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
-				$bio .= ' est' . (($sex eq 'M' ? 'all\N{U+00E9}' : 'all\N{U+00E9}e')) .
+				$bio .= ' est ' . (($sex eq 'M' ? "all\N{U+00E9}" : "all\N{U+00E9}e")) .
 					(($education[0] =~ /^[aehiou]/i) ? ' \N{U+00E0} l' : ' au');
 			} else {
 				$bio .= ' went to';
