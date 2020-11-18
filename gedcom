@@ -7552,6 +7552,7 @@ sub place {
 	}
 
 	# The more consistent the data, the fewer lookups on Geocoders and the smoother the English output
+	$place =~ s/\xc3\xa9/é/g;
 	if($place =~ /(.+?)\s*United States$/i) {
 		$place = "$1 USA";
 	} elsif($place =~ /States\s*$/) {
@@ -7560,14 +7561,9 @@ sub place {
 		my $town = $1;
 		my $province = $3;
 
-		if($province eq 'Québec') {
-			if($language eq 'English') {
-				$province = 'Quebec';
-			} else {
-				utf8::decode($province);
-			}
-		}
 		# FIXME: doesn't work because none of this code properly handles UTF-8 which is needed for Québec
+		# utf8::decode($province);
+		$province =~ s/\xc3\xa9/é/g;
 		if(defined(my $p = $ca_en->{province2code}{uc($province)} || $ca_fr->{province2code}{uc($province)})) {
 			my $ca;
 			if($language eq 'French') {
@@ -7580,6 +7576,17 @@ sub place {
 				$place = "$town, $p, Canada";
 			} else {
 				$place = "$p, Canada";
+			}
+		} elsif($province eq 'Québec') {
+			if($language eq 'French') {
+				$province = "Qu\N{U+00E9}bec";
+			} else {
+				$province = 'Quebec';
+			}
+			if(defined($town) && length($town)) {
+				$place = "$town, $province, Canada";
+			} else {
+				$place = "$province, Canada";
 			}
 		} else {
 			complain({ person => $params{'person'}, warning => "Unknown Canadian province $province" });
