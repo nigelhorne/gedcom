@@ -154,7 +154,7 @@ my %all_locations;
 my %all_places;
 # my $pi = atan2(1,1) * 4;
 
-binmode(STDOUT, ':utf8');
+# binmode(STDOUT, ':utf8');
 
 my $ged = Gedcom->new(gedcom_file => $ARGV[0], read_only => 1);
 my $nameparser = Lingua::EN::NameParse->new(extended_titles => 1, initials => 1);
@@ -7563,7 +7563,6 @@ sub place {
 
 		# FIXME: doesn't work because none of this code properly handles UTF-8 which is needed for Québec
 		# utf8::decode($province);
-		$province =~ s/\xc3\xa9/é/g;
 		if(defined(my $p = $ca_en->{province2code}{uc($province)} || $ca_fr->{province2code}{uc($province)})) {
 			my $ca;
 			if($language eq 'French') {
@@ -7571,7 +7570,21 @@ sub place {
 			} else {
 				$ca = $ca_en;
 			}
-			$p = sortoutcase($ca->{code2province}{$p});
+			if($p eq 'QC') {
+				if($language eq 'French') {
+					$p = "Qu\N{U+00E9}bec";
+					if($town eq 'Montréal') {
+						$town = "Montr\N{U+00E9}al";
+					}
+				} else {
+					$p = 'Quebec';
+					if($town eq 'Montréal') {
+						$town = 'Montreal';
+					}
+				}
+			} else {
+				$p = sortoutcase($ca->{code2province}{$p});
+			}
 			if(defined($town) && length($town)) {
 				$place = "$town, $p, Canada";
 			} else {
@@ -7580,8 +7593,14 @@ sub place {
 		} elsif($province eq 'Québec') {
 			if($language eq 'French') {
 				$province = "Qu\N{U+00E9}bec";
+				if($town eq 'Montréal') {
+					$town = "Montr\N{U+00E9}al";
+				}
 			} else {
 				$province = 'Quebec';
+				if($town eq 'Montréal') {
+					$town = 'Montreal';
+				}
 			}
 			if(defined($town) && length($town)) {
 				$place = "$town, $province, Canada";
