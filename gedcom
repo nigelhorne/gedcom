@@ -227,7 +227,7 @@ if(get_language()) {
 	push @modules, 'Locale::Country::Multilingual';
 }
 if($opts{'w'}) {
-	push @modules, 'Genealogy::ChroniclingAmerica', 'Locale::Country';
+	push @modules, 'Genealogy::ChroniclingAmerica', 'Genealogy::ObituaryDailyTimes', 'Locale::Country';
 }
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
@@ -450,6 +450,7 @@ unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 			'dev.virtualearth.net' => 1,	# Bing
 			'api.geonames.org' => 1,
 			'yboss.yahooapis.com' => 1,	# Geo::Coder::PlaceFinder
+			'www.familysearch.org' => 1,
 		});
 		# G::C::GooglePlaces
 		$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
@@ -620,6 +621,8 @@ if($language) {
 	$lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
 		cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
+
+my $obituaries = Genealogy::ObituaryDailyTimes->new();
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
@@ -1868,6 +1871,8 @@ sub print_person
 		}
 	}
 
+	my $birth_dt = date_to_datetime(date => $dateofbirth);
+
 	if($opts{'w'} && $firstname && $lastname) {
 		my %chronicling_params = ( ua => $cached_browser );
 		if($dateofbirth && ($dateofbirth =~ /(\d{4})$/)) {
@@ -1898,18 +1903,25 @@ sub print_person
 			chronicling_america($person, \%chronicling_params);
 
 		}
-		if($placeofdeath && (($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
-			my $stateofdeath = uc($1);
-			if($us->{code2state}{$stateofdeath}) {
-				$stateofdeath = $us->{code2state}{$stateofdeath};
-			} elsif(!$us->{state2code}{$stateofdeath}) {
-				complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
-			}
-			if((!defined($stateofbirth)) || (lc($stateofdeath) ne lc($stateofbirth))) {
-				$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
+		if($placeofdeath) {
+			if((($placeofdeath =~ /USA$/) || ($placeofdeath =~ /United States$/)) && ($placeofdeath =~ /^.+,\s*([\w\s]+),[\w\s]+$/)) {
+				my $stateofdeath = uc($1);
+				if($us->{code2state}{$stateofdeath}) {
+					$stateofdeath = $us->{code2state}{$stateofdeath};
+				} elsif(!$us->{state2code}{$stateofdeath}) {
+					complain({ person => $params{'person'}, warning => "Unknown state '$stateofdeath' in death place $placeofbirth" });
+				}
+				if((!defined($stateofbirth)) || (lc($stateofdeath) ne lc($stateofbirth))) {
+					$chronicling_params{'state'} = ucfirst(lc($stateofdeath));
 
-				# TODO: married and maiden names, could be two searches
-				chronicling_america($person, \%chronicling_params);
+					# TODO: married and maiden names, could be two searches
+					chronicling_america($person, \%chronicling_params);
+				}
+			}
+			obituaries({ first => $firstname, last => $lastname, death_dt => $death_dt, birth_dt => $birth_dt });
+			my $sex = get_value({ person => $person, value => 'sex' });
+			if(defined($sex) && ($sex eq 'F')) {
+				obituaries({ first => $firstname, maiden => $lastname, death_dt => $death_dt, birth_dt => $birth_dt });
 			}
 		}
 	}
@@ -2073,8 +2085,6 @@ sub print_person
 			}
 		}
 	}
-
-	my $birth_dt = date_to_datetime(date => $dateofbirth);
 
 	if($birth_dt && (my $spouse = $spouses[0])) {
 		my $sdob = dateofbirth($spouse);
@@ -3916,7 +3926,7 @@ sub print_person
 					last;
 				}
 			}
-			if($all_residences_have_date) {
+			if($all_residences_have_date && (scalar(@residencelist) > 1)) {
 				print "Sort the residences\n" if($opts{'v'});
 				@residencelist = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @residencelist;
 			}
@@ -3932,12 +3942,15 @@ sub print_person
 
 			my @residencestringarray;
 
+			print "Sanity checking the residences\n" if($opts{'v'});
 			# Create a list of residence strings
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
+				my $residencestring;
+
 				my $latitude;
 				my $longitude;
-				my $residencestring;
+
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
 					if($birth && $dateofbirth && $rdate && ($rdate eq $dateofbirth) &&
 					   places_are_the_same({ person => $person, first => $birth, second => $residence})) {
@@ -3964,6 +3977,16 @@ sub print_person
 							# Actually prints the place here
 							$residencestring .= $p;
 							$places_printed{$p} = 1;
+							$p = place({
+								person => $person,
+								record => $residence,
+								nopreposition => 1,
+							});
+							$p =~ s/^\s+//;
+							if(my $location = get_location($p)) {
+								$latitude = $location->lat();
+								$longitude = $location->long();
+							}
 						}
 					}
 					if($rdate && (my $rdate_dt = date_to_datetime($rdate))) {
@@ -4194,12 +4217,15 @@ sub print_person
 							$prev_residence = $residence;
 						}
 					}
-					if(defined($latitude)) {
+					if(defined($latitude) && date_to_datetime($rdate)) {
 						# Print close relatives living close by
 						# This really only works when printing a lot of people, for example with the -a
 						#	flag, or when producing a PDF book, since it relies on having found data
 						#	on people beforehand
-						my $year = date_to_datetime($rdate)->year();
+						my $year;
+						if(my $dt = date_to_datetime($rdate)) {
+							$year = $dt->year();
+						}
 						my $printed_person = 0;
 						my $gis = GIS::Distance->new('MathTrig');
 						my $p2 = place({ record => $residence, nopreposition => 1 });
@@ -4397,7 +4423,7 @@ sub print_person
 												}
 												$printed_sibling = 1;
 												# May be removed later
-		if($language eq 'French') {
+												if($language eq 'French') {
 													$residencestring .= ' et';
 												} else {
 													$residencestring .= ' and';
@@ -4778,7 +4804,7 @@ sub print_person
 				last;
 			}
 		}
-		if($all_events_have_date) {
+		if($all_events_have_date && (scalar(@events) > 0)) {
 			@events = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @events;
 		}
 		# Let's remove things that aren't relavent that may
@@ -4943,7 +4969,7 @@ sub print_person
 					}
 				}
 			}
-		} else {
+		} elsif(scalar(@events) > 0) {
 			my $mentioned_military;
 			my $index = 0;
 			my $previous;
@@ -9127,6 +9153,49 @@ sub chronicling_america
 			}
 		}
 	}
+}
+
+sub obituaries
+{
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die "BUG: no arguments given\n";
+	}
+
+	my $birth_dt = delete $params{'birth_dt'};
+	my $death_dt = delete $params{'death_dt'};
+	my @obituaries = $obituaries->search(\%params);
+
+	if(scalar(@obituaries)) {
+		print Data::Dumper->new([\@obituaries])->Dump();
+		foreach my $obituary(@obituaries) {
+			if($death_dt && (my $date = $obituary->{'date'})) {
+				if($date =~ /^(\d+)\-(\d+)\-(\d+)$/) {
+					$date = DateTime->new(year => $1, month => $2, day => $3);
+					if($death_dt) {
+						if(abs($date->year() - $death_dt->year()) <= 1) {
+							die 'TODO';
+						}
+					} elsif($birth_dt && $obituary->{'age'}) {
+						if(abs($date->year() - $birth_dt->year() + $obituary->{'age'}) <= 1) {
+							die 'TODO';
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return @obituaries;
 }
 
 # FIXME: once RT127603 has been fixed
