@@ -1703,7 +1703,6 @@ sub print_person
 		}
 	}
 
-	my ($marriage_dt, $death_dt);
 	my $birth = $person->get_record('birth');
 
 	my $placeofbirth = get_value({ person => $person, value => 'birth place' });
@@ -1872,6 +1871,7 @@ sub print_person
 	}
 
 	my $birth_dt = date_to_datetime(date => $dateofbirth);
+	my $death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'w'} && $firstname && $lastname) {
 		my %chronicling_params = ( ua => $cached_browser );
@@ -2103,10 +2103,12 @@ sub print_person
 		}
 	}
 
+	my $marriage_dt;
 	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	if((!$dateofmarriage) && $marriage) {
 		$dateofmarriage = $marriage->date();
 	}
+
 	if($dateofmarriage && ($dateofmarriage =~ /\d$/)) {
 		$marriage_dt = date_to_datetime(date => $dateofmarriage);
 	}
@@ -2117,8 +2119,6 @@ sub print_person
 			warning => 'married when less than 16 years old'
 		});
 	}
-
-	$death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'} || $opts{'B'}) {
 		my $baptism = $person->get_record('baptism');
@@ -6007,28 +6007,32 @@ sub print_person
 			print "\n";
 		}
 		if(defined($dod) && (!$onlydeaths) && !$onlybirthdays) {
-			my $d;
-			if(($dod !~ /^\d{3,4}$/) && ($dod =~ /^\d/)) {
-				eval {
-					$d = $date_parser->parse(date => $dod);
-				};
-			}
-			if($d) {
-				$d = @{$d}[0];
-				$death_dt = $dfn->parse_datetime($d->{'canonical'});
-				print "\tDied: ", $death_dt->strftime('%x');
+			if(defined($death_dt)) {
+				print "\tDied: ", $death_dt->strftime('%x'), "\n";
 			} else {
-				if($@) {
-					if($opts{'f'}) {
-						die $@;
-					}
-					if($opts{'w'}) {
-						red_warning({ person => $person, warning => $@ });
-					}
+				my $d;
+				if(($dod !~ /^\d{3,4}$/) && ($dod =~ /^\d/)) {
+					eval {
+						$d = $date_parser->parse(date => $dod);
+					};
 				}
-				print "\tDied: $dod\n";
+				if($d) {
+					$d = @{$d}[0];
+					$death_dt = $dfn->parse_datetime($d->{'canonical'});
+					print "\tDied: ", $death_dt->strftime('%x');
+				} else {
+					if($@) {
+						if($opts{'f'}) {
+							die $@;
+						}
+						if($opts{'w'}) {
+							red_warning({ person => $person, warning => $@ });
+						}
+					}
+					print "\tDied: $dod\n";
+				}
+				print "\n";
 			}
-			print "\n";
 		}
 	}
 	# $printed{$person->xref()} = 1;
@@ -9214,7 +9218,7 @@ sub obituaries
 	if(scalar(@obituaries)) {
 		print Data::Dumper->new([\@obituaries])->Dump();
 		foreach my $obituary(@obituaries) {
-			if($death_dt && (my $date = $obituary->{'date'})) {
+			if(my $date = $obituary->{'date'}) {
 				if($date =~ /^(\d+)\-(\d+)\-(\d+)$/) {
 					$date = DateTime->new(year => $1, month => $2, day => $3);
 					if($death_dt) {
@@ -9222,7 +9226,7 @@ sub obituaries
 							die 'TODO';
 						}
 					} elsif($birth_dt && $obituary->{'age'}) {
-						if(abs($date->year() - $birth_dt->year() + $obituary->{'age'}) <= 1) {
+						if(abs($date->year() - ($birth_dt->year() + $obituary->{'age'})) <= 1) {
 							die 'TODO';
 						}
 					}
