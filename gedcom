@@ -2967,7 +2967,7 @@ sub print_person
 				$bio .= ' ';
 				unless($dateofbirth || $placeofbirth) {
 					if($language eq 'French') {
-						$bio .= "\N{U+00E0} \N{U+00E9}t\N{U+00E9} ";	# à été
+						$bio .= "a \N{U+00E9}t\N{U+00E9} ";	# a été
 					} else {
 						$bio .= 'was ';
 					}
@@ -3062,9 +3062,9 @@ sub print_person
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
 			if($language eq 'French') {
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-					$bio .= " $pronoun y \N{U+00E0} \N{U+00E9}t\N{U+00E9} ";	# à été
+					$bio .= " $pronoun y a \N{U+00E9}t\N{U+00E9} ";	# a été
 				} else {
-					$bio .= " $pronoun \N{U+00E0} \N{U+00E9}t\N{U+00E9} ";	# à été
+					$bio .= " $pronoun a \N{U+00E9}t\N{U+00E9} ";	# a été
 				}
 			} else {
 				$bio .= " $pronoun was ";
@@ -3262,7 +3262,7 @@ sub print_person
 						if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism)) {
 							$bio .= ' y';
 						}
-						$bio .= " est mari\N{U+00E9}";
+						$bio .= " a mari\N{U+00E9}";
 						if($sex eq 'F') {
 							$bio .= 'e';
 						}
@@ -3290,9 +3290,9 @@ sub print_person
 					}
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$bio .= " est mari\N{U+00E9} \N{U+00E0} ";
+							$bio .= " a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9} \N{U+00E0} ";
 						} else {
-							$bio .= " est mari\N{U+00E9}e \N{U+00E0} ";
+							$bio .= " a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}e \N{U+00E0} ";
 						}
 					} else {
 						$bio .= ' was married to ';
@@ -3474,10 +3474,16 @@ sub print_person
 					}
 				}
 				if(is_alive(person => $person)) {
-					$bio .= ' has been married ';
+					$bio .= ' has been married';
+				} elsif($language eq 'French') {
+					$bio .= " a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}";
+					if($sex eq 'F') {
+						$bio .= 'e';
+					}
 				} else {
-					$bio .= ' was married ';
+					$bio .= ' was married';
 				}
+				$bio .= ' ';
 				if(scalar(@spouses) == 2) {
 					if($spouses[0]->xref() eq $spouses[1]->xref()) {
 						complain({ person => $person, warning => [ 'Married twice to ', $spouses[0]->as_string() ] });
@@ -3485,7 +3491,12 @@ sub print_person
 						$bio .= 'twice';
 					}
 				} else {
-					$bio .= scalar(@spouses) . ' times';
+					$bio .= scalar(@spouses);
+					if($language eq 'French') {
+						$bio .= ' temps';
+					} else {
+						$bio .= ' times';
+					}
 				}
 				my $all_marriages_have_date = 1;
 				foreach my $spouse(@spouses) {
@@ -7391,10 +7402,25 @@ sub year
 				}
 			}
 		}
-		if($params{'circa'}) {
-			return $params{'circa'} . " $rc";
+		if(!defined($params{'circa'})) {
+			$params{'circa'} //= 'c.';
 		}
-		return "c. $rc";
+		if($language ne 'English') {
+			my $d = $date_parser->parse(date => $rc);
+			if($d && (ref($d) eq 'ARRAY')) {
+				$d = @{$d}[0];
+			}
+			$d = $dfn->parse_datetime($d->{'canonical'});
+			if($ENV{'LC_TIME'}) {
+				$d->set_locale($ENV{'LC_TIME'});
+			} elsif($ENV{'LC_ALL'}) {
+				$d->set_locale($ENV{'LC_ALL'});
+			} elsif($ENV{'LANG'}) {
+				$d->set_locale($ENV{'LANG'});
+			}
+			return $params{'circa'} . ' ' . $d->strftime('%b %Y');
+		}
+		return $params{'circa'} . " $rc";
 	}
 	if(($string =~ /^bet (.+) and (.+)/i) ||
 	   ($string =~ /^Fro?m (.+) to (.+)/i)) {
