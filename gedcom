@@ -4771,7 +4771,7 @@ sub print_person
 					if(defined($lastdate) && ($deathplace eq $lastresidence)) {
 						my $p = lcfirst($pronoun);
 						if($language eq 'French') {
-							$bio .= " c'est où $p est mort";
+							$bio .= " c'est o\N{U+00F9} $p est mort";
 							if($sex eq 'F') {
 								$bio .= 'e';
 							}
