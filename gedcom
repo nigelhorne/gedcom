@@ -622,7 +622,10 @@ if($language) {
 		cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
 
-my $obituaries = Genealogy::ObituaryDailyTimes->new();
+my $obituaries;
+if($opts{'w'}) {
+	$obituaries = Genealogy::ObituaryDailyTimes->new();
+}
 
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
