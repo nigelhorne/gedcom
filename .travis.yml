@@ -18,7 +18,7 @@ sudo: false
 install:
   # - sudo apt-get update -q
   # - sudo apt-get install -y liburi-perl
-  - cpanm -qin --skip-satisfied $(cat requrements.txt)
+  - cpanm -qin --skip-satisfied $(cat requirements.txt)
 
 script:
   - perl -MO=Lint ./gedcom
