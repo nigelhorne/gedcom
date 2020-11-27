@@ -2386,10 +2386,7 @@ sub print_person
 						eval {
 							$d = $date_parser->parse(date => $dob);
 						};
-						if($d) {
-							$d = @{$d}[0];
-						}
-						if($d) {
+						if($d && ($d = $d->[0])) {
 							$d = $dfn->parse_datetime($d->{'canonical'});
 							if(($d == $birth_dt) || ($d == ($birth_dt - $oneday)) || ($d == ($birth_dt + $oneday))) {
 								push @twins, $s;
@@ -2444,23 +2441,16 @@ sub print_person
 					my $all_siblings_have_dob = 1;
 					foreach my $sibling(@siblings) {
 						if(my $dob = dateofbirth($sibling)) {
-							if(($dob !~ /^\d/) || ($dob =~ /[a-z]$/i) ||
-							   ($dob =~ /[\/\-]/) || !date_parser_cached(date => $dob)) {
-								$all_siblings_have_dob = 0;
-								last;
-							}
-							my $d;
-							eval {
-								$d = $date_parser->parse(date => $dob);
-							};
-							if($d) {
-								$d = @{$d}[0];
-							}
-							if($@ || !defined($d)) {
+							if(!date_parser_cached(date => $dob)) {
 								complain({
 									person => $sibling,
 									warning => "has an invalid date of birth: $dob"
 								});
+								$all_siblings_have_dob = 0;
+								last;
+							}
+							if(($dob !~ /^\d/) || ($dob =~ /[a-z]$/i) ||
+							   ($dob =~ /[\/\-]/)) {
 								$all_siblings_have_dob = 0;
 								last;
 							}
@@ -2931,10 +2921,7 @@ sub print_person
 								eval {
 									$d = $date_parser->parse(date => $dob);
 								};
-								if($d) {
-									$d = @{$d}[0];
-								}
-								if($d) {
+								if($d && ($d = $d->[0])) {
 									$d = $dfn->parse_datetime($d->{'canonical'});
 									if(($d == $birth_dt) || ($d == ($birth_dt - $oneday)) || ($d == ($birth_dt + $oneday))) {
 										push @twins, { sibling => $s, dob => $d };
@@ -3037,7 +3024,7 @@ sub print_person
 							if(my $motherdob = dateofbirth($mother)) {
 								my $d = $date_parser->parse(date => $motherdob);
 								if($d && (ref($d) eq 'ARRAY')) {
-									$d = @{$d}[0];
+									$d = $d->[0];
 									if(defined($d) && !$d->{'flag'}) {
 										$d = $dfn->parse_datetime($d->{'canonical'})->strftime('%Y');
 										if($d > ($yobaptism - 13)) {
@@ -7434,7 +7421,7 @@ sub year
 		if($language ne 'English') {
 			my $d = $date_parser->parse(date => $rc);
 			if($d && (ref($d) eq 'ARRAY')) {
-				$d = @{$d}[0];
+				$d = $d->[0];
 			}
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			if($ENV{'LC_TIME'}) {
@@ -8487,7 +8474,7 @@ sub date_parser_cached
 		$d = $date_parser->parse(date => $date);
 	};
 	if($d && (ref($d) eq 'ARRAY')) {
-		$d = @{$d}[0];
+		$d = $d->[0];
 		$all_dates{$date} = $d;
 	}
 	return $d;
