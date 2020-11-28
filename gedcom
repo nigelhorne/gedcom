@@ -206,6 +206,8 @@ if($opts{'B'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
+} else {
+	push @modules, 'GIS::Distance';
 }
 unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
