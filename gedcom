@@ -1547,7 +1547,7 @@ sub print_person
 	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
 	my $lastname = ucfirst(lc($person->surname())); # RT109786
 
-	if($opts{'s'}) {
+	if($opts{'s'} && defined($lastname)) {
 		my $surname;
 
 		if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
@@ -1556,7 +1556,11 @@ sub print_person
 			$surname = $opts{'h'};
 		}
 		if($lastname ne $surname) {
-			return if(soundex_nara($lastname) ne soundex_nara($surname));
+			if((my $l = soundex_nara($lastname)) && (my $s = soundex_nara($surname))) {
+				return if($l ne $s);
+			} else {
+				return;
+			}
 		}
 	}
 
