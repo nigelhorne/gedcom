@@ -47,7 +47,15 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
-        gedcom -dwlHm $i -y 2018 gedcom-file.ged > $i.html
+        gedcom -dwHm $i -y 2018 gedcom-file.ged > $i.html
+    done
+
+To print a month-to-a-page calendar of all the Smiths in your tree as a present,
+choose any Smith in your tree as a home person so that the -s option works:
+
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12
+    do
+        gedcom -dwHlm $i -y 2021 -h 'John Smith' -s gedcom-file.ged > $i.html
     done
 
 Alternatively you can create an ICS file to import to Google Calendar:

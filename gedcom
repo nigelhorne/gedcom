@@ -201,7 +201,7 @@ if($opts{'B'}) {
 			'Data::ICal::TimeZone', 'Data::ICal::DateTime';
 	}
 } elsif($opts{'H'}) {
-	push @modules, 'HTML::Table';
+	push @modules, 'HTML::Table', 'Text::Soundex';
 } elsif($opts{'x'} || $opts{'g'} || $opts{'M'}) {
 	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
@@ -546,7 +546,7 @@ if($opts{'B'}) {
 	}
 	$opts{'A'} = 1 unless($opts{'G'});
 } elsif($opts{'s'}) {
-	die '-s only makes sense with the -B, -g or -x options' unless($opts{'x'} || $opts{'g'} || $opts{'M'});
+	die '-s only makes sense with the -B, -H, -g or -x options' unless($opts{'x'} || $opts{'g'} || $opts{'M'} || $opts{'H'});
 } elsif($opts{'S'}) {
 	# Use basename of .ged with .sql suffix
 	my $sqlite_file = $ARGV[0];
@@ -632,7 +632,7 @@ if($opts{'w'}) {
 if($opts{'H'}) {
 	die '-H only makes sense with the -d option' unless($opts{'d'});
 	die '-a doesn\'t make sense with the -H option' if($opts{'a'});
-	die '-h doesn\'t make sense with the -H option' if($opts{'h'});
+	die '-h doesn\'t make sense with the -H option unless you give the -s option' if($opts{'h'} && !$opts{'s'});
 	die '-p doesn\'t make sense with the -H option' if($opts{'p'});
 	die '-H doesn\'t support citations' if($opts{'c'});
 
@@ -712,6 +712,7 @@ if($opts{'H'}) {
 	print "<center><h2>", @{$dtl->month_format_wide()}[$month], " $year</h2></center>";
 
 	foreach my $day(1..28) {
+		# print STDERR __LINE__, ": $day/", $month + 1, "/$year\n";
 		generate(day => $day, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
 	}
 	if($month == 1) {
@@ -757,7 +758,7 @@ if($opts{'H'}) {
 				my $text = $page->text();
 				$text->font($font, 28);
 				$text->translate(300, 600);
-				if($opts{'s'}) {
+				if($surname) {
 					$text->text_center("The Surname Book of $surname");
 				} else {
 					$text->text_center('The Family Tree of');
@@ -772,7 +773,7 @@ if($opts{'H'}) {
 				}
 				my $dt = DateTime->today(%args);
 				my $dtl = DateTime::Locale->load($ENV{'LC_TIME'} // $ENV{'LC_ALL'} // $ENV{'LANG'});
-				if($opts{'s'}) {
+				if($surname) {
 					$text->translate(300, 525);
 				} else {
 					$text->translate(300, 450);
@@ -782,7 +783,7 @@ if($opts{'H'}) {
 					@{$dtl->month_format_wide()}[$dt->month - 1] . ' ' .
 					$dt->year()
 				);
-				if($opts{'s'} && !$opts{'G'}) {
+				if($surname && !$opts{'G'}) {
 					$text->translate(300, 450);
 					if(is_alive(person => $me)) {
 						$text->text_center('for ' . normalize_name($opts{'h'}));
@@ -1085,7 +1086,7 @@ sub generate {
 			next;
 		}
 
-		next if($printed{$xref});
+		next if($printed{$xref} && !$opts{'H'});
 		$printed{$xref} = 1;
 
 		if($pr) {
@@ -1292,9 +1293,7 @@ sub generate {
 				);
 			}
 			next;
-		}
-
-		if($opts{'B'}) {
+		} elsif($opts{'B'}) {
 			if($opts{'G'}) {
 				if(stepsabove($person, $me, 0) != $generation) {
 					# FIXME:  only do this if the generation contains dead people if the -l flag is not given
@@ -1486,7 +1485,7 @@ sub print_person
 	my @spouses = $person->spouse();
 
 	# TODO: Properly chart which spouse a child comes from
-	if($opts{'w'}) {
+	if($opts{'w'} && !$opts{'H'}) {
 		my $family;
 		foreach my $f($person->fams()) {
 			if($f->number_of_children()) {
@@ -1540,7 +1539,38 @@ sub print_person
 	my $year = $params{'year'} || (localtime)[5];
 	$year += 1900 if($year < 1900);
 
+	my $name = $person->name();
+	$name =~ s/\///g;
+	print "Look at $name\n" if($opts{'v'});
+	$nameparser->parse($name);
+	my %name_components = $nameparser->components();
+	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
+	my $lastname = ucfirst(lc($person->surname())); # RT109786
+
+	if($opts{'s'}) {
+		my $surname;
+
+		if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
+			$surname = $1;
+		} else {
+			$surname = $opts{'h'};
+		}
+		if($lastname ne $surname) {
+			return if(soundex_nara($lastname) ne soundex_nara($surname));
+		}
+	}
+
+	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
+	if((!defined($firstname)) && ($name =~ /(.+)\s(.+)/)) {
+		$firstname = $1;
+		if(!defined($lastname)) {
+			$lastname = $2;
+		}
+		complain({ person => $person, warning => "Can't parse the name - assuming first name: $firstname, last name: $lastname" });
+	}
+
 	if($opts{'H'}) {
+		# print STDERR __LINE__, ": $day/", $month + 1, "/$year\n";
 		my $start_of_month = DateTime->new(month => $month + 1, day => 1, year => $year);
 		my $dt = DateTime->new(month => $month + 1, day => $day, year => $year);
 
@@ -1567,7 +1597,6 @@ sub print_person
 		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
 		if(index($str, $person->as_string()) != -1) {
-			# $printed{$person->xref()} = 1;
 			return;
 		}
 		$str .= '<br>';
@@ -1594,7 +1623,6 @@ sub print_person
 		}
 
 		$table->setCell($row, $column, $str);
-		# $printed{$person->xref()} = 1;
 		return;
 	}
 	if($ged2 && !defined($ged2->get_individual($person->as_string()))) {
@@ -1678,23 +1706,6 @@ sub print_person
 		return;
 	} else {
 		print $person->as_string($args), "\n";
-	}
-
-	my $name = $person->name();
-	$name =~ s/\///g;
-	print "Look at $name\n" if($opts{'v'});
-	$nameparser->parse($name);
-	my %name_components = $nameparser->components();
-	my $firstname = $name_components{'given_name_1'} // $name_components{'initials_1'};
-	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
-	my $lastname = ucfirst(lc($person->surname())); # RT109786
-
-	if((!defined($firstname)) && ($name =~ /(.+)\s(.+)/)) {
-		$firstname = $1;
-		if(!defined($lastname)) {
-			$lastname = $2;
-		}
-		complain({ person => $person, warning => "Can't parse the name - assuming first name: $firstname, last name: $lastname" });
 	}
 
 	if($firstname && ($firstname =~ /\d/)) {
