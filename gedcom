@@ -1435,11 +1435,18 @@ sub print_person
 		return;
 	}
 
+	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
+	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
+	if((!$dateofmarriage) && $marriage) {
+		$dateofmarriage = $marriage->date();
+	}
+
 	# print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
 	my $print = 0;
 	my $aob;
 	my $aod;
+	my $aom;
 	my $day = $params{'day'};
 	my $month = $params{'month'};
 
@@ -1472,6 +1479,18 @@ sub print_person
 		}
 		return if($onlydeaths && !defined($aod));
 
+		if($opts{'H'} && $dateofmarriage && ($dateofmarriage !~ /^\d{3,4}$/)) {
+			my @mtime = strptime("$dateofmarriage 12:00");
+			if(defined($mtime[3]) && ($mtime[3] == $day) && ($mtime[4] == $month) && $mtime[5]) {
+				$print = 1;
+				if(!$opts{a}) {
+					$aom = (localtime)[5] - $mtime[5];
+					if($aom <= 0) {
+						$aom += 1900;
+					}
+				}
+			}
+		}
 		return unless($print || ($day == -1) || $opts{'p'});
 	}
 
@@ -1616,6 +1635,14 @@ sub print_person
 				$str .= ' b' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of birth '$dateofbirth'" });
+			}
+		}
+		if($aom) {
+		die $dateofmarriage unless(dateofmarriage($person));
+			if(my $d = $dfg->parse_datetime(date => dateofmarriage($person))) {
+				$str .= ' m' . $d->strftime('%Y');
+			} else {
+				red_warning({ person => $person, warning => "Can't parse date of marriage '$dateofmarriage'" });
 			}
 		}
 		if($aod) {
@@ -2076,7 +2103,6 @@ sub print_person
 		}
 	}
 
-	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
 	if((!defined($marriage)) && scalar(@spouses)) {
 		$marriage = $spouses[0]->get_record('marriage');
 		if((!defined($marriage)) && scalar(@spouses)) {
@@ -2124,11 +2150,6 @@ sub print_person
 	}
 
 	my $marriage_dt;
-	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
-	if((!$dateofmarriage) && $marriage) {
-		$dateofmarriage = $marriage->date();
-	}
-
 	if($dateofmarriage && ($dateofmarriage =~ /\d$/)) {
 		$marriage_dt = date_to_datetime(date => $dateofmarriage);
 	}
@@ -9335,7 +9356,43 @@ sub dateofbirth {
 	return $dateofbirth;
 }
 
-sub dateofdeath {
+sub dateofmarriage
+{
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} else {
+		$params{'person'} = shift;
+	}
+
+	my $person = $params{'person'};
+
+
+	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
+	if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage'))) {
+		$dateofmarriage = $marriage->date();
+	}
+
+	if(defined($dateofmarriage)) {
+		if(lc($dateofmarriage) eq 'unknown') {
+			return;
+		}
+		if($dateofmarriage =~ /[A-Z]{4,}/i) {
+			complain({ person => $person, warning => "Death month '$dateofmarriage' should be 3 letters" });
+			if($dateofmarriage =~ /from (.+) to (.+)/i) {
+				return "bet $1 and $2";
+			}
+			return;
+		}
+	}
+	return $dateofmarriage;
+}
+
+sub dateofdeath
+{
 	my %params;
 
 	if(ref($_[0]) eq 'HASH') {
