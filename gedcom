@@ -2295,7 +2295,7 @@ sub print_person
 			}
 		}
 
-		my $pronoun = $i18n->{$person->pronoun()};
+		my $pronoun = ucfirst(i18n($person->pronoun()));
 		
 		my $sex = $person->sex();
 
@@ -9687,13 +9687,28 @@ sub get_language
 	}
 }
 
+sub i18n
+{
+	my $format = lc(shift);
+
+	return $i18n->{$format};
+}
+
+# Must all be in lower case
 __DATA__
 @@ English
-He:He
-She:She
+he:he
+she:she
+wife:wife
+husband:husband
 @@ French
-He:Il
-She:Elle
+he:il
+she:elle
+wife:femme
+husband:marie
+@@ Latin
+wife:uxor
+husband:maritus
 __END__
 
 1;
