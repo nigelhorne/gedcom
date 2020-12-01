@@ -50,7 +50,7 @@ my @needfull;
 # Install Pre-requisites
 BEGIN {
 	my @modules = (
-		'Date::Manip', 'Parse::RecDescent', 'Roman',
+		'Data::Section::Simple', 'Date::Manip', 'Parse::RecDescent',
 		'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'String::Compare', 'Unicode::Diacritic::Strip',
@@ -64,6 +64,7 @@ BEGIN {
 		'File::Spec', 'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
+		'Roman',
 		'utf8::all',
 		# 'Devel::FIXME',
 	);
@@ -353,7 +354,16 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 }
 
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
+
+# Read in the $text table for translation
+my $i18n;
 my $language = get_language();
+my $data = Data::Section::Simple::get_data_section($language);
+my @lines = split /\n/, $data;
+foreach(@lines) {
+	my ($english, $foreign) = split /:/;
+	$i18n->{$english} = $foreign;
+}
 
 my $date_parser = Genealogy::Gedcom::Date->new();
 my $dfn;
@@ -2285,10 +2295,8 @@ sub print_person
 			}
 		}
 
-		my $pronoun = $person->pronoun();
-		if($language eq 'French') {
-			$pronoun = ($pronoun eq 'He') ? 'Il' : 'Elle';
-		}
+		my $pronoun = $i18n->{$person->pronoun()};
+		
 		my $sex = $person->sex();
 
 		if($opts{'w'} && $firstname && $sex) {
@@ -9679,6 +9687,15 @@ sub get_language
 	}
 }
 
+__DATA__
+@@ English
+He:He
+She:She
+@@ French
+He:Il
+She:Elle
+__END__
+
 1;
 
 package PDFPage;
@@ -9774,3 +9791,5 @@ sub DESTROY {
 	}
 }
 # TODO: DESTROY - add a page number
+
+1;
