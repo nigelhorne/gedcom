@@ -212,7 +212,7 @@ if($opts{'B'}) {
 unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
-		'Geo::Coder::DataScienceToolkit',
+		# 'Geo::Coder::DataScienceToolkit',
 		'Geo::Coder::Ovi', 'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
 		'Geo::Coder::OSM', 'Geo::Coder::XYZ';
 }
@@ -416,7 +416,7 @@ unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 		->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 		->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England|Wales)$/i, geocoder => Geo::Coder::Postcodes->new() })
-		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
+		# ->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })	# Offline
 		->push(Geo::Coder::OSM->new())
 		# ->push({ limit => 200, geocoder => Geo::Coder::XYZ->new()})
 		->push(Geo::Coder::Ovi->new());
