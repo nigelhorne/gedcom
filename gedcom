@@ -2358,13 +2358,7 @@ sub print_person
 			$relationship = $me->relationship($person);
 			if((!$relationship) && scalar(@spouses)) {
 				if($person->spouse() eq $me) {
-					if($language eq 'French') {
-						$relationship = ($sex eq 'F') ? 'femme' : 'mari';
-					} elsif($language eq 'Latin') {
-						$relationship = ($sex eq 'F') ? 'uxor' : 'maritus';
-					} else {
-						$relationship = ($sex eq 'F') ? 'wife' : 'husband';
-					}
+					$relationship = i18n(($sex eq 'F') ? 'wife' : 'husband');
 				} else {
 					foreach my $s(@spouses) {
 						$spouserelationship = $me->relationship($s);
