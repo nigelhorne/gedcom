@@ -2645,15 +2645,9 @@ sub print_person
 						$bio .= $person->as_string() . ' was ';
 					}
 				}
-				if($language eq 'French') {
-					$bio .= 'votre';
-				} else {
-					$bio .= 'your';
-				}
-			} elsif($language eq 'French') {
-				$bio .= 'Votre';
+				$bio .= i18n('your');
 			} else {
-				$bio .= 'Your';
+				$bio .= ucfirst(i18n('your'));
 			}
 			$bio .= " $relationship";
 		} elsif($spouserelationship) {
@@ -9680,22 +9674,24 @@ sub i18n
 __DATA__
 @@ English
 and:and
+check out %s:check out %s
 he:he
 she:she
 wife:wife
 husband:husband
 of %d children:of %d children
 of:of
-check out %s:check out %s
+your:your
 @@ French
 and:et
+check out %s:visitez %s
 he:il
 she:elle
 wife:femme
 husband:marie
 of %d children:de %d enfants
 of:de
-check out %s:visitez %s
+your:votre
 @@ German
 and:und
 @@ Latin
