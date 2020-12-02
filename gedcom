@@ -2296,7 +2296,7 @@ sub print_person
 		}
 
 		my $pronoun = ucfirst(i18n($person->pronoun()));
-		
+
 		my $sex = $person->sex();
 
 		if($opts{'w'} && $firstname && $sex) {
