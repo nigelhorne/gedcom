@@ -9048,10 +9048,7 @@ sub journey
 			}
 		}
 	}
-	$rc = $person->pronoun();
-	if($language eq 'French') {
-		$rc = ($rc eq 'He') ? 'Il' : 'Elle';
-	}
+	$rc = ucfirst(i18n($person->pronoun()));
 	if($yoa || $yod) {
 		my $year = $yoa // $yod;
 		if($language eq 'French') {
