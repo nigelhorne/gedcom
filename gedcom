@@ -2569,11 +2569,7 @@ sub print_person
 				}
 			}
 
-			if($language eq 'French') {
-				$bio .= ' de';
-			} else {
-				$bio .= ' of';
-			}
+			$bio .= ' ' . i18n('of');
 
 			if($father) {
 				$bio .= ' ' . $father->as_string();
@@ -9233,11 +9229,7 @@ sub chronicling_america
 
 	if(my $loc = Genealogy::ChroniclingAmerica->new($chronicling_params)) {
 		while(my $url = $loc->get_next_entry()) {
-			if($language eq 'French') {
-				complain({ person => $person, warning => "Visitez $url" });
-			} else {
-				complain({ person => $person, warning => "Check out $url" });
-			}
+			complain({ person => $person, warning => ucfirst(i18n('check out %s', $url)) });
 		}
 	}
 }
@@ -9696,12 +9688,16 @@ she:she
 wife:wife
 husband:husband
 of %d children:of %d children
+of:of
+check out %s:check out %s
 @@ French
 he:il
 she:elle
 wife:femme
 husband:marie
 of %d children:de %d enfants
+of:de
+check out %s:visitez %s
 @@ Latin
 wife:uxor
 husband:maritus
