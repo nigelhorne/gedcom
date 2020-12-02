@@ -2595,11 +2595,7 @@ sub print_person
 					}
 				}
 				if($mother) {
-					if($language eq 'French') {
-						$bio .= ' et';
-					} else {
-						$bio .= ' and';
-					}
+					$bio .= ' ' . i18n('and');
 				} else {
 					$bio .= ', ';
 					$printed_comma = 1;
@@ -9683,6 +9679,7 @@ sub i18n
 # Must all be in lower case
 __DATA__
 @@ English
+and:and
 he:he
 she:she
 wife:wife
@@ -9691,6 +9688,7 @@ of %d children:of %d children
 of:of
 check out %s:check out %s
 @@ French
+and:et
 he:il
 she:elle
 wife:femme
@@ -9698,6 +9696,8 @@ husband:marie
 of %d children:de %d enfants
 of:de
 check out %s:visitez %s
+@@ German
+and:und
 @@ Latin
 wife:uxor
 husband:maritus
