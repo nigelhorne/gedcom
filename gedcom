@@ -2664,11 +2664,7 @@ sub print_person
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$bio .= ', ';
 				} elsif(is_alive(person => $person)) {
-					if($language eq 'French') {
-						$bio .= ' est ';
-					} else {
-						$bio .= ' is ';
-					}
+					$bio .= ' ' . i18n('is') . ' ';
 				} else {
 					if($language eq 'French') {
 						$bio .= " \N{U+00E9}tait ";
@@ -9673,6 +9669,7 @@ __DATA__
 and:and
 check out %s:check out %s
 he:he
+is:is
 she:she
 wife:wife
 husband:husband
@@ -9683,6 +9680,7 @@ your:your
 and:et
 check out %s:visitez %s
 he:il
+is:est
 she:elle
 wife:femme
 husband:marie
