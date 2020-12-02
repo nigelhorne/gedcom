@@ -2545,11 +2545,7 @@ sub print_person
 						} else {
 							$bio .= ordinate($age_index);
 						}
-						if($language eq 'French') {
-							$bio .= ' de ' . (scalar(@siblings) + 1) . ' enfants';
-						} else {
-							$bio .= ' of ' . (scalar(@siblings) + 1) . ' children';
-						}
+						$bio .= ' ' . i18n('of %d children', scalar(@siblings) + 1);
 					} else {
 						if($language eq 'French') {
 							$bio .= "'enfant";
@@ -9685,6 +9681,10 @@ sub i18n
 {
 	my $format = lc(shift);
 
+	if($format =~ /%/) {	# FIXME: %%
+		return sprintf($i18n->{$format}, @_);
+	}
+
 	return $i18n->{$format};
 }
 
@@ -9695,11 +9695,13 @@ he:he
 she:she
 wife:wife
 husband:husband
+of %d children:of %d children
 @@ French
 he:il
 she:elle
 wife:femme
 husband:marie
+of %d children:de %d enfants
 @@ Latin
 wife:uxor
 husband:maritus
