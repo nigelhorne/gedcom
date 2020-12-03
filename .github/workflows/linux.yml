@@ -43,7 +43,7 @@ jobs:
         run: perl -V
       - name: Install Dependencies
         env:
-	  AUTOMATED_TESTING: 1
+          AUTOMATED_TESTING: 1
         run: |
           cpanm -iqn --skip-satisfied File::Spec ExtUtils::MakeMaker
           cpanm -iv Geo::Coder::Free
