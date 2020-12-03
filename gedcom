@@ -5692,11 +5692,9 @@ sub print_person
 						}
 					}
 					$bio .= '.';
-				} elsif(get_value({ person => $child, value => 'baptism date' })) {
+				} elsif(my $bd = get_value({ person => $child, value => 'baptism date' })) {
 					$bio .= "\t" . $child->given_names() .
-						' was born c. ' .
-						get_value({ person => $child, value => 'baptism date' }) .
-						'.';
+						" was born c. $bd.";
 				}
 			}
 
@@ -9662,11 +9660,19 @@ sub i18n
 {
 	my $format = lc(shift);
 
-	if($format =~ /%/) {	# FIXME: %%
-		return sprintf($i18n->{$format}, @_);
-	}
+	if(my $translation = $i18n->{$format}) {
+		if($format =~ /%/) {	# FIXME: %%
+			return sprintf($translation, @_);
+		}
 
-	return $i18n->{$format};
+		return $translation;
+	}
+	my $i = 0;
+	print "\n";
+	while((my @call_details = caller($i++))) {
+		print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+	}
+	die $format;
 }
 
 # Must all be in lower case
@@ -9681,6 +9687,7 @@ wife:wife
 husband:husband
 of %d children:of %d children
 of:of
+they:they
 your:your
 @@ French
 and:et
@@ -9692,6 +9699,7 @@ wife:femme
 husband:marie
 of %d children:de %d enfants
 of:de
+they:ils
 your:votre
 @@ German
 and:und
