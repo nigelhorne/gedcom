@@ -1,4 +1,4 @@
-name: linux
+name: ubuntu
 
 on:
   push:
@@ -10,22 +10,34 @@ on:
 
 jobs:
   perl:
-
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os:
+          - ubuntu-16.04
+          - ubuntu-18.04
+          - ubuntu-20.04
         perl-version:
-          # - '5.16'
+          - '5.8'
+          - '5.10'
+          - '5.12'
+          - '5.14'
+          - '5.16'
+          - '5.18'
+          - '5.20'
           - '5.22'
+          - '5.24'
+          - '5.26'
+          - '5.28'
+          - '5.30'
           - '5.32'
           - 'latest'
-
     container:
-      image: perl:${{ matrix.perl-version }}
-
+        image: perl:${{ matrix.perl-version }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+      - name: Platform check
+        run: uname -a
       - name: perl -V
         run: perl -V
       - name: Install Dependencies
