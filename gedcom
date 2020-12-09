@@ -3716,22 +3716,47 @@ sub print_person
 						} else {
 							$bio .= "$numberofchildren children";
 						}
-						my $childnames;
+						my @childnames;
 						if($parentofall) {
 							if($numberofchildren == 2) {
 								$bio .= ', both with ' . $parentofall->as_string();
 							} else {
 								$bio .= ', all with ' . $parentofall->as_string();
 							}
-							$childnames = join(', ', map { $_->given_names() } @children);
+							@childnames = join(', ', map { $_->given_names() } @children);
 						} elsif($sex eq 'M') {
-							# FIXME: children from the same parent should be listed together
-							$childnames = join(', ', map { $_->given_names() . ($_->mother() ? (' (with ' . $_->mother()->given_names() . ')') : '') } @children);
+							# List children by the same mother together
+							my %childmap;
+							foreach my $child(@children) {
+								push @{$childmap{$child->mother()->given_names()}}, $child;
+							}
+							while(my ($key, $value) = each %childmap) {
+								push @childnames, '(' .
+									join(', ', map { $_->given_names() } @{$value}) .
+									' ' .
+									i18n('with') .
+									" $key)";
+							}
 						} else {
-							$childnames = join(', ', map { $_->given_names() . ($_->father() ? (' (with ' . $_->father()->given_names() . ')') : '') } @children);
+							# List children by the same father together
+							my %childmap;
+							foreach my $child(@children) {
+								push @{$childmap{$child->father()->given_names()}}, $child;
+							}
+							while(my ($key, $value) = each %childmap) {
+								push @childnames, '(' .
+									join(', ', map { $_->given_names() } @{$value}) .
+									' ' .
+									i18n('with') .
+									" $key)";
+							}
 						}
-						substr($childnames, rindex($childnames, ', '), 2, ' and ');
-						$bio .= ": $childnames";
+						$bio .= ': ' .
+							Lingua::EN::Inflect::WORDLIST(@childnames, {
+								sep => '; ',
+								conj => i18n('and'),
+								final_sep => ''
+							});
 					}
 				}
 			}
@@ -9696,31 +9721,33 @@ __DATA__
 and:and
 check out %s:check out %s
 he:he
-is:is
-she:she
-wife:wife
 husband:husband
+is:is
 of %d children:of %d children
 of:of
+she:she
 they:they
+wife:wife
+with:with
 your:your
 @@ French
 and:et
 check out %s:visitez %s
 he:il
-is:est
-she:elle
-wife:femme
 husband:marie
+is:est
 of %d children:de %d enfants
 of:de
+she:elle
 they:ils
+wife:femme
+with:avec
 your:votre
 @@ German
 and:und
 is:ist
+with:mit
 @@ Latin
-wife:uxor
 husband:maritus
-
+wife:uxor
 __END__
