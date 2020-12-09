@@ -296,7 +296,7 @@ my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1);
+	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1, timeout => 30);
 	$browser->env_proxy(1);
 	$browser->conn_cache->total_capacity(undef);
 
@@ -354,7 +354,8 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
 		agent => basename($0),
-		keep_alive => 1
+		keep_alive => 1,
+		timeout => 30,
 	);
 	$cached_browser->env_proxy(1);
 }
