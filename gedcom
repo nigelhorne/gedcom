@@ -6031,10 +6031,10 @@ sub print_person
 				}
 				$bio = undef;
 			}
+		} elsif($bio eq "\t.") {
+			complain({ person => $person, warning => "couldn't extract a biography" });
 		} else {
-			if($bio eq "\t.") {
-				complain({ person => $person, warning => "couldn't extract a biography" });
-			}
+			# FIXME: don't do this if this is the last person
 			print "$bio\n", '-' x 80, "\n";
 		}
 	} else {
