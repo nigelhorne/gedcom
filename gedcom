@@ -781,7 +781,12 @@ if($opts{'H'}) {
 				if($surname) {
 					$text->text_center("The Surname Book of $surname");
 				} else {
-					$text->text_center('The Family Tree of');
+					if($language eq 'French') {
+						$text->text_center("L'arbre de la famille de");
+					} else {
+						$text->text_center('The Family Tree of');
+					}
+
 					$text->translate(300, 525);
 					$text->text_center(normalize_name($opts{'h'}));
 				}
@@ -3716,47 +3721,45 @@ sub print_person
 						} else {
 							$bio .= "$numberofchildren children";
 						}
-						my @childnames;
 						if($parentofall) {
 							if($numberofchildren == 2) {
 								$bio .= ', both with ' . $parentofall->as_string();
 							} else {
 								$bio .= ', all with ' . $parentofall->as_string();
 							}
-							@childnames = join(', ', map { $_->given_names() } @children);
-						} elsif($sex eq 'M') {
-							# List children by the same mother together
-							my %childmap;
-							foreach my $child(@children) {
-								push @{$childmap{$child->mother()->given_names()}}, $child;
-							}
-							while(my ($key, $value) = each %childmap) {
-								push @childnames, '(' .
-									join(', ', map { $_->given_names() } @{$value}) .
-									' ' .
-									i18n('with') .
-									" $key)";
-							}
-						} else {
-							# List children by the same father together
-							my %childmap;
-							foreach my $child(@children) {
-								push @{$childmap{$child->father()->given_names()}}, $child;
-							}
-							while(my ($key, $value) = each %childmap) {
-								push @childnames, '(' .
-									join(', ', map { $_->given_names() } @{$value}) .
-									' ' .
-									i18n('with') .
-									" $key)";
-							}
-						}
-						$bio .= ': ' .
-							Lingua::EN::Inflect::WORDLIST(@childnames, {
-								sep => '; ',
+							$bio .= ': ' . Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @children), {
 								conj => i18n('and'),
 								final_sep => ''
 							});
+						} else {
+							# List children by the same parent together
+							my %childmap;
+							if($sex eq 'M') {
+								foreach my $child(@children) {
+									push @{$childmap{$child->mother()->given_names()}}, $child;
+								}
+							} else {
+								foreach my $child(@children) {
+									push @{$childmap{$child->father()->given_names()}}, $child;
+								}
+							}
+							my @childnames;
+							while(my ($key, $value) = each %childmap) {
+								push @childnames, '(' .
+									Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @{$value}), {
+										conj => i18n('and'),
+										final_sep => ''
+									}) .
+									' ' .
+									i18n('with') .
+									" $key)";
+							}
+							$bio .= ': ' .
+								Lingua::EN::Inflect::WORDLIST(@childnames, {
+									sep => '; ',
+									conj => ''
+								});
+						}
 					}
 				}
 			}
