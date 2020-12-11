@@ -2758,17 +2758,14 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
+			$bio .= ' ' . i18n({ person => $person, gender => 1, format => 'was born' }) . ' ';
 			if($language eq 'French') {
-				$bio .= " est n\N{U+00E9}";
-				if($sex eq 'F') {
-					$bio .= 'e';
-				}
-				$bio .= " il y a $aob " . (($aob == 1) ? 'an' : 'ans');
+				$bio .= "il y a $aob " . (($aob == 1) ? 'an' : 'ans');
 				if($opts{'t'}) {
 					$bio .= ' demain';
 				}
 			} else {
-				$bio .= " was born $aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
+				$bio .= "$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today');
 			}
 			if($placeofbirth) {
@@ -5590,15 +5587,8 @@ sub print_person
 				}
 				$bio .= $pronoun;
 			}
-			if($language eq 'French') {
-				if($sex eq 'M') {
-					$bio .= ' est mort';
-				} else {
-					$bio .= ' est morte';
-				}
-			} else {
-				$bio .= ' died';
-			}
+			$bio .= ' ' . i18n({ person => $person, gender => 1, format => 'died' });
+
 			if($dateofdeath) {
 				if($dateofbirth && ($dateofdeath eq $dateofbirth)) {
 					$bio .= ' on the same day';
@@ -9730,6 +9720,7 @@ sub i18n
 				return sprintf($translation, $params{'args'});
 			}
 		}
+		utf8::decode($translation);
 		return $translation;
 	}
 
@@ -9748,6 +9739,7 @@ a %s::a %s
 an %s::an %s
 and::and
 check out %s::check out %s
+died::died
 during %s life::during %s life
 he::he
 husband::husband
@@ -9756,6 +9748,7 @@ of %d children::of %d children
 of::of
 she::she
 they::they
+was born::was born
 was living::was living
 wife::wife
 with::with
@@ -9767,6 +9760,8 @@ an %s:M:un %s
 an %s:F:une %s
 and::et
 check out %s::visitez %s
+died:M:est mort
+died:F:est morte
 during %s life::pendant sa vie
 he::il
 husband::marie
@@ -9776,6 +9771,8 @@ of::de
 she::elle
 they:M:ils
 they:F:elles
+was born:M:est né
+was born:F:est née
 was living::habitait
 wife::femme
 with::avec
