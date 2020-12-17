@@ -644,8 +644,10 @@ if($opts{'B'}) {
 
 my $lcm;
 if($language) {
-	$lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
-		cache => CHI->new(driver => 'RawMemory', datastore => {}));
+	# FIXME
+	# $lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
+		# cache => CHI->new(driver => 'RawMemory', datastore => {}));
+	$lcm = Locale::Country::Multilingual->new();
 }
 
 my $obituaries;
@@ -7853,7 +7855,7 @@ sub place {
 	if($lcm) {
 		if($place =~ /(.*),\s+([A-Z\s]+)$/i) {
 			my $c = $2;
-			if($c eq 'USA') {
+			if($c eq 'USA' || ($c eq 'US')) {
 				$c = 'United States';
 			}
 			if(($language eq 'French') && ($c eq 'England')) {
@@ -7873,7 +7875,9 @@ sub place {
 				$town =~ s/Swansea$/Abertawe/;
 				$place = "$town, Cymru";
 			} elsif(my $code = $lcm->country2code($c)) {
-				$place = "$1, " . $lcm->code2country($code, $ENV{'LANG'});
+				$c = $lcm->code2country($code, $ENV{'LANG'});
+				utf8::decode($c);
+				$place = "$1, $c";
 			}
 		} elsif($place !~ /,/) {
 			if(my $code = $lcm->country2code($place)) {
