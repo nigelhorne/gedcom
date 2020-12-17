@@ -644,10 +644,8 @@ if($opts{'B'}) {
 
 my $lcm;
 if($language) {
-	# FIXME
-	# $lcm = Class::Simple::Cached->new(object => Locale::Country::Multilingual->new(),
-		# cache => CHI->new(driver => 'RawMemory', datastore => {}));
-	$lcm = Locale::Country::Multilingual->new();
+	$lcm = Class::Simple::Readonly::Cached->new(object => Locale::Country::Multilingual->new(),
+		cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
 
 my $obituaries;
