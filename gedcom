@@ -381,12 +381,18 @@ my $dfn;
 if($language eq 'French') {
 	# $dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy', lang => 'fr');	 # not supported
 	$dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy');
+	Date_Init("DateFormat=FR");	# Date::Manip
 } elsif((defined($ENV{'LC_TIME'}) && ($ENV{'LC_TIME'} =~ /^en_US/)) ||
 	((defined($ENV{'LC_ALL'}) && ($ENV{'LC_ALL'} =~ /^en_US/)))) {
 	$dfn = DateTime::Format::Natural->new();
+	Date_Init("DateFormat=US");	# Date::Manip
 } else {
 	$dfn = DateTime::Format::Natural->new(format => 'dd/mm/yy');
+	Date_Init("DateFormat=International");	# Date::Manip
 }
+
+Date_Init("Language=$language");	# Date::Manip
+
 my $dfg = DateTime::Format::Genealogy->new();
 my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
