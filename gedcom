@@ -188,6 +188,8 @@ if($opts{'f'}) {
 
 die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'d'});
 
+my $language = get_language();
+
 @needfull = ();
 my @modules;
 
@@ -235,8 +237,11 @@ if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'HTTP::Cache::Transparent', 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
 }
-if(get_language()) {
+if($language) {
 	push @modules, 'Locale::Country::Multilingual';
+	if($language ne 'English') {
+		push @modules, 'Locale::Places';
+	}
 }
 if($opts{'w'}) {
 	push @modules, 'Genealogy::ChroniclingAmerica', 'Genealogy::ObituaryDailyTimes', 'Locale::Country';
@@ -360,11 +365,15 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$cached_browser->env_proxy(1);
 }
 
+my $places;
+if($language ne 'English') {
+	$places = Locale::Places->new();
+}
+
 my %all_dates;	# Maps dates to the hashref from Genealogy::Gedcom::Date
 
 # Read in the $text table for translation
 my $i18n;
-my $language = get_language();
 my $data = Data::Section::Simple::get_data_section($language);
 my @lines = split /\n/, $data;
 foreach(@lines) {
@@ -7734,6 +7743,21 @@ sub place {
 		} else {
 			complain({ person => $params{'person'}, warning => "Unknown Canadian province $province" });
 		}
+	} elsif($place =~ /(.*)(^|,\s*.+),\s*(UK|England|Wales|Scotland)$/i) {
+		# Translate the city from English
+		# TODO: if language eq English, translate a city to English
+		if($language ne 'English') {
+			# FIXME: should be table driven
+			my $to = 'en';
+			if($language eq 'French') {
+				$to = 'fr';
+			} else {
+				die "TODO: add language $language";
+			}
+			if(my $t = $places->translate({ place => $1, from => 'en', to => $to })) {
+				$place = "$t$2, $3";
+			}
+		}
 	}
 
 	if($params{'person'}) {
@@ -7864,8 +7888,6 @@ sub place {
 			}
 			if(($language eq 'French') && ($c eq 'England')) {
 				my $town = $1;
-				$town =~ s/London$/Londres/;
-				$town =~ s/Dover$/Douvres/;
 				$place = "$town, Angleterre";
 			} elsif(($language eq 'French') && ($c eq 'France')) {
 				$place =~ s/Normandy,/Normandie,/;
