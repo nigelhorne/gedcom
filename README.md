@@ -161,6 +161,9 @@ in which case you'll need to add them by hand.
 To ensure you'll be installing them in a directory you can use either use local::lib
 or perlbrew.
 
+[Library](https://github.com/nigelhorne/lib) - library of code common with
+[ged2site](https://github.com/nigelhorne/ged2site).
+
 ## Acknowledgements
 
 So many Perl CPAN modules that if I list them all I'll miss one, but special
