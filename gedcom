@@ -757,10 +757,10 @@ if($opts{'H'}) {
 		# February
 		if(($year % 100) == 0) {
 			if(($year % 400) == 0) {
-				generate(day => 29, month => $month, everyone => \@everyone);
+				generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
 			}
 		} elsif(($year % 4) == 0) {
-			generate(day => 29, month => $month, everyone => \@everyone);
+			generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
 		}
 	} else {
 		generate(day => 29, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
@@ -1651,6 +1651,15 @@ sub print_person
 		$row++;
 		my $column = $dt->day_of_week();
 		my $dtl = $params{'dtl'};
+
+		if(!defined($dtl)) {
+			print STDERR "\n";
+			my $i = 0;
+			while((my @call_details = caller($i++))) {
+				print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+			}
+			die 'dtl is not optional with -H';
+		}
 
 		if($dtl->first_day_of_week() eq 7) {
 			$column++;
