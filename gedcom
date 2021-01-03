@@ -7614,9 +7614,10 @@ sub place {
 	my $place = $params{'place'};
 	my $address = $params{'address'};
 
-	if(!defined($params{'encode'})) {
-		$params{'encode'} = 1;
-	}
+	# if(!defined($params{'encode'})) {
+		# $params{'encode'} = 1;
+	# }
+	$params{'encode'} = 0;
 
 	if(!defined($place)) {
 		$place = $params{'record'};
