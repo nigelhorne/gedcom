@@ -7614,6 +7614,10 @@ sub place {
 	my $place = $params{'place'};
 	my $address = $params{'address'};
 
+	if(!defined($params{'encode'})) {
+		$params{'encode'} = 1;
+	}
+
 	if(!defined($place)) {
 		$place = $params{'record'};
 		return unless($place);
@@ -7873,10 +7877,16 @@ sub place {
 			if($places_printed->{" in$2,$3"}) {
 				# We did place, county, country before, so just
 				# return place, county
+				my $rc;
 				if(($language eq 'French') && ("$2,$3" eq ' London, England')) {
-					return "$1, Londres";
+					$rc = "$1, Londres";
+				} else {
+					$rc = "$1,$2";
 				}
-				return "$1,$2";
+				if($params{'encode'}) {
+					return HTML::Entities::encode($rc);
+				}
+				return $rc;
 			}
 			$places_printed->{" in$2,$3"} = 1;
 		}
@@ -7914,9 +7924,6 @@ sub place {
 				$place = $lcm->code2country($code, $ENV{'LANG'});
 			}
 		}
-	}
-	if(!defined($params{'encode'})) {
-		$params{'encode'} = 0;
 	}
 	if($params{'encode'}) {
 		return HTML::Entities::encode($place);
