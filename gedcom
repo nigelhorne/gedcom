@@ -7865,10 +7865,10 @@ sub place {
 				return "$1,$2";
 			}
 			$str = "$3,$4";
-			if($places_printed->{" in$str"}) {
-				return "$1,$2,$3";
-			}
-			if($places_printed->{" at$str"}) {
+			if($places_printed->{" in$str"} || $places_printed->{" at$str"}) {
+				if($params{'encode'}) {
+					return HTML::Entities::encode("$1,$2,$3");
+				}
 				return "$1,$2,$3";
 			}
 			$places_printed->{" in$str"} = 1;
