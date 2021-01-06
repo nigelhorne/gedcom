@@ -3244,7 +3244,6 @@ sub print_person
 			}
 		}
 
-
 		my $all_children_are_alive = 1;
 
 		if($yob && ($year >= $yob + 150)) {
@@ -3257,6 +3256,8 @@ sub print_person
 				}
 			}
 		}
+
+		print "all_children_are_alive = $all_children_are_alive\n" if($opts{'v'});
 
 		my @education = $person->education();
 
