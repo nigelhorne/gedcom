@@ -56,6 +56,7 @@ BEGIN {
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
+		'Lingua::Conjunction',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
@@ -3462,11 +3463,7 @@ sub print_person
 							# my $childnames = join(', ', map { $_->given_names() } @children);
 							# substr($childnames, rindex($childnames, ', '), 2, ' and ');
 							# print $childnames;
-							if($language eq 'French') {
-								$bio .= Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => '', conj => 'et'});
-							} else {
-								$bio .= Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @childrenofthisspouse), {final_sep => ''});
-							}
+							$bio .= conjunction(map { $_->given_names() } @childrenofthisspouse);
 						}
 					}
 				} else {
