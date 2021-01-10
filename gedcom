@@ -3308,18 +3308,7 @@ sub print_person
 					   !$end_of_sentence) {
 					   	$bio .= i18n(' also');
 					}
-					if($language eq 'French') {
-						if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism)) {
-							$bio .= ' y';
-						}
-						$bio .= " a mari\N{U+00E9}";
-						if($sex eq 'F') {
-							$bio .= 'e';
-						}
-						$bio .= ' ';
-					} else {
-						$bio .= ' married ';
-					}
+					$bio .= i18n(' married ');
 				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 					if($language eq 'French') {
 						if($sex eq 'M') {
@@ -9776,6 +9765,11 @@ sub i18n
 		$format = $1;
 		$prepend_space = 1;
 	}
+	my $append_space;
+	if($format =~ /^(.+)\s$/) {
+		$format = $1;
+		$append_space = 1;
+	}
 
 	my $translation;
 	if($params{'gender'}) {
@@ -9800,6 +9794,7 @@ sub i18n
 			}
 		}
 		utf8::decode($translation);
+		$translation .= ' ' if($append_space);
 		if($prepend_space) {
 			return " $translation";
 		}
@@ -9829,6 +9824,7 @@ during %s life::during %s life
 he::he
 husband::husband
 is::is
+married::married
 of %d children::of %d children
 of::of
 she::she
@@ -9856,6 +9852,7 @@ during %s life::pendant sa vie
 he::il
 husband::marie
 is::est
+married::a marié
 of %d children::de %d enfants
 of::de
 she::elle
