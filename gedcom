@@ -3728,10 +3728,11 @@ sub print_person
 							$bio .= "$numberofchildren children";
 						}
 						if($parentofall) {
+							$bio .= ', ';
 							if($numberofchildren == 2) {
-								$bio .= ', both with ' . $parentofall->as_string();
+								$bio .= i18n(person => $person, format => 'both with %s', args => $parentofall->as_string());
 							} else {
-								$bio .= ', all with ' . $parentofall->as_string();
+								$bio .= 'all with ' . $parentofall->as_string();
 							}
 							$bio .= ': ' . Lingua::EN::Inflect::WORDLIST((map { $_->given_names() } @children), {
 								conj => i18n('and'),
@@ -9818,6 +9819,7 @@ also%s::also%s
 an %s::an %s
 and::and
 at::at
+both with %s::both with %s
 check out %s::check out %s
 died::died
 during %s life::during %s life
@@ -9845,6 +9847,7 @@ an %s:M:un %s
 an %s:F:une %s
 and::et
 at::à
+both with %s::les deux avec %s
 check out %s::visitez %s
 died:M:est mort
 died:F:est morte
