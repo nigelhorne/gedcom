@@ -7816,14 +7816,15 @@ sub place {
 		if(($language eq 'French') && ($place =~ /(.+), London, England/)) {
 			$place = "$1, Londres, Angleterre";
 		}
-		if($places_printed->{$place} && $place =~ /^(.+?),/) {
+		if($places_printed->{$place} && ($place =~ /^(.+?),/)) {
 			# Only print the town if the location has already been printed
 			return $1;
 		}
 		if($place =~ /(.+),(.+?),(.+?),(.+?)$/) {
 			my $str = "$2,$3,$4";
-			if($params{'person'}) {
-				validate_place({ person => $params{'person'}, place => $place });
+			# If !defined($address) is't already been validated
+			if($params{'person'} && $address) {
+				validate_place({ person => $params{'person'}, place => $copy });
 			}
 			if($places_printed->{" in$str"}) {
 				if(($4 eq ' USA') || ($4 eq ' Canada')) {
