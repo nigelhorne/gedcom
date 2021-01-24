@@ -56,6 +56,7 @@ BEGIN {
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
+		'HTML::Entities',
 		'Lingua::Conjunction',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
