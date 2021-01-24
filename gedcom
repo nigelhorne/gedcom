@@ -58,7 +58,7 @@ BEGIN {
 		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
 		'Lingua::Conjunction',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
-		'Lingua::EN::ABC',
+		'Lingua::EN::ABC', 'Lingua::String',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'DateTime::Format::Genealogy',
@@ -7824,7 +7824,7 @@ sub place {
 			my $str = "$2,$3,$4";
 			# If !defined($address) is't already been validated
 			if($params{'person'} && $address) {
-				validate_place({ person => $params{'person'}, place => $copy });
+				validate_place({ person => $params{'person'}, place => $place });
 			}
 			if($places_printed->{" in$str"}) {
 				if(($4 eq ' USA') || ($4 eq ' Canada')) {
