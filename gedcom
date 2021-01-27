@@ -3299,11 +3299,7 @@ sub print_person
 				if((!$end_of_sentence) &&
 				   ($dateofbirth || $dateofdeath) &&
 				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
-					if($language eq 'French') {
-						$bio .= ' et';
-					} else {
-						$bio .= ' and';
-					}
+					$bio .= i18n(' and');
 					$printed_and = 1;
 				}
 				if($placeofmarriage || $dateofmarriage) {
@@ -3311,48 +3307,27 @@ sub print_person
 					   !$end_of_sentence) {
 					   	$bio .= i18n(' also');
 					}
-					$bio .= i18n(' married ');
-				} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
-					if($language eq 'French') {
-						if($sex eq 'M') {
-							$bio .= " est mari\N{U+00E9} \N{U+00E0} ";
-						} else {
-							$bio .= " est mari\N{U+00E9}e \N{U+00E0} ";
-						}
+					if(is_alive(person => $person) && is_alive(person => $spouses[0])) {
+						$bio .= i18n({ person => $person, format => ' is married to ' });
 					} else {
-						$bio .= ' is married to ';
+						$bio .= i18n({ person => $person, format => ' was married to ' });
 					}
-				} else {
-					if($dateofbaptism && (!$end_of_sentence) && !$printed_and) {
-						if($language eq 'French') {
-							$bio .= ' et';
-						} else {
-							$bio .= ' and';
-						}
-					}
-					if($language eq 'French') {
-						if($sex eq 'M') {
-							$bio .= " a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9} \N{U+00E0} ";
-						} else {
-							$bio .= " a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}e \N{U+00E0} ";
-						}
-					} else {
-						$bio .= ' was married to ';
-					}
-				}
-				if($haveprintedspousename) {
-					$nameparser->parse($spouses[0]->name());
 
-					my %name_components = $nameparser->components();
-					if(my $n = $name_components{'given_name_1'}) {
-						$bio .= $n;
+					if($haveprintedspousename) {
+						$nameparser->parse($spouses[0]->name());
+
+						my %name_components = $nameparser->components();
+						if(my $n = $name_components{'given_name_1'}) {
+							$bio .= $n;
+						} else {
+							complain({ person => $spouses[0], warning => 'seems to have no first name' });
+						}
 					} else {
-						complain({ person => $spouses[0], warning => 'seems to have no first name' });
+						$bio .= $spouses[0]->as_string();
+						$haveprintedspousename = 1;
 					}
-				} else {
-					$bio .= $spouses[0]->as_string();
-					$haveprintedspousename = 1;
 				}
+
 				my $parentheses = 0;
 				if($numberofchildren) {
 					my @spouse_occupations = get_all_occupations($spouses[0]);
@@ -3399,14 +3374,16 @@ sub print_person
 						}
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
-						if(!$parentheses) {
-							$bio .= ' (';
-							$parentheses = 1;
-						}
-						if($language eq 'French') {
-							$bio .= "avec qu'" . lcfirst($pronoun);
-						} else {
-							$bio .= 'with whom ' . lcfirst($pronoun);
+						if($placeofmarriage || $dateofmarriage) {
+							if(!$parentheses) {
+								$bio .= ' (';
+								$parentheses = 1;
+							}
+							if($language eq 'French') {
+								$bio .= "avec qu'" . lcfirst($pronoun);
+							} else {
+								$bio .= 'with whom ' . lcfirst($pronoun);
+							}
 						}
 						if((!$all_children_are_alive) || (!$opts{'l'}) || ($yob && ($year > $yob + 100))) {
 							if($language eq 'French') {
@@ -3438,12 +3415,19 @@ sub print_person
 							}
 						} else {
 							if($all_children_are_alive) {
-								$bio .= "$numberofchildrenwiththisspouse surviving children: ";
+								$bio .= "$numberofchildrenwiththisspouse surviving children";
 							} elsif($language eq 'French') {
-								$bio .= "$numberofchildrenwiththisspouse enfants: ";
+								$bio .= "$numberofchildrenwiththisspouse enfants";
 							} else {
-								$bio .= "$numberofchildrenwiththisspouse children: ";
+								$bio .= "$numberofchildrenwiththisspouse children";
 							}
+							if($placeofmarriage || $dateofmarriage) {
+								$bio .= ':';
+							}
+							$bio .= ' ';
+						}
+						if((!($placeofmarriage)) && !$dateofmarriage) {
+							$bio .= i18n({ format => 'with %s, ', args => $spouse->as_string() });
 						}
 						if($numberofchildrenwiththisspouse == 1) {
 							$bio .= $children[0]->given_names();
@@ -3565,8 +3549,6 @@ sub print_person
 				my $spouse_number = 0;
 				my $previousplace;
 				foreach my $spouse(@spouses) {
-					# $names .= ', ' if($names);
-					$names .= $spouse->as_string();
 					my $dateofmarriage = get_value({ person => $spouse, value => 'marriage date' });
 					if(!defined($dateofmarriage)) {
 						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
@@ -3588,7 +3570,11 @@ sub print_person
 						} else {
 							$previousplace = $placeofmarriage;
 						}
+					} elsif(!$dateofmarriage) {
+						next;
 					}
+					# $names .= ', ' if($names);
+					$names .= $spouse->as_string();
 
 					my $printed_bracket = 0;
 					if($dateofmarriage && $placeofmarriage) {
@@ -4062,7 +4048,6 @@ sub print_person
 								record => $residence,
 								nopreposition => 1,
 							});
-							$p =~ s/^\s+//;
 							if(my $location = get_location($p)) {
 								$latitude = $location->lat();
 								$longitude = $location->long();
@@ -4078,7 +4063,6 @@ sub print_person
 							nopreposition => 1,
 						});
 						if($place) {
-							$place =~ s/^\s+//;
 							if(my $location = get_location($place)) {
 								push @{$all_locations{$year}}, {
 									'residence' => $residence,
@@ -7663,13 +7647,15 @@ sub place {
 	}
 
 	# The more consistent the data, the fewer lookups on Geocoders and the smoother the English output
-	$place =~ s/\xc3\xa9/é/g;
-	my $rc = Lingua::String->new();
+	my $rc = Lingua::String->new('en' => $place);
 	my $lang = get_language_code() // 'en';
+	if($lang ne 'en') {
+		$rc->set({ lang => $lang, string => $place });
+	}
+	$place =~ s/\xc3\xa9/é/g;
 
 	if($place =~ /(.+?)\s*United States$/i) {
 		$place = "$1 USA";
-		$rc->en($place);
 	} elsif($place =~ /States\s*$/) {
 		complain({ person => $params{'person'}, warning => "Unexpected text at the end of the place '$place'" });
 	} elsif($place =~ /(.*)(^|,\s*)(.+),\s*Canada$/i) {
@@ -7751,7 +7737,7 @@ sub place {
 	}
 
 	if($params{'person'}) {
-		validate_place({ person => $params{'person'}, place => $place });
+		validate_place({ person => $params{'person'}, place => $rc });
 	}
 
 	if($birth_country && (!$opts{'T'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
@@ -7862,14 +7848,13 @@ sub place {
 			if($places_printed->{" in$2,$3"}) {
 				# We did place, county, country before, so just
 				# return place, county
-				my $rc;
 				if(($language eq 'French') && ("$2,$3" eq ' London, England')) {
-					$rc = "$1, Londres";
+					$rc->fr("$1, Londres");
 				} else {
-					$rc = "$1,$2";
+					$rc->fr("$1,$2");
 				}
 				if($params{'encode'}) {
-					return HTML::Entities::encode($rc);
+					$rc->encode();
 				}
 				return $rc;
 			}
@@ -7899,7 +7884,7 @@ sub place {
 				my $town = $1;
 				$town =~ s/Swansea$/Abertawe/;
 				$rc->cy("$town, Cymru");
-			} elsif(my $code = $lcm->country2code($c)) {
+			} elsif(my $code = $lcm->country2code($c, 'LOCALE_CODE_ALPHA_2', 'en')) {
 				$c = $lcm->code2country($code, $lang);
 				if($c ne 'United States') {
 					utf8::decode($c);
@@ -7907,7 +7892,7 @@ sub place {
 				}
 			}
 		} elsif($place !~ /,/) {
-			if(my $code = $lcm->country2code($place)) {
+			if(my $code = $lcm->country2code($place, 'LOCALE_CODE_ALPHA_2', 'en')) {
 				$rc->set({ lang => $lang, string => $lcm->code2country($code, $lang) });
 			}
 		}
@@ -8147,7 +8132,7 @@ sub validate_place
 				}
 				$places{$place} = 0;
 				return 0;
-			} elsif(($place !~ /,/) && !Locale::Country::country2code($place)) {
+			} elsif(($place !~ /,/) && !Locale::Country::country2code($place, 'LOCALE_CODE_ALPHA_2', 'en')) {
 				if(my $person = $params{'person'}) {
 					complain({ person => $person, warning => "Country not included in country, or misspelt country '$place'" });
 				} else {
@@ -9578,18 +9563,27 @@ sub get_location($)
 
 	return unless(defined($geocoder));
 
+	print "get_location: $place\n" if($opts{'v'});
+
+	# Translate to English so that Geo::Coder::List can choose the right geocoder
 	if(ref($place) eq 'Lingua::String') {
 		$place = $place->en();
-		print "English translation: $place\n";
+		print "English translation: $place\n" if($opts{'v'});
 	} elsif($lcm) {
 		if($place =~ /(.+),\s*(.+)$/) {
 			if($2 ne 'England') {
-				# Translate country to English to use the right geocoder
-				if(($language eq 'French') && ($2 eq 'Angleterre')) {
+				my $c = $2;
+				utf8::encode($c);
+				if(($language eq 'French') && ($c eq 'Angleterre')) {
 					$place = "$1, England";
-				} elsif(my $code = $lcm->country2code($2)) {
-					$place = "$1, " . $lcm->code2country($code, 'en');
+				} elsif(my $code = $lcm->country2code($c, 'LOCALE_CODE_ALPHA_2', get_language_code())) {
+					$c = $lcm->code2country($code, 'en');
+					if($c eq 'United States') {
+						$c = 'USA';
+					}
+					$place = "$1, $c";
 				}
+				print "English translation: $place\n" if($opts{'v'});
 			}
 		}
 	}
@@ -9776,6 +9770,7 @@ sub get_language_code
 	return;	# undef
 }
 
+# TODO format containing ':'
 sub i18n
 {
 	my %params;
@@ -9796,7 +9791,7 @@ sub i18n
 		while((my @call_details = caller($i++))) {
 			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 		}
-		die "BUG: format argument not given";
+		die 'BUG: format argument not given';
 	}
 
 	my $prepend_space;
@@ -9811,17 +9806,13 @@ sub i18n
 	}
 
 	my $translation;
-	if($params{'gender'}) {
-		my $person = $params{'person'};
-		$translation = $i18n->{$format};
-		if(ref($translation) eq 'HASH') {
-			$translation = $translation->{$person->sex()};
+	my $person = $params{'person'};
+	$translation = $i18n->{$format};
+	if(ref($translation) eq 'HASH') {
+		if(!defined($person)) {
+			die "BUG: '$format' requires the person argument to determine gender";
 		}
-	} else {
-		$translation = $i18n->{$format};
-		if(ref($translation) eq 'HASH') {
-			die "BUG: '$format' requires the gender argument";
-		}
+		$translation = $translation->{$person->sex()};
 	}
 
 	if($translation) {
@@ -9866,6 +9857,7 @@ he::he
 husband::husband
 is::is
 married::married
+is married to::is married to
 of %d children::of %d children
 of::of
 she::she
@@ -9874,9 +9866,11 @@ twice::twice
 was buried::was buried
 was born::was born
 was living::was living
+was married to::was married to
 when::when
 wife::wife
 with::with
+with %s,::with %s,
 your::your
 @@ French
 a %s:M:un %s
@@ -9897,6 +9891,8 @@ he::il
 husband::marie
 is::est
 married::a marié
+is married to:M:est marié à
+is married to:F:est mariée à
 of %d children::de %d enfants
 of::de
 she::elle
@@ -9907,10 +9903,13 @@ was buried:M:a été enterré
 was buried:F:a été enterrée
 was born:M:est né
 was born:F:est née
+was married to:M:a été marié à
+was married to:F:a été marié à
 was living::habitait
 when::lorsque
 wife::femme
 with::avec
+with %s,::avec %s,
 your::votre
 @@ German
 and::und
