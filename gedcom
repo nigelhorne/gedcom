@@ -2969,14 +2969,10 @@ sub print_person
 					}
 				}
 				if($dateofbaptism || $placeofbaptism) {
-					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0) && !($opts{'a'} || $opts{'p'})) {
-						if($language eq 'French') {
-							$bio .= ", \N{U+00E9}tait";
-						} else {
-							$bio .= ', was';
-						}
-					} else {
+					if((scalar(@spouses) == 0) || (!$aod && !$aob) || ($numberofchildren == 0) || ($opts{'a'} && !$opts{'p'})) {
 						$bio .= i18n(' and');
+					} else {
+						$bio .= ',';
 					}
 				} elsif($birth_dt) {
 					my @twins;
@@ -3009,7 +3005,7 @@ sub print_person
 						}
 						my $ssex = $sibling->sex();
 						if($language eq 'French') {
-							$bio .= ($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : 'sa jumelle sœer ');
+							$bio .= ($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : "sa jumelle s\N{U+0153}er ");
 						} else {
 							$bio .= ($sex eq 'M' ? 'his' : 'her') . ' twin ' .
 								(($ssex eq 'F') ? 'sister ' : 'brother ');
@@ -3026,17 +3022,17 @@ sub print_person
 						if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 							$bio .= 'y ';
 						}
-						$bio .= "a \N{U+00E9}t\N{U+00E9} ";	# a été
-					} else {
-						$bio .= 'was ';
 					}
 				}
 				if($language eq 'French') {
-					$bio .= "a baptis\N{U+00E9}";
+					$bio .= "a \N{U+00E9}t\N{U+00E9} baptis\N{U+00E9}";
+					if($sex eq 'F') {
+						$bio .= 'e';
+					}
 				} elsif($ENV{'LANG'} =~ /^en_US/) {
-					$bio .= 'baptized';
+					$bio .= 'was baptized';
 				} else {
-					$bio .= 'baptised';
+					$bio .= 'was baptised';
 				}
 				if($placeofbaptism) {
 					if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
@@ -3305,7 +3301,7 @@ sub print_person
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   !$end_of_sentence) {
-					   	$bio .= i18n(' also');
+						$bio .= i18n(' also');
 					}
 					if(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 						$bio .= i18n({ person => $person, format => ' is married to ' });
@@ -7565,7 +7561,6 @@ sub year
 	return ($string =~ /\d$/) ? "in $string" : "on $string";
 }
 
-# TODO: Use Locale::Country::Multilingual
 sub place {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
@@ -7796,8 +7791,11 @@ sub place {
 		utf8::decode($address);
 		if($params{'nopreposition'}) {
 			$place = " $address, $place";
+			$rc->en(" $address, " . $rc->en());
 		} elsif($language eq 'French') {
 			$place = " \N{U+00E0} $address, $place";
+			$rc->fr($place);
+			$rc->en("$address, " . $rc->en());
 		} elsif($on_road && ($address =~ /^[a-z]+\s+[a-z]+$/i)) {
 			# e.g on Appleby Street
 			$place = " on $address, $place";
@@ -7813,10 +7811,12 @@ sub place {
 	} else {
 		$place = " in $place";
 	}
+	$rc->set({ lang => $lang, string => $place });
 
 	if((!$opts{'T'}) && (my $places_printed = $params{'places_printed'})) {
 		if(($language eq 'French') && ($place =~ /(.+), London, England/)) {
 			$place = "$1, Londres, Angleterre";
+			$rc->fr($place);
 		}
 		if($places_printed->{$place} && ($place =~ /^(.+?),/)) {
 			# Only print the town if the location has already been printed
