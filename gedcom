@@ -463,10 +463,10 @@ unless(($opts{'T'} && !$opts{'v'}) || $opts{'B'}) {
 	# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
 	$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 		->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
-		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 		->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England|Wales)$/i, geocoder => Geo::Coder::Postcodes->new() })
 		# ->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })	# Offline
 		->push(Geo::Coder::OSM->new())
+		->push({ regex => qr/(USA|US|United States)$/i, geocoder => Geo::Coder::RandMcnally->new() })
 		# ->push({ limit => 200, geocoder => Geo::Coder::XYZ->new()})
 		->push(Geo::Coder::Ovi->new());
 		# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
