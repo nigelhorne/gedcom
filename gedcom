@@ -3722,7 +3722,9 @@ sub print_person
 							} else {
 								$bio .= 'all with ' . $parentofall->as_string();
 							}
-							$bio .= ': ' . conjunction(map { $_->given_names() } @children);
+							my $decoded = conjunction(map { $_->given_names() } @children);
+							utf8::decode($decoded);
+							$bio .= ": $decoded";
 						} else {
 							# List children by the same parent together
 							my %childmap;
