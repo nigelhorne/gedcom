@@ -68,6 +68,7 @@ BEGIN {
 		'File::Spec', 'Net::OAuth',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
+		'Geo::Coder::Abbreviations',
 		'Roman',
 		'utf8::all',
 		# 'Devel::FIXME',
