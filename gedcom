@@ -7479,7 +7479,8 @@ sub year
 		$from =~ s/^(in|on|c.) //;
 		$to =~ s/^(in|on|c.) //;
 		if($language eq 'French') {
-			return "de $from \N{U+00E0} $to";
+			$from =~ s/^le //;
+			return "du $from \N{U+00E0} $to";
 		}
 		return "from $from to $to";
 	}
