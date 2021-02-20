@@ -5551,7 +5551,7 @@ sub print_person
 					} else {
 						$bio .= ', qui est';
 					}
-					$bio .= ' aussi où ' . lcfirst($pronoun);
+					$bio .= " aussi o\N{U+00F9} " . lcfirst($pronoun);
 				} else {
 					if($end_of_sentence) {
 						$bio .= ' That';
@@ -7480,7 +7480,8 @@ sub year
 		$to =~ s/^(in|on|c.) //;
 		if($language eq 'French') {
 			$from =~ s/^le //;
-			return "du $from \N{U+00E0} $to";
+			$to =~ s/^le //;
+			return "du $from au $to";
 		}
 		return "from $from to $to";
 	}
