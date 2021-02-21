@@ -1043,7 +1043,9 @@ if($opts{'H'}) {
 				}
 				%printed = ();
 			}
-			system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+			# If this fails, try this:
+			#	system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+			system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
 			unlink 'output.png', @files;
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
