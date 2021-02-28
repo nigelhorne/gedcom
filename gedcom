@@ -31,7 +31,6 @@
 #	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 # TODO: investigate Locale::Geocode
 # FIXME: with a US state you use 'en' not à
-# TODO: Investigate Lingua::Conjunction
 # TODO: Investigate List::ToHumanString
 
 # dnf install langpacks-fr glibc-all-langpacks -y
