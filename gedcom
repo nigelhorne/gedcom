@@ -3212,7 +3212,7 @@ sub print_person
 					if($end_of_sentence) {
 						$bio .= " $pronoun";
 					} elsif($aod && scalar(@twins)) {
-						$bio .= ' and';
+						$bio .= i18n(' and');
 					} else {
 						$bio .= ', and';
 					}
@@ -3272,10 +3272,8 @@ sub print_person
 		if(scalar(@education)) {
 			if($end_of_sentence) {
 				$bio .= " $pronoun";
-			} elsif($language eq 'French') {
-				$bio .= ' et';
 			} else {
-				$bio .= ' and';
+				$bio .= i18n(' and');
 			}
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
@@ -3507,11 +3505,7 @@ sub print_person
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 			} else {
 				if($dateofbaptism && !$end_of_sentence) {
-					if($language eq 'French') {
-						$bio .= ' et';
-					} else {
-						$bio .= ' and';
-					}
+					$bio .= i18n(' and');
 				}
 				if(is_alive(person => $person)) {
 					$bio .= ' has been married';
@@ -3627,11 +3621,7 @@ sub print_person
 					}
 					$names .= ')' if($printed_bracket);
 					if($spouse_number == (scalar(@spouses) - 1)) {
-						if($language eq 'French') {
-							$names .= ' et ';
-						} else {
-							$names .= ' and ';
-						}
+						$names .= i18n(' and');
 					} elsif($spouse_number < (scalar(@spouses) - 1)) {
 						$names .= ', ';
 					}
@@ -3788,11 +3778,7 @@ sub print_person
 			if($end_of_sentence) {
 				$bio .= " $pronoun";
 			} elsif(scalar(@residences) == 0) {
-				if($language eq 'French') {
-					$bio .= ' et';
-				} else {
-					$bio .= ' and';
-				}
+				$bio .= i18n(' and');
 			}
 			if($language eq 'French') {
 				$bio .= ' a eu ';
@@ -5508,10 +5494,8 @@ sub print_person
 				   $burial->address() && !$death->address()) {
 					if($end_of_sentence) {
 						$bio .= " $pronoun";
-					} elsif($language eq 'French') {
-						$bio .= ' et';
 					} else {
-						$bio .= ' and';
+						$bio .= i18n(' and');
 					}
 					if($language eq 'French') {
 						$bio .= " est y enterr\N{U+00E9}";
@@ -5564,10 +5548,8 @@ sub print_person
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				if($end_of_sentence) {
 					$bio .= " $pronoun";
-				} elsif($language eq 'French') {
-					$bio .= ' et';
 				} else {
-					$bio .= ' and';
+					$bio .= i18n(' and');
 				}
 			} else {
 				$bio .= '.' if(!$end_of_sentence);
@@ -8298,7 +8280,7 @@ sub sibling_baptism_string
 		} elsif($count < (scalar(@onsameday) - 1)) {
 			$rc .= ', ';
 		} elsif($count == (scalar(@onsameday) - 1)) {
-			$rc .= ' and ';
+			$rc .= i18n(' and ');
 		}
 		$rc .= lcfirst($person->possessive()) . ' ';
 		my $dateofsiblingbirth = dateofbirth($sibling);
