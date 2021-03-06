@@ -4361,10 +4361,8 @@ sub print_person
 										while(my $p = pop(@people_at_p3)) {
 											if(scalar(@people_at_p3)) {
 												$residencestring .= ',';
-											} elsif($language eq 'French') {
-												$residencestring .= ' et';
 											} else {
-												$residencestring .= ' and';
+												$residencestring .= i18n(' and');
 											}
 											$residencestring .= ' ' .
 												$person->relationship($p->{'person'}) .
@@ -4433,11 +4431,7 @@ sub print_person
 												}
 												$printed_sibling = 1;
 												# May be removed later
-												if($language eq 'French') {
-													$residencestring .= ' et';
-												} else {
-													$residencestring .= ' and';
-												}
+												$residencestring .= i18n(' and');
 												last;
 											}
 										}
