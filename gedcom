@@ -7447,9 +7447,10 @@ sub year
 	   ($string =~ /^Fro?m (.+) to (.+)/i)) {
 		my $from = year({ %params, string => $1 });
 		my $to = year({ %params, string => $2 });
-		$from =~ s/^(in|on|c.) //;
-		$to =~ s/^(in|on|c.) //;
+
 		if($language eq 'French') {
+			$from =~ s/^(en|c.) //;
+			$to =~ s/^(en|c.) //;
 			if($from =~ /^le (.+)/) {
 				$from = "du $1";
 			} else {
@@ -7462,6 +7463,8 @@ sub year
 			}
 			return "$from $to";
 		}
+		$from =~ s/^(in|on|c.) //;
+		$to =~ s/^(in|on|c.) //;
 		return "from $from to $to";
 	}
 
