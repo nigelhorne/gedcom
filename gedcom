@@ -5346,14 +5346,7 @@ sub print_person
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					$bio .= " $pronoun ";
-					if($language eq 'French') {
-						$bio .= "est enterr\N{U+00E9}";
-						if($sex eq 'F') {
-							$bio .= 'e';
-						}
-					} else {
-						$bio .= 'was buried';
-					}
+					$bio .= i18n({ person => $person, gender => 1, format => 'was buried' });
 					if(my $address = $burial->address()) {
 						$bio .= " at $address";
 					}
@@ -5367,7 +5360,7 @@ sub print_person
 					}
 				} else {
 					$bio .= " $pronoun " .
-						(($language eq 'French') ? "est enterr\N{U+00E9}" : 'is buried') .
+						i18n({ person => $person, format => 'is buried' }) .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage });
 				}
 				$end_of_sentence = 0;
@@ -5497,7 +5490,7 @@ sub print_person
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$bio .= " $pronoun ";
-						$bio .= (($language eq 'French') ? "est enterr\N{U+00E9}" : 'is buried') .
+						$bio .= i18n({ person => $person, format => 'is buried' }) .
 							$b;
 					} else {
 						$bio .= (($language eq 'French') ? " et est enterr\N{U+00E9}" : ' and is buried') .
@@ -9882,6 +9875,7 @@ eldest::eldest
 he::he
 husband::husband
 is::is
+is buried::is buried
 married::married
 is married to::is married to
 of %d children::of %d children
@@ -9921,6 +9915,8 @@ he::il
 husband::marie
 is::est
 married::a marié
+is buried:M:est enterré
+is buried:F:est enterrée
 is married to:M:est marié à
 is married to:F:est mariée à
 of %d children::de %d enfants
