@@ -3508,7 +3508,7 @@ sub print_person
 				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 			} else {
-				if($dateofbaptism && !$end_of_sentence) {
+				if(!$end_of_sentence) {
 					$bio .= i18n(' and');
 				}
 				if(is_alive(person => $person)) {
