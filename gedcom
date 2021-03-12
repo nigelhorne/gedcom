@@ -922,6 +922,8 @@ if($opts{'H'}) {
 				print $fout '}}';
 				close $fout;
 
+				print "Resize $png\n" if($opts{'v'});
+
 				my $image;
 				my $resize = Image::Resize->new($png);
 				my $width = $resize->width();
@@ -997,6 +999,8 @@ if($opts{'H'}) {
 				print_graphviz_generation({ person => $top, fout => $fout, format => 'dynamic', rank => 0, maxrank => $level + 1 });
 				print $fout '}}';
 				close $fout;
+
+				print "Resize $png\n" if($opts{'v'});
 
 				my $image;
 				my $resize = Image::Resize->new($png);
@@ -1500,6 +1504,10 @@ sub print_person
 	if((!$dateofmarriage) && $marriage) {
 		$dateofmarriage = $marriage->date();
 	}
+	if($dateofmarriage && ($dateofmarriage =~ /\s$/)) {
+		complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
+		$dateofmarriage =~ s/\s+$//;
+	}
 
 	# print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
@@ -1842,6 +1850,11 @@ sub print_person
 		$birth_country = 'United States';
 	} elsif($placeofbirth && ($placeofbirth =~ /.+,\s?(.+)$/)) {
 		my $c = $1;
+		if($c =~ /\)$/) {
+			complain({ person => $person, warning => 'Trailing bracket in birth location' });
+			$c =~ s/\)$//;
+		}
+			
 		if($c eq 'England') {
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'USA') {
@@ -2537,6 +2550,10 @@ sub print_person
 					my $all_siblings_have_dob = 1;
 					foreach my $sibling(@siblings) {
 						if(my $dob = dateofbirth($sibling)) {
+							if($dob =~ /\s$/) {
+								complain({ person => $sibling, warning => 'Removing trailing spaces from date of birth' });
+								$dob =~ s/\s+$//;
+							}
 							if(!date_parser_cached(date => $dob)) {
 								complain({
 									person => $sibling,
@@ -2562,6 +2579,10 @@ sub print_person
 					$print_sibling_count = 1;
 					foreach my $sibling(@siblings) {
 						if(my $dob = dateofbirth($sibling)) {
+							if($dob =~ /\s$/) {
+								complain({ person => $sibling, warning => 'Removing trailing spaces from date of birth' });
+								$dob =~ s/\s+$//;
+							}
 							if(my $d = date_parser_cached(date => $dob)) {
 								$d = $dfn->parse_datetime($d->{'canonical'});
 								if($opts{'w'} &&
@@ -2887,6 +2908,10 @@ sub print_person
 				$bio .= $birth_place if($birth_place);
 
 				if($dateofbirth) {
+					if($dateofbirth =~ /\s$/) {
+						complain({ person => $person, warning => "Removing trailing spaces from date of birth '$dateofbirth'" });
+						$dateofbirth =~ s/\s+$//;
+					}
 					my $y = year({
 						person => $person,
 						date => $dateofbirth,
@@ -3566,6 +3591,10 @@ sub print_person
 							$dateofmarriage = $marriage->date();
 						}
 					}
+					if($dateofmarriage && ($dateofmarriage =~ /\s$/)) {
+						complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
+						$dateofmarriage =~ s/\s+$//;
+					}
 					my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
 					if(!defined($placeofmarriage)) {
 						if(my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage')) {
@@ -3609,6 +3638,10 @@ sub print_person
 								$name .= '(';
 								$printed_bracket = 1;
 							}
+							if($death_of_first_spouse =~ /\s$/) {
+								complain({ person => $person, warning => 'Removing trailing spaces from date' });
+								$death_of_first_spouse =~ s/\s+$//;
+							}
 							$name .= 'following the death of ' .
 								$spouses[0]->as_string() . ' ' .
 								year({
@@ -3620,7 +3653,9 @@ sub print_person
 					$name .= ')' if($printed_bracket);
 					push @names, $name;
 				}
-				$bio .= ',' . i18n(' to ') . conjunction(@names);
+				if(scalar(@names)) {
+					$bio .= ',' . i18n(' to ') . conjunction(@names);
+				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
 
 				# Determine if all the children are from one marriage, since that's
@@ -4251,6 +4286,10 @@ sub print_person
 						}
 					}
 					if(scalar(@residencelist) > 1) {
+						if($rdate =~ /\s$/) {
+							complain({ person => $person, warning => 'Removing trailing spaces from "$rdate"' });
+							$rdate =~ s/\s+$//;
+						}
 						my $this_date = year({ person => $person, date => $rdate });
 						if($prev_residence && (year(record => $prev_residence) eq $this_date)) {
 							if(place(record => $prev_residence) ne place(record => $residence)) {
@@ -4654,10 +4693,15 @@ sub print_person
 							}
 							if($spdeath_dt) {
 								# Outlived spouse, but not living with a child
+								my $date = dateofdeath($spouses[0]);
+								if($date =~ /\s$/) {
+									complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
+									$date =~ s/\s+$//;
+								}
 								$residencestring .= ' following the death of ' .
 									($person->pronoun() eq 'She' ? 'her' : 'his') .
 									(($sex eq 'M') ? ' wife ' : ' husband ') .
-									year(date => dateofdeath($spouses[0]));
+									year(date => $date);
 							}
 							$printed_following_message = 1;
 						}
@@ -5401,6 +5445,10 @@ sub print_person
 						$start_of_paragraph = 0;
 					}
 					if($dateofdeath) {
+						if($dateofdeath =~ /\s$/) {
+							complain({ person => $person, warning => 'Removing trailing spaces from date of death' });
+							$dateofdeath =~ s/\s+$//;
+						}
 						my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 						if($y =~ /^fro?m (.+) to (.+)/i) {
 							$y = "between $1 and $2";
@@ -5469,6 +5517,14 @@ sub print_person
 						} else {
 							$must_postdate = date_to_datetime($d);
 						}
+					}
+					if($dateofburial =~ /\s$/) {
+						complain({ person => $person, warning => "Removing trailing spaces from date of burial '$dateofburial'" });
+						$dateofburial =~ s/\s+$//;
+					}
+					if($dateofburial =~ /\.$/) {
+						complain({ person => $person, warning => "Removing trailing fullstop from date of burial '$dateofburial'" });
+						$dateofburial =~ s/\.+$//;
 					}
 					$bio .= ' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate });
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
@@ -5563,9 +5619,18 @@ sub print_person
 						$y = "between $1 and $2";
 					}
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
-					$bio .= " in $1 " .
+					my $p = $1;
+					if($dateofdeath =~ /\s$/) {
+						complain({ person => $person, warning => 'Removing trailing spaces from date of death' });
+						$dateofdeath =~ s/\s+$//;
+					}
+					$bio .= " in $p " .
 						year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 				} else {
+					if($dateofdeath =~ /\s$/) {
+						complain({ person => $person, warning => "Removing trailing spaces from date of death '$death'" });
+						$dateofdeath =~ s/\s+$//;
+					}
 					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
 					if($y =~ /^fro?m (.+) to (.+)/i) {
 						$y = "between $1 and $2";
@@ -5934,13 +5999,13 @@ sub print_person
 		if($opts{'B'}) {
 			if($bio) {
 				$bio =~ s/\.\././g;
-				if(length($bio) > 4000) {
+				if(length($bio) > 3000) {
 					# It's not going to fit on one page
 					# Split into paragraphs
 					my @paras = split(/\n/, $bio);
 					foreach my $p(@paras) {
 						next if(length($p) == 0);
-						if(length($p) > 4000) {
+						if(length($p) > 3000) {
 							# Very long paragraph
 							my @lines = split(/\n/, wrap('', '', ($p)));
 							foreach my $l(@lines) {
@@ -6102,6 +6167,7 @@ sub print_person
 						print $fh $resp->decoded_content();
 						close $fh;
 						$orig_filename = $filename;
+
 						print "Resize $filename\n" if($opts{'v'});
 
 						my $resize = Image::Resize->new($filename);
@@ -6156,37 +6222,45 @@ sub print_person
 					my $tmp = File::Temp->new(UNLINK => 0);
 					$filename = $tmp->filename();
 					$orig_filename = $filename;
+					print "Downloading $file to $filename\n" if($opts{'v'});
 					if(LWP::Simple::WithCache::is_success($rc = LWP::Simple::WithCache::getstore($file, $filename))) {
-						my $resize = Image::Resize->new($filename);
-						my $width = $resize->width();
-						my $height = $resize->height();
-						if($height > 250) {
-							my $newwidth = $width * (250 / $height);
-							my $newheight;
-							if($newwidth > 550) {
-								$newheight = $height * (550 / $width);
+						if(-z $filename) {
+							complain({ person => $person, warning => "Downloaded file '$file' was empty" });
+							$title = undef;
+						} else {
+							print "Resize $filename\n" if($opts{'v'});
+
+							my $resize = Image::Resize->new($filename);
+							my $width = $resize->width();
+							my $height = $resize->height();
+							if($height > 250) {
+								my $newwidth = $width * (250 / $height);
+								my $newheight;
+								if($newwidth > 550) {
+									$newheight = $height * (550 / $width);
+									$gd = $resize->resize(550, $newheight);
+								} else {
+									$gd = $resize->resize($newwidth, 250);
+									$newheight = 250;
+								}
+							} elsif($width > 550) {
+								my $newheight = $height * (550 / $width);
 								$gd = $resize->resize(550, $newheight);
-							} else {
-								$gd = $resize->resize($newwidth, 250);
-								$newheight = 250;
 							}
-						} elsif($width > 550) {
-							my $newheight = $height * (550 / $width);
-							$gd = $resize->resize(550, $newheight);
+							if($gd) {
+								# $orig_image = $pdf->image_jpeg($orig_filename);
+								# $tmp = File::Temp->new(UNLINK => 0);
+								# $filename = $tmp->filename();
+								# open(my $fh, '>', $filename);
+								# print $fh $gd->jpeg();
+								# close $fh;
+								$image = $pdf->image_gd($gd, -lossless => 1);
+							}
+							$image = $pdf->image_jpeg($filename);
+							$title = $file if(!defined($title));
+							# $image->height(32);
+							# $image->width(32);
 						}
-						if($gd) {
-							# $orig_image = $pdf->image_jpeg($orig_filename);
-							# $tmp = File::Temp->new(UNLINK => 0);
-							# $filename = $tmp->filename();
-							# open(my $fh, '>', $filename);
-							# print $fh $gd->jpeg();
-							# close $fh;
-							$image = $pdf->image_gd($gd, -lossless => 1);
-						}
-						$image = $pdf->image_jpeg($filename);
-						$title = $file if(!defined($title));
-						# $image->height(32);
-						# $image->width(32);
 					} else {
 						red_warning({ person => $person, warning => "download $file failed to $filename: $rc" });
 						$title = undef;
@@ -6270,6 +6344,7 @@ sub print_person
 					if($height >= 650) {
 						my $newwidth = ($width * 650) / $height;
 						my $gd = GD::Image->new($i->{'orig_filename'});
+						print "Resize $gd\n" if($opts{'v'});
 						my $resize = Image::Resize->new($gd);
 						$gd = $resize->resize($newwidth, 650);
 						$image = $pdf->image_gd($gd, -lossless => 1);
@@ -6288,6 +6363,7 @@ sub print_person
 					if($width >= 500) {
 						my $newheight = ($height * 500) / $width;
 						my $gd = GD::Image->new($i->{'orig_filename'});
+						print "Resize $gd\n" if($opts{'v'});
 						my $resize = Image::Resize->new($gd);
 						$gd = $resize->resize(500, $newheight);
 						$image = $pdf->image_gd($gd, -lossless => 1);
@@ -6313,6 +6389,7 @@ sub print_person
 						$newwidth = 500;
 					}
 					my $gd = GD::Image->new($i->{'orig_filename'});
+					print "Resize $gd\n" if($opts{'v'});
 					my $resize = Image::Resize->new($gd);
 					$gd = $resize->resize($newwidth, $newheight);
 					$image = $pdf->image_gd($gd, -lossless => 1);
@@ -6334,6 +6411,7 @@ sub print_person
 							$newwidth = 500;
 						}
 						my $gd = GD::Image->new($i->{'orig_filename'});
+						print "Resize $gd\n" if($opts{'v'});
 						my $resize = Image::Resize->new($gd);
 						$gd = $resize->resize($newwidth, $newheight);
 						$image = $pdf->image_gd($gd, -lossless => 1);
@@ -7381,6 +7459,7 @@ sub year
 		if(ref($string) eq 'Gedcom::Record') {
 			$string = $string->date();
 			return unless($string);
+			$string =~ s/\s+$//;
 		}
 	}
 
@@ -8540,7 +8619,7 @@ sub date_parser_cached
 		while((my @call_details = caller($i++))) {
 			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 		}
-		die 'BUG: illegal date should have been trapped by now';
+		die "BUG: illegal '$date' should have been trapped by now";
 	}
 	print "Parse date $date\n" if($opts{'v'});
 	my $d;
