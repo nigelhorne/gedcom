@@ -4401,7 +4401,6 @@ sub print_person
 						my $count = 0;
 						my $p3;	# previous place
 						my @people_at_p3;
-						my $yoe = $dt->year();
 
 						my @sorted_locations = sort { $a->{'latitude'} <=> $b->{'latitude'} } @{$all_locations{$year}};
 
@@ -4457,7 +4456,7 @@ sub print_person
 									my $future_spouse;
 									if($spouses[0] && ($l->{'person'}->xref() eq $spouses[0]->xref())) {
 										if(defined($dateofmarriage) && ($dateofmarriage =~ /(\d{3,4})$/)) {
-											if($yoe < $1) {
+											if($year < $1) {
 												$future_spouse = 1;
 											}
 										} elsif($bdiff->in_units('years') < 16) {
@@ -4473,6 +4472,7 @@ sub print_person
 											$first_string = (($sex eq 'M') ? 'his future wife ' : 'her future husband ');
 										}
 									} else {
+										next unless($relationship);
 										if($bdiff->in_units('years') < 21) {
 											if(my $mother = $person->mother()) {
 												if($l->{'person'}->xref() eq $mother->xref()) {
