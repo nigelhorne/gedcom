@@ -4145,62 +4145,7 @@ sub print_person
 						}
 					}
 				}
-				if((!($opts{'c'} && $residence->source())) && (my $notes = notes({ record => $residence }))) {
-					$notes =~ s/\.$//;
-					$notes = lcfirst($notes);
-					$residencestring .= " ($notes)";
-				} elsif($opts{'c'}) {
-					if($residencecitations{$residence}) {
-						my $remove_comma = 0;
-						if($residencestring =~ s/,$//) {
-							$remove_comma = 1;
-						}
-						$residencestring .= '[' . $residencecitations{$residence} . ']';
-						if($remove_comma) {
-							$residencestring .= ',';
-						}
-					}
-					if($residence->place() &&
-					  (!$rdate) &&
-					  ($count <= (scalar(@residencelist) - 1)) &&
-					  ($residencecitations{$residence})) {
-						my $peek = $residencelist[$count + 1];
-						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-							if($residencecitations{$peek}) {
-								$residencestring .= '[' . $residencecitations{$peek} . ']';
-							}
-						}
-					}
-				}
-				$count++;
-				if(($count == 1) && (scalar(@residencelist) == 2)) {
-					if($print_year_only) {
-						$residencestring .= $rdate;
-						$print_year_only = 0;
-					}
-				} else {
-					my $peek = $residencelist[$count];
-					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-						my $nextnotes = notes(record => $peek);
-						$peek = $residencelist[$count + 1];
-						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
-							# FIXME: work with citations by printing them all
-							if((!$opts{'c'}) && $rdate && ($rdate =~ /^\d{4}$/) && $peek->date() && ($peek->date() =~ /^\d{4}$/)) {
-								if((!$print_year_only) && (!defined($nextnotes)) && !notes(record => $peek)) {
-									$residencestring .= '-';
-									$print_year_only = 1;
-								}
-							} elsif($print_year_only && $rdate) {
-								$residencestring .= $rdate;
-								$print_year_only = 0;
-							}
-						}
-					} elsif($print_year_only) {
-						$residencestring .= $rdate if((!defined($residencestring)) || ($rdate ne $residencestring));
-						$print_year_only = 0;
-					}
-				}
-				if($rdate) {	# residence has a date?
+				if($rdate) {
 					next if($printed_dates{$rdate});
 					$printed_dates{$rdate}++;
 					if($rdate =~ /(\d{3,4})$/) {
@@ -4384,6 +4329,63 @@ sub print_person
 							$prev_residence = $residence;
 						}
 					}
+				}
+				if((!($opts{'c'} && $residence->source())) && (my $notes = notes({ record => $residence }))) {
+					$notes =~ s/\.$//;
+					$notes = lcfirst($notes);
+					$residencestring .= " ($notes)";
+				} elsif($opts{'c'}) {
+					if($residencecitations{$residence}) {
+						my $remove_comma = 0;
+						if($residencestring =~ s/,$//) {
+							$remove_comma = 1;
+						}
+						$residencestring .= '[' . $residencecitations{$residence} . ']';
+						if($remove_comma) {
+							$residencestring .= ',';
+						}
+					}
+					if($residence->place() &&
+					  (!$rdate) &&
+					  ($count <= (scalar(@residencelist) - 1)) &&
+					  ($residencecitations{$residence})) {
+						my $peek = $residencelist[$count + 1];
+						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+							if($residencecitations{$peek}) {
+								$residencestring .= '[' . $residencecitations{$peek} . ']';
+							}
+						}
+					}
+				}
+				$count++;
+				if(($count == 1) && (scalar(@residencelist) == 2)) {
+					if($print_year_only) {
+						$residencestring .= $rdate;
+						$print_year_only = 0;
+					}
+				} else {
+					my $peek = $residencelist[$count];
+					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+						my $nextnotes = notes(record => $peek);
+						$peek = $residencelist[$count + 1];
+						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
+							# FIXME: work with citations by printing them all
+							if((!$opts{'c'}) && $rdate && ($rdate =~ /^\d{4}$/) && $peek->date() && ($peek->date() =~ /^\d{4}$/)) {
+								if((!$print_year_only) && (!defined($nextnotes)) && !notes(record => $peek)) {
+									$residencestring .= '-';
+									$print_year_only = 1;
+								}
+							} elsif($print_year_only && $rdate) {
+								$residencestring .= $rdate;
+								$print_year_only = 0;
+							}
+						}
+					} elsif($print_year_only) {
+						$residencestring .= $rdate if((!defined($residencestring)) || ($rdate ne $residencestring));
+						$print_year_only = 0;
+					}
+				}
+				if($rdate) {	# residence has a date?
 					my $bdiff;
 					if($birth_dt) {
 						$bdiff = $dfn->parse_datetime($rdate) - $birth_dt;
