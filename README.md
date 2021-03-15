@@ -10,7 +10,7 @@ This program does a lot of different things with a gedcom file.
 Given your family tree as a gedcom, gedcom will tell you whose birthday it is
 and who died on this day.
 Although primarily a tool for genealogy,
-the -l flag tells gedcom to print matches for family members that are still
+the -l flag tells gedcom to include matches for family members that are still
 alive.
 
 The -d flag will give you a short biography of each person.
