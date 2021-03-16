@@ -1854,7 +1854,7 @@ sub print_person
 			complain({ person => $person, warning => 'Trailing bracket in birth location' });
 			$c =~ s/\)$//;
 		}
-			
+
 		if($c eq 'England') {
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'USA') {
