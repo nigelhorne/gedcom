@@ -2845,6 +2845,10 @@ sub print_person
 			}
 			if($placeofbirth) {
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
+				if(!defined($p)) {
+					# Most likely there was more than one birth() record
+					die 'BUG: ', $person->as_string, ": place() returned undef on '$placeofbirth'";
+				}
 				$bio .= $p;
 				$places_printed{$p} = 1;
 			} else {
@@ -7720,7 +7724,7 @@ sub place {
 				$place = $place->place();
 			}
 			if(!defined($place)) {
-				if($opts{'w'} && (!$params{'allow_empty'}) && ($params{'record'}->type() ne 'Story')) {
+				if($opts{'w'} && (!$params{'allow_empty'}) && $params{'record'}->type() && ($params{'record'}->type() ne 'Story')) {
 					if(my $date = $p->date()) {
 						if($date =~ /^bet\s*(.+)/i) {
 							complain({ person => $params{'person'}, warning => "Location for the event between $1 is empty" });
