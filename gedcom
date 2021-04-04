@@ -3629,6 +3629,7 @@ sub print_person
 					if($placeofmarriage) {
 						$placeofmarriage = undef if(lc($placeofmarriage) eq 'unknown');
 					}
+					my $name .= $spouse->as_string();
 					if($placeofmarriage) {
 						$placeofmarriage = place({ person => $spouse, place => $placeofmarriage, places_printed => \%places_printed });
 						if($previousplace && ($placeofmarriage eq $previousplace)) {
@@ -3639,9 +3640,17 @@ sub print_person
 							$previousplace = $placeofmarriage;
 						}
 					} elsif(!$dateofmarriage) {
+						# FIXME: possibly not married, so above it shouldn't have said "married x times"
+						$name .= ' (possibly not married to';
+						if($spouse->sex() eq 'M') {
+							$name .= ' him)';
+						} else {
+							$name .= ' her)';
+						}
+						push @names, $name;
 						next;
 					}
-					my $name .= $spouse->as_string();
+					push @names, $name;
 
 					my $printed_bracket = 0;
 					if($dateofmarriage && $placeofmarriage) {
@@ -3679,7 +3688,6 @@ sub print_person
 						}
 					}
 					$name .= ')' if($printed_bracket);
-					push @names, $name;
 				}
 				if(scalar(@names)) {
 					$bio .= ',' . i18n(' to ') . conjunction(@names);
