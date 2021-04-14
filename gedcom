@@ -1107,6 +1107,9 @@ if($opts{'H'}) {
 		my($day, $month) = (localtime)[3,4];
 
 		foreach my $person(@people) {
+			if(!ref($person)) {
+				die "$0: Can't find '$opts{p}' in $ARGV[0]";
+			}
 			print_person(person => $person, day => $day, month => $month);
 		}
 	} else {
@@ -8599,6 +8602,13 @@ sub get_value
 			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 		}
 		die 'BUG: person argument is mandatory';
+	}
+	if(!ref($person)) {
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die "BUG: person argument isn't an object";
 	}
 	return $params{'person'}->get_value($params{'value'});
 }
