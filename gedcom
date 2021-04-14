@@ -7408,11 +7408,7 @@ sub Gedcom::Individual::relationship_up
 					my $mymother = $self->mother();
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							if($language eq 'French') {
-								$rc .= " sur votre p\N{U+00E8}re's side";
-							} else {
-								$rc .= " on your father's side";
-							}
+							$rc .= i18n(" on your father's side");
 						} else {
 							$rc .= ' on ' .
 								lcfirst($self->possessive()) .
@@ -7420,11 +7416,7 @@ sub Gedcom::Individual::relationship_up
 						}
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
 						if($me && ($self eq $me)) {
-							if($language eq 'French') {
-								$rc .= " sur votre m\N{U+00E8}re's side";
-							} else {
-								$rc .= " on your mother's side";
-							}
+							$rc .= i18n(" on your mother's side");
 						} else {
 							$rc .= ' on ' .
 								lcfirst($self->possessive()) .
@@ -10105,8 +10097,10 @@ is::is
 is buried::is buried
 married::married
 is married to::is married to
-of %d children::of %d children
 of::of
+of %d children::of %d children
+on your father's side::on your father's side
+on your mother's side::on your mother's side
 she::she
 they::they
 times::times
@@ -10146,8 +10140,10 @@ is buried:M:est enterré
 is buried:F:est enterrée
 is married to:M:est marié à
 is married to:F:est mariée à
-of %d children::de %d enfants
 of::de
+of %d children::de %d enfants
+on your father's side::sur la côté de votre père
+on your mother's side::sur la côté de votre mère
 she::elle
 they:M:ils
 they:F:elles
