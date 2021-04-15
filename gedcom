@@ -201,8 +201,10 @@ my $language = get_language();
 my @modules = ('NJH::Normalize');
 if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize',
-		'NJH::PDFPage' ,'LWP::Simple::WithCache', 'PDF::API2', 'Text::Soundex', 'Text::Wrap',
-		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent';
+		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent',
+		'NJH::PDFPage' ,'LWP::Simple::WithCache',
+		'PDF::API2', 'PDF::API2::XS',
+		'Text::Soundex', 'Text::Wrap';
 } elsif($opts{'T'} || $opts{'i'}) {
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
