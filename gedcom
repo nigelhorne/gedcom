@@ -5655,12 +5655,11 @@ sub print_person
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$bio .= " $pronoun ";
-						$bio .= i18n({ person => $person, format => 'is buried' }) .
-							$b;
 					} else {
-						$bio .= (($language eq 'French') ? " et est enterr\N{U+00E9}" : ' and is buried') .
-							$b;
+						$bio .= i18n(' and ');
 					}
+					$bio .= i18n({ person => $person, format => 'is buried' }) .
+						$b;
 				}
 				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
 					$b =~ s/\.$//;
@@ -10142,8 +10141,8 @@ he::il
 husband::marie
 is::est
 married::a marié
-is buried:M:est enterré
-is buried:F:est enterrée
+is buried:M:est inhumé
+is buried:F:est inhumée
 is married to:M:est marié à
 is married to:F:est mariée à
 of::de
