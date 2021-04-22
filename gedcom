@@ -309,14 +309,32 @@ my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1, timeout => 30);
-	$browser->env_proxy(1);
-	$browser->conn_cache->total_capacity(undef);
-
-	# Cache calls to openstreetmap etc.
 	my $cachedir = $ENV{'CACHEDIR'};
 	if($cachedir) {
 		mkdir $cachedir, 0700 if(!-d $cachedir);
+		$cachedir = File::Spec->catfile($cachedir, 'lwp-cache');
+	} else {
+		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
+	}
+	mkdir $cachedir, 0700 if(!-d $cachedir);
+	print "Cachedir $cachedir\n" if($opts{'v'});
+	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
+		agent => basename($0),
+		keep_alive => 1,
+		timeout => 30,
+	);
+	$cached_browser->env_proxy(1);
+	$cached_browser->conn_cache->total_capacity(undef);
+
+	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1, timeout => 30);
+	$browser->env_proxy(1);
+	$browser->conn_cache->total_capacity(undef);
+	$browser->ua($cached_browser);
+
+	# Cache calls to openstreetmap etc.
+	$cachedir = $ENV{'CACHEDIR'};
+	if($cachedir) {
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
@@ -354,23 +372,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		# if(!$ged->validate() && $opts{'f'}) {
 			# die "$ARGV[0] is not a valid gedcom file";
 		# }
-
 	}
-
-	if(my $e = $ENV{'CACHEDIR'}) {
-		$cachedir = File::Spec->catfile($e, 'lwp-cache');
-	} else {
-		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
-	}
-	mkdir $cachedir, 0700 if(!-d $cachedir);
-	print "Cachedir $cachedir\n" if($opts{'v'});
-	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
-		agent => basename($0),
-		keep_alive => 1,
-		timeout => 30,
-	);
-	$cached_browser->env_proxy(1);
 }
 
 my $places;
