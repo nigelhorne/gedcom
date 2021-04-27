@@ -155,7 +155,7 @@ print "Starting\n" if($opts{'v'});
 
 my $me;
 my @myancestors;
-my @mydescendents;
+my @mydescendant;
 my %printed;
 my %places;
 my %all_locations;
@@ -298,7 +298,7 @@ foreach my $module(@modules) {
 	# }
 }
 
-umask(0077);	# Don't let PII become publically readable
+umask(0077);	# Don't let PII become publicly readable
 
 my $browser;
 my $cached_browser;
@@ -866,11 +866,11 @@ if($opts{'H'}) {
 				if($opts{'F'}) {
 					@everyone = ($me, ancestors($me));
 				} else {
-					@everyone = ($me, ancestors($me), descendents($me));
+					@everyone = ($me, ancestors($me), descendants($me));
 					my @siblings = ($me->siblings(), $me->half_siblings());
 					foreach my $sibling(@siblings) {
 						# print $sibling->as_string(), "\n";
-						@everyone = descendents($sibling, \@everyone);
+						@everyone = descendants($sibling, \@everyone);
 					}
 					@everyone = (@everyone, @siblings);
 				}
@@ -910,7 +910,7 @@ if($opts{'H'}) {
 
 			my $maxrank = 2;
 			while(1) {
-				my $d = count_descendents_at_level($me, $maxrank + 1);
+				my $d = count_descendants_at_level($me, $maxrank + 1);
 				last if($d == 0);
 				last if($d >= 3);
 
@@ -959,7 +959,7 @@ if($opts{'H'}) {
 				$pdfpage = NJH::PDFPage->new($pdf);
 			}
 
-			# FIXME: This sorting only works when all people are descendents of $me,
+			# FIXME: This sorting only works when all people are descendants of $me,
 			# there are no ancestors involved
 			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
 			@everyone = sort {
@@ -987,12 +987,12 @@ if($opts{'H'}) {
 				} else {
 					last;
 				}
-				if(count_descendents_at_level($parent, $level + 1) > 20) {
+				if(count_descendants_at_level($parent, $level + 1) > 20) {
 					last;
 				}
 				$top = $parent;
 				$level++;
-				# print $top->as_string(), " $level, ", count_descendents_at_level($top, $level), "\n";
+				# print $top->as_string(), " $level, ", count_descendant_at_level($top, $level), "\n";
 			}
 
 			if(($top->xref() ne $me->xref()) && $dot && open(my $fout, '|-', "$dot -Tpng -o$png -Tcmapx -o$filename")) {
@@ -3408,7 +3408,7 @@ sub print_person
 					my $spouse = $spouses[0];
 					foreach my $child(@children) {
 						if($sex eq 'F') {
-							# Check through all possible fathers, since there could be a biologial and
+							# Check through all possible fathers, since there could be a biological and
 							# and adoptive one listed
 							# FIXME: this assumes that the spouse is the biological father, which is not
 							#	a good assumption to make
@@ -3936,7 +3936,7 @@ sub print_person
 					if(ref($e) eq 'Gedcom::Record') {
 						$event = $e;
 					} else {
-						red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
+						red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
 					}
 				}
 				if(ref($event) eq 'Gedcom::Record') {
@@ -3977,7 +3977,7 @@ sub print_person
 						if(ref($r) eq 'Gedcom::Record') {
 							$residence = $r;
 						} else {
-							red_warning({ person => $person, warning => "Residence record is just description ($residence), infomation has been lost" });
+							red_warning({ person => $person, warning => "Residence record is just description ($residence), information has been lost" });
 						}
 					}
 				}
@@ -4829,7 +4829,7 @@ sub print_person
 										if(ref($e) eq 'Gedcom::Record') {
 											$event = $e;
 										} else {
-											# red_warning({ person => $child, warning => "Event record is just description ($event), infomation has been lost" });
+											# red_warning({ person => $child, warning => "Event record is just description ($event), information has been lost" });
 											next EVENT;
 										}
 									}
@@ -5001,7 +5001,7 @@ sub print_person
 		if($all_events_have_date && (scalar(@events) > 0)) {
 			@events = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @events;
 		}
-		# Let's remove things that aren't relavent that may
+		# Let's remove things that aren't relevent that may
 		# allow optimisations in the English
 		while(scalar(@events) > 2) {
 			my $e = $events[scalar(@events) - 1];
@@ -5068,7 +5068,7 @@ sub print_person
 				if(ref($e) eq 'Gedcom::Record') {
 					$event = $e;
 				} else {
-					red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
+					red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
 					$bio .= ' ' . ucfirst($event) . '. ';
 				}
 			}
@@ -5180,7 +5180,7 @@ sub print_person
 					if(ref($e) eq 'Gedcom::Record') {
 						$event = $e;
 					} else {
-						red_warning({ person => $person, warning => "Event record is just description ($event), infomation has been lost" });
+						red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
 						$bio .= ' ' . ucfirst($event) . '. ';
 					}
 				}
@@ -5771,7 +5771,7 @@ sub print_person
 				$notes =~ s/\.$//;
 				# FIXME: If the notes are so long they go over
 				#	a page split into more than one page
-				#	poperly rather than don't print, as now
+				#	properly rather than don't print, as now
 				if((!$opts{'B'}) || (length($notes) < 4000)) {
 					$bio .= " ($notes)";
 				}
@@ -5954,7 +5954,7 @@ sub print_person
 			$bio .= "\n" if($citationcount);
 
 			if($opts{'w'}) {
-				# People alive during the years when censues have been available must
+				# People alive during the years when censuses have been available must
 				# have appeared in at least one census
 				# FIXME:  should be a better test, e.g. catch people 1861-1930, don't
 				#	catch 1862-1865.  The current test misses some but should have
@@ -7450,16 +7450,16 @@ sub Gedcom::Individual::relationship_down
 {
 	my $self = shift;
 	my $other = shift;
-	my @descendents;
+	my @descendant;
 
 	if($me && ($self eq $me)) {
-		unless(@mydescendents) {
-			@mydescendents = $me->descendents();
+		unless(@mydescendant) {
+			@mydescendant = $me->descendants();
 		}
-		return unless scalar(@mydescendents);
-		@descendents = @mydescendents;
+		return unless scalar(@mydescendant);
+		@descendant = @mydescendant;
 	} else {
-		@descendents = $self->descendents();
+		@descendant = $self->descendants();
 	}
 
 	my $sex = get_value({ person => $other, value => 'sex' });
@@ -7469,11 +7469,11 @@ sub Gedcom::Individual::relationship_down
 	}
 
 	# print __LINE__, ': ', $self->as_string(), '/', $other->as_string(), "\n";
-	foreach my $person1(@descendents) {
+	foreach my $person1(@descendant) {
 		# print __LINE__, "\t", $person1->as_string(), "\n";
 		die if($person1 eq $self);
 		if($person1 eq $other) {
-			# Direct desendent
+			# Direct descendant
 			my $steps = stepsabove($other, $self, 0);
 			my $title = ($sex eq 'M') ? 'son' : 'daughter';
 			if($steps >= 5) {
@@ -8006,7 +8006,6 @@ sub place {
 		}
 		if($place =~ /(.+),(.+?),(.+?),(.+?)$/) {
 			my $str = "$2,$3,$4";
-			# If !defined($address) is't already been validated
 			if($params{'person'} && $address) {
 				validate_place({ person => $params{'person'}, place => $place });
 			}
@@ -8155,7 +8154,7 @@ sub notes {
 			if(ref($note) eq 'Gedcom::Record') {
 				$note = $note->full_value();	# Include CONC records
 			} else {
-				complain("Note record is just description ($note), infomation may have been lost");
+				complain("Note record is just description ($note), information may have been lost");
 			}
 			$note =~ s/\r//g;
 			next if($note =~ /^\s*$/);
@@ -8786,7 +8785,7 @@ sub date_to_datetime
 	}
 }
 
-sub descendents
+sub descendants
 {
 	my $person = shift;
 
@@ -8803,7 +8802,7 @@ sub descendents
 			# if(scalar(@spouses)) {
 				# push @list, @spouses;
 			# }
-			@list = descendents($child, \@list);
+			@list = descendant($child, \@list);
 		}
 	}
 
@@ -8829,7 +8828,7 @@ sub ancestors
 			# if(scalar(@spouses)) {
 				# push @list, @spouses;
 			# }
-			@list = descendents($sibling, \@list);
+			@list = descendant($sibling, \@list);
 		}
 	}
 	if(my $father = $person->father()) {
@@ -8842,7 +8841,7 @@ sub ancestors
 			# if(scalar(@spouses)) {
 				# push @list, @spouses;
 			# }
-			@list = descendents($sibling, \@list);
+			@list = descendant($sibling, \@list);
 		}
 	}
 
@@ -9365,7 +9364,7 @@ sub journey
 	return "$rc, arriving $doa";
 }
 
-sub count_descendents_at_level
+sub count_descendant_at_level
 {
 	my $person = shift;
 	my $level = shift;
@@ -9375,7 +9374,7 @@ sub count_descendents_at_level
 		if($level == 1) {
 			$count++;
 		} else {
-			$count += count_descendents_at_level($child, $level - 1);
+			$count += count_descendant_at_level($child, $level - 1);
 		}
 	}
 	return $count;
