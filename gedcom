@@ -5001,7 +5001,7 @@ sub print_person
 		if($all_events_have_date && (scalar(@events) > 0)) {
 			@events = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @events;
 		}
-		# Let's remove things that aren't relevent that may
+		# Let's remove things that aren't relevant that may
 		# allow optimisations in the English
 		while(scalar(@events) > 2) {
 			my $e = $events[scalar(@events) - 1];
@@ -9932,9 +9932,9 @@ sub get_year_from_date($)
 		complain("old-style string ($string) should be in $year");
 		return $year;
 	}
-	my $year = UnixDate(ParseDate($string), '%Y');	# Date::Manip
-
-	return $year if($year);
+	if(my $year = UnixDate(ParseDate($string), '%Y')) {	# Date::Manip
+		return $year;
+	}
 	complain("Can't parse string '$string'");
 }
 
