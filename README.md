@@ -86,7 +86,7 @@ your dad on father's day:
     # Note that this will only print people related to your father, even if you give -a
     gedcom -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
-You can create a book of your family name based on the descendents of John Smith:
+You can create a book of your family name based on the descendants of John Smith:
 
     gedcom -GB smith.pdf -dsh 'John Smith' gedcom-file.ged
 
@@ -136,6 +136,13 @@ The options are:
     -W: don't colorize warning output
     -x: prints a list of towns in a format suitable to import into a google map
     -y: year for -H calendar
+
+## Running on Windows
+
+* Firstly, if you're running Windows 10, install
+[Ubuntu](https://ubuntu.com/tutorials/ubuntu-on-windows#1-overview)
+or install Perl directly, either ActiveState or Strawberry should work fine.
+I have also had success using Cygwin's Perl.
 
 ## Bugs
 
