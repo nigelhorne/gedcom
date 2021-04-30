@@ -8802,7 +8802,7 @@ sub descendants
 			# if(scalar(@spouses)) {
 				# push @list, @spouses;
 			# }
-			@list = descendant($child, \@list);
+			@list = descendants($child, \@list);
 		}
 	}
 
@@ -9364,7 +9364,7 @@ sub journey
 	return "$rc, arriving $doa";
 }
 
-sub count_descendant_at_level
+sub count_descendants_at_level
 {
 	my $person = shift;
 	my $level = shift;
@@ -9374,7 +9374,7 @@ sub count_descendant_at_level
 		if($level == 1) {
 			$count++;
 		} else {
-			$count += count_descendant_at_level($child, $level - 1);
+			$count += count_descendants_at_level($child, $level - 1);
 		}
 	}
 	return $count;
