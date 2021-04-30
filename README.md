@@ -144,6 +144,11 @@ The options are:
 or install Perl directly, either ActiveState or Strawberry should work fine.
 I have also had success using Cygwin's Perl.
 
+* Next follow the instructions at [local::lib](https://metacpan.org/pod/local::lib#The-bootstrapping-technique).
+
+* Load in all the CPAN modules that gedcom uses.
+If you're not sure, run gedcom with no arguments and the program will install its core modules to get started.
+
 ## Bugs
 
 There will be numerous strange handling of Gedcoms since it's not that tightly
