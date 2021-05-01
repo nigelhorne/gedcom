@@ -8828,7 +8828,7 @@ sub ancestors
 			# if(scalar(@spouses)) {
 				# push @list, @spouses;
 			# }
-			@list = descendant($sibling, \@list);
+			@list = descendants($sibling, \@list);
 		}
 	}
 	if(my $father = $person->father()) {
