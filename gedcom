@@ -155,7 +155,7 @@ print "Starting\n" if($opts{'v'});
 
 my $me;
 my @myancestors;
-my @mydescendant;
+my @mydescendants;
 my %printed;
 my %places;
 my %all_locations;
@@ -7453,11 +7453,11 @@ sub Gedcom::Individual::relationship_down
 	my @descendant;
 
 	if($me && ($self eq $me)) {
-		unless(@mydescendant) {
-			@mydescendant = $me->descendants();
+		unless(@mydescendants) {
+			@mydescendants = $me->descendants();
 		}
-		return unless scalar(@mydescendant);
-		@descendant = @mydescendant;
+		return unless scalar(@mydescendants);
+		@descendant = @mydescendants;
 	} else {
 		@descendant = $self->descendants();
 	}

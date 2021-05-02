@@ -49,7 +49,7 @@ You can create a month-to-a-page genealogical calendar of your ancestors:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
-        gedcom -dwHm $i -y 2018 gedcom-file.ged > $i.html
+        gedcom -dwHm $i -y 2021 gedcom-file.ged > $i.html
     done
 
 To print a month-to-a-page calendar of all the Smiths in your tree as a present,
