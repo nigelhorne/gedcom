@@ -84,7 +84,7 @@ You can create a genealogy book as a PDF of your family history to give to
 your dad on father's day:
 
     # Note that this will only print people related to your father, even if you give -a
-    # yum install gd-devel
+    # yum install gd-devel ImageMagick-devel
     gedcom -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
 You can create a book of your family name based on the descendants of John Smith:
