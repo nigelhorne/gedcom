@@ -200,6 +200,7 @@ my $language = get_language();
 @needfull = ();
 my @modules = ('NJH::Normalize');
 if($opts{'B'}) {
+	# yum install gd-devel
 	push @modules, 'File::Temp', 'Image::Resize',
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent',
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
