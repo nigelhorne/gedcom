@@ -566,8 +566,8 @@ if($opts{'F'} && !$opts{'B'}) {
 if($opts{'m'} && !$opts{'H'}) {
 	die '-m only makes sense with the -H option';
 }
-if($opts{'y'} && !$opts{'H'}) {
-	die '-y only makes sense with the -H option';
+if($opts{'y'} && (!$opts{'H'}) && (!$opts{'T'})) {
+	die '-y only makes sense with the -H or -T options';
 }
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
@@ -1794,6 +1794,20 @@ sub print_person
 	} elsif($opts{'T'}) {
 		foreach my $place(get_all_residences($person)) {
 			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
+				if($opts{'y'}) {
+					if(my $d = $place->date()) {
+						$d =~ /(\d{3,4})$/;
+						if($1) {
+							if($1 != $opts{'y'}) {
+								next;
+							}
+						} else {
+							next;
+						}
+					} else {
+						next;
+					}
+				}
 				$p =~ s/^\s//;
 				if($opts{'v'}) {
 					get_location($p);
@@ -1804,8 +1818,36 @@ sub print_person
 		for my $event('birth', 'baptism', 'marriage', 'death', 'burial') {
 			my $p;
 			if(my $r = $person->get_record($event)) {
+				if($opts{'y'}) {
+					if(my $d = $r->date()) {
+						$d =~ /(\d{3,4})$/;
+						if($1) {
+							if($1 != $opts{'y'}) {
+								next;
+							}
+						} else {
+							next;
+						}
+					} else {
+						next;
+					}
+				}
 				$p = place({ person => $person, record => $r, places_printed => \%places_printed, nopreposition => 1 });
 			} elsif($p = get_value({ person => $person, value => "$event place" })) {
+				if($opts{'y'}) {
+					if(my $d = get_value({ person => $person, value => "$event date" })) {
+						$d =~ /(\d{3,4})$/;
+						if($1) {
+							if($1 != $opts{'y'}) {
+								next;
+							}
+						} else {
+							next;
+						}
+					} else {
+						next;
+					}
+				}
 				$p = place({ person => $person, place => $p, places_printed => \%places_printed, nopreposition => 1 });
 			}
 			if($p) {

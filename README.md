@@ -136,7 +136,7 @@ The options are:
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -W: don't colorize warning output
     -x: prints a list of towns in a format suitable to import into a google map
-    -y: year for -H calendar
+    -y: year for -H calendar, or -T to give a list of places for a specific year
 
 ## Running on Windows
 
