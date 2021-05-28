@@ -923,7 +923,7 @@ if($opts{'H'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
-		if($opts{'G'}) {
+		if($opts{'G'} && $dot) {
 			if($me->father() || $me->mother()) {
 				print STDERR $me->as_string({ include_years => 1, middle_names => 1, nee => 1 }), ":\n\t";
 				die 'A generations book (-B and -G) must have the -h person at the top of the tree';
