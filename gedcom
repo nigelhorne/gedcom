@@ -202,8 +202,14 @@ my $language = get_language();
 my @modules = ('NJH::Normalize');
 if($opts{'B'}) {
 	# yum install gd-devel ImageMagick-devel
-	push @modules, 'File::Temp', 'Image::Resize',
-		'Image::Magick 6.9.12-1', 	# Debian lacks ImageMagick-7
+	my $magick;
+	if($^O eq 'linux') {
+		# Debian lacks ImageMagick-7
+		$magick = 'Image::Magick 6.9.12-1';
+	} else {
+		$magick = 'Image::Magick';
+	}
+	push @modules, 'File::Temp', 'Image::Resize', $magick,
 		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent',
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
