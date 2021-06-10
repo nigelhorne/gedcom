@@ -2918,7 +2918,7 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
-			$bio .= ' ' . i18n({ person => $person, gender => 1, format => 'was born' }) . ' ';
+			$bio .= i18n({ person => $person, gender => 1, format => ' was born ' });
 			if($language eq 'French') {
 				$bio .= "il y a $aob " . (($aob == 1) ? 'an' : 'ans');
 				if($opts{'t'}) {
@@ -3001,12 +3001,7 @@ sub print_person
 					complain({ person => $person, warning => 'Date of birth is known, but not place' });
 				}
 
-				if($language eq 'French') {
-					$bio .= ' est ';
-					$bio .= ($sex eq 'M' ? "n\N{U+00E9}" : "n\N{U+00E9}e");
-				} else {
-					$bio .= ' was born';
-				}
+				$bio .= i18n({ person => $person, gender => 1, format => ' was born' });
 				$bio .= $birth_place if($birth_place);
 
 				if($dateofbirth) {
