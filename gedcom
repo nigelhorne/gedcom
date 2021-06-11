@@ -2724,7 +2724,7 @@ sub print_person
 						} else {
 							$bio .= ordinate($age_index);
 						}
-						$bio .= ' ' . i18n('of %d children', scalar(@siblings) + 1);
+						$bio .= i18n(' of %d children', scalar(@siblings) + 1);
 					} else {
 						if($language eq 'French') {
 							$bio .= "'enfant";
@@ -2748,7 +2748,7 @@ sub print_person
 				}
 			}
 
-			$bio .= ' ' . i18n('of');
+			$bio .= i18n(' of');
 
 			if($father) {
 				$bio .= ' ' . $father->as_string();
@@ -2774,7 +2774,7 @@ sub print_person
 					}
 				}
 				if($mother) {
-					$bio .= ' ' . i18n('and');
+					$bio .= i18n(' and');
 				} else {
 					$bio .= ', ';
 					$printed_comma = 1;
@@ -2843,7 +2843,7 @@ sub print_person
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$bio .= ', ';
 				} elsif(is_alive(person => $person)) {
-					$bio .= ' ' . i18n('is') . ' ';
+					$bio .= i18n(' is ');
 				} else {
 					if($language eq 'French') {
 						$bio .= " \N{U+00E9}tait ";
@@ -4997,7 +4997,7 @@ sub print_person
 				while(!defined($residencestringarray[scalar(@residencestringarray) - 1])) {
 					pop @residencestringarray;
 				}
-				# $bio .= ', ' . lcfirst($pronoun) . ' ' . i18n('was living') . ' ' .
+				# $bio .= ', ' . lcfirst($pronoun) . i18n(' was living ') .
 					# Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => i18n('and')});
 				$bio .= ', ' . lcfirst($pronoun) . i18n(' was living ') . conjunction(@residencestringarray);
 
