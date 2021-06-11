@@ -4974,6 +4974,8 @@ sub print_person
 						} else {
 							$bio .= "\n\t";
 						}
+					} elsif(!$end_of_sentence) {
+						$bio .= ' ';
 					}
 					$bio .= ucfirst(i18n('during %s life', lc($person->possessive())));
 				}
