@@ -2766,10 +2766,10 @@ sub print_person
 								$occupation = Lingua::EN::ABC::a2b($occupation);
 							}
 						}
-						if($language eq 'English') {
-							$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
-						} else {
+						if($language eq 'French') {
 							$bio .= " (un $occupation)";
+						} else {
+							$bio .= ' (' . Lingua::EN::Inflect::A($occupation) . ')';
 						}
 					}
 				}
