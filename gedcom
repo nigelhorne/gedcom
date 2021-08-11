@@ -3731,7 +3731,7 @@ sub print_person
 					if($placeofmarriage) {
 						$placeofmarriage = undef if(lc($placeofmarriage) eq 'unknown');
 					}
-					my $name .= $spouse->as_string();
+					my $name = $spouse->as_string();
 					if($placeofmarriage) {
 						$placeofmarriage = place({ person => $spouse, place => $placeofmarriage, places_printed => \%places_printed });
 						if($previousplace && ($placeofmarriage eq $previousplace)) {
