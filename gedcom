@@ -3659,6 +3659,10 @@ sub print_person
 					}
 				}
 				$bio .= "[$marriagecitation]" if($marriagecitation);
+				if(my $notes = notes(record => $marriage)) {
+					$notes =~ s/\.$//;
+					$bio .= " ($notes)";
+				}
 			} else {
 				if(!$end_of_sentence) {
 					$bio .= i18n(' and');
@@ -8294,6 +8298,7 @@ sub notes {
 			$note =~ s/\s+$//g;
 			$note =~ s/\. /.  /g;
 			$note =~ s/Dr\.\s\s/Dr. /g;
+			$note =~ s/Mr\.\s\s/Mr. /g;
 			$note =~ s/Mrs\.\s\s/Mrs. /g;
 			$note =~ s/Rev\.\s\s/Rev. /g;
 			$note =~ s/St\.\s\s/St. /g;
