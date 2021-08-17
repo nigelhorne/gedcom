@@ -2287,7 +2287,7 @@ sub print_person
 
 	if((!defined($marriage)) && scalar(@spouses)) {
 		$marriage = $spouses[0]->get_record('marriage');
-		if((!defined($marriage)) && scalar(@spouses)) {
+		if(!defined($marriage)) {
 			if(scalar(@events) == 1) {
 				my $event = $person->event();
 				if(!ref($event)) {
@@ -9742,7 +9742,6 @@ sub dateofmarriage
 	}
 
 	my $person = $params{'person'};
-
 
 	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage'))) {
