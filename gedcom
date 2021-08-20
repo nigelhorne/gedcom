@@ -3582,7 +3582,7 @@ sub print_person
 									$bio .= ' (un ' . lc($soccupation) . ')';
 								}
 							}
-							$bio .= ', ';
+							$bio .= ': ';
 							$haveprintedspousename = 1;
 						}
 						if($numberofchildrenwiththisspouse == 1) {
