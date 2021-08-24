@@ -2269,7 +2269,7 @@ sub print_person
 				last;
 			}
 			if(my $date = $event->date()){
-				if(!$dfg->parse_datetime(date => $date)) {
+				if(($date =~ /^abt/) || !$dfg->parse_datetime(date => $date)) {
 					$all_have_dates = 0;
 					last;
 				}
