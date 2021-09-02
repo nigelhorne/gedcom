@@ -9257,7 +9257,7 @@ sub get_all_residences
 				next unless($date);
 
 				if(my $place = place({ person => $person, record => $residence, nopreposition => 1 })) {
-					my $year = get_year_from_date($date);
+					$year = get_year_from_date($date);
 					$place =~ s/^\s+//;
 					if($prev_year && $prev_place) {
 						if(($year >= 1900) && ($year >= $prev_year)) {
