@@ -81,7 +81,7 @@ BEGIN {
 	}
 	# Fix for this module not being found
 	# https://cpan.metacpan.org/authors/id/G/GR/GRAY/Geo-Coder-PlaceFinder-0.05.tar.gz
-	eval 'use Geo::Coder::PlaceFinder';
+	eval { use Geo::Coder::PlaceFinder };
 	if($@) {
 		push @needfull, 'JSON', 'F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz'
 	}
@@ -94,12 +94,12 @@ BEGIN {
 		}
 	} else {
 		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fa/)) {
-			eval 'use Lingua::FA::Number';
+			eval { use Lingua::FA::Number };
 			if($@) {
 				push @needfull, 'Lingua::FA::Number', 'HTML::Entities';
 			}
 		}
-		eval 'use Lingua::EN::Numbers::Ordinate';
+		eval { use Lingua::EN::Numbers::Ordinate };
 		if($@) {
 			push @needfull, 'Lingua::EN::Numbers::Ordinate';
 		}
@@ -5621,18 +5621,18 @@ sub print_person
 							$bio .= place($opts);
 						}
 					}
-					my $b;
+					my $record;
 					if($type eq 'burial') {
 						$bio .= ' ' . year({ person => $person, date => $dateofburial });
-						$b = notes({ record => $burial, paragraph => 0 });
+						$record = $burial;
 					} else {
 						$bio .= ' ' . year({ person => $person, date => $dateofcremation });
-						$b = notes({ record => $cremation, paragraph => 0 });
+						$record = $cremation;
 					}
-					if($b) {
-						$b =~ s/\.$//;
-						$b =~ tr/\r//;
-						$bio .= " ($b)";
+					if(my $n = notes({ record => $record, paragraph => 0 })) {
+						$n =~ s/\.$//;
+						$n =~ tr/\r//;
+						$bio .= " ($n)";
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					$bio .= " $pronoun ";
@@ -9865,7 +9865,7 @@ sub dump_places {
 				next;
 			}
 		} elsif($opts{'M'}) {
-			if(my $location = get_location($place)) {
+			if($location = get_location($place)) {
 				my $lat = $location->lat();
 				my $long = $location->long();
 				if(!defined($printed{$long}{$lat})) {
