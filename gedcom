@@ -81,9 +81,9 @@ BEGIN {
 	}
 	# Fix for this module not being found
 	# https://cpan.metacpan.org/authors/id/G/GR/GRAY/Geo-Coder-PlaceFinder-0.05.tar.gz
-	eval { use Geo::Coder::PlaceFinder };
+	eval 'use Geo::Coder::PlaceFinder';
 	if($@) {
-		push @needfull, 'JSON', 'F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz'
+		push @needfull, 'Net::OAuth', 'JSON', 'F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz'
 	}
 
 	if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fr/)) {
@@ -94,12 +94,12 @@ BEGIN {
 		}
 	} else {
 		if(defined($ENV{'LANG'}) && ($ENV{'LANG'} =~ /^fa/)) {
-			eval { use Lingua::FA::Number };
+			eval 'use Lingua::FA::Number';
 			if($@) {
 				push @needfull, 'Lingua::FA::Number', 'HTML::Entities';
 			}
 		}
-		eval { use Lingua::EN::Numbers::Ordinate };
+		eval 'use Lingua::EN::Numbers::Ordinate';
 		if($@) {
 			push @needfull, 'Lingua::EN::Numbers::Ordinate';
 		}
