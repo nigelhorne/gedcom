@@ -5595,7 +5595,7 @@ sub print_person
 							$bio .= 'e';
 						}
 					} else {
-						$bio .= ($type eq 'burial') ? 'was buried' : 'was cremated';
+						$bio .= ($type eq 'burial') ? i18n({ person => $person, gender => 1, format => 'was buried' }) : 'was cremated';
 					}
 					if(my $city = ($placeofburial // $placeofcremation)) {
 						if($placeofbirth && ($city eq $placeofbirth)) {
@@ -10336,8 +10336,8 @@ they:F:elles
 times::temps
 to::à
 twice::deux fois
-was buried:M:a été enterré
-was buried:F:a été enterrée
+was buried:M:a été inhumé
+was buried:F:a été inhumée
 was born:M:est né
 was born:F:est née
 was married to:M:a été marié à
