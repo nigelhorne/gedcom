@@ -2581,7 +2581,6 @@ sub print_person
 
 				$bio .= ucfirst(i18n({
 					person => $person,
-					gender => 1,
 					format => "$article %s",
 					args => lc(conjunction(@occupations))
 				}));
@@ -2927,7 +2926,7 @@ sub print_person
 			$bio .= '. ';
 			$end_of_sentence = 1;
 		} elsif($aob) {
-			$bio .= i18n({ person => $person, gender => 1, format => ' was born ' });
+			$bio .= i18n({ person => $person, format => ' was born ' });
 			if($language eq 'French') {
 				$bio .= "il y a $aob " . (($aob == 1) ? 'an' : 'ans');
 				if($opts{'t'}) {
@@ -3010,7 +3009,7 @@ sub print_person
 					complain({ person => $person, warning => 'Date of birth is known, but not place' });
 				}
 
-				$bio .= i18n({ person => $person, gender => 1, format => ' was born' });
+				$bio .= i18n({ person => $person, format => ' was born' });
 				$bio .= $birth_place if($birth_place);
 
 				if($dateofbirth) {
@@ -5023,7 +5022,7 @@ sub print_person
 
 			# Print out the residence strings with semi-colons between each residence
 			if(scalar(@residencestringarray)) {
-				$bio .= '. ' unless($end_of_sentence);
+				$bio .= '. ' unless($end_of_sentence || $start_of_paragraph);
 				my $first = $residencelist[0];
 				if((scalar(@residencelist) == 1) && (my $rdate = $first->date())) {
 					$bio .= ' ' . ucfirst(year({ person => $person, date => $rdate, circa => 'About' }));
@@ -5604,7 +5603,7 @@ sub print_person
 							$bio .= 'e';
 						}
 					} else {
-						$bio .= ($type eq 'burial') ? i18n({ person => $person, gender => 1, format => 'was buried' }) : 'was cremated';
+						$bio .= ($type eq 'burial') ? i18n({ person => $person, format => 'was buried' }) : 'was cremated';
 					}
 					if(my $city = ($placeofburial // $placeofcremation)) {
 						if($placeofbirth && ($city eq $placeofbirth)) {
@@ -5658,7 +5657,7 @@ sub print_person
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					$bio .= " $pronoun ";
-					$bio .= i18n({ person => $person, gender => 1, format => 'was buried' });
+					$bio .= i18n({ person => $person, format => 'was buried' });
 					if(my $address = $burial->address()) {
 						$bio .= " at $address";
 					}
@@ -5700,18 +5699,13 @@ sub print_person
 					}
 				}
 				if(!$diedathome) {
-					$bio .= '. ' if(!$end_of_sentence);
-					if($language eq 'French') {
-						if($sex eq 'M') {
-							$bio .= " $pronoun est mort";
-						} else {
-							$bio .= " $pronoun est morte";
-						}
-					} else {
-						$bio .= ' ' unless($start_of_paragraph);
-						$bio .= "$pronoun died";
-						$start_of_paragraph = 0;
-					}
+					$bio .= '. ' if((!$end_of_sentence) && !$start_of_paragraph);
+					$bio .= ' ' unless($start_of_paragraph);
+
+					$bio .= $pronoun . i18n({ person => $person, format => ' died ' });
+
+					$start_of_paragraph = 0;
+					$end_of_sentence = 0;
 					if($dateofdeath) {
 						if($dateofdeath =~ /\s$/) {
 							complain({ person => $person, warning => 'Removing trailing spaces from date of death' });
@@ -5762,7 +5756,7 @@ sub print_person
 					  defined($placeofdeath) && ($placeofburial eq $placeofdeath) && (!$address) && !$death->address()) {
 						$bio .= ' y';
 					}
-					$bio .= i18n({ person => $person, gender => 1, format => ' was buried' });
+					$bio .= i18n({ person => $person, format => ' was buried' });
 					if($placeofburial) {
 						if(defined($placeofdeath) && ($placeofburial eq $placeofdeath) && !$death->address()) {
 							$bio .= ' there' if($language ne 'French');
@@ -5878,7 +5872,7 @@ sub print_person
 				}
 				$bio .= $pronoun;
 			}
-			$bio .= i18n({ person => $person, gender => 1, format => ' died' });
+			$bio .= i18n({ person => $person, format => ' died' });
 
 			if($dateofdeath) {
 				if($dateofbirth && ($dateofdeath eq $dateofbirth)) {
@@ -10194,8 +10188,8 @@ sub i18n
 
 	my $format = $params{'format'};
 	if(!defined($format)) {
-		my $i = 0;
 		print "\n";
+		my $i = 0;
 		while((my @call_details = caller($i++))) {
 			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 		}
