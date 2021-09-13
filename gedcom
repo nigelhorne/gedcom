@@ -1090,6 +1090,7 @@ if($opts{'H'}) {
 				%printed = ();
 			}
 			# If this fails, try this:
+			#	apngasm version 3.1.6
 			#	system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
 
 			# apngasm version 2.91
