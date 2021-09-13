@@ -2759,7 +2759,7 @@ sub print_person
 			$bio->append(i18n(' of'));
 
 			if($father) {
-				$bio->append(' ' . $father->as_string());
+				$bio->append([' ', $father]);
 				if(!$same_occupation_as_father) {
 					my @occupations = get_all_occupations(person => $father);
 					# TODO: print all occupations
@@ -2783,7 +2783,7 @@ sub print_person
 				}
 				if($mother) {
 					$bio->append(i18n(' and'));
-				} else {
+				} elsif(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $relationship || scalar(@spouses)) && $occupations[0]) {
 					$bio->append(', ');
 					$printed_comma = 1;
 				}
@@ -2804,10 +2804,10 @@ sub print_person
 						}
 					}
 				}
-			}
-			if(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses) || $relationship) && ($occupations[0])) {
-				$bio->append(', ');
-				$printed_comma = 1;
+				if(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $relationship || scalar(@spouses)) && $occupations[0] && !$printed_comma) {
+					$bio->append(', ');
+					$printed_comma = 1;
+				}
 			}
 			if($language eq 'French') {
 				$bio =~ s/^\tThe child of\s/\tL'enfant de /;
@@ -2821,15 +2821,15 @@ sub print_person
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 					$bio->append(', ') unless($printed_comma);
 				} elsif(is_alive(person => $person)) {
-					$bio->append($person->as_string() . ' is ');
+					$bio->append([$person, ' is ']);
 				} else {
 					if($opts{'p'} || $opts{'a'}) {
 						$bio->append(', ') unless($printed_comma);
 					}
 					if($language eq 'French') {
-						$bio->append($person->as_string() . " \N{U+00E9}tait ");
+						$bio->append([$person, " \N{U+00E9}tait "]);
 					} else {
-						$bio->append($person->as_string() . ' was ');
+						$bio->append([$person, ' was ']);
 					}
 				}
 				$bio->append(i18n('your'));
@@ -2847,7 +2847,7 @@ sub print_person
 				}
 				$bio->append(', ');
 			} else {
-				$bio->append($person->as_string());
+				$bio->append($person);
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$bio->append(', ');
 				} elsif(is_alive(person => $person)) {
@@ -2940,7 +2940,7 @@ sub print_person
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
 				if(!defined($p)) {
 					# Most likely there was more than one birth() record
-					die 'BUG: ', $person->as_string, ": place() returned undef on '$placeofbirth'";
+					die 'BUG: ', $person->as_string(), ": place() returned undef on '$placeofbirth'";
 				}
 				$bio->append($p);
 				$places_printed{$p} = 1;
@@ -3378,7 +3378,7 @@ sub print_person
 								$text->font($params{'font'}, 12);
 								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$bio = ' ';
+							$bio = Data::Text->new()->append(' ');
 						}
 					} else {
 						$bio->append("\n\t");
@@ -3468,7 +3468,7 @@ sub print_person
 							complain({ person => $spouses[0], warning => 'seems to have no first name' });
 						}
 					} else {
-						$bio->append($spouses[0]->as_string());
+						$bio->append($spouses[0]);
 						$haveprintedspousename = 1;
 					}
 				}
@@ -3635,8 +3635,7 @@ sub print_person
 							}
 						}
 					} else {
-						$bio->append(place({ person => $person, record => $marriage }));
-						$bio->append(' ');
+						$bio->append(place({ person => $person, record => $marriage }))->append(' ');
 					}
 					$bio->append(year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt));
 				} else {
@@ -3865,9 +3864,9 @@ sub print_person
 					}
 					$bio->append(".  $pronoun ");
 					if($language eq 'French') {
-						$bio->append(($all_children_are_alive ? 'a ' : 'a eu '));
+						$bio->append($all_children_are_alive ? 'a ' : 'a eu ');
 					} else {
-						$bio->append(($all_children_are_alive ? 'has ' : 'had '));
+						$bio->append($all_children_are_alive ? 'has ' : 'had ');
 					}
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
@@ -3883,16 +3882,12 @@ sub print_person
 						}
 						if($childrenseen >= $numberofchildren) {
 							if($parentofall) {
-								if($language eq 'French') {
-									$bio->append(' avec ' . $parentofall->as_string());
-								} else {
-									$bio->append(' with ' . $parentofall->as_string());
-								}
+								$bio->append([i18n(' with '), $parentofall]);
 							} else {
 								complain({ person => $person, warning => 'BUG: parentofall not set when only one child' });
 							}
 						} else {
-							$bio->append(' with an unknown ' . (($sex eq 'M') ? 'mother' : 'father'));
+							$bio->append([' with an unknown ', (($sex eq 'M') ? 'mother' : 'father')]);
 						}
 						$bio->append(', ' . $children[0]->given_names());
 					} else {
@@ -3952,7 +3947,7 @@ sub print_person
 					}
 				}
 			}
-			if($bio =~ /\.$/) {
+			if($bio->as_string() =~ /\.$/) {
 				$end_of_sentence = 1;
 			} else {
 				$end_of_sentence = 0;
@@ -5038,7 +5033,7 @@ sub print_person
 								$text->font($params{'font'}, 12);
 								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$bio = ' ';
+							$bio = Data::Text->new()->append(' ');
 						} else {
 							$bio->append("\n\t");
 						}
@@ -5112,9 +5107,10 @@ sub print_person
 				$end_of_sentence = 1;
 			}
 		}
-		$bio =~ s/,;/;/g;
-		$bio =~ s/;$//;
-		$bio =~ s/,.$/./;
+
+		# $bio =~ s/,;/;/g;
+		# $bio =~ s/;$//;
+		# $bio =~ s/,.$/./;
 
 		my $all_events_have_date = 1;
 		foreach my $event(@events) {
@@ -5251,6 +5247,7 @@ sub print_person
 						$bio->append(" ($notes)");
 					}
 					$bio->append('. ');
+					$end_of_sentence = 1;
 				} elsif($type eq 'Departure') {
 					$bio->append(' ' . $person->pronoun());
 					if($ENV{'LANG'} =~ /^en_US/) {
@@ -5267,6 +5264,7 @@ sub print_person
 						$bio->append(" ($notes)");
 					}
 					$bio->append('. ');
+					$end_of_sentence = 1;
 				} elsif(($type eq 'Military service') || ($type eq 'Military')) {
 					$bio->append('. ') if(!$end_of_sentence);
 					my $date = year(record => $event);
@@ -5591,12 +5589,15 @@ sub print_person
 		if($placeofburial || $dateofburial || $placeofcremation || $dateofcremation) {
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
 				$bio->append('. ') if(!$end_of_sentence);
+				$end_of_sentence = 1;
+
 				my $type = 'burial';
 				if($placeofcremation || $dateofcremation) {
 					$type = 'cremation';
 				}
 				if($dateofburial || $dateofcremation) {
 					$bio->append(" $pronoun ");
+					$end_of_sentence = 0;
 					if($language eq 'French') {
 						$bio->append("est enterr\N{U+00E9}");
 						if($sex eq 'F') {
@@ -5674,7 +5675,6 @@ sub print_person
 						i18n({ person => $person, format => 'is buried' }) .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage }));
 				}
-				$end_of_sentence = 0;
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
 					$bio->append('.') if(!$end_of_sentence);
@@ -5690,7 +5690,7 @@ sub print_person
 								$text->font($params{'font'}, 12);
 								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$bio = ' ';
+							$bio = Data::Text->new()->append(' ');
 						}
 					} else {
 						$bio->append("\n\t");
@@ -5700,9 +5700,8 @@ sub print_person
 				}
 				if(!$diedathome) {
 					$bio->append('. ') if((!$end_of_sentence) && !$start_of_paragraph);
-					$bio->append(' ') unless($start_of_paragraph);
 
-					$bio->append($pronoun . i18n({ person => $person, format => ' died ' }));
+					$bio->append([$pronoun, i18n({ person => $person, format => ' died' })]);
 
 					$start_of_paragraph = 0;
 					$end_of_sentence = 0;
@@ -5865,7 +5864,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = ' ';
+						$bio = Data::Text->new()->append(' ');
 					}
 				} else {
 					$bio->append("\n\t");
@@ -5930,13 +5929,14 @@ sub print_person
 					$bio->append(" ($notes)");
 				}
 			}
-			if($bio =~ /\.$/) {
+			if($bio->as_string() =~ /\.$/) {
 				$end_of_sentence = 1;
 			} else {
 				$end_of_sentence = 0;
 			}
 		}
 
+# die $bio->as_string() if((!$end_of_sentence) && ($bio->as_string() =~ /[\.\,]\s*$/));
 		$bio->append('.') if(!$end_of_sentence);
 
 		# if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
@@ -5956,7 +5956,7 @@ sub print_person
 						# print STDERR "\n", length($bio), "\n", length($notes), "\n";
 						die "$bio: Print failure" if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 					}
-					$bio = ' ';
+					$bio = Data::Text->new()->append(' ');
 				}
 			} else {
 				$bio->append("\n");
@@ -6065,8 +6065,7 @@ sub print_person
 						$bio = undef;
 					}
 				} else {
-					$bio =~ s/\s+$//;
-					$bio->append("\n\t");
+					$bio->trim()->append("\n\t");
 				}
 				$bio->append("[$index]: $title");
 				# if(defined(my $publication = $citation->publication())) {
