@@ -10154,8 +10154,7 @@ sub get_language
 	return 'English';
 }
 
-sub get_language_code
-{
+sub get_language_code {
 	if($ENV{'LANGUAGE'}) {
 		if($ENV{'LANGUAGE'} =~ /^([a-z]{2})/i) {
 			return lc($1);
@@ -10168,6 +10167,9 @@ sub get_language_code
 		if($val =~ /^([a-z]{2})/i) {
 			return lc($1);
 		}
+	}
+	if(defined($ENV{'LANG'}) && (($ENV{'LANG'} =~ /^C\./) || ($ENV{'LANG'} eq 'C'))) {
+		return 'en';
 	}
 	return;	# undef
 }
