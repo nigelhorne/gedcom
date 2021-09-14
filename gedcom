@@ -6066,7 +6066,7 @@ sub print_person
 						$bio = undef;
 					}
 				} else {
-					$bio->trim()->append("\n\t");
+					$bio->rtrim()->append("\n\t");
 				}
 				$bio->append("[$index]: $title");
 				# if(defined(my $publication = $citation->publication())) {
