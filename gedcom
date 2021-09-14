@@ -3361,15 +3361,15 @@ sub print_person
 						$bio->append('at the age of ' . ($myod - $yob) .
 							' following the death of ' .
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" father in $fyod and mother in $myod. ");
+							" father in $fyod and mother in $myod.");
 					} else {
 						$bio->append('at the age of ' . ($fyod - $yob) .
 							' following the death of ' .
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" mother in $myod and father in $fyod. ");
+							" mother in $myod and father in $fyod.");
 					}
 					if($opts{'B'}) {
-						if($bio) {
+						if($bio->length()) {
 							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 								$text->textend();
 
@@ -5679,9 +5679,9 @@ sub print_person
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
 					$bio->append('.') if(!$end_of_sentence);
-					$end_of_sentence = 0;
+					$end_of_sentence = 1;
 					if($opts{'B'}) {
-						if($bio) {
+						if($bio->length()) {
 							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 								$text->textend();
 
@@ -5691,7 +5691,9 @@ sub print_person
 								$text->font($params{'font'}, 12);
 								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$bio = Data::Text->new()->append(' ');
+							$bio = Data::Text->new();
+							$end_of_sentence = 0;
+							$start_of_paragraph = 1;
 						}
 					} else {
 						$bio->append("\n\t");
@@ -5855,7 +5857,7 @@ sub print_person
 			} else {
 				$bio->append('.') if(!$end_of_sentence);
 				if($opts{'B'}) {
-					if($bio) {
+					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
 
@@ -5946,7 +5948,7 @@ sub print_person
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			if($opts{'B'}) {
-				if($bio) {
+				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 						$text->textend();
 
@@ -6053,7 +6055,7 @@ sub print_person
 					}
 				}
 				if($opts{'B'}) {
-					if($bio) {
+					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
 
