@@ -6096,7 +6096,7 @@ sub print_person
 				}
 				if($citationnotes{$index}) {
 					$citationnotes{$index} =~ s/\.$//;
-					$bio->append("($citationnotes{$index})");
+					$bio->append(" ($citationnotes{$index})");
 				}
 
 				if(($title =~ /census/i) && ($title =~ /(\d{3,4})/)) {
