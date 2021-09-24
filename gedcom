@@ -5306,6 +5306,8 @@ sub print_person
 						$bio->append(" ($notes)");
 						$end_of_sentence = 0;
 					}
+				} elsif($end_of_sentence) {
+					$bio->append(' ');
 				}
 			}
 		} elsif(scalar(@events) > 0) {
