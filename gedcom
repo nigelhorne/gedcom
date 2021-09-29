@@ -9496,7 +9496,7 @@ sub journey
 			if($doa =~ /^\d/) {
 				$doa = "on $doa";
 			} elsif($yoa == $yod) {
-				$doa = 'later that same year';
+				$doa = i18n('later that same year');
 			} else {
 				$doa = "during $yoa";
 			}
@@ -10299,8 +10299,9 @@ he::he
 husband::husband
 is::is
 is buried::is buried
-married::married
 is married to::is married to
+later that same year::later that same year
+married::married
 of::of
 of %d children::of %d children
 on your father's side::on your father's side
@@ -10341,11 +10342,12 @@ had::a eu
 he::il
 husband::marie
 is::est
-married::a marié
 is buried:M:est inhumé
 is buried:F:est inhumée
 is married to:M:est marié à
 is married to:F:est mariée à
+later that same year::plus tard cette année
+married::a marié
 of::de
 of %d children::de %d enfants
 on your father's side::sur la côté de votre père
