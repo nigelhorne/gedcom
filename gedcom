@@ -4200,9 +4200,10 @@ sub print_person
 			foreach my $residence(@residencelist) {
 				my $rdate = $residence->date();
 				my $residencestring;
-
 				my $latitude;
 				my $longitude;
+
+				print __LINE__, ": count = $count\n" if($opts{'v'});
 
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
 					if($birth && $dateofbirth && $rdate && ($rdate eq $dateofbirth) &&
@@ -4213,8 +4214,13 @@ sub print_person
 						next;
 					}
 					if($birth && places_are_the_same({ person => $person, first => $birth, second => $residence})) {
-						$residencestring = i18n(' at ') . ($person->pronoun() eq 'She' ? 'her' : 'his')
-								. i18n(' birthplace');
+						$residencestring = i18n(' at ');
+						if($language eq 'French') {
+							$residencestring .= 'sa';
+						} else {
+							$residencestring .= ($person->pronoun() eq 'She') ? 'her' : 'his';
+						}
+						$residencestring .= i18n(' birthplace');
 					} elsif(my $p = place({ person => $person, record => $residence, places_printed => \%places_printed })) {
 						if($residence->type() && ($residence->type() eq 'Hospitalisation')) {
 							$residencestring = ' in hospital';
