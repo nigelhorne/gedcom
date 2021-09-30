@@ -4762,7 +4762,7 @@ sub print_person
 								complain({ person => $person, warning => [ 'Not living with either parent in childhood when aged ', $bdiff->in_units('years') ] });
 							} elsif($father_date) {
 								$residencestring .= ' (the same place as ' . 
-									($person->pronoun() eq 'She' ? 'her' : 'his') .  ' father ';
+									($person->pronoun() eq 'She' ? 'her' : 'his') . ' father ';
 								if(datecmp($rdate, $father_date) > 0) {
 									$residencestring .= 'had been';
 								} else {
@@ -4773,7 +4773,7 @@ sub print_person
 									')';
 							} elsif($mother_date) {
 								$residencestring .= ' (the same place as ' . 
-									($person->pronoun() eq 'She' ? 'her' : 'his') .  ' mother ';
+									($person->pronoun() eq 'She' ? 'her' : 'his') . ' mother ';
 								if(datecmp($rdate, $mother_date) > 0) {
 									$residencestring .= 'had been';
 								} else {
@@ -5312,8 +5312,8 @@ sub print_person
 						$bio->append(" ($notes)");
 						$end_of_sentence = 0;
 					}
-				} elsif($end_of_sentence) {
-					$bio->append(' ');
+				# } elsif($end_of_sentence) {
+					# $bio->append(' ');
 				}
 			}
 		} elsif(scalar(@events) > 0) {
