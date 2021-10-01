@@ -3983,11 +3983,11 @@ sub print_person
 			$bio->append('.  ') if(!$end_of_sentence);
 			$bio->append("$pronoun ");
 			if(scalar(@children) > scalar(@childrenunknownparent)) {
-				$bio->append('also ');
+				$bio->append(i18n('also '));
 			}
-			$bio->append('had ' . scalar(@childrenunknownparent) . ' ');
+			$bio->append(i18n('had ') . scalar(@childrenunknownparent) . ' ');
 			if(scalar(@childrenunknownparent) == 1) {
-				$bio->append('child, ');
+				$bio->append(i18n('child, '));
 			} else {
 				$bio->append('children, ');
 			}
@@ -5712,7 +5712,7 @@ sub print_person
 				if(!$diedathome) {
 					$bio->append('. ') if((!$end_of_sentence) && !$start_of_paragraph);
 
-					$bio->append([$pronoun, i18n({ person => $person, format => ' died' })]);
+					$bio->append([' ', $pronoun, i18n({ person => $person, format => ' died' })]);
 
 					$start_of_paragraph = 0;
 					$end_of_sentence = 0;
@@ -10247,7 +10247,7 @@ sub i18n
 				}
 			}
 			utf8::decode($translation);
-			$translation .= ', ' if($append_comma);
+			$translation .= ',' if($append_comma);
 			$translation .= ' ' if($append_space);
 			if($prepend_space) {
 				return " $translation";
@@ -10290,6 +10290,7 @@ at::at
 birthplace::birthplace
 both with %s::both with %s
 check out %s::check out %s
+child::child
 died::died
 during %s life::during %s life
 eldest::eldest
@@ -10333,6 +10334,7 @@ at::à
 birthplace::ville natal
 both with %s::toutes les deux avec %s
 check out %s::visitez %s
+child::enfant
 died:M:est mort
 died:F:est morte
 during %s life::pendant sa vie
