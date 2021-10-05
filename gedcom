@@ -251,6 +251,9 @@ if($opts{'A'} || $opts{'B'} || $opts{'G'} || $opts{'i'}) {
 }
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'HTTP::Cache::Transparent', 'LWP::UserAgent::Cached', 'LWP::UserAgent::Throttled';
+	if($opts{'M'}) {
+		push @modules, 'IPC::Run';
+	}
 }
 if($language) {
 	push @modules, 'Locale::Country::Multilingual';
@@ -1089,12 +1092,19 @@ if($opts{'H'}) {
 				}
 				%printed = ();
 			}
-			# If this fails, try this:
-			#	apngasm version 3.1.6
-			#	system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
 
-			# apngasm version 2.91
-			system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+			my $version;
+
+			IPC::Run::run([ 'apngasm', '-v' ], '>', \$version);
+			if($version =~ /v3\.1\.6/) {
+				system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
+			} else {
+				# If this fails, try this:
+				#	system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
+
+				# apngasm version 2.91
+				system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+			}
 			unlink 'output.png', @files;
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
