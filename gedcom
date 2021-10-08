@@ -5689,13 +5689,13 @@ sub print_person
 					} else {
 						$bio->append(place({ person => $person, place => $placeofburial }));
 					}
-					$bio->append('. ');
-					$end_of_sentence = 1;
 				} else {
 					$bio->append(" $pronoun " .
 						i18n({ person => $person, format => 'is buried' }) .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage }));
 				}
+				$bio->append('. ');
+				$end_of_sentence = 1;
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
 					$bio->append('.') if(!$end_of_sentence);
