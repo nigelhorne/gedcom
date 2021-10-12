@@ -5394,8 +5394,8 @@ sub print_person
 						}
 						if($previous) {
 							if($prev_type eq 'Departure') {
-								$bio->append('.  ') if(!$end_of_sentence);
-								$bio->append(journey({ person => $person, arrival => $event, departure => $previous }));
+								$bio->append('. ') if(!$end_of_sentence);
+								$bio->append(' ')->append(journey({ person => $person, arrival => $event, departure => $previous }));
 							} else {
 								# Two arrival records, put into one sentence for improved readability
 								my $date1 = year({ record => $previous });
