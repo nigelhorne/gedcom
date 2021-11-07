@@ -3000,7 +3000,7 @@ sub print_person
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			if($aob || $aod) {
+			if($aod) {
 				$bio->append(' ') unless($start_of_paragraph);
 				$bio->append($pronoun);
 			}
@@ -3128,6 +3128,10 @@ sub print_person
 					}
 				} elsif($birth_dt) {
 					my @twins;
+
+					if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
+						$bio->append(i18n(' and'));
+					}
 					foreach my $s(@siblings) {
 						if(my $dob = dateofbirth($s)) {
 							if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
