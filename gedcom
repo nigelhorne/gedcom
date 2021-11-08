@@ -3129,9 +3129,6 @@ sub print_person
 				} elsif($birth_dt) {
 					my @twins;
 
-					if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-						$bio->append(i18n(' and'));
-					}
 					foreach my $s(@siblings) {
 						if(my $dob = dateofbirth($s)) {
 							if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
@@ -3170,6 +3167,9 @@ sub print_person
 						if($dateofbaptism || $placeofbaptism) {
 							$bio->append(',');
 						}
+					}
+					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0)) {
+						$bio->append(i18n(' and'));
 					}
 				}
 				$end_of_sentence = 0;
