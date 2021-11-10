@@ -3443,12 +3443,9 @@ sub print_person
 				   ($dateofbirth || $dateofdeath) &&
 				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
 					push @phrases, $phrase;
-					$phrase = Data::Text->new();
 				}
 				$phrase = Data::Text->new();
-				if(scalar(@phrases)) {
-					$phrase->append($pronoun);
-				} else {
+				if(scalar(@phrases) == 0) {
 					$phrase->append($firstname);
 				}
 				if($placeofmarriage || $dateofmarriage) {
@@ -3690,8 +3687,6 @@ sub print_person
 					$phrase->append(" ($notes)");
 				}
 			} else {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 				if(is_alive(person => $person)) {
 					$phrase->append('has been married');
 				} elsif($language eq 'French') {
@@ -3700,7 +3695,7 @@ sub print_person
 						$phrase->append('e');
 					}
 				} else {
-					$phrase->append(' was married');
+					$phrase->append('was married');
 				}
 				$phrase->append(' ');
 				if(scalar(@spouses) == 2) {
@@ -5655,7 +5650,7 @@ sub print_person
 					$type = 'cremation';
 				}
 				if($dateofburial || $dateofcremation) {
-					$phrase->append(" $pronoun ");
+					$phrase->append("$pronoun ");
 					if($language eq 'French') {
 						$phrase->append("est enterr\N{U+00E9}");
 						if($sex eq 'F') {
@@ -5715,8 +5710,7 @@ sub print_person
 						$phrase->append(" ($n)");
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
-					$phrase->append(" $pronoun ");
-					$phrase->append(i18n({ person => $person, format => 'was buried' }));
+					$phrase->append($pronoun)->append(i18n({ person => $person, format => 'was buried' }));
 					if(my $address = $burial->address()) {
 						$phrase->append(" at $address");
 					}
