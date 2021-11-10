@@ -2940,7 +2940,7 @@ sub print_person
 			$phrase->append("[$_]") foreach(@deathcitations);
 
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		} elsif($aob) {
@@ -3341,7 +3341,7 @@ sub print_person
 				$phrase = Data::Text->new();
 			} else {
 				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 				$phrase = Data::Text->new();
 				@phrases = ();
 			}
@@ -3366,36 +3366,36 @@ sub print_person
 				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
 					$phrase->append(" $pronoun was orphaned");
 					if($myod == $fyod) {
-						$phrase->append("in $myod by the death of both parents in that year.");
+						$phrase->append("in $myod by the death of both parents in that year");
 					} elsif($myod > $fyod) {
 						$phrase->append('at the age of ' . ($myod - $yob) .
 							i18n(' following the death of ') .
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" father in $fyod and mother in $myod.");
+							" father in $fyod and mother in $myod");
 					} else {
 						$phrase->append('at the age of ' . ($fyod - $yob) .
 							i18n(' following the death of ') .
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" mother in $myod and father in $fyod.");
+							" mother in $myod and father in $fyod");
 					}
 					if($opts{'B'}) {
-						if($phrase->length()) {
-							if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+						if($bio->length()) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 								$text->textend();
 
 								$pdfpage = NJH::PDFPage->new($pdf);
 
 								$text = $pdfpage->text();
 								$text->font($params{'font'}, 12);
-								pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$phrase = Data::Text->new()->append(' ');
+							$bio = Data::Text->new();
 						}
 					} else {
 						$phrase->append("\n\t");
 					}
 					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
 					@phrases = ();
 				}
@@ -3438,14 +3438,22 @@ sub print_person
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
-
 			if(scalar(@spouses) == 1) {
-				if(defined($phrase)) {
+				if(defined($phrase) && ($phrase->length() > 0) &&
+				   ($dateofbirth || $dateofdeath) &&
+				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
 					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 				}
-				$phrase = Data::Text->new()->append($pronoun);
+				$phrase = Data::Text->new();
+				if(scalar(@phrases)) {
+					$phrase->append($pronoun);
+				} else {
+					$phrase->append($firstname);
+				}
 				if($placeofmarriage || $dateofmarriage) {
-					if($phrase->length()) {
+					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
+					   $phrase->length()) {
 						$phrase->append(i18n(' also'));
 					}
 					my %args = (person => $person);
@@ -3983,7 +3991,7 @@ sub print_person
 
 		if(scalar(@childrenunknownparent)) {
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 
@@ -4022,7 +4030,7 @@ sub print_person
 				$phrase->append(' ' . Lingua::EN::Inflect::A(lc($same_occupation_as_father)));
 			}
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
@@ -5035,10 +5043,12 @@ sub print_person
 
 			# Print out the residence strings with semi-colons between each residence
 			if(scalar(@residencestringarray)) {
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
-				@phrases = ();
+				push @phrases, $phrase if($phrase->length());
+				if(scalar(@phrases)) {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					$phrase = Data::Text->new();
+					@phrases = ();
+				}
 
 				my $first = $residencelist[0];
 				if((scalar(@residencelist) == 1) && (my $rdate = $first->date())) {
@@ -5046,16 +5056,16 @@ sub print_person
 				} else {
 					if(!$start_of_paragraph) {
 						if($opts{'B'}) {
-							if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 								$text->textend();
 
 								$pdfpage = NJH::PDFPage->new($pdf);
 
 								$text = $pdfpage->text();
 								$text->font($params{'font'}, 12);
-								pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$phrase = Data::Text->new()->append(' ');
+							$bio = Data::Text->new()->append(' ');
 						} else {
 							$phrase->append("\n\t");
 						}
@@ -5180,7 +5190,7 @@ sub print_person
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 
@@ -5280,7 +5290,7 @@ sub print_person
 						$phrase->append(" ($notes)");
 					}
 					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
 					@phrases = ();
 				} elsif($type eq 'Departure') {
@@ -5299,7 +5309,7 @@ sub print_person
 						$phrase->append(" ($notes)");
 					}
 					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
 					@phrases = ();
 				} elsif(($type eq 'Military service') || ($type eq 'Military')) {
@@ -5329,7 +5339,7 @@ sub print_person
 						$notes =~ s/[\s\.]+$//;
 						$phrase->append(" ($notes)");
 						push @phrases, $phrase;
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 						$phrase = Data::Text->new();
 						@phrases = ();
 					}
@@ -5441,7 +5451,7 @@ sub print_person
 									$date2 =~ s/,\s//;
 								}
 								push @phrases, $phrase;
-								$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+								$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 								$phrase = Data::Text->new();
 								@phrases = ();
 								if(defined($year1) && defined($year2) && ($year1 == $year2)) {
@@ -5560,13 +5570,13 @@ sub print_person
 							}
 						}
 						push @phrases, $phrase;
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 						$phrase = Data::Text->new();
 						@phrases = ();
 					} elsif($type eq 'Story') {
 						if(my $notes = notes(record => $event)) {
 							push @phrases, $phrase;
-							$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
+							$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 							$phrase = Data::Text->new();
 							@phrases = ();
 
@@ -5629,12 +5639,9 @@ sub print_person
 		if(my $profile_object = $person->tag_record('_MILT')) {
 			# $person->resolve_xref($profile_object->value());
 			if(my $value = $profile_object->get_value()) {
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
-				$phrase = Data::Text->new();
-				@phrases = ();
 				$value =~ s/[\s\.]+$//;
-				$phrase->append(" $pronoun served in the military ($value). ");
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ')->append("$pronoun served in the military ($value).  ");
 			}
 		}
 
@@ -5734,17 +5741,17 @@ sub print_person
 						@phrases = ();
 					}
 					if($opts{'B'}) {
-						if($phrase->length()) {
-							if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+						if($bio->length()) {
+							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 								$text->textend();
 
 								$pdfpage = NJH::PDFPage->new($pdf);
 
 								$text = $pdfpage->text();
 								$text->font($params{'font'}, 12);
-								pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage);
+								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$phrase = Data::Text->new();
+							$bio = Data::Text->new();
 						}
 					} else {
 						$phrase->append("\n\t");
@@ -5896,17 +5903,17 @@ sub print_person
 					$phrase = Data::Text->new();
 				}
 				if($opts{'B'}) {
-					if($phrase->length()) {
-						if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+					if($bio->length()) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
 
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
-							pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage);
+							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$phrase = Data::Text->new()->append(' ');
+						$bio = Data::Text->new()->append(' ');
 					}
 				} else {
 					$phrase->append("\n\t");
@@ -5982,8 +5989,8 @@ sub print_person
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			if($opts{'B'}) {
-				if($phrase->length()) {
-					if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+				if($bio->length()) {
+					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 						$text->textend();
 
 						$pdfpage = NJH::PDFPage->new($pdf);
@@ -5993,11 +6000,12 @@ sub print_person
 						# print STDERR "\n", length($phrase), "\n", length($notes), "\n";
 						die "$phrase: Print failure" if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage));
 					}
-					$phrase = Data::Text->new()->append(' ');
+					$bio = Data::Text->new()->append(' ');
 				}
 			} else {
 				$phrase->append("\n");
 			}
+			$notes =~ s/\.$//;
 			$phrase->append($notes);
 		}
 
@@ -6044,7 +6052,7 @@ sub print_person
 			}
 
 			$phrase->append("\n") if(scalar(@children));
-		} else {
+		} elsif($phrase->length()) {
 			$phrase->append('.');
 		}
 
@@ -6091,17 +6099,17 @@ sub print_person
 					}
 				}
 				if($opts{'B'}) {
-					if($phrase->length()) {
-						if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+					if($bio->length()) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
 
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
-							pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage);
+							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$phrase = undef;
+						$bio = undef;
 					}
 				} else {
 					$phrase->rtrim()->append("\n\t");
@@ -6300,10 +6308,18 @@ sub print_person
 		}
 		if($opts{'B'}) {
 			if($phrase->length()) {
-				if($phrase->length() > 3000) {
+				push @phrases, $phrase;
+			}
+			if(scalar(@phrases)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				$phrase = Data::Text->new();
+				@phrases = ();
+			}
+			if($bio->length()) {
+				if($bio->length() > 3000) {
 					# It's not going to fit on one page
 					# Split into paragraphs
-					my @paras = split(/\n/, $phrase->as_string());
+					my @paras = split(/\n/, $bio->as_string());
 					foreach my $p(@paras) {
 						next if(length($p) == 0);
 						if(length($p) > 3000) {
@@ -6330,14 +6346,14 @@ sub print_person
 							die "Print failure: $p" if(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage));
 						}
 					}
-				} elsif(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
+				} elsif(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 					$text->textend();
 
 					$pdfpage = NJH::PDFPage->new($pdf);
 
 					$text = $pdfpage->text();
 					$text->font($params{'font'}, 12);
-					die 'Print failure' if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage));
+					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
 				}
 				$phrase = undef;
 			}
