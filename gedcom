@@ -3438,27 +3438,27 @@ sub print_person
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
+
 			if(scalar(@spouses) == 1) {
-				if(($dateofbirth || $dateofdeath) &&
-				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
+				if(defined($phrase)) {
 					push @phrases, $phrase;
-					$phrase = Data::Text->new();
 				}
+				$phrase = Data::Text->new()->append($pronoun);
 				if($placeofmarriage || $dateofmarriage) {
 					if($phrase->length()) {
 						$phrase->append(i18n(' also'));
 					}
 					my %args = (person => $person);
 					if($spouserelationship) {
-						$args{'format'} = 'married ';
+						$args{'format'} = ' married ';
 					} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 						if($placeofmarriage || $dateofmarriage) {
-							$args{'format'} = 'married ';
+							$args{'format'} = ' married ';
 						} else {
-							$args{'format'} = 'is married to ';
+							$args{'format'} = ' is married to ';
 						}
 					} else {
-						$args{'format'} = 'was married to ';
+						$args{'format'} = ' was married to ';
 					}
 					$phrase->append(i18n(\%args));
 
@@ -5728,10 +5728,11 @@ sub print_person
 				}
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
-					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->('.  ');
-					$phrase = Data::Text->new();
-					@phrases = ();
+					if($phrase->length()) {
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+						$phrase = Data::Text->new();
+						@phrases = ();
+					}
 					if($opts{'B'}) {
 						if($phrase->length()) {
 							if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage)) {
@@ -5753,7 +5754,7 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 
-					$phrase->append([' ', $pronoun, i18n({ person => $person, format => ' died' })]);
+					$phrase->append([$pronoun, i18n({ person => $person, format => ' died' })]);
 
 					$start_of_paragraph = 0;
 					if($dateofdeath) {
@@ -5793,18 +5794,14 @@ sub print_person
 					$opts->{'address'} = $address;
 				}
 				if($dateofburial) {
-					if($diedathome) {
-						push @phrases, $phrase;
-						$phrase = Data::Text->new();
-						$phrase->append($pronoun);
-					} else {
-						$phrase->append(i18n(' and'));
-					}
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+
 					if(($language eq 'French') && $placeofburial &&
 					  defined($placeofdeath) && ($placeofburial eq $placeofdeath) && (!$address) && !$death->address()) {
 						$phrase->append(' y');
 					}
-					$phrase->append(i18n({ person => $person, format => ' was buried' }));
+					$phrase->append(i18n({ person => $person, format => 'was buried' }));
 					if($placeofburial) {
 						if(defined($placeofdeath) && ($placeofburial eq $placeofdeath) && !$death->address()) {
 							$phrase->append(' there') if($language ne 'French');
@@ -5977,8 +5974,7 @@ sub print_person
 		}
 
 # die $phrase->as_string() if((!$end_of_sentence) && ($phrase->as_string() =~ /[\.\,]\s*$/));
-		push @phrases, $phrase;
-		$phrase = Data::Text->new();
+		# push @phrases, $phrase;
 
 		# if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 1 }))) {
 			# print "\n$notes";
@@ -6048,6 +6044,8 @@ sub print_person
 			}
 
 			$phrase->append("\n") if(scalar(@children));
+		} else {
+			$phrase->append('.');
 		}
 
 		if($opts{'c'}) {
