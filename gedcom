@@ -343,6 +343,9 @@ foreach my $module(@modules) {
 
 umask(0077);	# Don't let PII become publicly readable
 
+Lingua::Conjunction->separator_phrase(',');
+Lingua::Conjunction->penultimate(0);
+
 my $browser;
 my $cached_browser;
 my $au = Locale::AU->new();
@@ -3275,12 +3278,12 @@ sub print_person
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
 			if($language eq 'French') {
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-					$phrase->append(" $pronoun y a \N{U+00E9}t\N{U+00E9} ");	# a été
+					$phrase->append("$pronoun y a \N{U+00E9}t\N{U+00E9} ");	# a été
 				} else {
-					$phrase->append(" $pronoun a \N{U+00E9}t\N{U+00E9} ");	# a été
+					$phrase->append("$pronoun a \N{U+00E9}t\N{U+00E9} ");	# a été
 				}
 			} else {
-				$phrase->append(" $pronoun was ");
+				$phrase->append("$pronoun was ");
 			}
 
 			if($language eq 'French') {
@@ -3446,24 +3449,24 @@ sub print_person
 				}
 				$phrase = Data::Text->new();
 				if(scalar(@phrases) == 0) {
-					$phrase->append($firstname);
+					$phrase->append("$firstname ");
 				}
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   $phrase->length()) {
-						$phrase->append(i18n(' also'));
+						$phrase->append(i18n('also '));
 					}
 					my %args = (person => $person);
 					if($spouserelationship) {
-						$args{'format'} = ' married ';
+						$args{'format'} = 'married ';
 					} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 						if($placeofmarriage || $dateofmarriage) {
-							$args{'format'} = ' married ';
+							$args{'format'} = 'married ';
 						} else {
-							$args{'format'} = ' is married to ';
+							$args{'format'} = 'is married to ';
 						}
 					} else {
-						$args{'format'} = ' was married to ';
+						$args{'format'} = 'was married to ';
 					}
 					$phrase->append(i18n(\%args));
 
@@ -5095,7 +5098,12 @@ sub print_person
 				} else {
 					$s = 'was living';
 				}
+
+				Lingua::Conjunction->separator_phrase(';');
+				Lingua::Conjunction->penultimate(1);
 				$phrase->append(', ' . lcfirst($pronoun) . i18n(" $s ") . conjunction(@residencestringarray));
+				Lingua::Conjunction->separator_phrase(',');
+				Lingua::Conjunction->penultimate(0);
 
 				if($placeofdeath && !$aod) {
 					my $lastresidence = $residencelist[scalar(@residencelist) - 1];
@@ -5847,9 +5855,9 @@ sub print_person
 						if($sex eq 'F') {
 							$phrase->append('e');
 						}
-						$phrase->append(" \N{U+00E0} " . $burial->address());
+						$phrase->append("\N{U+00E0} " . $burial->address());
 					} else {
-						$phrase->append(' is buried there at ' . $burial->address());
+						$phrase->append('is buried there at ' . $burial->address());
 					}
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
@@ -6046,11 +6054,23 @@ sub print_person
 			}
 
 			$phrase->append("\n") if(scalar(@children));
-		} elsif($phrase->length()) {
+		} elsif($phrase->length() && !$opts{'c'}) {
 			$phrase->append('.');
 		}
 
 		if($opts{'c'}) {
+			if($phrase->length() > 0) {
+				push @phrases, $phrase;
+			}
+			if(scalar(@phrases)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				@phrases = ();
+
+				$phrase = Data::Text->new()->append("\n\t");
+			} elsif($citationcount) {
+				$phrase->append("\n\t");
+			}
+
 			my $ufinder = URI::Find::Schemeless->new(sub {
 				my($uri, $orig_uri) = @_;
 
@@ -6353,7 +6373,7 @@ sub print_person
 			}
 		} elsif($bio->as_string() eq "\t.") {
 			complain({ person => $person, warning => "couldn't extract a biography" });
-		} else {
+		} elsif($phrase->length() > 0) {
 			# FIXME: don't do this if this is the last person
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases));
