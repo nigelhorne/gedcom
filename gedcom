@@ -3665,17 +3665,18 @@ sub print_person
 						$phrase->append($p);
 						$places_printed{$p} = 1;
 					} elsif(!$haveprintedspousename) {
-						if($phrase->length()) {
+						if(scalar(@phrases) == 0) {
+							$phrase->append($pronoun);
+						} elsif($phrase->length()) {
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
 						}
-						$phrase->append($pronoun);
 						$spouse //= $spouses[0];
 						if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
 							if(is_alive(person => $person) && is_alive(person => $spouse)) {
-								$phrase->append(i18n({ person => $person, format => ' is married to ' }));
+								$phrase->append(i18n({ person => $person, format => 'is married to ' }));
 							} else {
-								$phrase->append(i18n({ person => $person, format => ' was married to ' }));
+								$phrase->append(i18n({ person => $person, format => 'was married to ' }));
 							}
 							$phrase->append($s);
 						} else {
@@ -5650,8 +5651,10 @@ sub print_person
 
 		if($placeofburial || $dateofburial || $placeofcremation || $dateofcremation) {
 			if($aod || ((!$dateofdeath) && !$placeofdeath)) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
+				if($phrase->length() > 0) {
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+				}
 
 				my $type = 'burial';
 				if($placeofcremation || $dateofcremation) {
@@ -5731,9 +5734,17 @@ sub print_person
 						$phrase->append(place({ person => $person, place => $placeofburial }));
 					}
 				} else {
-					$phrase->append(" $pronoun " .
+					if($phrase->length() > 0) {
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
+					} elsif(scalar(@phrases) == 0) {
+						$phrase->append("$pronoun ");
+					}
+
+					$phrase->append(
 						i18n({ person => $person, format => 'is buried' }) .
-						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage }));
+						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage })
+					);
 				}
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
