@@ -5776,10 +5776,13 @@ sub print_person
 						} else {
 							$phrase->append("\n\t");
 						}
-						$phrase->append("$pronoun ");
-					} else {
+					} elsif($phrase->length() > 0) {
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
+					}
+
+					if(scalar(@phrases) == 0) {
+						$phrase->append("$pronoun ");
 					}
 
 					$phrase->append(i18n({ person => $person, format => 'died' }));
