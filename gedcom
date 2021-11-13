@@ -5748,7 +5748,7 @@ sub print_person
 				}
 			} elsif($dateofdeath || $placeofdeath) {
 				if((!$placeofburial) && !$diedathome) {
-					if($phrase->length()) {
+					if($phrase->length() && scalar(@phrases)) {
 						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 						$phrase = Data::Text->new();
 						@phrases = ();
@@ -6134,7 +6134,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = undef;
+						$bio = Data::Text->new()->append(' ');
 					}
 				} else {
 					$phrase->rtrim()->append("\n\t");
@@ -8726,7 +8726,7 @@ sub sibling_baptism_string
 	}
 
 	if($allsamesex) {
-		return i18n(', the same day as ') . lcfirst($person->possessive()) . ' ' .
+		return ', ' . i18n('the same day as ') . lcfirst($person->possessive()) . ' ' .
 			($onsameday[0]->sex() eq 'M' ? 'brothers ' : 'sisters ') .
 			conjunction(map { $_->given_names() } @onsameday);
 	}
@@ -8746,7 +8746,7 @@ sub sibling_baptism_string
 			$sibling->given_names();
 		push @baptisms, $baptism;
 	}
-	return i18n(', the same day as ') . conjunction(@baptisms);
+	return ', ' . i18n('the same day as ') . conjunction(@baptisms);
 }
 
 sub complain
