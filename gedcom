@@ -3434,8 +3434,10 @@ sub print_person
 			# FIXME: do all schools
 			$phrase->append(place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }));
 			push @phrases, $phrase;
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
-		}
+			@phrases = ();
+}
 
 		my @childrenunknownparent;
 		# TODO: children != 0 && spouses == 0
@@ -3969,7 +3971,7 @@ sub print_person
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			}
-			$phrase->append(" $pronoun");
+			$phrase->append("$pronoun");
 			$phrase->append(i18n(' had '));
 			if($language eq 'French') {
 				$phrase->append((($numberofchildren == 1) ? '1 enfant' : "$numberofchildren enfants"));
@@ -5323,10 +5325,10 @@ sub print_person
 					}
 					my $date = year(record => $event);
 					if($date) {
-						if($date !~ /^from /i) {
-							$phrase->append(' ' . ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military');
+						if($date =~ /^from /i) {
+							$phrase->append("$pronoun was serving in the military");
 						} else {
-							$phrase->append(" $pronoun was serving in the military");
+							$phrase->append(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military');
 						}
 					} else {
 						$phrase->append(" $pronoun served in the military");
