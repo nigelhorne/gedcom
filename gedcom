@@ -2998,8 +2998,10 @@ sub print_person
 				if(length($notes) > 160) {
 					$phrase->append("\n\t");
 					$start_of_paragraph = 1;
-				} else {
+				} elsif($opts{'B'}) {
 					$phrase->append(' ');
+				} else {
+					$phrase->append('  ');
 				}
 			} else {
 				push @phrases, $phrase;
@@ -5595,12 +5597,16 @@ sub print_person
 							# }
 						}
 					} elsif($type eq 'Court') {
-						push @phrases, $phrase;
-						$phrase = Data::Text->new();
+						if($phrase->length() > 0) {
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
+						} else {
+							$phrase->append("$pronoun ");
+						}
 						if($language eq 'French') {
 							$phrase->append("a \N{U+00E9}t\N{U+00E9} au tribunal");
 						} else {
-							$phrase->append("was in court");
+							$phrase->append('appeared in court');
 						}
 						if(my $place = place({ person => $person, record => $event, allow_empty => 1 })) {
 							$phrase->append($place);
