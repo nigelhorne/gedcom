@@ -5388,32 +5388,24 @@ sub print_person
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
-							if($phrase->length()) {
-								push @phrases, $phrase;
-								$phrase = Data::Text->new();
-							}
-
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^on /) {
-									$phrase->append(' ' . ucfirst($date) . ' ');
+									$phrase->append(ucfirst($date));
 								} elsif($date =~ /^in (\d{4})/) {
-									$phrase->append(" During $1, ");
+									$phrase->append("During $1,");
+								} elsif($date =~ /(.+)\-(.+)/) {
+									$phrase->append("Between $1 and $2");
 								} else {
-									if($date =~ /(.+)\-(.+)/) {
-										$phrase->append(" Between $1 and $2 ");
-									} else {
-										$phrase->append(' ' . ucfirst($date) . ' ');
-									}
+									$phrase->append(ucfirst($date));
 								}
-								$phrase->append(lcfirst($pronoun) . ' was serving in the military');
+								$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
 							} else {
-								$phrase->append(" $pronoun served in the military");
+								$phrase->append("$pronoun served in the military");
 							}
 
 							if(my $place = place({ person => $person, record => $event, allow_empty => 1 })) {
 								$phrase->append($place);
 							}
-
 							$mentioned_military = 1;
 						}
 
@@ -5422,6 +5414,8 @@ sub print_person
 							$notes =~ s/[\s\.]+$//;
 							$phrase->append(" ($notes)");
 						}
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
 						if(!defined($event->place())) {
 							complain({ person => $person, warning => 'Arrival record without destination' });
@@ -5649,6 +5643,16 @@ sub print_person
 						}
 					}
 				}
+			}
+
+			# End of events, put them all into one sentence
+			if(scalar(@phrases) > 0) {
+				if($phrase->rtrim()->length() > 0) {
+					push @phrases, $phrase;
+				}
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new();
+				@phrases = ();
 			}
 		}
 
@@ -5926,7 +5930,7 @@ sub print_person
 				}
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				push @phrases, $phrase;
-				$phrase = Data::Text->new();
+				$phrase = Data::Text->new()->append($firstname // $pronoun);
 			} else {
 				if($phrase->length()) {
 					push @phrases, $phrase;
