@@ -2627,10 +2627,12 @@ sub print_person
 			}
 			if(scalar(@twins) == 1) {	# TODO triplets and higher order
 				if(scalar(@occupations)) {
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 					if($language eq 'French') {
-						$phrase->append(($sex eq 'M') ? ', jumeau de' : ', jumelle de');
+						$phrase->append(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
 					} else {
-						$phrase->append(', twin of');
+						$phrase->append('twin of');
 					}
 				} else {
 					if($language eq 'French') {
@@ -2799,7 +2801,8 @@ sub print_person
 				if($mother) {
 					$phrase->append(i18n(' and'));
 				} elsif(($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $relationship || scalar(@spouses)) && $occupations[0]) {
-					$phrase->append(', ');
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 				}
 			}
 			if($mother) {
@@ -2861,7 +2864,8 @@ sub print_person
 				} else {
 					$phrase->append($pronoun);
 				}
-				$phrase->append(', ');
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			} else {
 				$phrase->append($person);
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
