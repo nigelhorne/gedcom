@@ -5952,7 +5952,7 @@ sub print_person
 				} else {
 					$phrase->append("\n\t");
 				}
-				$phrase->append($pronoun);
+				$phrase->append($firstname // $pronoun);
 			}
 			$phrase->append(i18n({ person => $person, format => ' died' }));
 
