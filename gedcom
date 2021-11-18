@@ -2998,7 +2998,7 @@ sub print_person
 			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$notes =~ s/\.$//;
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-				$phrase->append(" ($notes).");
+				$phrase->append(" ($notes)");
 				if(length($notes) > 160) {
 					$phrase->append("\n\t");
 					$start_of_paragraph = 1;
@@ -5160,6 +5160,11 @@ sub print_person
 				$phrase = Data::Text->new();
 				@phrases = ();
 			}
+		} elsif(scalar(@phrases)) {
+			# No residences
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			$phrase = Data::Text->new();
+			@phrases = ();
 		}
 
 		# $phrase =~ s/,;/;/g;
@@ -5596,7 +5601,7 @@ sub print_person
 							# if(my $date = year(record => $event)) {
 								# $phrase->append(' ' . ucfirst($notes) . " $date. ");
 							# } else {
-								$phrase->append(' ' . ucfirst($notes) . '. ');
+								$phrase->append(' ' . ucfirst($notes));
 							# }
 						}
 					} elsif($type eq 'Court') {
@@ -5644,9 +5649,9 @@ sub print_person
 								}
 							} else {
 								if($date) {
-									$phrase->append(' ' . ucfirst($notes) . " $date. ");
+									$phrase->append(' ' . ucfirst($notes) . " $date");
 								} else {
-									$phrase->append(' ' . ucfirst($notes) . '. ');
+									$phrase->append(' ' . ucfirst($notes));
 								}
 							}
 						}
@@ -5924,14 +5929,14 @@ sub print_person
 			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 				if($language eq 'French') {
 					if($phrase->length() == 0) {
-						$phrase->append(" C'est");
+						$phrase->append("C'est");
 					} else {
 						$phrase->append(', qui est');
 					}
 					$phrase->append(" aussi o\N{U+00F9} " . lcfirst($pronoun));
 				} else {
 					if($phrase->length() == 0) {
-						$phrase->append(' That');
+						$phrase->append('That');
 					} else {
 						$phrase->append(', which');
 					}
@@ -5946,6 +5951,12 @@ sub print_person
 					$phrase = Data::Text->new();
 				}
 				if($opts{'B'}) {
+					if(scalar(@phrases)) {
+						$bio->append(conjunction(map { $_->as_string() } @phrases));
+					}
+					$phrase = Data::Text->new();
+					@phrases = ();
+
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
@@ -6032,6 +6043,12 @@ sub print_person
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
 			if($opts{'B'}) {
+				if(scalar(@phrases)) {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				}
+				$phrase = Data::Text->new();
+				@phrases = ();
+
 				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 						$text->textend();
@@ -6040,8 +6057,7 @@ sub print_person
 
 						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
-						# print STDERR "\n", length($phrase), "\n", length($notes), "\n";
-						die "$phrase: Print failure" if(!pdfprint(string => $phrase, text => $text, pdfpage => $pdfpage));
+						pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 					}
 					$bio = Data::Text->new()->append(' ');
 				}
@@ -6154,6 +6170,13 @@ sub print_person
 					}
 				}
 				if($opts{'B'}) {
+					if(scalar(@phrases)) {
+						$bio->append(conjunction(map { $_->as_string() } @phrases));
+					}
+					$bio->append('.  ');
+					$phrase = Data::Text->new();
+					@phrases = ();
+
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
 							$text->textend();
