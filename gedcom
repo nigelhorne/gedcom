@@ -2575,7 +2575,7 @@ sub print_person
 
 		my $same_occupation_as_father;
 
-		my $phrase = Data::Text->new()->append("\t");
+		my $phrase = Data::Text->new("\t");
 		my @phrases;
 
 		if($occupations[0]) {
