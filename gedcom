@@ -2852,7 +2852,10 @@ sub print_person
 			} else {
 				$phrase->append(ucfirst(i18n('your')));
 			}
-			$phrase->append(" $relationship,");
+			$phrase->append(" $relationship");
+			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
+				$phrase->append(',');
+			}
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
 				if($phrase->length()) {
@@ -3883,7 +3886,12 @@ sub print_person
 							}
 						}
 					}
-					$phrase->append(".  $pronoun ");
+
+					if($phrase->length() > 0) {
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
+					}
+
 					if($language eq 'French') {
 						$phrase->append($all_children_are_alive ? 'a ' : 'a eu ');
 					} else {
@@ -3978,7 +3986,7 @@ sub print_person
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			}
-			$phrase->append($pronoun)->append(i18n(' had '));
+			$phrase->append($pronoun)->append(i18n('had '));
 			if($language eq 'French') {
 				$phrase->append((($numberofchildren == 1) ? '1 enfant' : "$numberofchildren enfants"));
 			} else {
@@ -3993,6 +4001,10 @@ sub print_person
 				# substr($childnames, rindex($childnames, ', '), 2, ' and ');
 				# $phrase->append(", $childnames");
 				$phrase->append(', ' . conjunction(map { $_->given_names() } @children));
+			}
+			if($phrase->length()) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			}
 		}
 
@@ -5077,7 +5089,7 @@ sub print_person
 								$text->font($params{'font'}, 12);
 								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 							}
-							$bio = Data::Text->new()->append(' ');
+							$bio = Data::Text->new(' ');
 						} else {
 							$phrase->append("\n\t");
 						}
@@ -5211,10 +5223,14 @@ sub print_person
 		   (ref($events[1]) eq 'Gedcom::Record') &&
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
-			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
-			@phrases = ();
+			if($phrase->rtrim()->length() > 0) {
+				push @phrases, $phrase;
+			}
+			if(scalar(@phrases)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new();
+				@phrases = ();
+			}
 
 			my $arrival = ($events[0]->type() eq 'Arrival') ? $events[0] : $events[1];
 			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
@@ -5945,7 +5961,7 @@ sub print_person
 				}
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				push @phrases, $phrase;
-				$phrase = Data::Text->new()->append($firstname // $pronoun);
+				$phrase = Data::Text->new()->append($rirstname // $pronoun);
 			} else {
 				if($phrase->length()) {
 					push @phrases, $phrase;
