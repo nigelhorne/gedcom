@@ -5897,7 +5897,7 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 					if($language eq 'French') {
-						$phrase->append(" est y enterr\N{U+00E9}");
+						$phrase->append("y enterr\N{U+00E9}");
 						if($sex eq 'F') {
 							$phrase->append('e');
 						}
@@ -5907,9 +5907,10 @@ sub print_person
 					}
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
-						$phrase->append(" $pronoun ");
+						$phrase->append("$pronoun ");
 					} else {
-						$phrase->append(i18n(' and '));
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
 					}
 					$phrase->append(i18n({ person => $person, format => 'is buried' }) .
 						$b);
