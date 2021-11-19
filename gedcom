@@ -5961,7 +5961,7 @@ sub print_person
 				}
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				push @phrases, $phrase;
-				$phrase = Data::Text->new()->append($rirstname // $pronoun);
+				$phrase = Data::Text->new()->append($firstname // $pronoun);
 			} else {
 				if($phrase->length()) {
 					push @phrases, $phrase;
