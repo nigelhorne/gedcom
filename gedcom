@@ -3170,7 +3170,7 @@ sub print_person
 						if($dob == $birth_dt) {
 							$phrase->append(' along with ');
 						} elsif($dob == ($birth_dt + $oneday)) {
-							$phrase->append(', a day before ');
+							$phrase->append(i18n(', a day before '));
 						} else {
 							$phrase->append(', a day after ');
 						}
@@ -10475,6 +10475,7 @@ sub i18n
 __DATA__
 @@ English
 a %s::a %s
+a day before::a day before
 all with %s::all with %s
 also::also
 also%s::also%s
@@ -10521,6 +10522,7 @@ your::your
 @@ French
 a %s:M:un %s
 a %s:F:une %s
+a day before::la veille
 all with %s::tout avec %s
 also::aussi
 also%s::aussi%s
