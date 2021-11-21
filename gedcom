@@ -3169,10 +3169,15 @@ sub print_person
 						my $dob = $t->{'dob'};
 						if($dob == $birth_dt) {
 							$phrase->append(' along with ');
-						} elsif($dob == ($birth_dt + $oneday)) {
-							$phrase->append(i18n(', a day before '));
 						} else {
-							$phrase->append(', a day after ');
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
+
+							if($dob == ($birth_dt + $oneday)) {
+								$phrase->append(i18n('a day before '));
+							} else {
+								$phrase->append('a day after ');
+							}
 						}
 						my $ssex = $sibling->sex();
 						if($language eq 'French') {
@@ -3182,11 +3187,9 @@ sub print_person
 								(($ssex eq 'F') ? 'sister ' : 'brother '));
 						}
 						$phrase->append($sibling->given_names());
-						if($dateofbaptism || $placeofbaptism) {
-							$phrase->append(',');
-						}
 					}
-					if(scalar(@spouses) && ($aod || $aob) && ($numberofchildren > 0)) {
+
+					if($phrase->length() > 0) {
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					}
