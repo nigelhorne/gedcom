@@ -3379,9 +3379,15 @@ sub print_person
 					die "BUG: !fyod || !myod";
 				}
 				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
-					$phrase->append(" $pronoun was orphaned");
+					$phrase->append("$pronoun was orphaned ");
 					if($myod == $fyod) {
-						$phrase->append("in $myod by the death of both parents in that year");
+						$phrase->append('when both of ')
+							->append(($person->pronoun() eq 'She') ? 'her' : 'his')
+							->append(" parents died in $myod when ")
+							->append(lcfirst($person->pronoun()))
+							->append(' was ')
+							->append($myod - $yob)
+							->append(' years old');
 					} elsif($myod > $fyod) {
 						$phrase->append('at the age of ' . ($myod - $yob) .
 							i18n(' following the death of ') .
@@ -3393,6 +3399,7 @@ sub print_person
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
 							" mother in $myod and father in $fyod");
 					}
+					$phrase->append('.');
 					if($opts{'B'}) {
 						if($bio->length()) {
 							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
@@ -3406,12 +3413,10 @@ sub print_person
 							}
 							$bio = Data::Text->new();
 						}
-					} else {
-						$phrase->append("\n\t");
 					}
 					push @phrases, $phrase;
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					$phrase = Data::Text->new();
+					$phrase = Data::Text->new("\n\t");
 					@phrases = ();
 				}
 			}
@@ -4236,7 +4241,6 @@ sub print_person
 				$spdeath_dt = date_to_datetime(date => $spdeath_dt);
 			}
 			my $print_year_only;	# used when printing a range, e.g. 1871-1891
-			my $printed_following_message;
 			my %printed_dates;
 
 			my @residencestringarray;
@@ -5000,7 +5004,7 @@ sub print_person
 							}
 						}
 					}
-					if($spdeath_dt && (!$printed_following_message) && (my $rdate_dt = date_to_datetime($rdate))) {
+					if($spdeath_dt && (my $rdate_dt = date_to_datetime($rdate))) {
 						if($rdate_dt > $spdeath_dt) {
 							# Living with a child following death of spouse?
 							CHILD: foreach my $child(@children) {
@@ -5052,7 +5056,8 @@ sub print_person
 									(($sex eq 'M') ? ' wife ' : ' husband ') .
 									year(date => $date);
 							}
-							$printed_following_message = 1;
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
 						}
 					}
 				}
@@ -5070,7 +5075,7 @@ sub print_person
 
 			# Print out the residence strings with semi-colons between each residence
 			if(scalar(@residencestringarray)) {
-				push @phrases, $phrase if($phrase->length());
+				push @phrases, $phrase if($phrase->rtrim()->length());
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
