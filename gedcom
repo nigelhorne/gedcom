@@ -2924,11 +2924,7 @@ sub print_person
 				if($relationship) {
 					$phrase->append(' ');
 				}
-				if($firstname) {
-					$phrase->append($firstname);
-				} else {
-					$phrase->append($pronoun);
-				}
+				$phrase->append($firstname // $pronoun);
 			}
 		}
 
@@ -2951,7 +2947,7 @@ sub print_person
 
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
+			$phrase = Data::Text->new("$pronoun ");
 			@phrases = ();
 		} elsif($aob) {
 			$phrase->append(i18n({ person => $person, format => ' was born ' }));
@@ -2978,7 +2974,7 @@ sub print_person
 			$phrase->append("[$_]") foreach(@birthcitations);
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
+			$phrase = Data::Text->new("$pronoun ");
 			@phrases = ();
 		} elsif($aod) {
 			if($language eq 'French') {
@@ -3002,29 +2998,26 @@ sub print_person
 				$notes =~ s/\.$//;
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 				$phrase->append(" ($notes)");
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 				if(length($notes) > 160) {
-					$phrase->append("\n\t");
 					$start_of_paragraph = 1;
-				} elsif($opts{'B'}) {
-					$phrase->append(' ');
+					$bio->append("\n\t");
 				} else {
-					$phrase->append('  ');
+					$bio->append('  ');
 				}
 			} else {
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
-				@phrases = ();
 			}
+			$phrase = Data::Text->new($pronoun);
+			@phrases = ();
 		}
 
 		my @residences = get_all_residences($person);
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			if($aod) {
-				$phrase->append($pronoun);
-			}
 			if($dateofbirth || $placeofbirth) {
 				$phrase->append(',') if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
 				my $birth_place;
@@ -3290,12 +3283,12 @@ sub print_person
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
 			if($language eq 'French') {
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-					$phrase->append("$pronoun y a \N{U+00E9}t\N{U+00E9} ");	# a été
+					$phrase->append("y a \N{U+00E9}t\N{U+00E9} ");	# a été
 				} else {
-					$phrase->append("$pronoun a \N{U+00E9}t\N{U+00E9} ");	# a été
+					$phrase->append("a \N{U+00E9}t\N{U+00E9} ");	# a été
 				}
 			} else {
-				$phrase->append("$pronoun was ");
+				$phrase->append('was ');
 			}
 
 			if($language eq 'French') {
@@ -3357,7 +3350,7 @@ sub print_person
 			} else {
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
+				$phrase = Data::Text->new("$pronoun ");
 				@phrases = ();
 			}
 		}
@@ -3461,15 +3454,6 @@ sub print_person
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			if(scalar(@spouses) == 1) {
-				if(defined($phrase) && ($phrase->length() > 0) &&
-				   ($dateofbirth || $dateofdeath) &&
-				   ((scalar(@residences) > 0) || ((!($dateofbaptism)) && !$placeofbaptism))) {
-					push @phrases, $phrase;
-				}
-				$phrase = Data::Text->new();
-				if(scalar(@phrases) == 0) {
-					$phrase->append("$firstname ");
-				}
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   $phrase->length()) {
