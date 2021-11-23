@@ -3392,7 +3392,11 @@ sub print_person
 							(($person->pronoun() eq 'She') ? 'her' : 'his') .
 							" mother in $myod and father in $fyod");
 					}
-					$phrase->append('.');
+					push @phrases, $phrase;
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					$phrase = Data::Text->new("\n\t");
+					@phrases = ();
+
 					if($opts{'B'}) {
 						if($bio->length()) {
 							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
@@ -3407,10 +3411,6 @@ sub print_person
 							$bio = Data::Text->new();
 						}
 					}
-					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					$phrase = Data::Text->new("\n\t");
-					@phrases = ();
 				}
 			}
 		}
