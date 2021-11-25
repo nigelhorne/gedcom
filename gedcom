@@ -5049,6 +5049,7 @@ sub print_person
 									($person->pronoun() eq 'She' ? 'her' : 'his') .
 									(($sex eq 'M') ? ' wife ' : ' husband ') .
 									year(date => $date);
+								$spdeath_dt = undef;
 							}
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
