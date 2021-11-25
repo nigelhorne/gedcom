@@ -2947,7 +2947,7 @@ sub print_person
 
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new("$pronoun ");
+			$phrase = Data::Text->new();
 			@phrases = ();
 		} elsif($aob) {
 			$phrase->append(i18n({ person => $person, format => ' was born ' }));
@@ -2974,7 +2974,7 @@ sub print_person
 			$phrase->append("[$_]") foreach(@birthcitations);
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new("$pronoun ");
+			$phrase = Data::Text->new();
 			@phrases = ();
 		} elsif($aod) {
 			if($language eq 'French') {
@@ -3010,7 +3010,7 @@ sub print_person
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			}
-			$phrase = Data::Text->new($pronoun);
+			$phrase = Data::Text->new();
 			@phrases = ();
 		}
 
@@ -3018,8 +3018,8 @@ sub print_person
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
+			$phrase->append("$pronoun ") if(scalar(@phrases) == 0);
 			if($dateofbirth || $placeofbirth) {
-				$phrase->append(',') if($print_sibling_count && (!$opts{'a'}) && (!$aob) && (!$aod) && !$opts{'p'});
 				my $birth_place;
 				if($placeofbirth) {
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
@@ -3035,7 +3035,7 @@ sub print_person
 					complain({ person => $person, warning => 'Date of birth is known, but not place' });
 				}
 
-				$phrase->append(i18n({ person => $person, format => ' was born' }));
+				$phrase->append(i18n({ person => $person, format => 'was born' }));
 				$phrase->append($birth_place) if($birth_place);
 
 				if($dateofbirth) {
@@ -3453,6 +3453,7 @@ sub print_person
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
+			$phrase->append("$pronoun ") if(scalar(@phrases) == 0);
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
@@ -5831,7 +5832,7 @@ sub print_person
 					}
 
 					if(scalar(@phrases) == 0) {
-						$phrase->append("$pronoun ");
+						$phrase->append("$pronoun ")->(__LINE__);
 					}
 
 					$phrase->append(i18n({ person => $person, format => 'died' }));
@@ -5998,7 +5999,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = Data::Text->new()->append(' ');
+						$bio = Data::Text->new(' ');
 					}
 				} else {
 					$phrase->append("\n\t");
@@ -6154,7 +6155,7 @@ sub print_person
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 				@phrases = ();
 
-				$phrase = Data::Text->new()->append("\n\t");
+				$phrase = Data::Text->new("\n\t");
 			} elsif($citationcount) {
 				$phrase->append("\n\t");
 			}
