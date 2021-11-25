@@ -2575,7 +2575,8 @@ sub print_person
 
 		my $same_occupation_as_father;
 
-		my $phrase = Data::Text->new("\t");
+		my $bio = Data::Text->new("\t");
+		my $phrase = Data::Text->new();
 		my @phrases;
 
 		if($occupations[0]) {
@@ -2913,19 +2914,12 @@ sub print_person
 		} elsif(($mother || $father) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage)) {
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
+		} elsif($phrase->length() == 0) {
+			$phrase->set($firstname // $pronoun);
 		}
 
 		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
 			complain({ person => $person, warning => 'Baptism information not used to determine a parent' });
-		}
-
-		if(!$spouserelationship) {
-			if($aob || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
-				if($relationship) {
-					$phrase->append(' ');
-				}
-				$phrase->append($firstname // $pronoun);
-			}
 		}
 
 		if(my $aka = $person->as_string({ use_aka => 1 })) {
@@ -2933,7 +2927,6 @@ sub print_person
 		}
 
 		my $start_of_paragraph = 0;
-		my $bio = Data::Text->new();
 
 		if($aob && $aod) {
 			if($aob == $aod) {
@@ -3018,15 +3011,15 @@ sub print_person
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			$phrase->append("$pronoun ") if(scalar(@phrases) == 0);
+			$phrase->set("$pronoun ") if((scalar(@phrases) == 0) && ($phrase->length() == 0));
 			if($dateofbirth || $placeofbirth) {
 				my $birth_place;
 				if($placeofbirth) {
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
 						if($language eq 'French') {
-							$phrase->append(' y');
+							$phrase->append('y');
 						} else {
-							$birth_place = ' there';
+							$birth_place = 'there';
 						}
 					} else {
 						$birth_place = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
@@ -3189,6 +3182,9 @@ sub print_person
 				}
 			}
 			if($dateofbaptism || $placeofbaptism) {
+				if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
+					$phrase->set("$pronoun ");
+				}
 				unless($dateofbirth || $placeofbirth) {
 					if($language eq 'French') {
 						if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
@@ -3281,6 +3277,9 @@ sub print_person
 				$phrase = Data::Text->new();
 			}
 		} elsif($aob && ($dateofbaptism || $placeofbaptism)) {
+			if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
+				$phrase->set("$pronoun ");
+			}
 			if($language eq 'French') {
 				if($placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
 					$phrase->append("y a \N{U+00E9}t\N{U+00E9} ");	# a été
@@ -3350,7 +3349,7 @@ sub print_person
 			} else {
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new("$pronoun ");
+				$phrase = Data::Text->new();
 				@phrases = ();
 			}
 		}
@@ -3393,8 +3392,8 @@ sub print_person
 							" mother in $myod and father in $fyod");
 					}
 					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					$phrase = Data::Text->new("\n\t");
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
+					$phrase = Data::Text->new();
 					@phrases = ();
 
 					if($opts{'B'}) {
@@ -3453,24 +3452,24 @@ sub print_person
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
-			$phrase->append("$pronoun ") if(scalar(@phrases) == 0);
+			$phrase->set($pronoun) if((scalar(@phrases) == 0) && ($phrase->length() == 0));
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   $phrase->length()) {
-						$phrase->append(i18n('also '));
+						$phrase->append(i18n('also'));
 					}
 					my %args = (person => $person);
 					if($spouserelationship) {
-						$args{'format'} = 'married ';
+						$args{'format'} = ' married ';
 					} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 						if($placeofmarriage || $dateofmarriage) {
-							$args{'format'} = 'married ';
+							$args{'format'} = ' married ';
 						} else {
-							$args{'format'} = 'is married to ';
+							$args{'format'} = ' is married to ';
 						}
 					} else {
-						$args{'format'} = 'was married to ';
+						$args{'format'} = ' was married to ';
 					}
 					$phrase->append(i18n(\%args));
 
@@ -3697,14 +3696,14 @@ sub print_person
 				}
 			} else {
 				if(is_alive(person => $person)) {
-					$phrase->append('has been married');
+					$phrase->append(' has been married');
 				} elsif($language eq 'French') {
 					$phrase->append(" a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}");
 					if($sex eq 'F') {
 						$phrase->append('e');
 					}
 				} else {
-					$phrase->append('was married');
+					$phrase->append(' was married');
 				}
 				$phrase->append(' ');
 				if(scalar(@spouses) == 2) {
@@ -4004,10 +4003,9 @@ sub print_person
 		if(scalar(@childrenunknownparent)) {
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
+			$phrase = Data::Text->new("$pronoun ");
 			@phrases = ();
 
-			$phrase->append("$pronoun ");
 			if(scalar(@children) > scalar(@childrenunknownparent)) {
 				$phrase->append(i18n('also '));
 			}
@@ -5961,14 +5959,14 @@ sub print_person
 			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
 				if($language eq 'French') {
 					if($phrase->length() == 0) {
-						$phrase->append("C'est");
+						$phrase->set("C'est");
 					} else {
 						$phrase->append(', qui est');
 					}
 					$phrase->append(" aussi o\N{U+00F9} " . lcfirst($pronoun));
 				} else {
 					if($phrase->length() == 0) {
-						$phrase->append('That');
+						$phrase->set('That');
 					} else {
 						$phrase->append(', which');
 					}
@@ -5976,7 +5974,7 @@ sub print_person
 				}
 			} elsif($aob && scalar(@spouses) && ($numberofchildren == 0)) {
 				push @phrases, $phrase;
-				$phrase = Data::Text->new()->append($firstname // $pronoun);
+				$phrase = Data::Text->new($firstname // $pronoun);
 			} else {
 				if($phrase->length()) {
 					push @phrases, $phrase;
@@ -6091,7 +6089,7 @@ sub print_person
 						$text->font($params{'font'}, 12);
 						pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 					}
-					$bio = Data::Text->new()->append(' ');
+					$bio = Data::Text->new(' ');
 				}
 			} else {
 				$phrase->append("\n");
@@ -6219,7 +6217,7 @@ sub print_person
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
-						$bio = Data::Text->new()->append(' ');
+						$bio = Data::Text->new(' ');
 					}
 				} else {
 					$phrase->rtrim()->append("\n\t");
