@@ -5832,7 +5832,7 @@ sub print_person
 					}
 
 					if(scalar(@phrases) == 0) {
-						$phrase->append("$pronoun ")->(__LINE__);
+						$phrase->append("$pronoun ");
 					}
 
 					$phrase->append(i18n({ person => $person, format => 'died' }));
