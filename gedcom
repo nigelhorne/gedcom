@@ -2595,7 +2595,7 @@ sub print_person
 					$article = 'a';
 				}
 
-				$phrase->append(ucfirst(i18n({
+				$phrase->set(ucfirst(i18n({
 					person => $person,
 					format => "$article %s",
 					args => lc(conjunction(@occupations))
@@ -2631,19 +2631,19 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 					if($language eq 'French') {
-						$phrase->append(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
+						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
 					} else {
-						$phrase->append('twin of');
+						$phrase->set('twin of');
 					}
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
-							$phrase->append("Le jumeau fr\N{U+00E8}re de");
+							$phrase->set("Le jumeau fr\N{U+00E8}re de");
 						} else {
-							$phrase->append('La jumelle sœer de');
+							$phrase->set('La jumelle sœer de');
 						}
 					} else {
-						$phrase->append('The twin ' . (($sex eq 'M') ? 'brother' : 'sister') .
+						$phrase->set('The twin ' . (($sex eq 'M') ? 'brother' : 'sister') .
 							' of');
 					}
 				}
@@ -2654,7 +2654,7 @@ sub print_person
 		my $print_sibling_count = 0;
 
 		if($father || $mother) {
-			if(scalar(@occupations) || scalar(@twins)) {
+			if($phrase->length() > 0) {
 				if($language eq 'French') {
 					$phrase->append(' et l');
 				} else {
@@ -2662,9 +2662,9 @@ sub print_person
 				}
 			} else {
 				if($language eq 'French') {
-					$phrase->append('L');
+					$phrase->set('L');
 				} else {
-					$phrase->append('The ');
+					$phrase->set('The ');
 				}
 			}
 
@@ -2830,6 +2830,8 @@ sub print_person
 		}
 
 		my $haveprintedspousename;
+		my $noun = $firstname // $pronoun;
+
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
@@ -2855,7 +2857,8 @@ sub print_person
 			}
 			$phrase->append(" $relationship");
 			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-				$phrase->append(',');
+				$phrase->append(" $noun");
+				$noun = $pronoun;
 			}
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
@@ -2863,13 +2866,8 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 				}
-				if($firstname) {
-					$phrase->append($firstname);
-				} else {
-					$phrase->append($pronoun);
-				}
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
+				$phrase->append($noun);
+				$noun = $pronoun;
 			} else {
 				$phrase->append($person);
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
@@ -2914,8 +2912,6 @@ sub print_person
 		} elsif(($mother || $father) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage)) {
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
-		} elsif($phrase->length() == 0) {
-			$phrase->set($firstname // $pronoun);
 		}
 
 		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
@@ -2937,11 +2933,6 @@ sub print_person
 			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
 			$phrase->append("[$_]") foreach(@birthcitations);
 			$phrase->append("[$_]") foreach(@deathcitations);
-
-			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
-			@phrases = ();
 		} elsif($aob) {
 			$phrase->append(i18n({ person => $person, format => ' was born ' }));
 			if($language eq 'French') {
@@ -2965,10 +2956,6 @@ sub print_person
 				complain({ person => $person, warning => 'Date of birth is known, but not place' });
 			}
 			$phrase->append("[$_]") foreach(@birthcitations);
-			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
-			@phrases = ();
 		} elsif($aod) {
 			if($language eq 'French') {
 				$phrase->append(' est mort');
@@ -2993,25 +2980,31 @@ sub print_person
 				$phrase->append(" ($notes)");
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				$phrase = Data::Text->new();
+				@phrases = ();
 				if(length($notes) > 160) {
 					$start_of_paragraph = 1;
 					$bio->append("\n\t");
 				} else {
 					$bio->append('  ');
 				}
-			} else {
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			}
+		}
+
+		if($phrase->length()) {
+			push @phrases, $phrase;
 			$phrase = Data::Text->new();
-			@phrases = ();
 		}
 
 		my @residences = get_all_residences($person);
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			$phrase->set("$pronoun ") if((scalar(@phrases) == 0) && ($phrase->length() == 0));
+			if($noun eq $firstname) {
+				$phrase->set("$firstname ");
+				$noun = $pronoun;
+			}
+
 			if($dateofbirth || $placeofbirth) {
 				my $birth_place;
 				if($placeofbirth) {
@@ -3356,59 +3349,63 @@ sub print_person
 
 		$start_of_paragraph = 0;
 		# Is/was this person an orphan?
-		if($mother && $father && $yob) {
-			if((my $mdod = dateofdeath($mother)) &&
-			   (my $fdod = dateofdeath($father))) {
-				my $myod;
-				my $fyod;
-				if(($fdod =~ /.*?(\d{3,4})/)) {
-					$fyod = $1;
+		if($mother && $father && $yob &&
+		  ((my $mdod = dateofdeath($mother)) &&
+		  (my $fdod = dateofdeath($father)))) {
+			my $myod;
+			my $fyod;
+			if(($fdod =~ /.*?(\d{3,4})/)) {
+				$fyod = $1;
+			}
+			if(($mdod =~ /.*?(\d{3,4})/)) {
+				$myod = $1;
+			}
+			if((!defined($fyod)) || (!defined($myod))) {
+				die "BUG: !fyod || !myod";
+			}
+			if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
+				if(scalar(@phrases) == 0) {
+					$phrase->append($pronoun);
+				} else {
+					$phrase->append(lcfirst($pronoun));
 				}
-				if(($mdod =~ /.*?(\d{3,4})/)) {
-					$myod = $1;
+				$phrase->append(' was orphaned ');
+				if($myod == $fyod) {
+					$phrase->append('when both of ')
+						->append(($person->pronoun() eq 'She') ? 'her' : 'his')
+						->append(" parents died in $myod when ")
+						->append(lcfirst($person->pronoun()))
+						->append(' was ')
+						->append($myod - $yob)
+						->append(' years old');
+				} elsif($myod > $fyod) {
+					$phrase->append('at the age of ' . ($myod - $yob) .
+						i18n(' following the death of ') .
+						(($person->pronoun() eq 'She') ? 'her' : 'his') .
+						" father in $fyod and mother in $myod");
+				} else {
+					$phrase->append('at the age of ' . ($fyod - $yob) .
+						i18n(' following the death of ') .
+						(($person->pronoun() eq 'She') ? 'her' : 'his') .
+						" mother in $myod and father in $fyod");
 				}
-				if((!defined($fyod)) || (!defined($myod))) {
-					die "BUG: !fyod || !myod";
-				}
-				if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
-					$phrase->append("$pronoun was orphaned ");
-					if($myod == $fyod) {
-						$phrase->append('when both of ')
-							->append(($person->pronoun() eq 'She') ? 'her' : 'his')
-							->append(" parents died in $myod when ")
-							->append(lcfirst($person->pronoun()))
-							->append(' was ')
-							->append($myod - $yob)
-							->append(' years old');
-					} elsif($myod > $fyod) {
-						$phrase->append('at the age of ' . ($myod - $yob) .
-							i18n(' following the death of ') .
-							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" father in $fyod and mother in $myod");
-					} else {
-						$phrase->append('at the age of ' . ($fyod - $yob) .
-							i18n(' following the death of ') .
-							(($person->pronoun() eq 'She') ? 'her' : 'his') .
-							" mother in $myod and father in $fyod");
-					}
-					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
-					$phrase = Data::Text->new();
-					@phrases = ();
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
+				$phrase = Data::Text->new();
+				@phrases = ();
 
-					if($opts{'B'}) {
-						if($bio->length()) {
-							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-								$text->textend();
+				if($opts{'B'}) {
+					if($bio->length()) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+							$text->textend();
 
-								$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = NJH::PDFPage->new($pdf);
 
-								$text = $pdfpage->text();
-								$text->font($params{'font'}, 12);
-								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
-							}
-							$bio = Data::Text->new();
+							$text = $pdfpage->text();
+							$text->font($params{'font'}, 12);
+							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
+						$bio = Data::Text->new();
 					}
 				}
 			}
@@ -3446,30 +3443,33 @@ sub print_person
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
-}
+		}
 
 		my @childrenunknownparent;
 		# TODO: children != 0 && spouses == 0
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
-			$phrase->set($pronoun) if((scalar(@phrases) == 0) && ($phrase->length() == 0));
+			if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
+				$phrase->set("$noun ");
+				$noun = $pronoun;
+			}
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
 					if($placeofbaptism && $placeofmarriage && ($placeofmarriage eq $placeofbaptism) &&
 					   $phrase->length()) {
-						$phrase->append(i18n('also'));
+						$phrase->append(i18n('also '));
 					}
 					my %args = (person => $person);
 					if($spouserelationship) {
-						$args{'format'} = ' married ';
+						$args{'format'} = 'married ';
 					} elsif(is_alive(person => $person) && is_alive(person => $spouses[0])) {
 						if($placeofmarriage || $dateofmarriage) {
-							$args{'format'} = ' married ';
+							$args{'format'} = 'married ';
 						} else {
-							$args{'format'} = ' is married to ';
+							$args{'format'} = 'is married to ';
 						}
 					} else {
-						$args{'format'} = ' was married to ';
+						$args{'format'} = 'was married to ';
 					}
 					$phrase->append(i18n(\%args));
 
@@ -3696,14 +3696,14 @@ sub print_person
 				}
 			} else {
 				if(is_alive(person => $person)) {
-					$phrase->append(' has been married');
+					$phrase->append('has been married');
 				} elsif($language eq 'French') {
-					$phrase->append(" a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}");
+					$phrase->append("a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}");
 					if($sex eq 'F') {
 						$phrase->append('e');
 					}
 				} else {
-					$phrase->append(' was married');
+					$phrase->append('was married');
 				}
 				$phrase->append(' ');
 				if(scalar(@spouses) == 2) {
