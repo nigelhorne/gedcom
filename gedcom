@@ -3029,14 +3029,11 @@ sub print_person
 						complain({ person => $person, warning => "Removing trailing spaces from date of birth '$dateofbirth'" });
 						$dateofbirth =~ s/\s+$//;
 					}
-					my $y = year({
+					my $y = between(year({
 						person => $person,
 						date => $dateofbirth,
 						must_predate => $death_dt
-					});
-					if($y =~ /^fro?m (.+) to (.+)/i) {
-						$y = "between $1 and $2";
-					}
+					}));
 					$phrase->append(" $y") if($y);
 				}
 				$phrase->append("[$_]") foreach(@birthcitations);
@@ -5841,11 +5838,10 @@ sub print_person
 							complain({ person => $person, warning => 'Removing trailing spaces from date of death' });
 							$dateofdeath =~ s/\s+$//;
 						}
-						my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-						if($y =~ /^fro?m (.+) to (.+)/i) {
-							$y = " between $1 and $2";
-						}
-						$phrase->append(" $y");
+						$phrase->append([
+							' ',
+							between(year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }))
+						]);
 					}
 					if($placeofdeath && (my $p = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
 						$phrase->append($p);
@@ -6010,10 +6006,10 @@ sub print_person
 				if($dateofbirth && ($dateofdeath eq $dateofbirth)) {
 					$phrase->append(i18n(' on the same day'));
 				} elsif($placeofdeath && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
-					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^fro?m (.+) to (.+)/i) {
-						$y = "between $1 and $2";
-					}
+					$phrase->append([
+						' ',
+						between(year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }))
+					]);
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					my $p = $1;
 					if($dateofdeath =~ /\s$/) {
@@ -6027,11 +6023,10 @@ sub print_person
 						complain({ person => $person, warning => "Removing trailing spaces from date of death '$death'" });
 						$dateofdeath =~ s/\s+$//;
 					}
-					my $y = year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt });
-					if($y =~ /^fro?m (.+) to (.+)/i) {
-						$y = "between $1 and $2";
-					}
-					$phrase->append(" $y");
+					$phrase->append([
+						' ',
+						between(year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }))
+					]);
 					if($placeofdeath && ((!$placeofmarriage) || ($placeofdeath ne $placeofmarriage) || $printed_residence)) {
 						my $place = place({ person => $person, record => $death, places_printed => \%places_printed });
 						if(!defined($place)) {
@@ -10482,6 +10477,19 @@ sub i18n
 		return " $format";
 	}
 	return $format;
+}
+
+sub between
+{
+	if(my $phrase = shift) {
+		if($phrase =~ /^fro?m (.+) to (.+)/i) {
+			if($language eq 'French') {
+				return "entre $1 et $2";
+			}
+			return "between $1 and $2";
+		}
+		return $phrase;
+	}
 }
 
 # Must all be in lower case
