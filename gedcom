@@ -3000,7 +3000,7 @@ sub print_person
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			if($noun eq $firstname) {
+			if(($noun eq $firstname) || (scalar(@phrases) == 0)) {
 				if($aod && scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
@@ -3015,9 +3015,9 @@ sub print_person
 				if($placeofbirth) {
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
 						if($language eq 'French') {
-							$phrase->append('y');
+							$phrase->append('y ');
 						} else {
-							$birth_place = 'there';
+							$birth_place = ' there';
 						}
 					} else {
 						$birth_place = place({ person => $person, place => $placeofbirth, places_printed => \%places_printed });
@@ -3829,6 +3829,7 @@ sub print_person
 					$phrase->append(',' . i18n(' to ') . conjunction(@names));
 				}
 				$phrase->append("[$marriagecitation]") if($marriagecitation);
+				$phrase->append(',') if(scalar(@names) > 0);
 
 				# Determine if all the children are from one marriage, since that's
 				# easier to print.
