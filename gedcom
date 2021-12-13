@@ -3826,10 +3826,9 @@ sub print_person
 					$name .= ')' if($printed_bracket);
 				}
 				if(scalar(@names)) {
-					$phrase->append(',' . i18n(' to ') . conjunction(@names));
+					$phrase->append(' -' . i18n(' to ') . conjunction(@names));
 				}
 				$phrase->append("[$marriagecitation]") if($marriagecitation);
-				$phrase->append(',') if(scalar(@names) > 0);
 
 				# Determine if all the children are from one marriage, since that's
 				# easier to print.
