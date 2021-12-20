@@ -3431,7 +3431,11 @@ sub print_person
 		my @education = $person->education();
 
 		if(scalar(@education)) {
-			$phrase->append($pronoun);
+			if(scalar(@phrases)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new($pronoun);
+				@phrases = ();
+			}
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
 				$phrase->append(' est ' . (($sex eq 'M' ? "all\N{U+00E9}" : "all\N{U+00E9}e")) .
