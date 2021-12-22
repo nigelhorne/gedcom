@@ -5626,17 +5626,19 @@ sub print_person
 						@phrases = ();
 					} elsif($type eq 'Story') {
 						if(my $notes = notes(record => $event)) {
-							push @phrases, $phrase;
-							$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-							$phrase = Data::Text->new();
-							@phrases = ();
+							if($phrase->length() > 0) {
+								push @phrases, $phrase;
+								$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+								$phrase = Data::Text->new();
+								@phrases = ();
+							}
 
 							$notes =~ s/\.$//;
 							# TODO:  Do this if the notes doesn't include a date
 							# if(my $date = year(record => $event)) {
-								# $phrase->append(' ' . ucfirst($notes) . " $date. ");
+								# $phrase->append(ucfirst($notes) . " $date. ");
 							# } else {
-								$phrase->append(' ' . ucfirst($notes));
+								$phrase->append(ucfirst($notes));
 							# }
 						}
 					} elsif($type eq 'Court') {
