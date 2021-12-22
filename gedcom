@@ -3160,9 +3160,9 @@ sub print_person
 							$phrase = Data::Text->new();
 
 							if($dob == ($birth_dt + $oneday)) {
-								$phrase->append(i18n('a day before '));
+								$phrase->set(i18n('a day before '));
 							} else {
-								$phrase->append('a day after ');
+								$phrase->set('a day after ');
 							}
 						}
 						my $ssex = $sibling->sex();
@@ -3343,15 +3343,12 @@ sub print_person
 					birthdate => $dateofbirth,
 				}));
 			}
-			if(scalar(@spouses)) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
-			} else {
-				push @phrases, $phrase;
+			push @phrases, $phrase;
+			if(scalar(@spouses) == 0) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
 				@phrases = ();
 			}
+			$phrase = Data::Text->new();
 		}
 
 		$start_of_paragraph = 0;
@@ -5484,7 +5481,7 @@ sub print_person
 									push @phrases, $phrase;
 									$phrase = Data::Text->new();
 								}
-								$phrase->append(journey({ person => $person, arrival => $event, departure => $previous }));
+								$phrase->set(journey({ person => $person, arrival => $event, departure => $previous }));
 							} else {
 								# Two arrival records, put into one sentence for improved readability
 								my $date1 = year({ record => $previous });
@@ -5511,13 +5508,13 @@ sub print_person
 									} else {
 										$date1 = " $date1";
 									}
-									$phrase->append("During $year1 " . lcfirst($pronoun) . ' arrived' .
+									$phrase->set("During $year1 " . lcfirst($pronoun) . ' arrived' .
 										place({ person => $person, record => $previous }) .
 										"$date1 and" .
 										place({ person => $person, record => $event, nopreposition => 1 }) .
 										" $date2");
 								} else {
-									$phrase->append(ucfirst(year({ person => $person, record => $previous })) .
+									$phrase->set(ucfirst(year({ person => $person, record => $previous })) .
 										' ' . lcfirst($person->pronoun()) .
 										' arrived' .
 										place({ person => $person, record => $previous }) .
@@ -5536,7 +5533,7 @@ sub print_person
 										push @phrases, $phrase;
 										$phrase = Data::Text->new();
 									}
-									$phrase->append($year);
+									$phrase->set($year);
 									if(my $notes = notes(record => $event)) {
 										$notes = lcfirst($notes);
 										$phrase->append(" ($notes)");
@@ -5646,7 +5643,7 @@ sub print_person
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
 						} else {
-							$phrase->append("$pronoun ");
+							$phrase->set("$pronoun ");
 						}
 						if($language eq 'French') {
 							$phrase->append("a \N{U+00E9}t\N{U+00E9} au tribunal");
@@ -5805,7 +5802,7 @@ sub print_person
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif(scalar(@phrases) == 0) {
-						$phrase->append("$pronoun ");
+						$phrase->set("$pronoun ");
 					}
 
 					$phrase->append(
@@ -5938,13 +5935,13 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 					if($language eq 'French') {
-						$phrase->append("y enterr\N{U+00E9}");
+						$phrase->set("y enterr\N{U+00E9}");
 						if($sex eq 'F') {
 							$phrase->append('e');
 						}
 						$phrase->append("\N{U+00E0} " . $burial->address());
 					} else {
-						$phrase->append('is buried there at ' . $burial->address());
+						$phrase->set('is buried there at ' . $burial->address());
 					}
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
@@ -5995,9 +5992,9 @@ sub print_person
 				if($opts{'B'}) {
 					if(scalar(@phrases)) {
 						$bio->append(conjunction(map { $_->as_string() } @phrases));
+						@phrases = ();
 					}
 					$phrase = Data::Text->new();
-					@phrases = ();
 
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
