@@ -2367,7 +2367,7 @@ sub print_person
 		if((!$dateofbaptism) && $baptism) {
 			$dateofbaptism = $baptism->date();
 		}
-		my $placeofbaptism = get_value({ person => $person, value => 'baptism place' });
+		my $placeofbaptism = place({ person => $person, record => $baptism });
 		if((!$placeofbaptism) && $baptism) {
 			$placeofbaptism = $baptism->place();
 		}
@@ -3220,7 +3220,12 @@ sub print_person
 							$phrase->append(i18n(' at') . " $address");
 						}
 					} else {
-						my $p = place({ person => $person, place => $placeofbaptism });
+						my $p;
+						if(defined($baptism)) {
+							$p = place({ person => $person, record => $baptism });
+						} else {
+							$p = place({ person => $person, place => $placeofbaptism });
+						}
 						$phrase->append($p);
 						$places_printed{$p} = 1;
 					}
