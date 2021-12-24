@@ -2866,7 +2866,7 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 				}
-				$phrase->append($noun);
+				$phrase->set($noun);
 				$noun = $pronoun;
 			} else {
 				$phrase->append($person);
@@ -2995,6 +2995,12 @@ sub print_person
 				} else {
 					$bio->append('  ');
 				}
+			} elsif(dateofbirth($person) && (scalar(@spouses) > 1)) {
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new();
+				@phrases = ();
+				$noun = $pronoun;
 			}
 		}
 
@@ -3013,7 +3019,7 @@ sub print_person
 					$phrase = Data::Text->new();
 					@phrases = ();
 				}
-				$phrase->set("$firstname ");
+				$phrase->set("$noun ");
 				$noun = $pronoun;
 			}
 
