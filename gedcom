@@ -2914,7 +2914,9 @@ sub print_person
 				$phrase->append(',');
 			}
 			$haveprintedspousename = 1;
-		} elsif(($mother || $father) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage)) {
+		} elsif(($mother || $father) &&
+			($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) &&
+			($relationship || $spouserelationship)) {
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
 		}
