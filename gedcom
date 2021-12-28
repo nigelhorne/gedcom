@@ -2367,7 +2367,7 @@ sub print_person
 		if((!$dateofbaptism) && $baptism) {
 			$dateofbaptism = $baptism->date();
 		}
-		my $placeofbaptism = place({ person => $person, record => $baptism });
+		my $placeofbaptism = get_value({ person => $person, value => 'baptism place' });
 		if((!$placeofbaptism) && $baptism) {
 			$placeofbaptism = $baptism->place();
 		}
