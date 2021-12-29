@@ -2831,6 +2831,7 @@ sub print_person
 
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
+		my $ended_with_comma;
 
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
@@ -2872,6 +2873,7 @@ sub print_person
 				$phrase->append($person);
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
 					$phrase->append(', ');
+					$ended_with_comma = 1;
 				} elsif(is_alive(person => $person)) {
 					$phrase->append(i18n(' is '));
 				} else {
@@ -2882,7 +2884,8 @@ sub print_person
 					}
 				}
 			}
-			if($phrase->length()) {
+
+			if(($phrase->length() > 0) && !$ended_with_comma) {
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			}
