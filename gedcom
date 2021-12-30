@@ -3577,7 +3577,7 @@ sub print_person
 								$phrase->append('a eu ');
 							} else {
 								if(is_alive(person => $person)) {
-									$phrase->append('has');
+									$phrase->append('has ');
 								}
 								$phrase->append('had ');
 							}
