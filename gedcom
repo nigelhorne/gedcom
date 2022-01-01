@@ -4043,8 +4043,11 @@ sub print_person
 			if($phrase->length()) {
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
+			} elsif(scalar(@phrases) == 0) {
+				$phrase->set($pronoun);
 			}
-			$phrase->append($pronoun)->append(i18n('had '));
+			$phrase->append(i18n('had '));
+
 			if($language eq 'French') {
 				$phrase->append((($numberofchildren == 1) ? '1 enfant' : "$numberofchildren enfants"));
 			} else {
