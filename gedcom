@@ -3635,16 +3635,37 @@ sub print_person
 							$haveprintedspousename = 1;
 						}
 						if($numberofchildrenwiththisspouse == 1) {
-							if(my $first_name = $children[0]->given_names()) {
-								$phrase->append($first_name);
-							} else {
-								$phrase->append('whose first name is unknown');
+							my $child = $children[0];
+							if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
+								if(my $first_name = $child->given_names()) {
+									$phrase->append($first_name);
+								} else {
+									$phrase->append('whose first name is unknown');
+								}
 							}
 						} elsif($numberofchildrenwiththisspouse > 1) {
 							# my $childnames = join(', ', map { $_->given_names() } @children);
 							# substr($childnames, rindex($childnames, ', '), 2, ' and ');
 							# print $childnames;
-							$phrase->append(conjunction(map { $_->given_names() } @childrenofthisspouse));
+							# $phrase->append(conjunction(map { $_->given_names() } @childrenofthisspouse));
+							my @childlist;
+							my $alive_children = 0;
+							foreach my $child(@childrenofthisspouse) {
+								if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
+									push @childlist, $child->given_names();
+								} else {
+									$alive_children++;
+									# push @childlist, $child->given_names();
+								}
+							}
+							if(scalar(@childlist)) {
+								$phrase->append(conjunction(@childlist));
+								if($alive_children == 1) {
+									$phrase->append(', along with 1 surviving child');
+								} elsif($alive_children > 1) {
+									$phrase->append(", along with $alive_children surviving children");
+								}
+							}
 						}
 					}
 				} else {
@@ -3958,23 +3979,33 @@ sub print_person
 						} else {
 							# List children by the same parent together
 							my %childmap;
+							my $surviving_children;
 							if($sex eq 'M') {
 								foreach my $child(@children) {
-									if(my $mother = $child->mother()) {
-										push @{$childmap{$mother->given_names()}}, $child;
+									if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
+										if(my $mother = $child->mother()) {
+											push @{$childmap{$mother->given_names()}}, $child;
+										} else {
+											push @{$childmap{'unknown mother'}}, $child;
+										}
 									} else {
-										push @{$childmap{'unknown mother'}}, $child;
+										$surviving_children++;
 									}
 								}
 							} else {
 								foreach my $child(@children) {
-									if(my $father = $child->father()) {
-										push @{$childmap{$father->given_names()}}, $child;
+									if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
+										if(my $father = $child->father()) {
+											push @{$childmap{$father->given_names()}}, $child;
+										} else {
+											push @{$childmap{'unknown father'}}, $child;
+										}
 									} else {
-										push @{$childmap{'unknown father'}}, $child;
+										$surviving_children++;
 									}
 								}
 							}
+
 							my @childnames;
 							while(my ($key, $value) = each %childmap) {
 								push @childnames,
@@ -3988,6 +4019,17 @@ sub print_person
 							# TODO: restore old values
 							Lingua::Conjunction->separator_phrase(',');
 							Lingua::Conjunction->penultimate(0);
+
+							if(defined($surviving_children)) {
+								push @phrases, $phrase;
+								$phrase = Data::Text->new();
+
+								if($surviving_children == 1) {
+									$phrase->append('one surviving child');
+								} elsif($surviving_children > 1) {
+									$phrase->append("$surviving_children surviving children");
+								}
+							}
 						}
 					}
 				}
