@@ -1577,7 +1577,6 @@ sub print_person
 
 	# print 'Checking ', $person->as_string({ include_years => 1 }), "\n" if($opts{'v'});
 
-	my $print = 0;
 	my $aob;
 	my $aod;
 	my $aom;
@@ -1585,6 +1584,7 @@ sub print_person
 	my $month = $params{'month'};
 
 	if($day) {
+		my $print = 0;
 		if($dateofbirth && ($dateofbirth !~ /^\d{3,4}$/)) {
 			my @btime = strptime("$dateofbirth 12:00");
 			if(defined($btime[3]) && ($btime[3] == $day) && ($btime[4] == $month) && $btime[5]) {
