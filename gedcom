@@ -1766,7 +1766,8 @@ sub print_person
 			return;
 		}
 		$str .= '<br>';
-		if($opts{'L'}) {
+		if($opts{'L'} && ($opts{'l'} || !is_alive(person => $person))) {
+			# Add a link to the person's web page from the calendar
 			$str .= '<a href="';
 			if($opts{'e'}) {
 				$str .= 'http://' . $opts{'e'} . '/cgi-bin/page.fcgi?page=people&entry=' . $person->xref();
