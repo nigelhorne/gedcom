@@ -614,7 +614,7 @@ if($opts{'m'} && !$opts{'H'}) {
 if($opts{'y'} && (!$opts{'H'}) && (!$opts{'T'})) {
 	die '-y only makes sense with the -H or -T options';
 }
-if($opts{'e'} && ((!$opts{'L'}) || (!opts{'H'}))) {
+if($opts{'e'} && ((!$opts{'L'}) || (!$opts{'H'}))) {
 	die '-e only makes sense with the -L option and -H options';
 }
 if($opts{'L'} && !$opts{'H'}) {
@@ -1769,11 +1769,11 @@ sub print_person
 		if($opts{'L'}) {
 			$str .= '<a href="';
 			if($opts{'e'}) {
-				$str .= 'http://' . $opts{'e'} . '/';
+				$str .= 'http://' . $opts{'e'} . '/cgi-bin/page.fcgi?page=people&entry=' . $person->xref();
+			} else {
+				$str .= '/' . make_filename_from_person(person => $person);
 			}
-			$str .= '/' . make_filename_from_person(person => $person) . '">' .
-				$person->as_string() .
-				'</a>';
+			$str .= '">' . $person->as_string() . '</a>';
 		} else {
 			$str .= $person->as_string();
 		}
