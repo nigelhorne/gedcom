@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2021, Nigel Horne
+# Copyright (C) 2015-2022, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -157,8 +157,8 @@ use autodie qw(:all);
 sub get_location($);
 
 my %opts;
-getopts('aAbB:cCdDfFGgh:Hi:m:M:lLp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
+getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLp:sStTwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
 
 print "Starting\n" if($opts{'v'});
 
@@ -613,6 +613,9 @@ if($opts{'m'} && !$opts{'H'}) {
 }
 if($opts{'y'} && (!$opts{'H'}) && (!$opts{'T'})) {
 	die '-y only makes sense with the -H or -T options';
+}
+if($opts{'e'} && ((!$opts{'L'}) || (!opts{'H'}))) {
+	die '-e only makes sense with the -L option and -H options';
 }
 if($opts{'L'} && !$opts{'H'}) {
 	die '-L only makes sense with the -H option';
@@ -1764,7 +1767,11 @@ sub print_person
 		}
 		$str .= '<br>';
 		if($opts{'L'}) {
-			$str .= '<a href="/' . make_filename_from_person(person => $person) . '">' .
+			$str .= '<a href="';
+			if($opts{'e'}) {
+				$str .= 'http://' . $opts{'e'} . '/';
+			}
+			$str .= '/' . make_filename_from_person(person => $person) . '">' .
 				$person->as_string() .
 				'</a>';
 		} else {

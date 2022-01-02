@@ -111,10 +111,11 @@ The options are:
     -A: print everyone, in alphabetical order
     -b: only print birthdays
     -B: create a genealogy book
-    -c: Give citations on detailed listing
-    -C: Print birth dates of children
+    -c: give citations on detailed listing
+    -C: print birth dates of children
     -d: show the detailed lifetime information about the person
     -D: only print anniversaries of deaths
+    -e: external website to use for the -L option
     -f: treat warnings as fatals, implies -w
     -F: create a forefathers book
     -G: print everyone, in generation order
