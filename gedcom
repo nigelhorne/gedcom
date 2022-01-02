@@ -5854,7 +5854,7 @@ sub print_person
 						$phrase->append(" ($n)");
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
-					$phrase->append($pronoun)->append(i18n({ person => $person, format => 'was buried' }));
+					$phrase->append($pronoun)->append(i18n({ person => $person, format => ' was buried' }));
 					if(my $address = $burial->address()) {
 						$phrase->append(" at $address");
 					}
