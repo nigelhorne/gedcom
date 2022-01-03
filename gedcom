@@ -7601,6 +7601,7 @@ sub Gedcom::Individual::relationship_up
 					17 << 24 | 1 => 'fifteen times great-uncle',
 					18 << 24 | 1 => 'sixteen times great-uncle',
 				);
+				# https://www.tfcg.ca/tableau-des-liens-de-parente
 				my %fr_male_relationships = (
 					1 << 24 | 1 => "fr\N{U+00E8}re",
 					1 << 24 | 2 => 'neveu',
@@ -7643,6 +7644,7 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 2 => 'first cousin five-times-removed',
 					7 << 24 | 3 => 'second cousin four-times-removed',
 					7 << 24 | 4 => 'third cousin three-times-removed',
+					7 << 24 | 4 => "petit-cousin \N{U+00E9}loing\N{U+00E9} au 3e degr\N{U+00E9}",
 					7 << 24 | 5 => "arri\N{U+00E8}re-petit-cousin \N{U+00E9}loing\N{U+00E9} au 2e degr\N{U+00E9}",
 					7 << 24 | 6 => 'fifth cousin once-removed',
 					7 << 24 | 7 => "sixi\N{U+00E8}me cousin",
@@ -7792,7 +7794,7 @@ sub Gedcom::Individual::relationship_up
 					7 << 24 | 1 => 'fifth times great-aunt',
 					7 << 24 | 2 => 'first cousin five-times-removed',
 					7 << 24 | 3 => 'second cousin four-times-removed',
-					7 << 24 | 4 => 'third cousin three-times-removed',
+					7 << 24 | 4 => "petite-cousine \N{U+00E9}loing\N{U+00E9}e au 3e degr\N{U+00E9}",
 					7 << 24 | 5 => "arri\N{U+00E8}re-petite-cousine \N{U+00E9}loing\N{U+00E9}e au 2e degr\N{U+00E9}",
 					7 << 24 | 6 => 'fifth cousin once-removed',
 					7 << 24 | 7 => "sixi\N{U+00E8}me cousin",
