@@ -5859,7 +5859,11 @@ sub print_person
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					$phrase->append($pronoun)->append(i18n({ person => $person, format => ' was buried' }));
 					if(my $address = $burial->address()) {
-						$phrase->append(" at $address");
+						if($language eq 'French') {
+							$phrase->append(" \N{U+00E0} $address");
+						} else {
+							$phrase->append(" at $address");
+						}
 					}
 					$phrase->append(' in ' . lcfirst($person->possessive()) .
 						' home town of ');
@@ -5971,7 +5975,11 @@ sub print_person
 						if(defined($placeofdeath) && ($placeofburial eq $placeofdeath) && !$death->address()) {
 							$phrase->append(' there') if($language ne 'French');
 							if($address) {
-								$phrase->append(" at $address");
+								if($language eq 'French') {
+									$phrase->append(" \N{U+00E0} $address");
+								} else {
+									$phrase->append(" at $address");
+								}
 							}
 						} else {
 							$phrase->append(place($opts));
