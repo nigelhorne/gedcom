@@ -2843,10 +2843,13 @@ sub print_person
 
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
+				if($noun eq $firstname) {
+					$phrase->append(", $firstname");
+					$noun = $pronoun;
+				}
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 					if($phrase->length()) {
-						push @phrases, $phrase;
-						$phrase = Data::Text->new();
+						$phrase->append(', ');
 					}
 				} elsif(is_alive(person => $person)) {
 					$phrase->append([$person, ' is ']);
@@ -2864,14 +2867,7 @@ sub print_person
 			} else {
 				$phrase->set(ucfirst(i18n('your')));
 			}
-			$phrase->append(" $relationship");
-			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-				if((scalar(@occupations) == 0) && !$aob) {
-					$phrase->append(',');
-				}
-				$phrase->append(" $noun");
-				$noun = $pronoun;
-			}
+			$phrase->append(" $relationship,");
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
 				if($phrase->length()) {
