@@ -2839,7 +2839,7 @@ sub print_person
 
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
-		my $ended_with_comma;
+		my @residences = get_all_residences($person);
 
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
@@ -2867,8 +2867,13 @@ sub print_person
 			} else {
 				$phrase->set(ucfirst(i18n('your')));
 			}
-			$phrase->append(" $relationship,");
+			$phrase->append(" $relationship");
+			if(scalar(@residences) || $aob || $aod) {
+				$phrase->append(',');
+			}
 		} elsif($spouserelationship) {
+			my $ended_with_comma;
+
 			if($father || $mother || $occupations[0]) {
 				if($phrase->length()) {
 					push @phrases, $phrase;
@@ -3019,7 +3024,6 @@ sub print_person
 			$phrase = Data::Text->new();
 		}
 
-		my @residences = get_all_residences($person);
 		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
