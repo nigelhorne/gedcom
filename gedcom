@@ -2843,11 +2843,11 @@ sub print_person
 
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
-				if($noun eq $firstname) {
-					$phrase->append(", $firstname");
-					$noun = $pronoun;
-				}
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
+					if($noun eq $firstname) {
+						$phrase->append(", $firstname");
+						$noun = $pronoun;
+					}
 					if($phrase->length()) {
 						$phrase->append(', ');
 					}
@@ -2868,7 +2868,7 @@ sub print_person
 				$phrase->set(ucfirst(i18n('your')));
 			}
 			$phrase->append(" $relationship");
-			if(scalar(@residences) || $aob || $aod) {
+			if($aob || $aod && (scalar(@events) == 0) && (scalar(@residences) == 0)) {
 				$phrase->append(',');
 			}
 		} elsif($spouserelationship) {
@@ -9518,6 +9518,9 @@ sub get_all_residences
 			push @rc, $census;
 		}
 	}
+
+	# TODO: Can't do this as so many things check ref($record) eq 'Gedcom::Record'
+	# @rc = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @rc;
 
 	if($opts{'w'}) {
 		# Warn if the address was 33 Foo St in 1900, and Foo St in 1910.
