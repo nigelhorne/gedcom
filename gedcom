@@ -481,8 +481,22 @@ if(my $e = $ENV{'CACHEDIR'}) {
 	$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
 }
 
+# FIXME: The location of the geo-coding database should be configurable
 my $gopts = {
-	cache => CHI->new(driver => 'File', root_dir => $cachedir)
+	# cache => CHI->new(driver => 'File', root_dir => $cachedir)
+	# cache => CHI->new(
+		# driver => 'Memcached',
+		# namespace => 'gedcom',
+		# servers => [ '192.168.1.16:11211', '192.168.1.15:11211', '127.0.0.1:11211', '192.168.1.2:11211' ],
+		# debug => $opts{'v'},
+		# compress_threshold => 10_000
+	# )
+	cache => CHI->new(
+		driver => 'Redis',
+		namespace => 'gedcom',
+		server => '192.168.1.16:6379',
+		debug => $opts{'v'}
+	)
 };
 if($opts{'v'}) {
 	$gopts->{'debug'} = 1;
