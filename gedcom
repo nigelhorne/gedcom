@@ -52,7 +52,7 @@ my @needfull;
 # Install Pre-requisites
 BEGIN {
 	my @modules = (
-		'Data::Section::Simple', 'Date::Manip', 'Parse::RecDescent',
+		'Array::Iterator', 'Data::Section::Simple', 'Date::Manip', 'Parse::RecDescent',
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
@@ -4342,7 +4342,10 @@ sub print_person
 
 			print "Sanity checking the residences\n" if($opts{'v'});
 			# Create a list of residence strings
-			foreach my $residence(@residencelist) {
+
+			# foreach my $residence(@residencelist) {
+			my $r = Array::Iterator->new({ __array__ => \@residencelist });
+			while(my $residence = $r->get_next()) {
 				my $rdate = $residence->date();
 				my $residencestring;
 				my $latitude;
@@ -4641,7 +4644,8 @@ sub print_person
 					  (!$rdate) &&
 					  ($count <= (scalar(@residencelist) - 1)) &&
 					  ($residencecitations{$residence})) {
-						my $peek = $residencelist[$count + 1];
+						# my $peek = $residencelist[$count + 1];
+						my $peek = $r->peek();
 						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 							if($residencecitations{$peek}) {
 								$residencestring .= '[' . $residencecitations{$peek} . ']';
@@ -4656,10 +4660,12 @@ sub print_person
 						$print_year_only = 0;
 					}
 				} else {
-					my $peek = $residencelist[$count];
+					# my $peek = $residencelist[$count];
+					my $peek = $r->peek();
 					if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 						my $nextnotes = notes(record => $peek);
-						$peek = $residencelist[$count + 1];
+						# $peek = $residencelist[$count + 1];
+						$peek = $r->peek(2);
 						if($peek && places_are_the_same({ person => $person, first => $residence, second => $peek })) {
 							# FIXME: work with citations by printing them all
 							if((!$opts{'c'}) && $rdate && ($rdate =~ /^\d{4}$/) && $peek->date() && ($peek->date() =~ /^\d{4}$/)) {
