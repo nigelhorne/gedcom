@@ -4343,6 +4343,8 @@ sub print_person
 			print "Sanity checking the residences\n" if($opts{'v'});
 			# Create a list of residence strings
 
+			my $printed_father_same_place;
+			my $printed_mother_same_place;
 			my $r = Array::Iterator->new({ __array__ => \@residencelist });
 			while(my $residence = $r->get_next()) {
 				my $rdate = $residence->date();
@@ -4780,7 +4782,7 @@ sub print_person
 										if($mdate eq $rdate) {
 											$with_mother++;
 											last;
-										} else {
+										} elsif(!$printed_mother_same_place) {
 											$mother_date = $mdate;
 										}
 									}
@@ -4816,7 +4818,7 @@ sub print_person
 										if($fdate eq $rdate) {
 											$with_father++;
 											last;
-										} else {
+										} elsif(!$printed_father_same_place) {
 											$father_date = $fdate;
 										}
 									}
@@ -4911,7 +4913,13 @@ sub print_person
 								complain({ person => $person, warning => [ 'Not living with either parent in childhood when aged ', $bdiff->in_units('years') ] });
 							} elsif($father_date) {
 								$residencestring .= ' (the same place as ' .
-									($person->pronoun() eq 'She' ? 'her' : 'his') . ' father ';
+									($person->pronoun() eq 'She' ? 'her' : 'his');
+								if($mother_date && (datecmp($father_date, $mother_date) == 0)) {
+									$residencestring .= ' parents ';
+									$printed_mother_same_place = 1;
+								} else {
+									$residencestring .= ' father ';
+								}
 								if(datecmp($rdate, $father_date) > 0) {
 									$residencestring .= 'had been';
 								} else {
@@ -4920,6 +4928,7 @@ sub print_person
 								$residencestring .= ' living ' .
 									year({ person => $person, string => $father_date }) .
 									')';
+								$printed_father_same_place = 1;
 							} elsif($mother_date) {
 								$residencestring .= ' (the same place as ' .
 									($person->pronoun() eq 'She' ? 'her' : 'his') . ' mother ';
@@ -4931,6 +4940,7 @@ sub print_person
 								$residencestring .= ' living ' .
 									year({ person => $person, string => $mother_date }) .
 									')';
+								$printed_mother_same_place = 1;
 							}
 						}
 						if($spouse && $marriage_dt && (my $rdate_dt = date_to_datetime($rdate))) {
@@ -8547,7 +8557,6 @@ sub place {
 				}
 			}
 		} elsif($place !~ /,/ && ($language ne 'English')) {
-							print __LINE__, "\n";
 			$rc->en($place);
 			my $en = $place;
 			$en =~ s/^ in //;
