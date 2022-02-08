@@ -3484,8 +3484,10 @@ sub print_person
 		if(scalar(@education)) {
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new($pronoun);
 				@phrases = ();
+				$phrase = Data::Text->new($pronoun);
+			} elsif($phrase->length() == 0) {
+				$phrase->set($pronoun);
 			}
 			if($language eq 'French') {
 				# FIXME: remove space after à l'
