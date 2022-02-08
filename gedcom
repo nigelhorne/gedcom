@@ -376,6 +376,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1, timeout => 30);
 	$browser->env_proxy(1);
 	$browser->conn_cache->total_capacity(undef);
+	$browser->default_header(accept_encoding => 'gzip,deflate');
 	$browser->ua($cached_browser);
 
 	# Cache calls to openstreetmap etc.
