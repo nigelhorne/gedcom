@@ -363,7 +363,9 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
 		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
-	mkdir $cachedir, 0700 if(!-d $cachedir);
+	if(!-d $cachedir) {
+		mkdir $cachedir, 0700 || die "$cachedir: $!";
+	}
 	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(cache_dir => $cachedir,
 		agent => basename($0),
