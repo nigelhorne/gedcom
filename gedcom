@@ -5656,7 +5656,6 @@ sub print_person
 										if($sex eq 'F') {
 											$phrase->append('e');
 										}
-										$phrase->append(" \N{U+00E0}");
 										$place =~ s/^ in//;
 										$phrase->append($place);
 									} else {
@@ -5710,9 +5709,11 @@ sub print_person
 							}
 							$previous = undef;
 						} else {
-							$phrase->append(' ' . $person->pronoun());
+							$phrase->append(ucfirst(i18n($person->pronoun())));
 							if($ENV{'LANG'} =~ /^en_US/) {
 								$phrase->append(' traveled');
+							} elsif($language eq 'French') {
+								$phrase->append(" a voyag\N{U+00E9}");
 							} else {
 								$phrase->append(' travelled');
 							}
