@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-
 unset https_proxy
 
-LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | grep '   '
-LANG=fr_FR ./gedcom -dlh 'Nigel Horne' "$*" | egrep -i "\ss?he\s"
+LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | grep --colour '   '
+LANG=fr_FR ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i "\ss?he\s"
