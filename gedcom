@@ -5818,11 +5818,19 @@ sub print_person
 		}
 
 		if(my $profile_object = $person->tag_record('_MILT')) {
+			# Ancestry does this, FMP stores military records as events
 			# $person->resolve_xref($profile_object->value());
 			if(my $value = $profile_object->get_value()) {
 				$value =~ s/[\s\.]+$//;
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ')->append("$pronoun served in the military ($value).  ");
+				if($phrase->length()) {
+					push @phrases, $phrase;
+				}
+				if(scalar(@phrases)) {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				}
+				$bio->append("$pronoun served in the military ($value).  ");
+				$phrase = Data::Text->new();
+				@phrases = ();
 			}
 		}
 
@@ -9724,7 +9732,7 @@ sub get_all_occupations
 		} elsif($occupations[0] =~ /^General serv.+dom/) {
 			$occupations[0] = 'Domestic General Server';
 		} elsif($occupations[0] =~ /^(.+) on farm/i) {
-			$occupations[0] = "$1 on a farm";
+			$occupations[0] = ($language eq 'French') ? "$1 en un ferme" : "$1 on a farm";
 		} elsif($occupations[0] eq 'Plate Glass Cutter') {
 		} elsif($occupations[0] =~ /police$/i) {
 			$occupations[0] .= ' officer';
