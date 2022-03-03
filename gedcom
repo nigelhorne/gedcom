@@ -4873,9 +4873,9 @@ sub print_person
 									if($with_mother && $with_father) {
 										$residencestring .= ' parents';
 									} elsif($with_mother) {
-										$residencestring .= ' mother, ' . $mother->given_names();
+										$residencestring .= i18n(' mother, ') . $mother->given_names();
 									} elsif($with_father) {
-										$residencestring .= ' father, ' . $father->given_names();
+										$residencestring .= i18n(' father, ') . $father->given_names();
 									}
 									if($first) {
 										$residencestring .= ')';
@@ -5302,7 +5302,6 @@ sub print_person
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
-
 		# $phrase =~ s/,;/;/g;
 		# $phrase =~ s/;$//;
 		# $phrase =~ s/,.$/./;
@@ -6688,7 +6687,7 @@ sub print_person
 				}
 				$phrase = undef;
 			}
-		} elsif((!defined($bio)) || ($bio->rtrim()->length() == 0) || ($bio->as_string() eq "\t.")) {
+		} elsif((!defined($bio)) || ($bio->length() == 0) || ($bio->as_string() eq "\t.")) {
 			if(scalar(@phrases)) {
 				print conjunction(map { $_->as_string() } @phrases), ".\n", '-' x 80, "\n";
 			} else {
@@ -6702,7 +6701,7 @@ sub print_person
 					$bio->append(conjunction(map { $_->as_string() } @phrases));
 				}
 			}
-			print $bio->as_string(), "\n", '-' x 80, "\n";
+			print $bio->rtrim()->as_string(), "\n", '-' x 80, "\n";
 		}
 	} else {
 		my ($dob, $dod);
@@ -10769,6 +10768,7 @@ children::children
 died::died
 during %s life::during %s life
 eldest::eldest
+father::father
 following the death of::following the death of
 had::had
 has lived::has lived
@@ -10779,6 +10779,7 @@ is buried::is buried
 is married to::is married to
 later that same year::later that same year
 married::married
+mother::mother
 of::of
 of %d children::of %d children
 on the same day::on the same day
@@ -10820,6 +10821,7 @@ died:F:est morte
 during %s life::pendant sa vie
 eldest:M:l'aîne
 eldest:F:l'aînee
+father::père
 following the death of::après le mort de
 had::a eu
 has lived::a habité
@@ -10832,6 +10834,7 @@ is married to:M:est marié à
 is married to:F:est mariée à
 later that same year::plus tard la même année
 married::a marié
+mother::mère
 of::de
 of %d children::de %d enfants
 on the same day::sur la même jour
