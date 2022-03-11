@@ -5489,7 +5489,7 @@ sub print_person
 								$phrase->append(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military');
 							}
 						} else {
-							$phrase->append(" $pronoun served in the military");
+							$phrase->append("$pronoun served in the military");
 						}
 					}
 					if(my $place = place({ person => $person, record => $event })) {
