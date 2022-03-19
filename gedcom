@@ -2777,7 +2777,11 @@ sub print_person
 							}
 						} elsif(scalar(@siblings) && ($age_index == 1)) {
 							if(scalar(@siblings) > 1) {
-								$phrase->append(i18n({ person => $person, format => 'eldest' }));
+								if(($language eq 'French') && ($phrase->as_string() eq 'Le ')) {
+									$phrase->set(ucfirst(i18n({ person => $person, format => 'eldest' })));
+								} else {
+									$phrase->append(i18n({ person => $person, format => 'eldest' }));
+								}
 							} else {
 								$phrase->append('older');
 							}
@@ -6317,10 +6321,16 @@ sub print_person
 					$bio = Data::Text->new(' ');
 				}
 			} else {
-				$phrase->append("\n");
+				if($phrase->length() > 0) {
+					push @phrases, $phrase;
+				}
+				if(scalar(@phrases)) {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+					@phrases = ();
+				}
 			}
 			$notes =~ s/\.$//;
-			$phrase->append($notes);
+			$phrase = Data::Text->new("\n")->append($notes);
 		}
 
 		if($opts{'C'}) {
@@ -6365,9 +6375,12 @@ sub print_person
 				}
 			}
 
-			$phrase->append("\n") if(scalar(@children));
-		} elsif($phrase->length() && !$opts{'c'}) {
-			$phrase->append('.');
+			if(scalar(@children)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				@phrases = ();
+
+				$phrase = Data::Text->new("\n\t");
+			}
 		}
 
 		if($opts{'c'}) {
@@ -8739,10 +8752,12 @@ sub notes {
 			}
 			$note =~ s/\r//g;
 			next if($note =~ /^\s*$/);
-			if(!$paragraph) {
+			$note =~ s/\s\s+/ /g;
+			if($paragraph) {
+				$note =~ s/\n+/\n\t/g;
+			} else {
 				$note =~ s/\n+/; /g;
 			}
-			$note =~ s/\s\s+/ /g;
 			$note =~ s/\s+$//g;
 			$note =~ s/\. /.  /g;
 			$note =~ s/Dr\.\s\s/Dr. /g;
@@ -10828,8 +10843,8 @@ children::enfants
 died:M:est mort
 died:F:est morte
 during %s life::pendant sa vie
-eldest:M:l'aîne
-eldest:F:l'aînee
+eldest:M:l'aîné
+eldest:F:l'aînée
 father::père
 following the death of::après le mort de
 had::a eu
