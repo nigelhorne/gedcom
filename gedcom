@@ -2815,10 +2815,13 @@ sub print_person
 				}
 			}
 
-			$phrase->append(i18n(' of'));
-
 			if($father) {
-				$phrase->append([' ', $father]);
+				if(($language eq 'French') && ($father->as_string =~ /^[aehiou]/i)) {
+					$phrase->append(" d'");
+				} else {
+					$phrase->append(i18n(' of '));
+				}
+				$phrase->append($father);
 				if(!$same_occupation_as_father) {
 					my @occupations = get_all_occupations(person => $father);
 					# TODO: print all occupations
@@ -2846,7 +2849,10 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 				}
+			} else {
+				$phrase->append(i18n(' of'));
 			}
+
 			if($mother) {
 				if(my $m = $mother->as_string(give_maidenname => 0)) {
 					$phrase->append(" $m");
@@ -2865,8 +2871,13 @@ sub print_person
 				}
 			}
 			if($language eq 'French') {
-				$phrase =~ s/^\tThe child of\s/\tL'enfant de /;
-				$phrase =~ s/\sand the child of\s/ et l'enfant de /;
+				if($father && ($father->as_string() =~ /^[aehiou]/i)) {
+					$phrase =~ s/^\tThe child of\s/\tL'enfant d'/;
+					$phrase =~ s/\sand the child of\s/ et l'enfant d'/;
+				} else {
+					$phrase =~ s/^\tThe child of\s/\tL'enfant de /;
+					$phrase =~ s/\sand the child of\s/ et l'enfant de /;
+				}
 			}
 		}
 
@@ -10863,8 +10874,8 @@ mother::mère
 of::de
 of %d children::de %d enfants
 on the same day::sur la même jour
-on your father's side::sur la côté de votre père
-on your mother's side::sur la côté de votre mère
+on your father's side::sur le côté de votre père
+on your mother's side::sur le côté de votre mère
 she::elle
 the same day as::le même jour comme
 they:M:ils
