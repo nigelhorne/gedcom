@@ -34,6 +34,7 @@
 # FIXME: with a US state you use 'en' not à
 # TODO: Investigate List::ToHumanString
 # TODO: Investigate Lingua::FR::Numbers
+# TODO: Investigate Locale::Maketext
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
