@@ -35,6 +35,7 @@
 # TODO: Investigate List::ToHumanString
 # TODO: Investigate Lingua::FR::Numbers
 # TODO: Investigate Locale::Maketext
+# TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
