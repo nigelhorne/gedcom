@@ -2693,7 +2693,7 @@ sub print_person
 							$phrase->set('La jumelle sœer de');
 						}
 					} else {
-						$phrase->set('The twin ' . (($sex eq 'M') ? 'brother' : 'sister') .
+						$phrase->set('The twin ' . i18n((($sex eq 'M') ? 'brother' : 'sister')) .
 							' of');
 					}
 				}
@@ -7491,15 +7491,11 @@ sub Gedcom::Individual::relationship {
 	if($self->mother() && $other->mother() && $self->father() && $other->father()) {
 		my $sex = $other->sex() || get_value({ person => $other, value => 'sex' });
 		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
-			if($language eq 'French') {
-				return ($sex eq 'M') ? "fr\N{U+00E8}re" : 'sœur';
-			} elsif($language eq 'Farsi') {
+			if($language eq 'Farsi') {
 				# return ($sex eq 'M') ? 'barādar' : 'khāhar';
 				return ($sex eq 'M') ? "\N{U+0631}\N{U+062F}\N{U+0637}\N{U+0631}\N{U+0638}" : "khāhar\N{U+0631}\N{U+0647}\N{U+0627}\N{U+0648}\N{U+062E}";
-			} elsif($language eq 'Latin') {
-				return ($sex eq 'M') ? 'frāter' : 'soror';
 			}
-			return ($sex eq 'M') ? 'brother' : 'sister';
+			return i18n(($sex eq 'M') ? 'brother' : 'sister');
 		}
 		if(($self->mother() eq $other->mother()) || ($self->father() eq $other->father())) {
 			if($language eq 'Latin') {
@@ -9095,7 +9091,14 @@ sub sibling_baptism_string
 
 	my @baptisms;
 	foreach my $sibling(@onsameday) {
-		my $baptism = lcfirst($person->possessive()) . ' ';
+		my $baptism;
+
+		if($language eq 'French') {
+			$baptism = ($sibling->sex() eq 'F') ? 'sa ' : 'son ';
+		} else {
+			$baptism = lcfirst($person->possessive()) . ' ';
+		}
+
 		my $dateofsiblingbirth = dateofbirth($sibling);
 		if($dateofsiblingbirth && $birthdate && ($dateofsiblingbirth eq $birthdate)) {
 			if($language eq 'French') {
@@ -9104,7 +9107,7 @@ sub sibling_baptism_string
 				$baptism .= 'twin ';
 			}
 		}
-		$baptism .= ($sibling->sex() eq 'M' ? 'brother ' : 'sister ') .
+		$baptism .= i18n(($sibling->sex() eq 'M' ? 'brother ' : 'sister ')) .
 			$sibling->given_names();
 		push @baptisms, $baptism;
 	}
@@ -10813,6 +10816,7 @@ arrived::arrived
 at::at
 birthplace::birthplace
 both with %s::both with %s
+brother::brother
 check out %s::check out %s
 child::child
 children::children
@@ -10837,6 +10841,7 @@ on the same day::on the same day
 on your father's side::on your father's side
 on your mother's side::on your mother's side
 she::she
+sister::sister
 the same day as::the same day as
 they::they
 times::times
@@ -10894,6 +10899,8 @@ on the same day::sur la même jour
 on your father's side::sur le côté de votre père
 on your mother's side::sur le côté de votre mère
 she::elle
+sister::sœur
+brother::frère
 the same day as::le même jour comme
 they:M:ils
 they:F:elles
@@ -10921,9 +10928,11 @@ wife::frau
 with::mit
 @@ Latin
 and::et
+brother::frāter
 father::pater
 husband::maritus
 mother::mater
+sister::soror
 wife::uxor
 @@ Spanish
 he::él
