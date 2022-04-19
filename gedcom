@@ -3855,7 +3855,8 @@ sub print_person
 						}
 						date_to_datetime(date => $date);
 					} @spouses;
-					@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @spouses;
+					# Already cached
+					# @spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @spouses;
 				}
 				my @names;
 				my $spouse_number = 0;
