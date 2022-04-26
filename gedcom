@@ -1758,6 +1758,7 @@ sub print_person
 		if(!defined($lastname)) {
 			$lastname = $2;
 		}
+		utf8::decode($firstname);
 		complain({ person => $person, warning => "Can't parse the name - assuming first name: $firstname, last name: $lastname" });
 	}
 
@@ -7265,11 +7266,11 @@ sub Gedcom::Individual::as_string
 			$rc .= " $suffix";
 		}
 	} elsif($args{'print_unknown'}) {
-		$rc .= ' ?';
+		$rc .= ' UNKNOWN';
 	}
 
 	if($has_maiden_name && $self->surname()) {
-		$rc .= ' (nee ' . normalize_name($self->surname()) . ')';
+		$rc .= ' (née ' . normalize_name($self->surname()) . ')';
 	}
 
 	if($opts{'w'} && !defined($rc)) {
@@ -7277,6 +7278,8 @@ sub Gedcom::Individual::as_string
 		$args{'include_years'} = 1;
 		$rc = 'Unknown person';
 	}
+
+	utf8::decode($rc);
 
 	if($args{'include_years'}) {
 		my $dob = dateofbirth($self);
