@@ -3659,7 +3659,7 @@ sub print_person
 								$phrase->append('had ');
 							}
 						} elsif((!$dateofdeath) && (!$dateofburial) && ($spouses[0]) && !$spouses[0]->death()) {
-							$phrase->append('has had ');
+							$phrase->append(i18n('has had '));
 						} else {
 							if($language eq 'French') {
 								$phrase->append($dateofdeath || $dateofburial ? 'a eu ' : 'a ');
@@ -10835,6 +10835,7 @@ eldest::eldest
 father::father
 following the death of::following the death of
 had::had
+has had::has had
 has lived::has lived
 he::he
 husband::husband
@@ -10890,6 +10891,7 @@ eldest:M:l'aîné
 eldest:F:l'aînée
 father::père
 following the death of::après le mort de
+has had::a eu
 had::a eu
 has lived::a habité
 he::il
