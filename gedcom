@@ -6416,10 +6416,10 @@ sub print_person
 			}
 		}
 
+		if($phrase->length() > 2) {
+			push @phrases, $phrase;
+		}
 		if($opts{'c'}) {
-			if($phrase->length() > 0) {
-				push @phrases, $phrase;
-			}
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 				@phrases = ();
@@ -6685,7 +6685,15 @@ sub print_person
 				}
 			}
 		} else {
-			$phrase->append("\n");
+			if(scalar(@phrases)) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				@phrases = ();
+
+				$phrase = Data::Text->new("\n");
+			}
+			if($citationcount) {
+				die "Bug: citationcount = $citationcount when -c not given";
+			}
 		}
 
 		if($opts{'B'}) {
