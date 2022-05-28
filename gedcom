@@ -1109,7 +1109,8 @@ if($opts{'H'}) {
 				my $y = $pdfpage->y() - $image->height();
 				$pdfpage->page()->gfx()->image($image, $x, $y);
 			}
-			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
+			# They're already cached
+			# @everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
 		} elsif($opts{'A'}) {
 			@everyone = Sort::Key::keysort { $_->as_sort_key() } @everyone;
