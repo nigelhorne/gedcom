@@ -3080,7 +3080,7 @@ sub print_person
 				} else {
 					$bio->append('  ');
 				}
-			} elsif(dateofbirth($person) && (scalar(@spouses) > 1)) {
+			} elsif(dateofbirth($person) && (scalar(@spouses) >= 1)) {
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 				$phrase = Data::Text->new();
