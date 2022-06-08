@@ -1135,7 +1135,7 @@ if($opts{'H'}) {
 			my $version;
 
 			IPC::Run::run([ 'apngasm', '-v' ], '>', \$version);
-			if($version =~ /v3\.1\.6/) {
+			if($version =~ /v3\.1\.\d+/) {
 				system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
 			} else {
 				# If this fails, try this:
