@@ -5279,7 +5279,7 @@ sub print_person
 							}
 							$bio = Data::Text->new(' ');
 						} else {
-							$phrase->append("\n\t");
+							$bio->rtrim()->append("\n\t");
 						}
 					}
 					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
@@ -5308,7 +5308,7 @@ sub print_person
 					# Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => i18n('and')});
 				my $s;
 				if(is_alive($person) && !$first->date()) {
-					$s = i18n('has lived');
+					$s = 'has lived';
 				} else {
 					$s = 'was living';
 				}
@@ -8470,6 +8470,11 @@ sub place {
 		} elsif($address =~ /(.+)\sRd\.?$/) {
 			$address = "$1 Road";
 			$on_road = 1;
+		} elsif($address =~ /(.+)\sLn\.?$/) {
+			$address = "$1 Lane";
+			$on_road = 1;
+		} elsif($address =~ /\sLane$/) {
+			$on_road = 1;
 		}
 	}
 
@@ -8642,7 +8647,7 @@ sub place {
 			$place = " \N{U+00E0} $address, $place";
 			$rc->fr($place);
 			$rc->en("$address, " . $rc->en());
-		} elsif($on_road && ($address =~ /^[a-z]+\s+[a-z]+$/i)) {
+		} elsif($on_road && ($address =~ /^[a-z]+\s+.*[a-z]+$/i)) {
 			# e.g on Appleby Street
 			$place = " on $address, $place";
 		} else {
@@ -8677,7 +8682,15 @@ sub place {
 				if(($4 eq ' USA') || ($4 eq ' Canada')) {
 					return "$1,$3";
 				}
-				return $address ? "$1,$2" : "$1 in$2";
+				my $road = $1;
+				my $town = $2;
+				if(($town !~ /,/) || !defined($address)) {
+					if($language eq 'French') {
+						return "$road \N{U+00E0}$town";
+					}
+					return "$road in$town";
+				}
+				return $address;
 			}
 			if($places_printed->{" at$str"}) {
 				return "$1,$2";
