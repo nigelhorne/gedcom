@@ -8396,6 +8396,9 @@ sub year
 	if($params{'nopreposition'}) {
 		return $string;
 	}
+	if($string =~ /^bef\s(.+)/i) {
+		return i18n({ format => 'before %s', args => $1 }); 
+	}
 	if($language eq 'French') {
 		if($string =~ /^[AEIOU]/) {
 			return "l'$string";
@@ -10893,6 +10896,7 @@ an %s::an %s
 and::and
 arrived::arrived
 at::at
+before %s::before %s
 birthplace::birthplace
 both with %s::both with %s
 brother::brother
@@ -10949,6 +10953,7 @@ and::et
 arrived:M:est arrivé
 arrived:F:est arrivée
 at::à
+before %s::avant de %s
 birthplace::ville natale
 both with %s::tous les deux avec %s
 check out %s::visitez %s
