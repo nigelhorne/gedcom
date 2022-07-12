@@ -32,7 +32,7 @@
 #	"20 miles from xxx - where xxx is a place of at least 10,000 people"
 # TODO: investigate Locale::Geocode
 # FIXME: with a US state you use 'en' not à
-# TODO: Investigate List::ToHumanString
+# TODO: Investigate List::ToHumanString and Lingua::EN::Sentence
 # TODO: Investigate Lingua::FR::Numbers
 # TODO: Investigate Locale::Maketext
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
