@@ -54,8 +54,11 @@ my @needfull;
 
 # Install Pre-requisites
 BEGIN {
+	# I can't get Marpa::R2 version 10 to build on OS/X or Solaris.
+	# It's used by Genealogy::Gedcom::Date, so force version 8
 	my @modules = (
 		'Array::Iterator', 'Array::Iterator::BiDirectional', 'Data::Section::Simple', 'Date::Manip',
+		'JKEGL/Marpa-R2-8.000000.tar.gz',
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
