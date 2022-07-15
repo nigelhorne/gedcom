@@ -10966,6 +10966,7 @@ at::à
 before %s::avant de %s
 birthplace::ville natale
 both with %s::tous les deux avec %s
+brother::frère
 check out %s::visitez %s
 child::enfant
 children::enfants
@@ -10996,7 +10997,6 @@ on your father's side::sur le côté de votre père
 on your mother's side::sur le côté de votre mère
 she::elle
 sister::sœur
-brother::frère
 the same day as::le même jour comme
 they:M:ils
 they:F:elles
@@ -11007,9 +11007,9 @@ was buried:M:a été inhumé
 was buried:F:a été inhumée
 was born:M:est né
 was born:F:est née
+was living::habitait
 was married to:M:a été marié à
 was married to:F:a été mariée à
-was living::habitait
 when::lorsque
 wife::femme
 with::avec
@@ -11017,6 +11017,7 @@ with %s::avec %s
 your::votre
 @@ German
 and::und
+birthplace::geburtsort
 father::vater
 is::ist
 mother::mutter
