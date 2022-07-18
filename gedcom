@@ -36,6 +36,7 @@
 # TODO: Investigate Lingua::FR::Numbers
 # TODO: Investigate Locale::Maketext
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
+# TODO: dbpedia
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -6364,6 +6365,10 @@ sub print_person
 		# }
 
 		if(my $notes = notes({ person => $person, record => $person, paragraph => 1 })) {
+			# TODO: add data from dbpedia to the notes
+			#	https://lookup.dbpedia.org/api/search?query=Francis%20Eric%20Irvine%20Bloy&format=JSON
+			#	with citation to https://dbpedia.org/page/Francis_Eric_Bloy
+			# if(LWP::Simple::WithCache::is_success($rc = LWP::Simple::WithCache::getstore($file, $filename))) {
 			if($opts{'B'}) {
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
