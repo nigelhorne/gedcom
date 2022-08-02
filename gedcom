@@ -2818,13 +2818,9 @@ sub print_person
 							}
 						} elsif(scalar(@siblings) && ($age_index == 1)) {
 							if(scalar(@siblings) > 1) {
-								if(($language eq 'French') && ($phrase->as_string() eq 'Le ')) {
-									$phrase->set(ucfirst(i18n({ person => $person, format => 'eldest' })));
-								} else {
-									$phrase->append(i18n({ person => $person, format => 'eldest' }));
-								}
+								$phrase->append(i18n({ person => $person, format => 'eldest' }));
 							} else {
-								$phrase->append('older');
+								$phrase->append(i18n({ person => $person, format => 'older' }));
 							}
 						} elsif($language eq 'French') {
 							$phrase->append(Lingua::FR::Numbers::Ordinate::ordinate($age_index));
@@ -2853,6 +2849,10 @@ sub print_person
 				} else {
 					$phrase->append('child');
 				}
+			}
+			if($language eq 'French') {
+				$phrase->replace({ 'Le a' => "L'a" });
+				$phrase->replace({ 'le a' => "l'a" });
 			}
 
 			if($father) {
@@ -2912,11 +2912,11 @@ sub print_person
 			}
 			if($language eq 'French') {
 				if($father && ($father->as_string() =~ /^[aehiou]/i)) {
-					$phrase =~ s/^\tThe child of\s/\tL'enfant d'/;
-					$phrase =~ s/\sand the child of\s/ et l'enfant d'/;
+					$phrase->replace({ "\tThe child of", "\tL'enfant d'" });
+					$phrase->replace({ ' and the child of ', " et l'enfant d'" });
 				} else {
-					$phrase =~ s/^\tThe child of\s/\tL'enfant de /;
-					$phrase =~ s/\sand the child of\s/ et l'enfant de /;
+					$phrase->replace({ "\tThe child of", "\tL'enfant de " });
+					$phrase->replace({ ' and the child of ', " et l'enfant de " });
 				}
 			}
 		}
@@ -10050,6 +10050,8 @@ sub get_all_occupations
 					$occupations[0] = (($person->sex() eq 'M') ? "Agriculteur $1" : "Agricultrice $1");
 				} elsif($occupations[0] eq 'Farmer') {
 					$occupations[0] = (($person->sex() eq 'M') ? 'Agriculteur' : 'Agricultrice');
+				} elsif($occupations[0] eq 'Teacher') {
+					$occupations[0] = 'Professeur';
 				}
 			}
 			$occupations[0] =~ s/[\(\)]//g;
@@ -11013,6 +11015,7 @@ married::married
 mother::mother
 of::of
 of %d children::of %d children
+older::older
 on the same day::on the same day
 on your father's side::on your father's side
 on your mother's side::on your mother's side
@@ -11055,8 +11058,8 @@ children::enfants
 died:M:est mort
 died:F:est morte
 during %s life::pendant sa vie
-eldest:M:l'aîné
-eldest:F:l'aînée
+eldest:M:aîné
+eldest:F:aînée
 father::père
 following the death of::après le mort de
 from::de
@@ -11075,6 +11078,8 @@ married::a marié
 mother::mère
 of::de
 of %d children::de %d enfants
+older:M:aîné
+older:F:aînée
 on the same day::sur la même jour
 on your father's side::sur le côté de votre père
 on your mother's side::sur le côté de votre mère
