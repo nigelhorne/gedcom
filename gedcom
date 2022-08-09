@@ -3480,11 +3480,9 @@ sub print_person
 			}
 			if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
 				if(scalar(@phrases) == 0) {
-					$phrase->append($pronoun);
-				} else {
-					$phrase->append(lcfirst($pronoun));
+					$phrase->append("$pronoun ");
 				}
-				$phrase->append(' was orphaned ');
+				$phrase->append('was orphaned ');
 				if($myod == $fyod) {
 					$phrase->append('when both of ')
 						->append(($person->pronoun() eq 'She') ? 'her' : 'his')
@@ -11120,11 +11118,12 @@ both with %s::beide mit %s
 brother::Bruder
 brothers::Brüder
 check out %s::Schau mal bei %s
+child::Kind
 father::Vater
 is::ist
-mother::mutter
-sister::schwester
-wife::frau
+mother::Mutter
+sister::Schwester
+wife::Frau
 with::mit
 @@ Latin
 and::et
