@@ -6395,7 +6395,10 @@ sub print_person
 					push @phrases, $phrase;
 				}
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+					$bio->append(conjunction(map { $_->as_string() } @phrases));
+					unless($placeofburial || $dateofburial || $placeofcremation || $dateofcremation) {
+						$bio->append('.');
+					}
 					@phrases = ();
 				}
 			}
@@ -7637,6 +7640,8 @@ sub Gedcom::Individual::relationship_up
 			} elsif($steps == 2) {
 				if($language eq 'Latin') {
 					return ($sex eq 'M') ? 'avus' : 'avia';
+				} elsif($language eq 'German') {
+					return ($sex eq 'M') ? 'Grossvater' : 'Grossmutter';
 				}
 				return "grand$title";
 			} elsif($steps == 3) {
