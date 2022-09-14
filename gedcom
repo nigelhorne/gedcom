@@ -10188,7 +10188,7 @@ sub journey
 			if($dod =~ /^\d/) {
 				$dod = "on $dod";
 			} else {
-				$dod = i18n("during $yod");
+				$dod = i18n({ format => 'during %d', args => $dod });
 				$only_have_departure_year = 1;
 			}
 			if($doa =~ /^\d/) {
@@ -10196,7 +10196,7 @@ sub journey
 			} elsif($yoa == $yod) {
 				$doa = i18n('later that same year');
 			} else {
-				$doa = i18n("during $yoa");
+				$doa = i18n({ format => 'during %d', args => $doa });
 			}
 		}
 	}
@@ -11205,6 +11205,7 @@ brother::Bruder
 brothers::Brüder
 check out %s::Schau mal bei %s
 child::Kind
+during %s life::während %s Leben
 died::starb
 eldest::älteste
 father::Vater
