@@ -11079,7 +11079,7 @@ check out %s::check out %s
 child::child
 children::children
 died::died
-during %d::during %d
+during %s::during %s
 during %s life::during %s life
 eldest::eldest
 father::father
@@ -11140,7 +11140,7 @@ child::enfant
 children::enfants
 died:M:est mort
 died:F:est morte
-during %d::en %d
+during %s::en %d
 during %s life::pendant sa vie
 eldest:M:aîné
 eldest:F:aînée
