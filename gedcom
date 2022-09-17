@@ -3554,9 +3554,7 @@ sub print_person
 				$phrase->set($pronoun);
 			}
 			if($language eq 'French') {
-				# FIXME: remove space after à l'
-				$phrase->append(' est ' . (($sex eq 'M' ? "all\N{U+00E9}" : "all\N{U+00E9}e")) .
-					(($education[0] =~ /^[aehiou]/i) ? ' \N{U+00E0} l' : ' au'));
+				$phrase->append(' a fait ses études à');
 			} else {
 				$phrase->append(' went to');
 			}
