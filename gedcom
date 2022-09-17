@@ -7638,7 +7638,9 @@ sub Gedcom::Individual::relationship_up
 			} elsif($steps == 1) {
 				return $title;
 			} elsif($steps == 2) {
-				if($language eq 'Latin') {
+				if($language eq 'French') {
+					return "grand-$title";
+				} elsif($language eq 'Latin') {
 					return ($sex eq 'M') ? 'avus' : 'avia';
 				} elsif($language eq 'German') {
 					return ($sex eq 'M') ? 'Grossvater' : 'Grossmutter';
@@ -7649,6 +7651,8 @@ sub Gedcom::Individual::relationship_up
 					return "arri\N{U+00E8}re-grand-$title";
 				} elsif($language eq 'Latin') {
 					return ($sex eq 'M') ? 'proavus' : 'proavia';
+				} elsif($language eq 'German') {
+					return ($sex eq 'M') ? 'Urgrossvater' : 'Urgrossmutter';
 				}
 				return "great-grand$title";
 			} elsif($steps == 4) {
@@ -10890,6 +10894,7 @@ sub get_language
 {
 	if($ENV{'LANGUAGE'}) {
 		my %langs = (
+			'de' => 'German',
 			'en' => 'English',
 			'fr' => 'French',
 			'fa' => 'Farsi',
@@ -10910,6 +10915,9 @@ sub get_language
 		}
 		if($val =~ /^fr/) {
 			return 'French';
+		}
+		if($val =~ /^de/) {
+			return 'German';
 		}
 		if($val =~ /^fa/) {
 			return 'Farsi';
