@@ -11093,7 +11093,7 @@ following the death of::following the death of
 from::from
 had::had
 has had::has had
-has lived::has lived
+has lived in %s::has lived in %s
 he::he
 husband::husband
 is::is
@@ -11155,7 +11155,7 @@ following the death of::après le mort de
 from::de
 has had::a eu
 had::a eu
-has lived::a habité
+has lived in %s::a habité en %s
 he::il
 husband::marie
 is::est
@@ -11217,6 +11217,7 @@ died::starb
 eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
+has lived in %s::hat in %s gelebt
 is::ist
 mother::Mutter
 sister::Schwester
