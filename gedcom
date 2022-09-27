@@ -38,6 +38,7 @@
 # TODO: Investigate Carp::Assert::More
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
 # TODO: dbpedia
+# TODO: consider Data::Dumper::Names instead of Data::Dumper
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
