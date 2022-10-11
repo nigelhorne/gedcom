@@ -10638,7 +10638,12 @@ sub dateofdeath
 	if((!defined($dateofdeath)) && (my $death = $person->get_record('death'))) {
 		$dateofdeath = $death->date();
 	}
-	return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
+	if(defined($dateofdeath)) {
+		if($dateofdeath =~ /died at birth/i) {
+			return dateofbirth(%params);
+		}
+		return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
+	}
 }
 
 sub parse_date
