@@ -10640,6 +10640,7 @@ sub dateofdeath
 	}
 	if(defined($dateofdeath)) {
 		if($dateofdeath =~ /died at birth/i) {
+			complain({ person => $person, warning => 'Getting date of death from date of birth' });
 			return dateofbirth(%params);
 		}
 		return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
@@ -10670,7 +10671,7 @@ sub parse_date
 			if($date =~ /from (.+) to (.+)/i) {
 				return "bet $1 and $2";
 			}
-			if($date =~ /^([\d\s]*)([A-Z]{4,})\s+([\d\/]+)$/i) {
+			if($date =~ /^([\d\s]*)([A-Z]{4,})\.?\s+([\d\/]+)$/i) {
 				if(lc($2) eq 'about') {
 					return "Abt $3";
 				}
