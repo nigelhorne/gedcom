@@ -1620,6 +1620,9 @@ sub print_person
 	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	if((!$dateofmarriage) && $marriage) {
 		$dateofmarriage = $marriage->date();
+		if(!defined($dateofmarriage)) {
+			$dateofmarriage = dateofmarriage($person);
+		}
 	}
 	if($dateofmarriage && ($dateofmarriage =~ /\s$/)) {
 		complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
@@ -1847,8 +1850,7 @@ sub print_person
 			}
 		}
 		if($aom) {
-			die $dateofmarriage unless(dateofmarriage($person));
-			if(my $d = $dfg->parse_datetime(date => dateofmarriage($person))) {
+			if(my $d = $dfg->parse_datetime(date => $dateofmarriage)) {
 				$str .= ' m' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of marriage '$dateofmarriage'" });
@@ -3949,7 +3951,7 @@ sub print_person
 						$printed_bracket = 1;
 					}
 					$spouse_number++;
-					if((scalar(@spouses) == 2) && ($spouse_number == 2)) {
+					if(defined($dateofmarriage) && (scalar(@spouses) == 2) && ($spouse_number == 2)) {
 						my $death_of_first_spouse = dateofdeath($spouses[0]);
 						if($death_of_first_spouse && (datecmp($dateofmarriage, $death_of_first_spouse) > 0)) {
 							if($printed_bracket) {
@@ -10254,7 +10256,7 @@ sub journey
 			$rc = "In $year " . lc($rc);
 		}
 	} else {
-		die 'TODO: handle departure only record';
+		die 'TODO: ', $person->as_string(), ': handle departure only record';
 		# $yod = year({ person => $person, record => $departure });
 		# $yoa = year({ person => $person, record => $arrival });
 	}
@@ -10647,6 +10649,11 @@ sub dateofmarriage
 
 	if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage'))) {
 		$dateofmarriage = $marriage->date();
+		if(!defined($dateofmarriage)) {
+			if(my $marriage = ($person->get_record('marriage') || $person->get_record('fams marriage'))) {
+				$dateofmarriage = $marriage->date();
+			}
+		}
 	}
 	if(defined($dateofmarriage)) {
 		if($dateofmarriage =~ /\s$/) {
