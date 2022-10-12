@@ -895,7 +895,7 @@ if($opts{'H'}) {
 	if($opts{'A'} || $opts{'G'}) {
 		my $surname;
 
-		if($opts{'s'}) {
+		if($opts{'s'} && $opts{'h'}) {
 			if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
 				$surname = $1;
 			} else {
@@ -973,9 +973,8 @@ if($opts{'H'}) {
 					}
 					@everyone = (@everyone, @siblings);
 				}
-
-			} elsif($opts{'s'}) {
-				die '-s and -h must be given together';
+			# } elsif($opts{'s'}) {
+				# die '-s and -h must be given together';
 			}
 		}
 
@@ -996,7 +995,7 @@ if($opts{'H'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		}
 
-		if($opts{'G'} && $dot) {
+		if($opts{'G'} && $dot && $me) {
 			if($me->father() || $me->mother()) {
 				print STDERR $me->as_string({ include_years => 1, middle_names => 1, nee => 1 }), ":\n\t";
 				die 'A generations book (-B and -G) must have the -h person at the top of the tree';
@@ -1476,7 +1475,7 @@ sub generate {
 			}
 			next;
 		} elsif($opts{'B'}) {
-			if($opts{'G'}) {
+			if($me && $opts{'G'}) {
 				if(stepsabove($person, $me, 0) != $generation) {
 					# FIXME:  only do this if the generation contains dead people if the -l flag is not given
 					$pdfpage = NJH::PDFPage->new($pdf);
@@ -1761,7 +1760,7 @@ sub print_person
 	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
 	my $lastname = ucfirst(lc($person->surname())); # RT109786
 
-	if($opts{'s'} && defined($lastname)) {
+	if(defined($opts{'h'}) && ($opts{'s'} && defined($lastname))) {
 		my $surname;
 
 		if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
@@ -2027,6 +2026,11 @@ sub print_person
 		$birth_country = 'United States';
 	} elsif($placeofbirth && ($placeofbirth =~ /.+,\s?(.+)$/)) {
 		my $c = $1;
+
+		if($c =~ /\s+$/) {
+			complain({ person => $person, warning => "Removing trailing spaces from place of birth '$c'" });
+			$c =~ s/\s+$//;
+		}
 		if($c =~ /\)$/) {
 			complain({ person => $person, warning => 'Trailing bracket in birth location' });
 			$c =~ s/\)$//;
@@ -5763,10 +5767,12 @@ sub print_person
 						} else {
 							complain({ person => $person, warning => "Can't determine $type location" });
 						}
-						push @phrases, $phrase;
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-						$phrase = Data::Text->new();
-						@phrases = ();
+						if(defined($phrase) && ($phrase->length() > 0)) {
+							push @phrases, $phrase;
+							$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+							$phrase = Data::Text->new();
+							@phrases = ();
+						}
 					} elsif($type eq 'Departure') {
 						if(!defined($event->place())) {
 							complain({ person => $person, warning => 'Departure record without destination' });
@@ -8370,6 +8376,15 @@ sub stepsabove
 	my $count = shift;
 
 	return -1 if($count == -1);
+
+	if(!defined($target)) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'Usage: stepsabove($person, $target, $count)';
+	}
 
 	if($person->xref() eq $target->xref()) {
 		return $count;
