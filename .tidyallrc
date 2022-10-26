@@ -1,0 +1,8 @@
+# run 'tidyall -a'
+[PerlTidy]
+select = gedcom
+argv = -noll -it=2
+
+[PerlCritic]
+select = gedcom
+argv = -severity 3
