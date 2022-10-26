@@ -1,4 +1,4 @@
-# run 'tidyall -a'
+; run 'tidyall -a'
 [PerlTidy]
 select = gedcom
 argv = -noll -it=2
