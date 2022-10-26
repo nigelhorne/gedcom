@@ -10566,7 +10566,7 @@ sub dateofbirth {
 			}
 		}
 		if(!defined($dateofbirth)) {
-			complain({ person => $person, warning => 'two dates of birth, neither of which is marked primary' });
+			complain({ person => $person, warning => "Two dates of birth ($d[0]/$d[1]), neither of which is marked primary" });
 			$dateofbirth = $d[0];
 		}
 	} elsif(scalar(@d) == 1) {
@@ -11382,9 +11382,9 @@ brother::Bruder
 brothers::Brüder
 check out %s::Schau mal bei %s
 child::Kind
+died::starb
 during %s life:M:während seines Lebens
 during %s life:F:während ihres Lebens
-died::starb
 eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
@@ -11398,6 +11398,7 @@ is buried::ist begraben
 is married to::ist verheiratet
 later that same year::später im gleichen Jahr
 mother::Mutter
+of %d children::von %d Kindern
 she::sie
 sister::Schwester
 wife::Frau
