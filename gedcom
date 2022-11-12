@@ -10053,6 +10053,7 @@ sub get_all_residences
 	return @rc;
 }
 
+# TODO: railway/railroad = le chemin de fer
 sub get_all_occupations
 {
 	my %params;
