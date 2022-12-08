@@ -7049,9 +7049,12 @@ sub print_person
 				}
 				if($title) {
 					push @images, { image => $image, orig_image => $orig_image, title => $title, orig_filename => $orig_filename };
+					push @tmpfiles, $orig_filename if(defined($orig_filename) && ($orig_filename ne $filename));
+				} elsif(defined($orig_filename) && ($orig_filename ne $filename)) {
+					# I don't think this path is ever taken
+					unlink $orig_filename;
 				}
 				push @tmpfiles, $filename if(defined($filename));
-				push @tmpfiles, $orig_filename if(defined($orig_filename) && ($orig_filename ne $filename));
 			}
 		}
 		if(scalar(@images)) {
@@ -7229,6 +7232,8 @@ sub print_person
 			}
 		}
 	}
+	# It would be nice to remove @tmpfiles here, but the PDF::API2 module needs them until the
+	#	PDF is finally created
 	print Data::Dumper->new([$person->state()])->Dump() if($opts{'v'});
 }
 
