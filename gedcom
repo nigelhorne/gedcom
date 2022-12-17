@@ -3054,10 +3054,8 @@ sub print_person
 		} elsif($aob) {
 			$phrase->append(i18n({ person => $person, format => ' was born ' }));
 			if($language eq 'French') {
-				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans'));
-				if($opts{'t'}) {
-					$phrase->append(' demain');
-				}
+				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
+					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today'));
@@ -3080,10 +3078,8 @@ sub print_person
 				if($sex eq 'F') {
 					$phrase->append('e');
 				}
-				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans'));
-				if($opts{'t'}) {
-					$phrase->append(' demain');
-				}
+				$phrase->append("il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
+					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append(" died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today'));
@@ -10223,6 +10219,7 @@ sub get_all_occupations
 				} elsif($occupations[0] eq 'Teacher') {
 					$occupations[0] = 'Professeur';
 				}
+				$occupations[0] =~ s/retired/\N{U+00E0} la retrainte/i;
 			}
 			$occupations[0] =~ s/[\(\)]//g;
 			$occupations[0] =~ s/\s+Own Account//i;
@@ -11353,7 +11350,7 @@ daughter::fille
 died:M:est mort
 died:F:est morte
 during %s::en %d
-during %s life::pendant sa vie
+during %s life::au cours de sa vie
 eldest:M:aîné
 eldest:F:aînée
 father::père
@@ -11379,8 +11376,8 @@ of %d children::de %d enfants
 older:M:aîné
 older:F:aînée
 on the same day::sur la même jour
-on your father's side::sur le côté de votre père
-on your mother's side::sur le côté de votre mère
+on your father's side::du côté paternel
+on your mother's side::du côté de votre mère
 she::elle
 sister::sœur
 son::fils
@@ -11437,6 +11434,7 @@ is married to::ist verheiratet
 later that same year::später im gleichen Jahr
 married::verheiratet
 mother::Mutter
+of::von
 of %d children::von %d Kindern
 she::sie
 sister::Schwester
