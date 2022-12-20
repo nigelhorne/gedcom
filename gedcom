@@ -10742,6 +10742,7 @@ sub dateofdeath
 		}
 		return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
 	}
+	return;	# undef
 }
 
 sub parse_date
@@ -10760,9 +10761,9 @@ sub parse_date
 		if(lc($date) eq 'unknown') {
 			return;
 		}
-		# if(length($date) == 0) {
-			# return;
-		# }
+		if(length($date) == 0) {
+			return;
+		}
 
 		my $type = $params{'type'};
 		my $person = $params{'person'};
