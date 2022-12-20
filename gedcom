@@ -9730,6 +9730,7 @@ sub date_to_datetime
 			return $dfg->parse_datetime(%params);
 		}
 	}
+	return;	# undef
 }
 
 sub descendants
@@ -10759,6 +10760,9 @@ sub parse_date
 		if(lc($date) eq 'unknown') {
 			return;
 		}
+		# if(length($date) == 0) {
+			# return;
+		# }
 
 		my $type = $params{'type'};
 		my $person = $params{'person'};
