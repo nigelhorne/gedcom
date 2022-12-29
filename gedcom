@@ -5861,10 +5861,9 @@ sub print_person
 							$notes = lcfirst($notes);
 							$notes =~ s/\.$//;
 							$phrase->append(" ($notes)");
-							if($phrase->length()) {
-								push @phrases, $phrase;
-								$phrase = Data::Text->new();
-							}
+
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
 						}
 					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif(($type !~ /Census/) &&
@@ -9397,7 +9396,7 @@ sub sibling_baptism_string
 
 	if($allsamesex) {
 		return ', ' . i18n('the same day as ') . lcfirst($person->possessive()) . ' ' .
-			($onsameday[0]->sex() eq 'M' ? 'brothers ' : 'sisters ') .
+			i18n(($onsameday[0]->sex() eq 'M' ? 'brothers ' : 'sisters ')) .
 			conjunction(map { $_->given_names() } @onsameday);
 	}
 
@@ -11313,6 +11312,7 @@ on your father's side::on your father's side
 on your mother's side::on your mother's side
 she::she
 sister::sister
+sisters::sisters
 son::son
 the same day as::the same day as
 they::they
@@ -11386,6 +11386,7 @@ on your father's side::du côté paternel
 on your mother's side::du côté de votre mère
 she::elle
 sister::sœur
+sisters::sœurs
 son::fils
 the same day as::le même jour comme
 they:M:ils
@@ -11444,6 +11445,7 @@ of::von
 of %d children::von %d Kindern
 she::sie
 sister::Schwester
+sisters::Schwestern
 wife::Frau
 with::mit
 @@ Latin
