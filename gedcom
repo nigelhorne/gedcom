@@ -11280,6 +11280,7 @@ before %s::before %s
 birthplace::birthplace
 both with %s::both with %s
 brother::brother
+brothers::brothers
 check out %s::check out %s
 child::child
 children::children
