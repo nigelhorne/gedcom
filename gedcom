@@ -4210,14 +4210,14 @@ sub print_person
 			}
 
 			if($language eq 'French') {
-				$phrase->append("Comme son p\N{U+00E8}re, " . lcfirst($pronoun) .
+				$phrase->set("Comme son p\N{U+00E8}re, " . lcfirst($pronoun) .
 					(is_alive(person => $person) ? ' est' : " \N{U+00E9}tait") . ' un');
 				if($same_occupation_as_father =~ /^[AEIOU]/) {
 					$phrase->append('e');
 				}
 				$phrase->append(' ' . lc($same_occupation_as_father));
 			} else {
-				$phrase->append('Like ' . lcfirst($person->possessive()) . ' father, ' . lcfirst($pronoun) .
+				$phrase->set('Like ' . lcfirst($person->possessive()) . ' father, ' . lcfirst($pronoun) .
 					(is_alive(person => $person) ? ' is' : ' was'));
 				$phrase->append(' ' . Lingua::EN::Inflect::A(lc($same_occupation_as_father)));
 			}
