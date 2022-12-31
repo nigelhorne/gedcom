@@ -2869,7 +2869,7 @@ sub print_person
 			}
 
 			if($father) {
-				if(($language eq 'French') && ($father->as_string =~ /^[aehiou]/i)) {
+				if(($language eq 'French') && ($father->as_string() =~ /^[aehiou]/i)) {
 					$phrase->append(" d'");
 				} else {
 					$phrase->append(i18n(' of '));
@@ -11207,6 +11207,8 @@ sub i18n
 			if($translation =~ /%/) {	# FIXME: %%
 				if(ref($params{'args'}) eq 'ARRAY') {
 					$translation = sprintf($translation, @{$params{'args'}});
+				} elsif(ref($params{'args'})) {
+					$translation = sprintf($translation, $params{'args'}->as_string());
 				} else {
 					$translation = sprintf($translation, $params{'args'});
 				}
