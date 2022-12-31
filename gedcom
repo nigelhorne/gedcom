@@ -5469,7 +5469,7 @@ sub print_person
 					} else {
 						$motion = 'departed';
 					}
-					$phrase->append("During $year1 " . lcfirst($pronoun) . " $motion" .
+					$phrase->set("During $year1 " . lcfirst($pronoun) . " $motion" .
 						place({ person => $person, record => $events[0] }) .
 						"$date1 and" .
 						place({ person => $person, record => $events[1], nopreposition => 1 }) .
