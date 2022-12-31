@@ -4036,9 +4036,9 @@ sub print_person
 					}
 
 					if($language eq 'French') {
-						$phrase->append($all_children_are_alive ? 'a ' : 'a eu ');
+						$phrase->set($all_children_are_alive ? 'a ' : 'a eu ');
 					} else {
-						$phrase->append($all_children_are_alive ? 'has ' : 'had ');
+						$phrase->set($all_children_are_alive ? 'has ' : 'had ');
 					}
 					if($numberofchildren == 1) {
 						if($all_children_are_alive) {
@@ -4133,9 +4133,9 @@ sub print_person
 								$phrase = Data::Text->new();
 
 								if($surviving_children == 1) {
-									$phrase->append('one surviving child');
+									$phrase->set('one surviving child');
 								} elsif($surviving_children > 1) {
-									$phrase->append("$surviving_children surviving children");
+									$phrase->set("$surviving_children surviving children");
 								}
 							}
 						}
