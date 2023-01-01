@@ -4071,12 +4071,12 @@ sub print_person
 							$phrase->append("$numberofchildren children");
 						}
 						if($parentofall) {
-							$phrase->append(', ');
 							my $format;
 							if($numberofchildren == 2) {
+								$phrase->append(', ');
 								$format = 'both with %s';
 							} else {
-								$format = 'all with %s';
+								$format = 'with %s';
 							}
 							$phrase->append(i18n(person => $person, format => $format, args => $parentofall->as_string()));
 							my $decoded = conjunction(map { $_->given_names() } @children);
