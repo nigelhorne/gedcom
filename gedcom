@@ -2641,7 +2641,7 @@ sub print_person
 		if($me && ($person->xref() ne $me->xref()) && !$opts{'G'}) {
 			$relationship = $me->relationship($person);
 			if((!$relationship) && scalar(@spouses)) {
-				if($person->spouse() eq $me) {
+				if($person->spouse()->xref() eq $me->xref()) {
 					$relationship = i18n(($sex eq 'F') ? 'wife' : 'husband');
 				} else {
 					foreach my $s(@spouses) {
@@ -7584,18 +7584,18 @@ sub Gedcom::Individual::relationship {
 	my $self = shift;
 	my $other = shift;
 
-	die $self->as_string() if($other eq $self);
+	return if($other->xref() eq $self->xref());
 
 	if($self->mother() && $other->mother() && $self->father() && $other->father()) {
 		my $sex = $other->sex() || get_value({ person => $other, value => 'sex' });
-		if(($self->mother() eq $other->mother()) && ($self->father() eq $other->father())) {
+		if(($self->mother()->xref() eq $other->mother()->xref()) && ($self->father()->xref() eq $other->father()->xref())) {
 			if($language eq 'Farsi') {
 				# return ($sex eq 'M') ? 'barādar' : 'khāhar';
 				return ($sex eq 'M') ? "\N{U+0631}\N{U+062F}\N{U+0637}\N{U+0631}\N{U+0638}" : "khāhar\N{U+0631}\N{U+0647}\N{U+0627}\N{U+0648}\N{U+062E}";
 			}
 			return i18n(($sex eq 'M') ? 'brother' : 'sister');
 		}
-		if(($self->mother() eq $other->mother()) || ($self->father() eq $other->father())) {
+		if(($self->mother()->xref() eq $other->mother()->xref()) || ($self->father()->xref() eq $other->father()->xref())) {
 			if($language eq 'Latin') {
 				return ($sex eq 'M') ? 'frāter uterīnus' : 'soror uterīna';
 			} elsif($language eq 'German') {
