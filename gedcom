@@ -4076,7 +4076,7 @@ sub print_person
 								$phrase->append(', ');
 								$format = 'both with %s';
 							} else {
-								$format = 'with %s';
+								$format = ' with %s';
 							}
 							$phrase->append(i18n(person => $person, format => $format, args => $parentofall->as_string()));
 							my $decoded = conjunction(map { $_->given_names() } @children);
@@ -11259,7 +11259,7 @@ sub between
 
 # Create an array that will allow fast access to each element
 sub cache_array {
-	if(ref($_[0])) {
+	if(ref($_[0]) && ref($_[0] eq 'ARRAY')) {
 		return map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @_;
 	}
 	return @_;
