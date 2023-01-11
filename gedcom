@@ -5872,12 +5872,23 @@ sub print_person
 								$phrase = Data::Text->new();
 							}
 							$notes =~ s/\.$//;
-							if(my $date = year(record => $event)) {
-								$phrase->set(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was working');
+							if($phrase->length()) {
+								if(my $date = year(record => $event)) {
+									$phrase->append(" $date " . lcfirst($pronoun) . ' was working');
+								} else {
+									$phrase->append(" $pronoun worked");
+								}
 							} else {
-								$phrase->set(ucfirst($pronoun) . ' worked');
+								if(my $date = year(record => $event)) {
+									$phrase->set(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was working');
+								} else {
+									$phrase->set("$pronoun worked");
+								}
 							}
-							$phrase->append(" at $notes" . place(person => $person, record => $event));
+							$phrase->append(" at $notes");
+							if(my $place = place(person => $person, record => $event)) {
+								$phrase->append($place);
+							}
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
 						}
