@@ -833,7 +833,7 @@ if($opts{'H'}) {
 	$dt->subtract(months => 1);
 	$dt->add(days => 1);
 	my $column = $dt->day_of_week();
-	if($dtl->first_day_of_week() eq 7) {
+	if($dtl->first_day_of_week() == 7) {
 		$column++;
 		if($column == 8) {
 			$column = 1;
@@ -863,7 +863,7 @@ if($opts{'H'}) {
 		}
 	}
 
-	print "<center><h2>", @{$dtl->month_format_wide()}[$month], " $year</h2></center>";
+	print '<center><h2>', @{$dtl->month_format_wide()}[$month], " $year</h2></center>";
 
 	foreach my $day(1..28) {
 		# print STDERR __LINE__, ": $day/", $month + 1, "/$year\n";
@@ -1814,7 +1814,7 @@ sub print_person
 			die 'dtl is not optional with -H';
 		}
 
-		if($dtl->first_day_of_week() eq 7) {
+		if($dtl->first_day_of_week() == 7) {
 			$column++;
 			if($column == 8) {
 				$column = 1;
