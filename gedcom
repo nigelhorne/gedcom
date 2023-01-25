@@ -2192,9 +2192,6 @@ sub print_person
 		}
 	}
 
-	my $birth_dt = date_to_datetime(date => $dateofbirth);
-	my $death_dt = date_to_datetime(date => $dateofdeath);
-
 	if($opts{'w'} && $firstname && $lastname) {
 		my %chronicling_params = ( ua => $cached_browser );
 		if($dateofbirth && ($dateofbirth =~ /(\d{4})$/)) {
@@ -2240,14 +2237,14 @@ sub print_person
 					chronicling_america($person, \%chronicling_params);
 				}
 			}
-			obituaries({ person => $person, first => $firstname, last => $lastname, yob => $yob, yod => $yod });
+			obituaries({ person => $person, first => $firstname, last => $lastname, yob => $yob, yod => $yod, age => $yod - $yob });
 			my $sex = get_value({ person => $person, value => 'sex' });
 			if(defined($sex) && ($sex eq 'F') && (my $husband = $person->husband())) {
 				my $married_name = ucfirst(lc($husband->surname()));
 				if($married_name eq $lastname) {
 					complain({ person => $person, warning => 'Maiden name same as married name' });
 				}
-				obituaries({ person => $person, first => $firstname, last => $married_name, yob => $yob, yod => $yod });
+				obituaries({ person => $person, first => $firstname, last => $married_name, yob => $yob, yod => $yod, age => $yod - $yob });
 			}
 		}
 	}
@@ -2416,6 +2413,9 @@ sub print_person
 			}
 		}
 	}
+
+	my $birth_dt = date_to_datetime(date => $dateofbirth);
+	my $death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($birth_dt && (my $spouse = $spouses[0])) {
 		my $sdob = dateofbirth($spouse);
