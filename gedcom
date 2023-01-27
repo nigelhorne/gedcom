@@ -2951,9 +2951,10 @@ sub print_person
 					if($noun eq $firstname) {
 						$phrase->append(", $firstname");
 						$noun = $pronoun;
-					}
-					if($phrase->length()) {
-						$phrase->append(', ');
+						if($phrase->length()) {
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
+						}
 					}
 				} elsif(is_alive(person => $person)) {
 					$phrase->append([$person, ' is ']);
@@ -2976,8 +2977,6 @@ sub print_person
 				$phrase->append(',');
 			}
 		} elsif($spouserelationship) {
-			my $ended_with_comma;
-
 			if($father || $mother || $occupations[0]) {
 				if($phrase->length()) {
 					push @phrases, $phrase;
@@ -2985,11 +2984,13 @@ sub print_person
 				}
 				$phrase->set($noun);
 				$noun = $pronoun;
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			} else {
 				$phrase->append($person);
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-					$phrase->append(', ');
-					$ended_with_comma = 1;
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 				} elsif(is_alive(person => $person)) {
 					$phrase->append(i18n(' is '));
 				} else {
@@ -2999,11 +3000,6 @@ sub print_person
 						$phrase->append(' was ');
 					}
 				}
-			}
-
-			if(($phrase->length() > 0) && !$ended_with_comma) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 			}
 
 			if($language eq 'French') {
@@ -3024,13 +3020,16 @@ sub print_person
 			} else {
 				$phrase->append(" of your $spouserelationship");
 			}
-			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append(" $s");
-			} else {
-				complain({ person => $spouse, warning => 'Seems to have no name' });
+			if(scalar(@phrases) == 0) {
+				if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
+					$phrase->append(" $s");
+				} else {
+					complain({ person => $spouse, warning => 'Seems to have no name' });
+				}
 			}
-			if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-				$phrase->append(',');
+			if($phrase->length()) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			}
 			$haveprintedspousename = 1;
 		} elsif(($mother || $father) &&
