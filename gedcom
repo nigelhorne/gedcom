@@ -3305,6 +3305,11 @@ sub print_person
 			if($dateofbaptism || $placeofbaptism) {
 				if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
 					$phrase->set("$pronoun ");
+				} elsif(scalar(@phrases) >= 3) {
+					push @phrases, $phrase;
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					$phrase = Data::Text->new("$pronoun ");
+					@phrases = ();
 				}
 				unless($dateofbirth || $placeofbirth) {
 					if($language eq 'French') {
