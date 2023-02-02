@@ -2949,12 +2949,8 @@ sub print_person
 			if($father || $mother || $occupations[0]) {
 				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
 					if($noun eq $firstname) {
-						$phrase->append(", $firstname");
+						$phrase->append(", $firstname, ");
 						$noun = $pronoun;
-						if($phrase->length()) {
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
-						}
 					}
 				} elsif(is_alive(person => $person)) {
 					$phrase->append([$person, ' is ']);
@@ -2968,13 +2964,11 @@ sub print_person
 						$phrase->append([$person, ' was ']);
 					}
 				}
-				$phrase->append(i18n('your'));
+				$phrase->append(i18n('your'))->append(" $relationship, ");
 			} else {
-				$phrase->set(ucfirst(i18n('your')));
-			}
-			$phrase->append(" $relationship");
-			if($aob || $aod && (scalar(@events) == 0) && (scalar(@residences) == 0)) {
-				$phrase->append(',');
+				$phrase->set(ucfirst(i18n('your')))->append(" $relationship");
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			}
 		} elsif($spouserelationship) {
 			if($father || $mother || $occupations[0]) {
@@ -3044,22 +3038,22 @@ sub print_person
 		}
 
 		if(my $aka = $person->as_string({ use_aka => 1 })) {
-			$phrase->append(" (also known as $aka)");
+			$phrase->append("(also known as $aka) ");
 		}
 
 		my $start_of_paragraph = 0;
 
 		if($aob && $aod) {
 			if($aob == $aod) {
-				$phrase->append(" was born and died $aod years ago ");
+				$phrase->append("was born and died $aod years ago ");
 			} else {
-				$phrase->append(" was born $aob years and died $aod years ago ");
+				$phrase->append("was born $aob years and died $aod years ago ");
 			}
 			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
 			$phrase->append("[$_]") foreach(@birthcitations);
 			$phrase->append("[$_]") foreach(@deathcitations);
 		} elsif($aob) {
-			$phrase->append(i18n({ person => $person, format => ' was born ' }));
+			$phrase->append(i18n({ person => $person, format => 'was born ' }));
 			if($language eq 'French') {
 				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
@@ -3081,14 +3075,14 @@ sub print_person
 			$phrase->append("[$_]") foreach(@birthcitations);
 		} elsif($aod) {
 			if($language eq 'French') {
-				$phrase->append(' est mort');
+				$phrase->append('est mort');
 				if($sex eq 'F') {
 					$phrase->append('e');
 				}
 				$phrase->append("il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
-				$phrase->append(" died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
+				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
 					($opts{'t'} ? 'tomorrow' : 'today'));
 			}
 			if($placeofdeath) {
