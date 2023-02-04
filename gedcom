@@ -3094,7 +3094,10 @@ sub print_person
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 				$phrase->append(" ($notes)");
 				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				if($notes !~ /\."$/) {
+					$bio->append('.');
+				}
 				$phrase = Data::Text->new();
 				@phrases = ();
 				if(length($notes) > 160) {
@@ -6452,10 +6455,7 @@ sub print_person
 					push @phrases, $phrase;
 				}
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases));
-					unless($placeofburial || $dateofburial || $placeofcremation || $dateofcremation) {
-						$bio->append('.');
-					}
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 					@phrases = ();
 				}
 			}
@@ -6518,7 +6518,10 @@ sub print_person
 		}
 		if($opts{'c'}) {
 			if(scalar(@phrases)) {
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				if($phrase->as_string() !~ /\."$/) {
+					$bio->append('.');
+				}
 				@phrases = ();
 
 				$phrase = Data::Text->new("\n\t");
@@ -9145,7 +9148,7 @@ sub notes {
 				$rc .= '; ';
 			}
 			$rc .= $note;
-			$rc .= '.' if($note !~ /\.$/);
+			$rc .= '.' if($note !~ /\."?$/);
 		} else {
 			complain('Notes field is empty');
 		}
@@ -11534,7 +11537,9 @@ of %d children::von %d Kindern
 she::sie
 sister::Schwester
 sisters::Schwestern
+the head of household::der Haushaltsvorstand
 the same day as::die gleichen Tag als
+they::Sie
 wife::Frau
 with::mit
 @@ Latin
