@@ -5289,7 +5289,9 @@ sub print_person
 			if(scalar(@residencestringarray)) {
 				push @phrases, $phrase if($phrase->rtrim()->length());
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					my $text = conjunction(map { $_->as_string() } @phrases);
+					$text =~ s/[\,;]\s*$//;
+					$bio->append("$text.  ");
 					$phrase = Data::Text->new();
 					@phrases = ();
 				}
