@@ -5395,9 +5395,14 @@ sub print_person
 				}
 			}
 		} elsif(scalar(@phrases)) {
-			# No residences
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			$phrase = Data::Text->new();
+			if($phrase->length()) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
+			}
+			# No residences - remove any trailing commas
+			my $text = conjunction(map { $_->as_string() } @phrases);
+			$text =~ s/[\,;]\s*$//;
+			$bio->append("$text.  ");
 			@phrases = ();
 		}
 		# $phrase =~ s/,;/;/g;
