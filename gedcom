@@ -3014,12 +3014,10 @@ sub print_person
 			} else {
 				$phrase->append(" of your $spouserelationship");
 			}
-			if(scalar(@phrases) == 0) {
-				if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-					$phrase->append(" $s");
-				} else {
-					complain({ person => $spouse, warning => 'Seems to have no name' });
-				}
+			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
+				$phrase->append(" $s");
+			} else {
+				complain({ person => $spouse, warning => 'Seems to have no name' });
 			}
 			if($phrase->length()) {
 				push @phrases, $phrase;
