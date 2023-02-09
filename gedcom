@@ -6643,8 +6643,8 @@ sub print_person
 				# FIXME:  should be a better test, e.g. catch people 1861-1930, don't
 				#	catch 1862-1865.  The current test misses some but should have
 				#	no false positives
-				if((defined($yob) && ($yob >= 1841)) &&
-				  ((defined($yod)) && ($yod <= 1911)) &&
+				if((defined($yob) && ($yob >= 1841) && ($yob <= 1921)) &&
+				  ((defined($yod)) && ($yod >= 1841) && ($yod <= 1921)) &&
 				  (($yod - $yob) >= 10) &&
 				  (scalar(keys(%census_years)) == 0)) {
 					complain({ person => $person, warning => 'Appears in no censuses' });
