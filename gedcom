@@ -11456,7 +11456,7 @@ during %s life::au cours de sa vie
 eldest:M:aîné
 eldest:F:aînée
 father::père
-following the death of::après le mort de
+following the death of::suite au mort de
 from::de
 has had::a eu
 had::a eu
@@ -11544,6 +11544,7 @@ sister::Schwester
 sisters::Schwestern
 the head of household::der Haushaltsvorstand
 the same day as::die gleichen Tag als
+times::fache
 they::Sie
 wife::Frau
 with::mit
