@@ -5018,7 +5018,7 @@ sub print_person
 										$residencestring .= ' parents ';
 										$printed_mother_same_place = 1;
 									} else {
-										$residencestring .= ' father ';
+										$residencestring .= i18n(' father ');
 									}
 									if(datecmp($rdate, $father_date) > 0) {
 										$residencestring .= 'had been';
@@ -5032,7 +5032,7 @@ sub print_person
 								$printed_father_same_place = 1;
 							} elsif($mother_date) {
 								$residencestring .= ' (the same place as ' .
-									($person->pronoun() eq 'She' ? 'her' : 'his') . ' mother ';
+									($person->pronoun() eq 'She' ? 'her' : 'his') . i18n(' mother ');
 								if(datecmp($rdate, $mother_date) > 0) {
 									$residencestring .= 'had been';
 								} else {
@@ -8722,7 +8722,7 @@ sub place {
 						if($date =~ /^bet\s*(.+)/i) {
 							complain({ person => $params{'person'}, warning => "Location for the event between $1 is empty" });
 						} else {
-							complain({ person => $params{'person'}, warning => "Location for the event on $date is empty" });
+							complain({ person => $params{'person'}, warning => 'Location for "' . lcfirst($params{'record'}->type()) . "\" on $date is empty" });
 						}
 					} else {
 						complain({ person => $params{'person'}, warning => 'Location is empty' });

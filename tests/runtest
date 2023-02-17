@@ -4,5 +4,6 @@ unset https_proxy
 
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | grep --colour '   '
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour '\. [A-Z]'
+./gedcom -dlh 'Nigel Horne' "$*" | spell 2>&1 | less
 LANG=fr_FR ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i "\ss?he\s"
 LANG=fr_FR ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i 'mother|father|brother|sister'
