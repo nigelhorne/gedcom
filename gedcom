@@ -1795,15 +1795,13 @@ sub print_person
 
 	if($opts{'H'}) {
 		# print STDERR __LINE__, ": $day/", $month + 1, "/$year\n";
-		my $start_of_month = DateTime->new(month => $month + 1, day => 1, year => $year);
 		my $dt = DateTime->new(month => $month + 1, day => $day, year => $year);
 
-		my $row = $dt->weekday_of_month();
-		my $first_day_of_month = $start_of_month->day_of_week();
+		my $row = $dt->weekday_of_month() + 1;
+		my $first_day_of_month = DateTime->new(month => $month + 1, day => 1, year => $year)->day_of_week();
 		if(($first_day_of_month < 7) && ($dt->day_of_week() < $first_day_of_month)) {
 			$row++;
 		}
-		$row++;
 		my $column = $dt->day_of_week();
 		my $dtl = $params{'dtl'};
 
