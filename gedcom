@@ -3080,7 +3080,7 @@ sub print_person
 				if($sex eq 'F') {
 					$phrase->append('e');
 				}
-				$phrase->append("il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
+				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
