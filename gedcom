@@ -3032,6 +3032,8 @@ sub print_person
 			($relationship || $spouserelationship)) {
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
+		} else {
+			$phrase->append(", $firstname ");
 		}
 
 		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
