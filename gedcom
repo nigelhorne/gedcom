@@ -128,7 +128,8 @@ BEGIN {
 	if(scalar(@needfull)) {
 		my $list = join(' ', @needfull);
 		print "Installing $list\n";
-		system("cpan -i $list");
+		# system("cpan -i $list");
+		system('perl -MCPAN -e \'CPAN::Shell->install("' . join('", "', @needfull) . '")\'');
 	}
 	# $Devel::FIXME::REPAIR_INC = 1;
 
@@ -343,8 +344,10 @@ foreach my $module(@modules) {
 		$module->import();
 	}
 }
+
 if(scalar(@needfull)) {
-	system('cpan -i ' . join(' ', @needfull));
+	# system('cpan -i ' . join(' ', @needfull));
+	system('perl -MCPAN -e \'CPAN::Shell->install("' . join('", "', @needfull) . '")\'');
 }
 
 foreach my $module(@modules) {
