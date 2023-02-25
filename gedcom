@@ -6044,9 +6044,11 @@ sub print_person
 						$n =~ s/\.$//;
 						$n =~ tr/\r//;
 						$phrase->append(" ($n)");
-					}
-					if($person->get_record('note')) {
-						$phrase->append('.');
+
+						push @phrases, $phrase;
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('. ');
+						$phrase = Data::Text->new();
+						@phrases = ();
 					}
 				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
 					$phrase->append($pronoun)->append(i18n({ person => $person, format => ' was buried' }));
