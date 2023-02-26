@@ -3092,6 +3092,13 @@ sub print_person
 				$phrase->append(place({ person => $person, record => $death, places_printed => \%places_printed }));
 			}
 			$phrase->append("[$_]") foreach(sort @deathcitations);
+
+			# Cause of death
+			if(my $cause = $person->cause()) {
+				$cause = lc($cause);
+				$phrase->append(" ($cause)");
+			}
+
 			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
 				$notes =~ s/\.$//;
 				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
@@ -5381,14 +5388,7 @@ sub print_person
 							$phrase->append(" $date");
 						}
 						$phrase->append("[$_]") foreach(List::Util::uniq(sort @deathcitations));
-						# Print notes about the death, if any
-						if(my $notes = notes({ person => $person, record => $death })) {
-							$notes =~ tr/\r//;
-							$notes =~ tr/\n/ /;
-							$notes =~ s/\.$//;
-							$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-							$phrase->append(" ($notes)");
-						}
+						add_death_notes({ person => $person, record => $death, phrase => $phrase });
 						$diedathome = 1;
 					}
 				}
@@ -6216,14 +6216,8 @@ sub print_person
 						}
 					}
 					$phrase->append("[$_]") foreach(List::Util::uniq(sort @deathcitations));
-					# Print notes about the death, if any
-					if(my $notes = notes({ person => $person, record => $death })) {
-						$notes =~ tr/\r//;
-						$notes =~ tr/\n/ /;
-						$notes =~ s/\.$//;
-						$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-						$phrase->append(" ($notes)");
-					}
+
+					add_death_notes({ person => $person, record => $death, phrase => $phrase });
 				}
 				my $opts = {
 					person => $person,
@@ -6418,17 +6412,8 @@ sub print_person
 				$phrase->append(place({ person => $person, place => $placeofdeath }));
 			}
 			$phrase->append("[$_]") foreach(List::Util::uniq(sort @deathcitations));
-			# Print notes about the death, if any
-			if(defined($death) && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
-				$notes =~ tr/\r//;
-				$notes =~ s/\.$//;
-				# FIXME: If the notes are so long they go over
-				#	a page split into more than one page
-				#	properly rather than don't print, as now
-				if((!$opts{'B'}) || (length($notes) < 4000)) {
-					$phrase->append(" ($notes)");
-				}
-			}
+
+			add_death_notes({ person => $person, record => $death, phrase => $phrase });
 		}
 
 # die $phrase->as_string() if((!$end_of_sentence) && ($phrase->as_string() =~ /[\.\,]\s*$/));
@@ -11363,6 +11348,44 @@ sub cache_array {
 		return map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @_;
 	}
 	return @_;
+}
+
+# Print notes about the death, if any
+sub add_death_notes
+{
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	}
+
+	my $person = $params{'person'};
+	my $death = $params{'record'};	# death record
+	my $phrase = $params{'phrase'};
+
+	return unless($death);
+
+	die 'BUG: add_death_notes, argument missing' unless(defined($person) && defined($phrase));
+
+	# Cause of death
+	if(my $cause = $person->cause()) {
+		$cause = lc($cause);
+		$phrase->append(" ($cause)");
+	}
+	if(my $notes = notes({ person => $person, record => $death, paragraph => 0 })) {
+		# FIXME: If the notes are so long they go over
+		#	a page split into more than one page
+		#	properly rather than don't print, as now
+		if((!$opts{'B'}) || (length($notes) < 4000)) {
+			$notes =~ tr/\r//;
+			$notes =~ tr/\n/ /;
+			$notes =~ s/\.$//;
+			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+			$phrase->append(" ($notes)");
+		}
+	}
 }
 
 # Must all be in lower case
