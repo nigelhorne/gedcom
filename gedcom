@@ -6017,7 +6017,7 @@ sub print_person
 		}
 
 		if($funeral && (!defined($dateofburial)) && (!defined($dateofcremation))) {
-			complain({ person => $person, 'Taking details of burial from funeral record' });
+			complain({ person => $person, warning => 'Taking details of burial from funeral record' });
 			$dateofburial = $funeral->date();
 			$placeofburial = $funeral->place();
 		}
