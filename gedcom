@@ -6367,7 +6367,7 @@ sub print_person
 					$phrase->append(i18n({ person => $person, format => 'is buried' }) .
 						$b);
 				}
-				if(my $b = notes({ record => ($burial // $cremation), paragraph => 0 })) {
+				if(my $b = notes({ record => ($burial // $cremation // $funeral), paragraph => 0 })) {
 					$b =~ s/\.$//;
 					$b =~ tr/\r//;
 					$phrase->append(" ($b)");
@@ -9162,7 +9162,14 @@ sub notes {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $record = $params{'record'};
-	die 'Usage: notes(record => $record)' unless($record);
+	if(!$record) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'Usage: notes(record => $record)';
+	}
 
 	my $paragraph = $params{'paragraph'};
 	my @notes = $record->get_record('note');
