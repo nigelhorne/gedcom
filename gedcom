@@ -6054,7 +6054,7 @@ sub print_person
 						$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
 					}
 					if(my $city = ($placeofburial // $placeofcremation)) {
-						if($placeofbirth && ($city eq $placeofbirth)) {
+						if($placeofbirth && places_are_the_same(first => $city, second => $placeofbirth)) {
 							if(my $address = $burial->address()) {
 								$phrase->append(" at $address");
 							}
@@ -6098,6 +6098,9 @@ sub print_person
 						$phrase->append(' ' . year({ person => $person, date => $dateofcremation }));
 						$record = $cremation;
 					}
+					if($funeral && (datecmp($funeral->date(), $record->date()) == 0)) {
+						die $record->date();
+					}
 					if(my $n = notes({ record => $record, paragraph => 0 })) {
 						$n =~ s/\.$//;
 						$n =~ tr/\r//;
@@ -6108,7 +6111,7 @@ sub print_person
 						$phrase = Data::Text->new();
 						@phrases = ();
 					}
-				} elsif($placeofbirth && ($placeofburial eq $placeofbirth)) {
+				} elsif($placeofbirth && places_are_the_same(first => $placeofburial, second => $placeofbirth)) {
 					$phrase->append($pronoun)->append(i18n({ person => $person, format => ' was buried' }));
 					if(my $address = $burial->address()) {
 						if($language eq 'French') {
@@ -6336,6 +6339,11 @@ sub print_person
 						$dateofburial =~ s/\.+$//;
 					}
 					$phrase->append(' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate }));
+					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+						$phrase->append(' following ' .
+																	($person->pronoun() eq 'She' ? 'her' : 'his') .
+																	" funeral at$place");
+					}
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
 					push @phrases, $phrase;
@@ -9383,6 +9391,10 @@ sub places_are_the_same
 
 	die 'first is not optional' unless $record1;
 	die 'second is not optional' unless $record2;
+
+	if((!ref($record1)) && (!ref($record2))) {
+		return $record1 eq $record2;
+	}
 
 	my $place1 = $record1->place();
 	return 0 unless(defined($place1));
