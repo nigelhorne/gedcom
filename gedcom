@@ -6341,8 +6341,8 @@ sub print_person
 					$phrase->append(' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate }));
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
 						$phrase->append(' following ' .
-																	($person->pronoun() eq 'She' ? 'her' : 'his') .
-																	" funeral at$place");
+							($person->pronoun() eq 'She' ? 'her' : 'his') .
+							" funeral at$place");
 					}
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
