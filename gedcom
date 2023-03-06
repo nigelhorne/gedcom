@@ -3032,6 +3032,8 @@ sub print_person
 			($relationship || $spouserelationship)) {
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
+		} elsif(scalar(@phrases)) {
+			$phrase->append("$firstname ");
 		} else {
 			$phrase->append(", $firstname ");
 		}
@@ -3043,8 +3045,6 @@ sub print_person
 		if(my $aka = $person->as_string({ use_aka => 1 })) {
 			$phrase->append("(also known as $aka) ");
 		}
-
-		my $start_of_paragraph = 0;
 
 		if($aob && $aod) {
 			if($aob == $aod) {
@@ -3111,7 +3111,6 @@ sub print_person
 				$phrase = Data::Text->new();
 				@phrases = ();
 				if(length($notes) > 160) {
-					$start_of_paragraph = 1;
 					$bio->append("\n\t");
 				} else {
 					$bio->append('  ');
@@ -3489,7 +3488,6 @@ sub print_person
 			$phrase = Data::Text->new();
 		}
 
-		$start_of_paragraph = 0;
 		# Is/was this person an orphan?
 		if($mother && $father && $yob &&
 		  ((my $mdod = dateofdeath($mother)) &&
@@ -5350,21 +5348,19 @@ sub print_person
 				if((scalar(@residencelist) == 1) && (my $rdate = $first->date())) {
 					$phrase->set(ucfirst(year({ person => $person, date => $rdate, circa => 'About' })));
 				} else {
-					if(!$start_of_paragraph) {
-						if($opts{'B'}) {
-							if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-								$text->textend();
+					if($opts{'B'}) {
+						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+							$text->textend();
 
-								$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = NJH::PDFPage->new($pdf);
 
-								$text = $pdfpage->text();
-								$text->font($params{'font'}, 12);
-								pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
-							}
-							$bio = Data::Text->new(' ');
-						} else {
-							$bio->rtrim()->append("\n\t");
+							$text = $pdfpage->text();
+							$text->font($params{'font'}, 12);
+							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 						}
+						$bio = Data::Text->new(' ');
+					} else {
+						$bio->rtrim()->append("\n\t");
 					}
 					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
 				}
@@ -6181,7 +6177,6 @@ sub print_person
 
 					$phrase->append(i18n({ person => $person, format => 'died' }));
 
-					$start_of_paragraph = 0;
 					if($dateofdeath) {
 						if($dateofdeath =~ /\s$/) {
 							complain({ person => $person, warning => 'Removing trailing spaces from date of death' });
