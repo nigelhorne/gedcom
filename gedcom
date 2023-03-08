@@ -3583,9 +3583,11 @@ sub print_person
 			# FIXME: do all schools
 			$phrase->append(place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }));
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
-			@phrases = ();
+			if($numberofchildren) {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				@phrases = ();
+			}
 		}
 
 		my @childrenunknownparent;
@@ -3834,12 +3836,10 @@ sub print_person
 						$phrase->append($p);
 						$places_printed{$p} = 1;
 					} elsif(!$haveprintedspousename) {
-						if(scalar(@phrases) == 0) {
-							$phrase->set($pronoun);
-						} elsif($phrase->length()) {
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
+						if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
+							$phrase->set("$pronoun ");
 						}
+
 						$spouse //= $spouses[0];
 						if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
 							if(is_alive(person => $person) && is_alive(person => $spouse)) {
