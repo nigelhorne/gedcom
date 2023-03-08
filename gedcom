@@ -3576,7 +3576,7 @@ sub print_person
 				$phrase->set($pronoun);
 			}
 			if($language eq 'French') {
-				$phrase->append(' a fait ses études à');
+				$phrase->append(" a fait ses \N{U+00E9}tudes \N{U+00E0}");
 			} else {
 				$phrase->append(' went to');
 			}
@@ -10456,6 +10456,9 @@ sub journey
 	}
 
 	if(defined($dod) && !$only_have_departure_year) {
+		if($language eq 'French') {
+			return "$rc, partant $dod";
+		}
 		return "$rc, departing $dod";
 	}
 
