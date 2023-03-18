@@ -1698,13 +1698,13 @@ sub print_person
 	my $mother = $person->mother();
 	my $father = $person->father();
 	if($father) {
-		$father = Class::Simple::Readonly::Cached->new({ object => $father, cache => {} });
+		$father = Class::Simple::Readonly::Cached->new({ object => $father, cache => {}, quiet => 1 });
 	}
 	if($mother) {
-		$mother = Class::Simple::Readonly::Cached->new({ object => $mother, cache => {} });
+		$mother = Class::Simple::Readonly::Cached->new({ object => $mother, cache => {}, quiet => 1 });
 	}
 	my @spouses = $person->spouse();
-	@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @spouses;
+	@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
 
 	# TODO: Properly chart which spouse a child comes from
 	if($opts{'w'} && !$opts{'H'}) {
