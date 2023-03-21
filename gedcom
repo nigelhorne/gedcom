@@ -58,10 +58,10 @@ my @needfull;
 # Install Pre-requisites
 BEGIN {
 	my @modules = (
-		'Array::Iterator', 'Array::Iterator::BiDirectional', 'Data::Section::Simple', 'Date::Manip',
+		'Array::Iterator', 'Data::Section::Simple', 'Date::Manip',
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
-		'CHI', 'File::HomeDir', 'String::Compare', 'Unicode::Diacritic::Strip',
+		'CHI', 'File::HomeDir', 'String::Compare',
 		'HTML::Entities',
 		'Lingua::Conjunction',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
@@ -75,16 +75,20 @@ BEGIN {
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		'Geo::Coder::Abbreviations',
-		'Roman',
+		'Roman', 'Unicode::Diacritic::Strip',
 		'utf8::all',
 		# 'Devel::FIXME',
 	);
 
-	# I can't get Marpa::R2 version 10 to build on OS/X or Solaris.
+	# I can't get Marpa::R2 versions 10 and 12 to build on OS/X or Solaris.
 	# It's used by Genealogy::Gedcom::Date, so force version 8
 	eval 'use Marpa::R2';
 	if($@) {
-		push @needfull, 'JKEGL/Marpa-R2-8.000000.tar.gz'
+		if(($^O eq 'solaris') || ($^O eq 'darwin')) {
+			push @needfull, 'JKEGL/Marpa-R2-8.000000.tar.gz'
+		} else {
+			push @needfull, 'Marpa::R2';
+		}
 	}
 
 	foreach my $module(@modules) {
@@ -129,6 +133,7 @@ BEGIN {
 		my $list = join(' ', @needfull);
 		print "Installing $list\n";
 		# system("cpan -i $list");
+		$ENV{'PERL_MM_USE_DEFAULT'} = 1;
 		system('perl -MCPAN -e \'CPAN::Shell->install("' . join('", "', @needfull) . '")\'');
 	}
 	# $Devel::FIXME::REPAIR_INC = 1;
@@ -346,7 +351,10 @@ foreach my $module(@modules) {
 }
 
 if(scalar(@needfull)) {
-	# system('cpan -i ' . join(' ', @needfull));
+	my $list = join(' ', @needfull);
+	print "Installing $list\n";
+	# system("cpan -i $list");
+	$ENV{'PERL_MM_USE_DEFAULT'} = 1;
 	system('perl -MCPAN -e \'CPAN::Shell->install("' . join('", "', @needfull) . '")\'');
 }
 
