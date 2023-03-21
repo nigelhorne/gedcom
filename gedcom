@@ -176,6 +176,7 @@ foreach my $module(@needfull) {
 
 # use IPC::System::Simple;
 use autodie qw(:all);
+use Array::Iterator::BiDirectional;
 # use diagnostics;
 # use warnings::unused;
 
