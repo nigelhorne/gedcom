@@ -1083,7 +1083,7 @@ if($opts{'H'}) {
 
 			# FIXME: This sorting only works when all people are descendants of $me,
 			# there are no ancestors involved
-			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @everyone;
+			@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @everyone;
 			@everyone = sort {
 				(stepsabove($a, $me, 0) == stepsabove($b, $me, 0)) ?
 					$a->as_sort_key() cmp $b->as_sort_key() :
@@ -6135,6 +6135,8 @@ sub print_person
 								}
 							} elsif($temperature < 0) {
 								$phrase->append(' (a cold day)');
+							} else {
+								die 'TODO: parse weather';
 							}
 						}
 						$phrase->append(' following ' .
