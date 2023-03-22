@@ -6109,8 +6109,10 @@ sub print_person
 						$phrase->append(' ' . year({ person => $person, date => $dateofcremation }));
 						$record = $cremation;
 					}
-					if($funeral && (datecmp($funeral->date(), $record->date()) == 0)) {
-						die $record->date();
+					if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+						$phrase->append(' following ' .
+							($person->pronoun() eq 'She' ? 'her' : 'his') .
+							" funeral at$place");
 					}
 					if(my $n = notes({ record => $record, paragraph => 0 })) {
 						$n =~ s/\.$//;
