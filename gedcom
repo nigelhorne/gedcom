@@ -6119,17 +6119,27 @@ sub print_person
 						$record = $cremation;
 					}
 					if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
-						$phrase->append(' following ' .
-							($person->pronoun() eq 'She' ? 'her' : 'his') .
-							" funeral at$place");
 						if(my $d = $dfg->parse_datetime(date => $record->date())) {
 							my $date = $d->strftime('%F');
 							my $location = get_location($funeral->place());
 							my $weather = $meteo->weather($location, $date);
-							$Data::Dumper::Maxdepth = 0;
-							use Data::Dumper;
-							die "TODO:\n\t", Data::Dumper->new([$weather])->Dump();
+
+							my $temperature = $weather->{'daily'}->{'temperature_2m_max'}[0];
+							my $wmo = $weather->{'daily'}->{'weathercode'}[0];
+
+							if($wmo == 3) {
+								if($temperature < 0) {
+									$phrase->append(' (a cold and overcast day)');
+								} else {
+									$phrase->append(' (an overcast day)');
+								}
+							} elsif($temperature < 0) {
+								$phrase->append(' (a cold day)');
+							}
 						}
+						$phrase->append(' following ' .
+							($person->pronoun() eq 'She' ? 'her' : 'his') .
+							" funeral at$place");
 					}
 					if(my $n = notes({ record => $record, paragraph => 0 })) {
 						$n =~ s/\.$//;
