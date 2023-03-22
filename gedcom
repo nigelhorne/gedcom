@@ -312,6 +312,9 @@ if($ENV{'GEONAMES_USER'}) {
 if($ENV{'REDIS_SERVER'}) {
 	push @modules, 'CHI::Driver::Redis';
 }
+if($opts{'d'}) {
+	push @modules, 'Weather::Meteo';
+}
 
 my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
 if(-d $libdir1) {
@@ -795,6 +798,12 @@ my ($obituaries, $wills);
 if($opts{'w'}) {
 	$obituaries = Genealogy::ObituaryDailyTimes->new();
 	$wills = Genealogy::Wills->new();
+}
+
+my $meteo;
+
+if($opts{'d'}) {
+	$meteo = Weather::Meteo->new(ua => $cached_browser);
 }
 
 if($opts{'H'}) {
@@ -6113,6 +6122,14 @@ sub print_person
 						$phrase->append(' following ' .
 							($person->pronoun() eq 'She' ? 'her' : 'his') .
 							" funeral at$place");
+						if(my $d = $dfg->parse_datetime(date => $record->date())) {
+							my $date = $d->strftime('%F');
+							my $location = get_location($funeral->place());
+							my $weather = $meteo->weather($location, $date);
+							$Data::Dumper::Maxdepth = 0;
+							use Data::Dumper;
+							die "TODO:\n\t", Data::Dumper->new([$weather])->Dump();
+						}
 					}
 					if(my $n = notes({ record => $record, paragraph => 0 })) {
 						$n =~ s/\.$//;
@@ -11147,7 +11164,9 @@ sub get_location($)
 			print Data::Dumper->new([$location])->Dump() if($opts{'v'});
 			my $rc = Class::Simple->new();
 			$rc->long($location->{geometry}{location}{lng});
+			$rc->longitude($location->{geometry}{location}{lng});
 			$rc->lat($location->{geometry}{location}{lat});
+			$rc->latitude($location->{geometry}{location}{lat});
 			return $rc;
 		}
 		if($opts{'w'}) {
