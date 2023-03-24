@@ -18,10 +18,10 @@ jobs:
         os:
           - name: freebsd
             version: '13.0'
-            pkginstall: pkg install -y perl
+            pkginstall: pkg install -y p5-LWP-UserAgent
           - name: openbsd
             version: '7.1'
-            pkginstall: pkg_add perl
+            pkginstall: pkg_add p5-LWP-UserAgent
 
     steps:
       - uses: actions/checkout@main
