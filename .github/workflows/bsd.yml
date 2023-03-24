@@ -18,7 +18,7 @@ jobs:
         os:
           - name: freebsd
             version: '13.0'
-            pkginstall: pkg install -y p5-LWP-UserAgent
+            pkginstall: pkg install -y p5-LWP-UserAgent-Cached
           - name: openbsd
             version: '7.1'
             pkginstall: pkg_add p5-LWP-UserAgent
