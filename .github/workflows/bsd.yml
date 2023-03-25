@@ -18,10 +18,10 @@ jobs:
         os:
           - name: freebsd
             version: '13.0'
-            pkginstall: pkg install -y p5-LWP-UserAgent-Cached p5-CHI p5-autodie
+            pkginstall: pkg install -y p5-LWP-UserAgent-Cached p5-CHI p5-autodie p5-Date-Manip p5-Data-ICal
           - name: openbsd
             version: '7.1'
-            pkginstall: pkg_add p5-LWP-UserAgent-Cached p5-CHI
+            pkginstall: pkg_add p5-CHI
 
     steps:
       - uses: actions/checkout@main
@@ -36,7 +36,7 @@ jobs:
           run: |
             sudo hostname example.com
             sudo ${{ matrix.os.pkginstall }}
-            sudo cpan --skip-satisfied -iqn Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Geo::Coder::XYZ Term::ANSIColor Lingua::EN::NameParse Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Tie::Static DateTime::Format::Natural B::Lint LWP::UserAgent::Throttled LWP::Simple::WithCache URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB autodie IPC::System::Simple Memoize Lingua::EN::ABC warnings::unused Lingua::EN::Inflect Geo::Coder::List Geo::Coder::CA Geo::StreetAddress::US Locale::US Geo::Coder::Postcodes List::Util File::Fetch~0.56 Geo::Coder::Ovi Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::Bing Geo::Coder::GooglePlaces Geo::GeoNames HTML::Table Net::OAuth HTTP::Cache::Transparent DateTime::Format::Genealogy Locale::Object::Country Config::Auto Module::Load Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz String::Compare Class::Simple::Cached Class::Simple::Readonly::Cached Geo::Coder::OpenCage Date::ICal Data::ICal Data::ICal::Entry::Event Data::ICal::DateTime Data::ICal::TimeZone Unicode::Diacritic::Strip Date::Manip Roman Data::Section::Simple CHI Locale::AU Locale::CA utf8::all Lingua::Conjunction Lingua::String Geo::Coder::Abbreviations Array::Iterator Data::Text Locale::Object::Country Weather::Meteo < /dev/null
+            sudo cpan -i App::cpanminus Array::Iterator Data::Section::Simple Date::Manip FindBin Gedcom Genealogy::Gedcom::Date Date::Parse IPC::System::Simple CHI File::HomeDir String::Compare HTML::Entities Lingua::Conjunction Lingua::EN::NameCase Lingua::EN::NameParse Lingua::EN::ABC Lingua::String Lingua::EN::Inflect DateTime::Format::Natural Locale::AU Locale::CA Locale::US Data::Text DateTime::Format::Genealogy Parse::RecDescent Sort::Key::DateTime Text::Names::GB Class::Simple::Cached Class::Simple::Readonly::Cached File::Spec Net::OAuth Getopt::Std File::Basename Locale::Object::Country Term::ANSIColor Geo::Coder::Abbreviations Roman Unicode::Diacritic::Strip utf8::all
             sudo chown -R runner:runner .
             perl -MO=Lint ./gedcom
             perl -c -Mwarnings::unused ./gedcom

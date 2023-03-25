@@ -1,4 +1,5 @@
 ---
+
 name: Ubuntu
 
 on:
@@ -16,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-18.04
+          - ubuntu-22.04
           - ubuntu-20.04
         perl-version:
           # - '5.8'	# Gedcom doesn't work on old perls
