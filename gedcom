@@ -212,10 +212,13 @@ if($opts{h}) {
 		# Need top of family tree
 		@rc = map { ($_->father() || $_->mother()) ? () : $_ } @rc;
 		if(scalar(@rc) > 1) {
-			my $i = 0;
-			print join("\n", map { $i++; "$i: " . $_->as_string({ include_years => 1, middle_names => 1 }) } @rc),
-				"\nMore than one $opts{h} found - choose a line number: ";
-			$i = <STDIN>;
+			my $i;
+			do {
+				$i = 0;
+				print join("\n", map { $i++; "$i: " . $_->as_string({ include_years => 1, middle_names => 1 }) } @rc),
+					"\nMore than one $opts{h} found - choose a line number: ";
+				$i = <STDIN>;
+			} while(!defined($i));
 			chomp $i;
 			$me = $rc[$i - 1];
 		} else {
