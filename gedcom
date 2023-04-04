@@ -805,7 +805,7 @@ if($opts{'w'}) {
 
 my $meteo;
 
-if($opts{'d'}) {
+if($opts{'d'} && !$opts{'T'}) {
 	$meteo = Weather::Meteo->new(ua => $cached_browser);
 }
 
@@ -10477,12 +10477,14 @@ sub journey
 		$rc .= ' travelled';
 	}
 
+	my $dnotes;
+
 	if(defined($departure->place())) {
 		$rc .= i18n(' from') . place({ person => $person, record => $departure, nopreposition => 1 });
-		if(my $notes = notes(record => $departure)) {
-			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-			$notes =~ s/\.$//;
-			$rc .= " ($notes)";
+		if($dnotes = notes(record => $departure)) {
+			$dnotes = lcfirst($dnotes) unless($dnotes =~ /^[A-Z]{2}/);
+			$dnotes =~ s/\.$//;
+			$rc .= " ($dnotes)";
 		}
 	} else {
 		complain({ person => $person, warning => 'Departure record has no location' });
@@ -10490,9 +10492,11 @@ sub journey
 	if(defined($arrival->place())) {
 		$rc .= (($language eq 'French') ? " \N{U+00E0}" : ' to') . place({ person => $person, record => $arrival, nopreposition => 1 });
 		if(my $notes = notes(record => $arrival)) {
-			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-			$notes =~ s/\.$//;
-			$rc .= " ($notes)";
+			if($notes !~ qr/$dnotes/i) {
+				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+				$notes =~ s/\.$//;
+				$rc .= " ($notes)";
+			}
 		}
 	} else {
 		complain({ person => $person, warning => 'Arrival record has no location' });
