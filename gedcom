@@ -6370,7 +6370,7 @@ sub print_person
 						$dateofburial =~ s/\.+$//;
 					}
 					$phrase->append(' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate }));
-					if(my $weather = weather({ person => $person, record => $burial, meteo => $meteo })) {
+					if($burial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
 						$phrase->append(" ($weather)");
 					}
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
@@ -11554,6 +11554,15 @@ sub weather
 	my $person = $params{'person'};
 	my $record = $params{'record'};	# death record
 	my $meteo = $params{'meteo'};
+
+	if(!$record) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'Usage: weather(person, record, meteo)';
+	}
 
 	if((my $d = $dfg->parse_datetime(date => $record->date())) &&
 	   (my $location = get_location($record->place()))) {
