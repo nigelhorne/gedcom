@@ -3639,6 +3639,11 @@ sub print_person
 					}
 					$phrase->append(i18n(\%args));
 
+					if(my $srelationship = $person->relationship($spouses[0])) {
+						$phrase->append(($person->pronoun() eq 'She') ? 'her ' : 'his ')
+							->append("$srelationship ");
+					}
+
 					if($haveprintedspousename) {
 						$nameparser->parse($spouses[0]->name());
 
