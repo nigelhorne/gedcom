@@ -316,7 +316,7 @@ if($ENV{'REDIS_SERVER'}) {
 	push @modules, 'CHI::Driver::Redis';
 }
 if($opts{'d'}) {
-	push @modules, 'Weather::Meteo';
+	push @modules, 'Weather::Meteo', 'XML::Hash';
 }
 
 my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
@@ -2700,6 +2700,28 @@ sub print_person
 		my $bio = Data::Text->new("\t");
 		my $phrase = Data::Text->new();
 		my @phrases;
+
+		# Lookup entry in dbpedia.
+		# TODO: Look up maiden name and married name(s)
+		if(my $resp = $cached_browser->get("http://lookup.dbpedia.org/api/search?query=$firstname%20$lastname")) {
+			my $xmlparser = XML::Hash->new();
+			my $dbpedia = $xmlparser->fromXMLStringtoHash($resp->decoded_content());
+			if(my $arrayofresults = $dbpedia->{'ArrayOfResults'}) {
+				foreach my $result(@{$arrayofresults->{'Result'}}) {
+					if(my $description = $result->{'Description'}) {
+						if($result->{'Label'}->{'text'} eq "$firstname $lastname") {
+							if(my $text = $description->{'text'}) {
+								# FIXME: add citation
+								$bio->append("$text\n\t");
+								last;
+							}
+						}
+						# $Data::Dumper::Maxdepth = 0;
+						# print Data::Dumper->new([\$result])->Dump() if($text eq "$firstname $lastname");
+					}
+				}
+			}
+		}
 
 		if($occupations[0]) {
 			my @foccupations;
