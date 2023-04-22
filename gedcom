@@ -37,7 +37,6 @@
 # TODO: Investigate Locale::Maketext
 # TODO: Investigate Carp::Assert::More
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
-# TODO: dbpedia
 # TODO: consider Data::Dumper::Names instead of Data::Dumper
 
 # dnf install langpacks-fr glibc-all-langpacks -y
@@ -2703,25 +2702,31 @@ sub print_person
 
 		# Lookup entry in dbpedia.
 		# TODO: Look up maiden name and married name(s)
-		if(my $resp = $cached_browser->get("http://lookup.dbpedia.org/api/search?query=$firstname%20$lastname")) {
-			my $xmlparser = XML::Hash->new();
-			my $dbpedia = $xmlparser->fromXMLStringtoHash($resp->decoded_content());
-			if(my $arrayofresults = $dbpedia->{'ArrayOfResults'}) {
-				foreach my $result(@{$arrayofresults->{'Result'}}) {
-					if(my $description = $result->{'Description'}) {
-						if($result->{'Label'}->{'text'} eq "$firstname $lastname") {
-							if(my $text = $description->{'text'}) {
-								# FIXME: add citation
-								$bio->append("$text\n\t");
-								last;
-							}
-						}
-						# $Data::Dumper::Maxdepth = 0;
-						# print Data::Dumper->new([\$result])->Dump() if($text eq "$firstname $lastname");
-					}
-				}
-			}
-		}
+		# Experimental code with false positives at the moment
+		# if(my $resp = $cached_browser->get("http://lookup.dbpedia.org/api/search?query=$firstname%20$lastname")) {
+			# my $xmlparser = XML::Hash->new();
+			# my $dbpedia = $xmlparser->fromXMLStringtoHash($resp->decoded_content());
+			# if(my $arrayofresults = $dbpedia->{'ArrayOfResults'}) {
+				# foreach my $result(@{$arrayofresults->{'Result'}}) {
+					# if(($result->{'Label'}->{'text'} eq "$firstname $lastname") &&
+					   # (my $description = $result->{'Description'})) {
+						# if(my $t = $description->{'text'}) {
+							# if($t =~ qr/$firstname $lastname/) {
+								# # FIXME: add citation
+								# if($opts{'B'}) {
+									# pdfprint(string => "\t$t\n\t", text => $text, pdfpage => $pdfpage);
+								# } else {
+									# print "\t$t\n\t";
+								# }
+								# # $Data::Dumper::Maxdepth = 0;
+								# # print STDERR Data::Dumper->new([\$result])->Dump();
+								# last;
+							# }
+						# }
+					# }
+				# }
+			# }
+		# }
 
 		if($occupations[0]) {
 			my @foccupations;
@@ -3576,19 +3581,17 @@ sub print_person
 				$phrase = Data::Text->new();
 				@phrases = ();
 
-				if($opts{'B'}) {
-					if($bio->length()) {
-						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$text->textend();
+				if($opts{'B'} && $bio->length()) {
+					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+						$text->textend();
 
-							$pdfpage = NJH::PDFPage->new($pdf);
+						$pdfpage = NJH::PDFPage->new($pdf);
 
-							$text = $pdfpage->text();
-							$text->font($params{'font'}, 12);
-							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
-						}
-						$bio = Data::Text->new();
+						$text = $pdfpage->text();
+						$text->font($params{'font'}, 12);
+						pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 					}
+					$bio = Data::Text->new();
 				}
 			}
 		}
