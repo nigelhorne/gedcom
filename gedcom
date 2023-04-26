@@ -38,6 +38,7 @@
 # TODO: Investigate Carp::Assert::More
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
 # TODO: consider Data::Dumper::Names instead of Data::Dumper
+# TODO: investigate User::Identity
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -2702,6 +2703,7 @@ sub print_person
 
 		# Lookup entry in dbpedia.
 		# TODO: Look up maiden name and married name(s)
+		# TODO: use DateTime::Format::Text to find embedded dates
 		# Experimental code with false positives at the moment
 		if(my $resp = $cached_browser->get("http://lookup.dbpedia.org/api/search?query=$firstname%20$lastname")) {
 			my $xmlparser = XML::Hash->new();
@@ -3621,18 +3623,19 @@ sub print_person
 		my @education = $person->education();
 
 		if(scalar(@education)) {
-			if(scalar(@phrases)) {
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				@phrases = ();
-				$phrase = Data::Text->new($pronoun);
-			} elsif($phrase->length() == 0) {
-				$phrase->set($pronoun);
+			if($phrase->length() > 0) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
+			} elsif(scalar(@phrases) == 0) {
+				$phrase->set("$pronoun ");
 			}
+
 			if($language eq 'French') {
-				$phrase->append(" a fait ses \N{U+00E9}tudes \N{U+00E0}");
+				$phrase->append("a fait ses \N{U+00E9}tudes \N{U+00E0}");
 			} else {
-				$phrase->append(' went to');
+				$phrase->append('went to');
 			}
+
 			# FIXME: do all schools
 			$phrase->append(place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }));
 			push @phrases, $phrase;
