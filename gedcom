@@ -318,6 +318,9 @@ if($ENV{'REDIS_SERVER'}) {
 if($opts{'d'}) {
 	push @modules, 'Weather::Meteo', 'XML::Hash';
 }
+if($opts{'d'} || $opts{'B'}) {
+	push @modules, 'DateTime::Format::Text';
+}
 
 my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
 if(-d $libdir1) {
@@ -2716,9 +2719,18 @@ sub print_person
 							if($t =~ qr/$firstname $lastname/) {
 								if($t =~ /\(born (\d{4})\)/) {
 									if($yod && ($1 > $yod)) {
-										# False positive
 										# Died after the dbpedia person was born
 										next;
+									}
+								}
+								if(my $dt = DateTime::Format::Text->parse_datetime($t)) {
+									if($birth_dt && ($dt < $birth_dt)) {
+										$dt = $dt->delta_days($birth_dt);
+										if(($dt->{'days'} / 356) > 10) {
+											# Born more than 10 years after
+											# the dbpedia event
+											next;
+										}
 									}
 								}
 								# FIXME: add citation
