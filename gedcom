@@ -11252,6 +11252,7 @@ sub get_location($)
 			return $rc;
 		}
 		if($opts{'w'}) {
+			$Data::Dumper::Maxdepth = 0;
 			print Data::Dumper->new([\$location])->Dump();
 			print Data::Dumper->new([\@locations])->Dump();
 			complain("Probable bug in Geo::Coder::List with '$place'");
