@@ -2759,6 +2759,15 @@ sub print_person
 										next;
 									}
 								}
+								my @dts = DateTime::Format::Text->parse_datetime($t);
+								if(scalar(@dts) == 2) {
+									if(defined($yob) && (($yob != $dts[0]->year()) || ($yob > $dts[1]->year()))) {
+										next;
+									}
+									if(defined($yod) && ($yod < $dts[0]->year())) {
+										next;
+									}
+								}
 								# FIXME: add citation
 								# if($opts{'B'}) {
 									# pdfprint(string => "\t$t\n\t", text => $text, pdfpage => $pdfpage);
