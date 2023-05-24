@@ -2710,12 +2710,12 @@ sub print_person
 			if($resp->is_success()) {
 				my $dbpedia = XML::Hash->new()->fromXMLStringtoHash($resp->decoded_content());
 				if(my $arrayofresults = $dbpedia->{'ArrayOfResults'}) {
-					foreach my $result(@{$arrayofresults->{'Result'}}) {
+					RESULT: foreach my $result(@{$arrayofresults->{'Result'}}) {
 						if(($result->{'Label'}->{'text'} =~ /$firstname([a-z\s]+)$lastname/i) &&
 						   (my $description = $result->{'Description'})) {
 							if(my $t = $description->{'text'}) {
 								if($t =~ /$firstname([a-z\s]+)$lastname/i) {
-									if($t =~ /\(born\s.*?(\d{4})\)/) {
+									if($t =~ /\(born\s.*?(\d{4})\D*?\)/) {
 										my $b = $1;
 										if(defined($yod) && ($yod < $b)) {
 											# Died before the dbpedia person was born
@@ -2768,6 +2768,28 @@ sub print_person
 										}
 										if(defined($yod) && ($yod < $dts[0]->year())) {
 											next;
+										}
+									} elsif(defined($yob)) {
+										# Try to guess other info
+										my @categories = @{$result->{'Categories'}->{'Category'}};
+										foreach my $category(@categories) {
+											my $uri = $category->{'URI'}->{'text'};
+											if(defined($yod) && ($uri =~ /Living_people$/)) {
+												# dbpedia person is alive, ours is not
+												next RESULT;
+											}
+											if(defined($yob) && ($uri =~ /Category:(\d{4})_births$/)) {
+												my $b = $1;
+												if(defined($yod) && ($yod < $b)) {
+													# Died before the dbpedia person was born
+													next RESULT;
+												}
+												if(defined($yob) && ($yob != $b)) {
+													# Born different year from the dbpedia person was born
+													next RESULT;
+												}
+											}
+											warn ">>>>>>>>>> $uri";
 										}
 									}
 									# FIXME: add citation
