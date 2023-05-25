@@ -2769,7 +2769,8 @@ sub print_person
 										if(defined($yod) && ($yod < $dts[0]->year())) {
 											next;
 										}
-									} elsif(defined($yob)) {
+									} elsif(defined($yob) && $result->{'Categories'}->{'Category'} &&
+										(ref($result->{'Categories'}->{'Category'}) eq 'ARRAY')) {
 										# Try to guess other info
 										my @categories = @{$result->{'Categories'}->{'Category'}};
 										foreach my $category(@categories) {
