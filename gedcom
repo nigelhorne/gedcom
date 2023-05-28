@@ -2393,27 +2393,28 @@ sub print_person
 	my @events = $person->event();
 
 	if(scalar(@events) > 1) {
-		my $all_have_dates = 1;
-		foreach my $event(@events) {
-			if(!ref($event)) {
-				$all_have_dates = 0;
-				last;
-			}
-			if(ref($event) ne 'Gedcom::Record') {
-				$all_have_dates = 0;
-				last;
-			}
-			if(my $date = $event->date()){
-				if(($date =~ /^abt/) || !$dfg->parse_datetime(date => $date)) {
-					$all_have_dates = 0;
-					last;
-				}
-			} else {
-				$all_have_dates = 0;
-				last;
-			}
-		}
-		if($all_have_dates) {
+		# my $all_have_dates = 1;
+		# foreach my $event(@events) {
+			# if(!ref($event)) {
+				# $all_have_dates = 0;
+				# last;
+			# }
+			# if(ref($event) ne 'Gedcom::Record') {
+				# $all_have_dates = 0;
+				# last;
+			# }
+			# if(my $date = $event->date()){
+				# if(($date =~ /^abt/) || !$dfg->parse_datetime(date => $date)) {
+					# $all_have_dates = 0;
+					# last;
+				# }
+			# } else {
+				# $all_have_dates = 0;
+				# last;
+			# }
+		# }
+		# if($all_have_dates) {
+		if(all_records_have_date({ person => $person, records => \@events })) {
 			# print join(' ', map { $_->date() } @events), "\n";
 			@events = Sort::Key::DateTime::dtkeysort { $dfg->parse_datetime(date => $_->date()) } @events;
 			# print join(' ', map { $_->date() } @events), "\n";
@@ -5489,41 +5490,22 @@ sub print_person
 		# $phrase =~ s/;$//;
 		# $phrase =~ s/,.$/./;
 
-		my $all_events_have_date = 1;
-		foreach my $event(@events) {
-			if((ref($event) ne 'Gedcom::Record') || !$event->date()) {
-				$all_events_have_date = 0;
-				last;
-			}
-			my $date = $event->date();
-			if(($date !~ /^\d/) || ($date =~ /[a-z]$/i) ||
-			   ($date =~ /[\/\-]/) || !date_parser_cached(date => $date)) {
-				$all_events_have_date = 0;
-				last;
-			}
-			if(!date_parser_cached(date => $date)) {
-				complain({
-					person => $person,
-					warning => "Event has an invalid date of $date"
-				});
-				$all_events_have_date = 0;
-				last;
-			}
-		}
-		if($all_events_have_date && (scalar(@events) > 0)) {
+		# Sort the events by date
+		if(all_records_have_date({ person => $person, records => \@events }) && (scalar(@events) > 0)) {
 			@events = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @events;
 		}
+
 		# Let's remove things that aren't relevant that may
 		# allow optimisations in the English
-		while(scalar(@events) > 2) {
-			my $e = $events[scalar(@events) - 1];
-			# TODO: add more
-			if(ref($e) && ($e->type() eq 'Register UK 1939')) {
-				pop @events;
-			} else {
-				last;
-			}
-		}
+		# while(scalar(@events) > 2) {
+			# my $e = $events[scalar(@events) - 1];
+			# # TODO: add more
+			# if(ref($e) && ($e->type() eq 'Register UK 1939')) {
+				# pop @events;
+			# } else {
+				# last;
+			# }
+		# }
 
 		my $funeral;
 
@@ -7415,6 +7397,33 @@ sub print_person
 	# It would be nice to remove @tmpfiles here, but the PDF::API2 module needs them until the
 	#	PDF is finally created
 	print Data::Dumper->new([$person->state()])->Dump() if($opts{'v'});
+}
+
+sub all_records_have_date
+{
+	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my @records = @{$args{'records'}};
+	my $person = $args{'person'};
+
+	foreach my $record(@records) {
+		if((ref($record) ne 'Gedcom::Record') || !$record->date()) {
+			return 0;
+		}
+		my $date = $record->date();
+		if(($date !~ /^\d/) || ($date =~ /[a-z]$/i) ||
+		   ($date =~ /[\/\-]/) || !date_parser_cached(date => $date)) {
+			return 0;
+		}
+		if(!date_parser_cached(date => $date)) {
+			complain({
+				person => $person,
+				warning => "Record has an invalid date of $date"
+			});
+			return 0;
+		}
+	}
+	return 1;
 }
 
 sub Gedcom::Individual::as_string
