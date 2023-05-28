@@ -2980,7 +2980,6 @@ sub print_person
 
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
-		my @residences = get_all_residences($person);
 
 		if($relationship) {
 			if($father || $mother || $occupations[0]) {
@@ -3162,8 +3161,6 @@ sub print_person
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
 		}
-
-		print scalar(@residences), " residences found\n" if($opts{'v'});
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
 			if((defined($firstname) && ($noun eq $firstname)) || (scalar(@phrases) == 0)) {
@@ -4360,12 +4357,15 @@ sub print_person
 		my $diedathome;
 		my $military_location;
 
+		my @residences = get_all_residences($person);
+		print scalar(@residences), " residences found\n" if($opts{'v'});
+
 		if((scalar(@residences) == 1) && (scalar(@events) == 1) &&
 		   $residences[0]->date() && ref($events[0]) && $events[0]->date() &&
 		   (year(string => $residences[0]->date()) eq year(string => $events[0]->date())) &&
 		   (($events[0]->type() eq 'Military service') || ($events[0]->type() eq 'Military'))) {
 			# There's just one residence and one event which is military, and they are at the same time
-			# so put them together: "in 1970 he was living in London when he was serving in the milirary"
+			# so put them together: "in 1970 he was living in London when he was serving in the military"
 			$military_location = 1;
 		}
 
@@ -4511,10 +4511,9 @@ sub print_person
 			my $print_year_only;	# used when printing a range, e.g. 1871-1891
 			my %printed_dates;
 
-			my @residencestringarray;
-
 			print "Sanity checking the residences\n" if($opts{'v'});
 			# Create a list of residence strings
+			my @residencestringarray;
 
 			my $printed_father_same_place;
 			my $printed_mother_same_place;
@@ -11771,8 +11770,15 @@ sub dbpedia
 									if(defined($yob) && (($yob != $dts[0]->year()) || ($yob > $dts[1]->year()))) {
 										next;
 									}
-									if(defined($yod) && ($yod < $dts[0]->year())) {
-										next;
+									if(defined($yod)) {
+										if($yod < $dts[0]->year()) {
+											next;
+										}
+										if($yod < ($dts[1]->year() - 40)) {
+											# Died more than 40 years before the
+											# dbpedia person
+											next;
+										}
 									}
 								} elsif(defined($yob) && $result->{'Categories'}->{'Category'} &&
 									(ref($result->{'Categories'}->{'Category'}) eq 'ARRAY')) {
