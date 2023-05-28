@@ -2416,7 +2416,8 @@ sub print_person
 		# if($all_have_dates) {
 		if(all_records_have_date({ person => $person, records => \@events })) {
 			# print join(' ', map { $_->date() } @events), "\n";
-			@events = Sort::Key::DateTime::dtkeysort { $dfg->parse_datetime(date => $_->date()) } @events;
+			# @events = Sort::Key::DateTime::dtkeysort { $dfg->parse_datetime(date => $_->date()) } @events;
+			@events = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @events;
 			# print join(' ', map { $_->date() } @events), "\n";
 		}
 	}
@@ -7407,19 +7408,22 @@ sub all_records_have_date
 	my $person = $args{'person'};
 
 	foreach my $record(@records) {
-		if((ref($record) ne 'Gedcom::Record') || !$record->date()) {
+		if((!ref($record)) || (ref($record) ne 'Gedcom::Record') || !$record->date()) {
 			return 0;
 		}
-		my $date = $record->date();
-		if(($date !~ /^\d/) || ($date =~ /[a-z]$/i) ||
-		   ($date =~ /[\/\-]/) || !date_parser_cached(date => $date)) {
-			return 0;
-		}
-		if(!date_parser_cached(date => $date)) {
-			complain({
-				person => $person,
-				warning => "Record has an invalid date of $date"
-			});
+		if(my $date = $record->date()) {
+			if(($date !~ /^\d/) || ($date =~ /[a-z]$/i) ||
+			   ($date =~ /[\/\-]/) || !date_parser_cached(date => $date)) {
+				return 0;
+			}
+			if(!date_parser_cached(date => $date)) {
+				complain({
+					person => $person,
+					warning => "Record has an invalid date of $date"
+				});
+				return 0;
+			}
+		} else {
 			return 0;
 		}
 	}
