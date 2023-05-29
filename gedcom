@@ -11207,9 +11207,18 @@ sub dump_places {
 # Given a place return its latitude and longitude
 sub get_location($)
 {
+	return unless(defined($geocoder));
+
 	my $place = shift;
 
-	return unless(defined($geocoder));
+	if(!defined($place)) {
+		print "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'BUG: place argument not given';
+	}
 
 	print "get_location: $place\n" if($opts{'v'});
 
