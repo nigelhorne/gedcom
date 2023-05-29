@@ -6370,7 +6370,7 @@ sub print_person
 						$dateofburial =~ s/\.+$//;
 					}
 					$phrase->append(' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate }));
-					if($burial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
+					if($burial && $placeofburial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
 						$phrase->append(" ($weather)");
 					}
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
