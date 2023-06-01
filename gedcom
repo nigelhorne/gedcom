@@ -1378,7 +1378,7 @@ sub generate {
 			}
 
 			my @spouses = $person->spouse();
-			@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } @spouses;
+			@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
 			if(scalar(@spouses)) {
 				$query = "INSERT INTO spouses('xref', 'spouse', 'dateofmarriage', 'placeofmarriage') VALUES (?, ?, ?, ?);";
 				$statement = $dbh->prepare($query);
