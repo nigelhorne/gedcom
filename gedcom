@@ -11756,6 +11756,9 @@ sub dbpedia
 							if($class->{'Label'}->{'text'} eq 'Place') {
 								next RESULT;
 							}
+							if($class->{'Label'}->{'text'} eq 'Artwork') {
+								next RESULT;
+							}
 						}
 					}
 					if($result->{'Label'}->{'text'} &&
