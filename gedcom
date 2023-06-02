@@ -5046,7 +5046,7 @@ sub print_person
 									$printed_sibling = 1;
 
 									if($with_mother && $with_father) {
-										$residencestring .= ' parents';
+										$residencestring .= i18n(' parents');
 									} elsif($with_mother) {
 										$residencestring .= i18n(' mother, ') . $mother->given_names();
 									} elsif($with_father) {
@@ -5068,13 +5068,13 @@ sub print_person
 
 									my @r;
 									if($same_road_as_mother && $same_road_as_father) {
-										$residencestring .= ' parents';
+										$residencestring .= i18n(' parents');
 										@r = get_all_residences(person => $father);
 									} elsif($same_road_as_mother) {
-										$residencestring .= ' mother';
+										$residencestring .= i18n(' mother');
 										@r = get_all_residences(person => $mother);
 									} else {
-										$residencestring .= ' father';
+										$residencestring .= i18n(' father');
 										@r = get_all_residences(person => $father);
 									}
 									foreach my $r(@r) {
@@ -5105,7 +5105,7 @@ sub print_person
 									$residencestring .= ' (the same place as ' .
 										($person->pronoun() eq 'She' ? 'her' : 'his');
 									if($mother_date && (datecmp($father_date, $mother_date) == 0)) {
-										$residencestring .= ' parents ';
+										$residencestring .= i18n(' parents ');
 										$printed_mother_same_place = 1;
 									} else {
 										$residencestring .= i18n(' father ');
@@ -11913,6 +11913,7 @@ older::older
 on the same day::on the same day
 on your father's side::on your father's side
 on your mother's side::on your mother's side
+parents::parents
 she::she
 sister::sister
 sisters::sisters
@@ -11987,6 +11988,7 @@ older:F:aînée
 on the same day::sur la même jour
 on your father's side::du côté paternel
 on your mother's side::du côté de votre mère
+parents::parents
 she::elle
 sister::sœur
 sisters::sœurs
@@ -12048,6 +12050,7 @@ mother::Mutter
 of::von
 of %d children::von %d Kindern
 on your father's side::Auf der Seite deines Vaters
+parents::Eltern
 she::sie
 sister::Schwester
 sisters::Schwestern
