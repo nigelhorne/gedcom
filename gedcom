@@ -2891,7 +2891,7 @@ sub print_person
 						if($language eq 'French') {
 							$phrase->append("'enfant");
 						} else {
-							$phrase->append('child');
+							$phrase->append(i18n('child'));
 						}
 					}
 				} else {
@@ -2899,14 +2899,14 @@ sub print_person
 					if($language eq 'French') {
 						$phrase->append("'enfant");
 					} else {
-						$phrase->append('child');
+						$phrase->append(i18n('child'));
 					}
 				}
 			} else {
 				if($language eq 'French') {
 					$phrase->append("'enfant");
 				} else {
-					$phrase->append('child');
+					$phrase->append(i18n('child'));
 				}
 			}
 			if($language eq 'French') {
