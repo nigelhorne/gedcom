@@ -6068,14 +6068,7 @@ sub print_person
 					if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
 						$phrase->set($pronoun);
 					}
-					if($language eq 'French') {
-						$phrase->append(" est enterr\N{U+00E9}");
-						if($sex eq 'F') {
-							$phrase->append('e');
-						}
-					} else {
-						$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
-					}
+					$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
 					if(my $city = ($placeofburial // $placeofcremation)) {
 						if($placeofbirth && places_are_the_same(first => $city, second => $placeofbirth)) {
 							if(my $address = $burial->address()) {
