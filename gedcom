@@ -2744,24 +2744,9 @@ sub print_person
 			}
 		}
 
-		my @twins;
 		if($birth_dt) {
-			foreach my $s(@siblings) {
-				if(my $dob = dateofbirth($s)) {
-					if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
-						my $d;
-						eval {
-							$d = $date_parser->parse(date => $dob);
-						};
-						if($d && ($d = $d->[0])) {
-							$d = $dfn->parse_datetime($d->{'canonical'});
-							if(($d == $birth_dt) || ($d == ($birth_dt - $oneday)) || ($d == ($birth_dt + $oneday))) {
-								push @twins, $s;
-							}
-						}
-					}
-				}
-			}
+			my @twins = twins({ dob => $dateofbirth, birth_dt => $birth_dt, siblings => \@siblings });
+
 			if(scalar(@twins) == 1) {	# TODO triplets and higher order
 				if(scalar(@occupations)) {
 					push @phrases, $phrase;
@@ -2783,7 +2768,7 @@ sub print_person
 							' of');
 					}
 				}
-				$phrase->append(' ' . $twins[0]->given_names());
+				$phrase->append(' ' . $twins[0]->{'sibling'}->given_names());
 			}
 		}
 
@@ -3291,48 +3276,33 @@ sub print_person
 					push @phrases, $phrase;
 					$phrase = Data::Text->new();
 				} elsif($birth_dt) {
-					my @twins;
+					if(!$aob) {
+						my @twins = twins({ dob => $dateofbirth, birth_dt => $birth_dt, siblings => \@siblings });
+						if(scalar(@twins) == 1) {	# TODO triplets and higher order
+							my $t = $twins[0];
+							my $sibling = $t->{'sibling'};
+							my $dob = $t->{'dob'};
+							if($dob == $birth_dt) {
+								$phrase->append(' along with ');
+							} else {
+								push @phrases, $phrase;
+								$phrase = Data::Text->new();
 
-					foreach my $s(@siblings) {
-						if(my $dob = dateofbirth($s)) {
-							if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
-								my $d;
-								eval {
-									$d = $date_parser->parse(date => $dob);
-								};
-								if($d && ($d = $d->[0])) {
-									$d = $dfn->parse_datetime($d->{'canonical'});
-									if(($d == $birth_dt) || ($d == ($birth_dt - $oneday)) || ($d == ($birth_dt + $oneday))) {
-										push @twins, { sibling => $s, dob => $d };
-									}
+								if($dob == ($birth_dt + $oneday)) {
+									$phrase->set(i18n('a day before '));
+								} else {
+									$phrase->set('a day after ');
 								}
 							}
-						}
-					}
-					if((!$aob) && (scalar(@twins) == 1)) {	# TODO triplets and higher order
-						my $t = $twins[0];
-						my $sibling = $t->{'sibling'};
-						my $dob = $t->{'dob'};
-						if($dob == $birth_dt) {
-							$phrase->append(' along with ');
-						} else {
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
-
-							if($dob == ($birth_dt + $oneday)) {
-								$phrase->set(i18n('a day before '));
+							my $ssex = $sibling->sex();
+							if($language eq 'French') {
+								$phrase->append(($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : "sa jumelle s\N{U+0153}er "));
 							} else {
-								$phrase->set('a day after ');
+								$phrase->append(($sex eq 'M' ? 'his' : 'her') . ' twin ' .
+									(($ssex eq 'F') ? 'sister ' : 'brother '));
 							}
+							$phrase->append($sibling->given_names());
 						}
-						my $ssex = $sibling->sex();
-						if($language eq 'French') {
-							$phrase->append(($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : "sa jumelle s\N{U+0153}er "));
-						} else {
-							$phrase->append(($sex eq 'M' ? 'his' : 'her') . ' twin ' .
-								(($ssex eq 'F') ? 'sister ' : 'brother '));
-						}
-						$phrase->append($sibling->given_names());
 					}
 
 					if($phrase->length() > 0) {
@@ -11691,6 +11661,43 @@ sub weather
 	}
 }
 
+# Given an array of siblings and my date of birth, return an array of which of them are my twins
+# Allow for a twin being born a day before or after this person
+sub twins
+{
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	}
+
+	my $dob = $params{'dob'};
+	my $birth_dt = $params{'birth_dt'};
+	my @siblings = @{$params{'siblings'}};
+	my @twins;
+
+	foreach my $s(@siblings) {
+		if(my $dob = dateofbirth($s)) {
+			if(($dob =~ /^\d/) && ($dob !~ /[a-z]$/i)) {
+				my $d;
+				eval {
+					$d = $date_parser->parse(date => $dob);
+				};
+				if($d && ($d = $d->[0])) {
+					$d = $dfn->parse_datetime($d->{'canonical'});
+					if(($d == $birth_dt) || ($d == ($birth_dt - $oneday)) || ($d == ($birth_dt + $oneday))) {
+						push @twins, { sibling => $s, dob => $d };
+					}
+				}
+			}
+		}
+	}
+
+	return @twins;
+}
+
 # Lookup entry in dbpedia.
 # TODO: Look up maiden name and married name(s)
 # TODO: use DateTime::Format::Text to find embedded dates
@@ -11822,10 +11829,14 @@ sub dbpedia
 											next;
 										}
 									}
-								} elsif(defined($yob) && $result->{'Categories'}->{'Category'} &&
-									(ref($result->{'Categories'}->{'Category'}) eq 'ARRAY')) {
+								} elsif($result->{'Categories'}->{'Category'}) {
 									# Try to guess other info
-									my @categories = @{$result->{'Categories'}->{'Category'}};
+									my @categories;
+									if(ref($result->{'Categories'}->{'Category'}) eq 'ARRAY') {
+										@categories = @{$result->{'Categories'}->{'Category'}};
+									} else {
+										@categories = ( $result->{'Categories'}->{'Category'} );
+									}
 									foreach my $category(@categories) {
 										my $uri = $category->{'URI'}->{'text'};
 										if(defined($yod) && ($uri =~ /Living_people$/)) {
@@ -11842,6 +11853,9 @@ sub dbpedia
 												# Born different year from the dbpedia person was born
 												next RESULT;
 											}
+										}
+										if($uri =~ /Category:Teaching_hospitals/) {
+											next RESULT;
 										}
 										warn ">>>>>>>>>> $uri";
 									}
