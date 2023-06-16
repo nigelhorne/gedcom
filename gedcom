@@ -3862,9 +3862,8 @@ sub print_person
 					}
 				}
 				$phrase->append("[$marriagecitation]") if($marriagecitation);
-				if(defined($marriage) && (my $notes = notes(record => $marriage))) {
-					$notes =~ s/\.$//;
-					$phrase->append(" ($notes)");
+				if(defined($marriage)) {
+					append_notes({ phrase => $phrase, record => $marriage });
 				}
 			} else {	# scalar(@spouses) > 1
 				if(is_alive(person => $person)) {
@@ -5597,11 +5596,8 @@ sub print_person
 							}
 						}
 					}
-					if(my $notes = notes({ record => $event })) {
-						$notes = lcfirst($notes);
-						$notes =~ s/\.$//;
-						$phrase->append(" ($notes)");
-					}
+					append_notes({ phrase => $phrase, record => $event });
+
 					push @phrases, $phrase;
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
@@ -5617,10 +5613,7 @@ sub print_person
 					$place =~ s/^\sin/ from/;
 					$phrase->append("$place " .
 						year({ person => $person, record => $events[0] }));
-					if(my $notes = notes({ record => $event })) {
-						$notes = lcfirst($notes);
-						$phrase->append(" ($notes)");
-					}
+					append_notes({ phrase => $phrase, record => $event });
 					push @phrases, $phrase;
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
@@ -5666,10 +5659,7 @@ sub print_person
 					($type ne 'Register UK 1939')) {
 
 					red_warning({ person => $person, warning => "Unhandled event type: $type" });
-					if(my $notes = notes(record => $event)) {
-						$notes = ucfirst($notes);
-						$phrase->append(" ($notes)");
-					}
+					append_notes({ phrase => $phrase, record => $event });
 				# } elsif($end_of_sentence) {
 					# $phrase->append(' ');
 				}
@@ -5716,11 +5706,7 @@ sub print_person
 							$mentioned_military = 1;
 						}
 
-						if(my $notes = notes(record => $event)) {
-							$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy)/);
-							$notes =~ s/[\s\.]+$//;
-							$phrase->append(" ($notes)");
-						}
+						append_notes({ phrase => $phrase, record => $event });
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
@@ -5793,12 +5779,11 @@ sub print_person
 									if($phrase->length()) {
 										push @phrases, $phrase;
 										$phrase = Data::Text->new();
+									} elsif(scalar(@phrases) == 0) {
+										$year = ucfirst($year);
 									}
 									$phrase->set($year);
-									if(my $notes = notes(record => $event)) {
-										$notes = lcfirst($notes);
-										$phrase->append(" ($notes)");
-									}
+									append_notes({ phrase => $phrase, record => $event });
 									$phrase->append(' ' . lcfirst($pronoun) . ' ');
 									if($language eq 'French') {
 										$phrase->append("est arriv\N{U+00E9}");
@@ -5824,10 +5809,7 @@ sub print_person
 										$phrase->append("arrived$place");
 									}
 									$phrase->append(" $year");
-									if(my $notes = notes(record => $event)) {
-										$notes = lcfirst($notes);
-										$phrase->append(" ($notes)");
-									}
+									append_notes({ phrase => $phrase, record => $event });
 								}
 							} else {
 								complain({ person => $person, warning => "Can't determine $type date" });
@@ -5876,10 +5858,7 @@ sub print_person
 							} else {
 								$phrase->append($place);
 							}
-							if(my $notes = notes(record => $event)) {
-								$notes = lcfirst($notes);
-								$phrase->append(" ($notes)");
-							}
+							append_notes({ phrase => $phrase, record => $event });
 						}
 						push @phrases, $phrase;
 						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
@@ -6398,11 +6377,7 @@ sub print_person
 						$phrase->append(" ($weather)");
 					}
 				}
-				if(my $b = notes({ record => ($burial // $cremation // $funeral), paragraph => 0 })) {
-					$b =~ s/\.$//;
-					$b =~ tr/\r//;
-					$phrase->append(" ($b)");
-				}
+				append_notes({ phrase => $phrase, record => ($burial // $cremation // $funeral), paragraph => 0 });
 			}
 			$phrase->append("[$_]") foreach(sort @burialcitations);
 		} elsif((!$aod) && ($placeofdeath || $dateofdeath) && !$diedathome) {
@@ -11657,6 +11632,26 @@ sub weather
 		} else {
 			die "TODO: parse weather (wmo = $wmo, temperature = $temperature)";
 		}
+	}
+}
+
+sub append_notes
+{
+	my %params;
+
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	}
+
+	if(my $notes = notes(\%params)) {
+		my $phrase = $params{'phrase'};
+
+		$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy|Royal Flying Corps)/);
+		$notes =~ s/[\s\.]+$//;
+		$notes =~ tr/\r//;
+		$phrase->append(" ($notes)");
 	}
 }
 
