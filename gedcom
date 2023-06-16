@@ -7586,9 +7586,8 @@ sub Gedcom::Individual::as_sort_key
 				$surname = $1;
 			}
 			return normalize_name("$surname, $given_names");
-		} else {
-			return normalize_name($surname) . ', ZZZZZ';
 		}
+		return normalize_name($surname) . ', ZZZZZ';
 	} elsif($given_names) {
 		return 'ZZZZZ, ' . normalize_name($given_names);
 	}
@@ -7685,9 +7684,7 @@ sub Gedcom::Individual::pronoun
 {
 	my $self = shift;
 
-	my $sex = get_value({ person => $self, value => 'sex' });
-
-	if(defined($sex)) {
+	if(defined(my $sex = get_value({ person => $self, value => 'sex' }))) {
 		if($sex eq 'F') {
 			return 'She';
 		}
