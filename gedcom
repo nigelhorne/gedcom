@@ -3965,16 +3965,7 @@ sub print_person
 				my $spouse_number = 0;
 				my $previousplace;
 				foreach my $spouse(@spouses) {
-					my $dateofmarriage = get_value({ person => $spouse, value => 'marriage date' });
-					if(!defined($dateofmarriage)) {
-						if(my $marriage = ($spouse->get_record('marriage') || $spouse->get_record('fams marriage'))) {
-							$dateofmarriage = $marriage->date();
-						}
-					}
-					if($dateofmarriage && ($dateofmarriage =~ /\s$/)) {
-						complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
-						$dateofmarriage =~ s/\s+$//;
-					}
+					my $dateofmarriage = dateofmarriage({ person => $spouse });
 					my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
 					if(!defined($placeofmarriage)) {
 						if(my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage')) {
@@ -8894,7 +8885,7 @@ sub place {
 	}
 	$place =~ s/\xc3\xa9/é/g;
 
-	if($place =~ /(.+?)\s*United States$/i) {
+	if(($place =~ /(.+?)\s*United States$/i) || ($place =~ /(.+?)\s*United States of America$/i)) {
 		$place = "$1 USA";
 	} elsif($place =~ /States\s.*$/) {
 		complain({ person => $params{'person'}, warning => "Unexpected text at the end of the place '$place'" });
