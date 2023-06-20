@@ -147,6 +147,8 @@ BEGIN {
 		   ($warning !~ /Subroutine Gedcom::Individual::relationship redefined at/)) {
 			if($warning =~ /^Use of uninitialized value/) {
 				die $warning;
+			} elsif($warning =~ /isn't numeric in numeric eq /i) {
+				die $warning;
 			}
 			warn $warning;
 		}
@@ -4236,7 +4238,7 @@ sub print_person
 				# $phrase->append(", $childnames");
 				my $all_children_have_names = 1;
 				foreach my $child(@children) {
-					if(length($child->given_names() == 0)) {
+					if(length($child->given_names()) == 0) {
 						$all_children_have_names = 0;
 						last;
 					}
