@@ -10569,7 +10569,7 @@ sub datecmp($$)
 		}
 		if($left =~ /^(Abt|ca?)\s+(.+)/i) {
 			$left = $2;
-		} elsif(($left =~ /^[a-z\/]+\s+(.+)/i) && ($left =~ /\//)) {
+		} elsif(($left =~ /\//) && ($left =~ /^[a-z\/]+\s+(.+)/i)) {
 			# e.g. "Oct/Nov/Dec 1950"
 			$left = $1;
 		}
