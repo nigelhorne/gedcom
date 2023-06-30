@@ -11826,10 +11826,9 @@ sub dbpedia
 					   (ref($result->{'Classes'}->{'Class'}) eq 'ARRAY')) {
 						my @classes = @{$result->{'Classes'}->{'Class'}};
 						foreach my $class(@classes) {
-							if($class->{'Label'}->{'text'} eq 'Place') {
-								next RESULT;
-							}
-							if($class->{'Label'}->{'text'} eq 'Artwork') {
+							if(($class->{'Label'}->{'text'} eq 'Place') ||
+							   ($class->{'Label'}->{'text'} eq 'School') ||
+							   ($class->{'Label'}->{'text'} eq 'Artwork')) {
 								next RESULT;
 							}
 						}
@@ -11910,9 +11909,25 @@ sub dbpedia
 									}
 									foreach my $category(@categories) {
 										my $uri = $category->{'URI'}->{'text'};
-										if(defined($yod) && ($uri =~ /Living_people$/)) {
-											# dbpedia person is alive, ours is not
+										if($uri =~ /Category:Teaching_hospitals/) {
 											next RESULT;
+										}
+										if(defined($yod)) {
+											if($uri =~ /Living_people$/) {
+												# dbpedia person is alive, ours is not
+												next RESULT;
+											}
+											if($uri =~ /Category:(\d{4})_deaths$/) {
+												my $d = $1;
+												if(defined($yob) && ($yob > $d)) {
+													# Born after this person died
+													next RESULT;
+												}
+												if($yod != $d) {
+													# Died different year from the dbpedia person died
+													next RESULT;
+												}
+											}
 										}
 										if(defined($yob) && ($uri =~ /Category:(\d{4})_births$/)) {
 											my $b = $1;
@@ -11920,13 +11935,10 @@ sub dbpedia
 												# Died before the dbpedia person was born
 												next RESULT;
 											}
-											if(defined($yob) && ($yob != $b)) {
+											if($yob != $b) {
 												# Born different year from the dbpedia person was born
 												next RESULT;
 											}
-										}
-										if($uri =~ /Category:Teaching_hospitals/) {
-											next RESULT;
 										}
 										warn ">>>>>>>>>> $uri";
 									}
