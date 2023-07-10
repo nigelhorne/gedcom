@@ -323,6 +323,10 @@ if($opts{'d'} || $opts{'B'}) {
 	push @modules, 'DateTime::Format::Text';
 }
 
+if($opts{'v'}) {
+	push @modules, 'Log::Any::Adapter';
+}
+
 my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
 if(-d $libdir1) {
 	unshift @INC, ($libdir1);
@@ -471,6 +475,13 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	}
 }
 
+my $script_name = basename($0);
+my $logger;
+if($opts{'v'}) {
+	Log::Any::Adapter->set('Stdout', log_level => 'trace');
+	$logger = Log::Any->get_logger(category => $script_name);
+}
+
 my $places;
 if(defined($language) && ($language ne 'English')) {
 	$places = Class::Simple::Readonly::Cached->new(object => Locale::Places->new(), cache => { });
@@ -537,10 +548,11 @@ if(my $e = $ENV{'CACHEDIR'}) {
 }
 
 my $gopts;
+
 if(my $redis = $ENV{'REDIS_SERVER'}) {
 	$gopts->{'cache'} = CHI->new(
 		driver => 'Redis',
-		namespace => 'gedcom',
+		namespace => $script_name,
 		server => $redis,
 		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 },
 		debug => $opts{'v'}
@@ -554,7 +566,7 @@ if(my $redis = $ENV{'REDIS_SERVER'}) {
 	);
 	# $gopts->{'cache'} = CHI->new(
 		# driver => 'Memcached',
-		# namespace => 'gedcom',
+		# namespace => basename($0),
 		# servers => [ '192.168.1.16:11211', '192.168.1.15:11211', '127.0.0.1:11211', '192.168.1.2:11211' ],
 		# debug => $opts{'v'},
 		# l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 },
@@ -568,18 +580,24 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
-unless($opts{'T'} && !$opts{'v'}) {
+if((!$opts{'T'}) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
+	my $topts;
 	if(my $oa = $ENV{'OPENADDR_HOME'}) {
-		$textgeocoder = Geo::Coder::Free->new(openaddr => $oa);
+		$topts->{'openaddr'} = $oa;
+	}
+	if($logger) {
+		$topts->{'logger'} = $logger;
+	}
+	$textgeocoder = Geo::Coder::Free->new($topts);
+	if($ENV{'OPENADDR_HOME'}) {
 		# $geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
 		# US, Canada and Australia are full
 		# Counties and towns in the UK are full
 		$geocoder->push({ regex => qr/,\s*(USA|US|United States|Canada|Australia)\s*$/, geocoder => $textgeocoder })
 			->push({ regex => qr/^([\w\s]+,)?\s*[\w\s]+,\s*[\w\s]+\s*$/, geocoder => $textgeocoder });
 	} else {
-		$textgeocoder = Geo::Coder::Free->new();
 		$geocoder->push({ regex => qr/^[\w\s\-]+?,[\w\s]+,[\w\s]+?$/, geocoder => $textgeocoder })
 			# E.g. 'Nebraska, USA'
 			->push({ regex => qr/^[\w\s]+,\s*(UK|England|Canada|USA|US|United States)$/i, geocoder => $textgeocoder });
@@ -808,8 +826,13 @@ if($opts{'B'}) {
 my ($obituaries, $wills);
 
 if($opts{'w'}) {
-	$obituaries = Genealogy::ObituaryDailyTimes->new();
-	$wills = Genealogy::Wills->new();
+	if($logger) {
+		$obituaries = Genealogy::ObituaryDailyTimes->new(logger => $logger);
+		$wills = Genealogy::Wills->new(logger => $logger);
+	} else {
+		$obituaries = Genealogy::ObituaryDailyTimes->new();
+		$wills = Genealogy::Wills->new();
+	}
 }
 
 my $meteo;
@@ -10696,7 +10719,7 @@ sub obituaries
 	}
 
 	$Data::Dumper::Maxdepth = 2;
-	print Data::Dumper->new([\%params])->Dump() if($opts{'v'});
+	print "obituaries:\n\t", Data::Dumper->new([\%params])->Dump() if($opts{'v'});
 
 	my $yob = delete $params{'yob'};
 	my $yod = delete $params{'yod'};
