@@ -3328,7 +3328,7 @@ sub print_person
 								$phrase->append(($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : "sa jumelle s\N{U+0153}er "));
 							} else {
 								$phrase->append(($sex eq 'M' ? 'his' : 'her') . ' twin ' .
-									(($ssex eq 'F') ? 'sister ' : 'brother '));
+									i18n(($ssex eq 'F') ? 'sister ' : 'brother '));
 							}
 							$phrase->append($sibling->given_names());
 						}
@@ -4928,7 +4928,7 @@ sub print_person
 										$first = 0;
 									}
 									$residencestring .= ' ' .
-										(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
+										i18n(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
 										$sibling->given_names() . ',';
 									$printed_sibling = 1;
 									last;
@@ -6268,7 +6268,7 @@ sub print_person
 											if($sp eq $p) {
 												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
-													(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
+													i18n(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
 													$sibling->as_string());
 												last;
 											}
@@ -8124,11 +8124,11 @@ sub Gedcom::Individual::relationship_up
 					18 << 24 | 1 => 'sixteen times great-uncle',
 				);
 				my %de_male_relationships = (
-					1 << 24 | 1 => 'brother',
+					1 << 24 | 1 => 'Brude',
 					1 << 24 | 2 => 'nephew',
 					1 << 24 | 3 => 'great-nephew',
 					1 << 24 | 4 => 'great-great-nephew',
-					2 << 24 | 1 => 'uncle',
+					2 << 24 | 1 => 'Onkle',
 					2 << 24 | 2 => 'Cousin',
 					2 << 24 | 3 => 'first cousin once-removed',
 					2 << 24 | 4 => 'first cousin twice-removed',
@@ -8349,7 +8349,7 @@ sub Gedcom::Individual::relationship_up
 					18 << 24 | 1 => 'sixteen times great-aunt',
 				);
 				my %de_female_relationships = (
-					1 << 24 | 1 => 'sister',
+					1 << 24 | 1 => 'Schwester',
 					1 << 24 | 2 => 'niece',
 					1 << 24 | 3 => 'great-niece',
 					1 << 24 | 4 => 'great-great-niece',
