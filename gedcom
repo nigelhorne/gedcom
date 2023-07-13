@@ -4924,7 +4924,7 @@ sub print_person
 								next if($sdate ne $rdate);
 								if(($place =~ /^\d/) && (place({ person => $sibling, record => $sr, nopreposition => 1 }) eq $place)) {
 									if($first) {
-										$residencestring .= ' with ' . ($person->pronoun() eq 'She' ? 'her' : 'his');
+										$residencestring .= i18n(' with ') . ($person->pronoun() eq 'She' ? 'her' : 'his');
 										$first = 0;
 									}
 									$residencestring .= ' ' .
@@ -5039,7 +5039,7 @@ sub print_person
 												$residencestring .= 'son';
 											}
 										} else {
-											$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
+											$residencestring .= i18n($printed_sibling ? ' and ' : ' with ') .
 												($sex eq 'M' ? 'his' : 'her');
 										}
 									} else {
@@ -5150,7 +5150,7 @@ sub print_person
 												($person->pronoun() eq 'She' ? 'son futur mari, ' : 'sa futur femme, ') .
 												$spouse->given_names();
 										} else {
-											$residencestring .= ($printed_sibling ? ' and ' : ' with ') .
+											$residencestring .= i18n($printed_sibling ? ' and ' : ' with ') .
 												($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
 												$spouse->given_names();
 										}
@@ -5618,7 +5618,7 @@ sub print_person
 								   $event->date() && $sevent->date() &&
 								   ($event->date() eq $sevent->date()) &&
 								   ($event->place() eq $sevent->place())) {
-									$phrase->append(' with ' .
+									$phrase->append(i18n(' with ') .
 										lcfirst($person->possessive()) . ' ' .
 										(($sex eq 'M') ? 'wife' : 'husband') .
 										' ' . $spouse->given_names());
