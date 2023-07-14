@@ -11812,7 +11812,8 @@ sub dbpedia
 	my $yod = $params{'yod'};
 	my $birth_dt = $params{'birth_dt'};
 	my $yob;
-	if(defined($birth_dt)) {
+
+	if(defined($birth_dt) && $birth_dt) {
 		if(!ref($birth_dt)) {
 			print STDERR "\n";
 			my $i = 0;
