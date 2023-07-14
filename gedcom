@@ -5636,7 +5636,7 @@ sub print_person
 						complain({ person => $person, warning => 'Date is known but not location in arrival record' });
 					}
 				} elsif($type eq 'Departure') {
-					$phrase->append(' ' . $person->pronoun());
+					$phrase->append(" $pronoun");
 					if($ENV{'LANG'} =~ /^en_US/) {
 						$phrase->append(' traveled');
 					} else {
