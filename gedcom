@@ -3920,6 +3920,7 @@ sub print_person
 				} else {
 					$phrase->append(scalar(@spouses) . i18n(' times'));
 				}
+
 				my $all_marriages_have_date = 1;
 				foreach my $spouse(@spouses) {
 					# my $date = get_value({ person => $spouse, value => 'marriage date' });
