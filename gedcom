@@ -2170,6 +2170,7 @@ sub print_person
 	if($placeofdeath) {
 		if(lc($placeofdeath) eq 'unknown') {
 			$placeofdeath = undef;
+			complain({ person => $person, warning => "Assuming place of death ', , ' means unknown place" });
 		} elsif($placeofdeath =~ /\s\s/) {
 			complain({ person => $person, warning => 'Removing successive spaces from place of death' });
 			$placeofdeath =~ s/\s\s+/ /g;
@@ -6501,6 +6502,10 @@ sub print_person
 						if(!defined($place)) {
 							$place = place({ person => $person, place => $placeofdeath, places_printed => \%places_printed });
 						}
+						if(defined($place) && ($place eq ' in , , ')) {
+							complain({ person => $person, warning => 'Assuming place of death is unknown' });
+							$place = undef;
+						}
 						if(defined($place)) {
 							$phrase->append($place);
 						} else {
@@ -8862,6 +8867,8 @@ sub place {
 		$place = getaddress($address);
 		$address = undef;
 	}
+
+	$place =~ s/\.$//;
 
 	return if(lc($place) eq 'unknown');
 
