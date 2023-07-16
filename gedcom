@@ -2104,7 +2104,7 @@ sub print_person
 			$birth_country = 'United Kingdom';
 		} elsif($c eq 'USA') {
 			$birth_country = 'United States';
-		} elsif($c eq 'United States of America') {
+		} elsif($c eq 'United States Of America') {
 			$birth_country = 'United States';
 		} elsif($c eq 'U.S.A.') {
 			$birth_country = 'United States';
@@ -10336,6 +10336,9 @@ sub get_all_occupations
 
 	# TODO: sort out case
 	if(scalar(@occupations)) {
+		$occupations[0] =~ tr/\r//;
+		$occupations[0] =~ tr/\n/ /;
+
 		if($occupations[0] =~ /works? on (.+)/i) {
 			$occupations[0] = "$1 worker";
 		} elsif(($occupations[0] eq 'Ag Lab') ||
@@ -11807,6 +11810,20 @@ sub person_in_residence_record
 	}
 
 	return 0;
+}
+
+# See https://www.compart.com/en/unicode/U+0161 etc.
+sub wide_to_html
+{
+	my $string = shift;
+
+	$string =~ s/š/&scaron;/g;
+	$string =~ s/č/&ccaron;/g;
+	utf8::decode($string);
+	$string =~ s/\xc5\xa1/&scaron;/g;
+	$string =~ s/\xc4\x8d/&ccaron;/g;
+
+	return $string;
 }
 
 # Lookup entry in dbpedia.
