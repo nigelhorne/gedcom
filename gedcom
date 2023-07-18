@@ -7544,8 +7544,8 @@ sub Gedcom::Individual::as_string
 		$rc .= ' UNKNOWN';
 	}
 
-	if($has_maiden_name && $self->surname()) {
-		$rc .= ' (née ' . normalize_name($self->surname()) . ')';
+	if($has_maiden_name && (my $surname = $self->surname())) {
+		$rc .= ' (née ' . normalize_name($surname) . ')';
 	}
 
 	if(!defined($rc)) {
@@ -7712,19 +7712,23 @@ sub Gedcom::Individual::as_sort_key
 
 sub normalize_name
 {
-	# my $name = shift;
+	my $name = shift;
 
-	# my $rc;
-	# foreach my $word(split(/-| |'/, lc($name))) {
-		# $rc .= '-' if($rc && ($name =~ /-/));
-		# $rc .= "'" if($rc && ($name =~ /'/));
-		# $rc .= ' ' if($rc && ($name =~ / /));
-		# $rc .= ucfirst($word);
+	utf8::decode($name);
+	# if($name =~ /[^\x00-\xFF]/) {
+		# my $rc;
+
+		# foreach my $word(split(/-| |'/, lc($name))) {
+			# $rc .= '-' if($rc && ($name =~ /-/));
+			# $rc .= "'" if($rc && ($name =~ /'/));
+			# $rc .= ' ' if($rc && ($name =~ / /));
+			# $rc .= ucfirst($word);
+		# }
+
+		# return $rc;
 	# }
 
-	# return $rc;
-
-	return Lingua::EN::NameCase::nc(shift);
+	return Lingua::EN::NameCase::nc($name);
 }
 
 sub Gedcom::Individual::pronoun
@@ -11816,12 +11820,6 @@ sub person_in_residence_record
 sub wide_to_html
 {
 	my $string = shift;
-
-	$string =~ s/š/&scaron;/g;
-	$string =~ s/č/&ccaron;/g;
-	utf8::decode($string);
-	$string =~ s/\xc5\xa1/&scaron;/g;
-	$string =~ s/\xc4\x8d/&ccaron;/g;
 
 	return $string;
 }
