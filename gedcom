@@ -1908,7 +1908,8 @@ sub print_person
 			}
 		}
 		if($aom) {
-			if(my $d = $dfg->parse_datetime(date => $dateofmarriage)) {
+			if(my $d = $dfn->parse_datetime(date => $dateofmarriage) //
+				$dfg->parse_datetime(date => $dateofmarriage)) {
 				$str .= ' m' . $d->strftime('%Y');
 			} else {
 				red_warning({ person => $person, warning => "Can't parse date of marriage '$dateofmarriage'" });
@@ -11861,6 +11862,7 @@ sub dbpedia
 	my $firstname = $name_components{'given_name_1'} // $person->given_names // $name_components{'initials_1'};
 	if($firstname) {
 		$firstname =~ s/\'/\\\'/g;
+		$firstname = Unicode::Diacritic::Strip::strip_diacritics($firstname);
 	} else {
 		$firstname = 'NULL';
 	}
@@ -11868,6 +11870,7 @@ sub dbpedia
 	my $surname = ucfirst(lc($person->surname()));
 	if($surname) {
 		$surname =~ s/\'/\\\'/g;
+		$surname = Unicode::Diacritic::Strip::strip_diacritics($surname);
 	} else {
 		$surname = 'NULL';
 	}
