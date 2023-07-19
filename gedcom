@@ -146,6 +146,7 @@ BEGIN {
 		   ($warning !~ /Subroutine HTML::GoogleMaps::V3::_text_to_point redefined at/) &&
 		   ($warning !~ /Subroutine Gedcom::Individual::relationship redefined at/)) {
 			if(($warning =~ /^Use of uninitialized value/) ||
+			   ($warning =~ /Wide/) ||
 			   ($warning =~ /isn't numeric in numeric eq /i)) {
 				die $warning;
 			}
@@ -1846,7 +1847,7 @@ sub print_person
 		if(!defined($lastname)) {
 			$lastname = $2;
 		}
-		utf8::decode($firstname);
+		# utf8::decode($firstname);
 		complain({ person => $person, warning => "Can't parse the name - assuming first name: $firstname, last name: $lastname" });
 	}
 
@@ -1908,7 +1909,7 @@ sub print_person
 			}
 		}
 		if($aom) {
-			if(my $d = $dfn->parse_datetime(date => $dateofmarriage) //
+			if(my $d = $dfn->parse_datetime($dateofmarriage) //
 				$dfg->parse_datetime(date => $dateofmarriage)) {
 				$str .= ' m' . $d->strftime('%Y');
 			} else {
@@ -2642,10 +2643,10 @@ sub print_person
 					} elsif($dateofcremation) {
 						complain({ person => $person, warning => "Cremation date ($dateofcremation) has no citations" });
 					} elsif($placeofburial) {
-						utf8::decode($placeofburial);
+						# utf8::decode($placeofburial);
 						complain({ person => $person, warning => "Burial place ($placeofburial) has no citations" });
 					} else {
-						utf8::decode($placeofcremation);
+						# utf8::decode($placeofcremation);
 						complain({ person => $person, warning => "Cremation place ($placeofcremation) has no citations" });
 					}
 				}
@@ -4179,7 +4180,7 @@ sub print_person
 							}
 							$phrase->append(i18n(person => $person, format => $format, args => $parentofall->as_string()));
 							my $decoded = conjunction(map { $_->given_names() } @children);
-							utf8::decode($decoded);
+							# utf8::decode($decoded);
 							$phrase->append(": $decoded");
 						} else {
 							# List children by the same parent together
@@ -7546,7 +7547,8 @@ sub Gedcom::Individual::as_string
 	}
 
 	if($has_maiden_name && (my $surname = $self->surname())) {
-		$rc .= ' (née ' . normalize_name($surname) . ')';
+		# née
+		$rc .= " (n\N{U+00E9}e " . normalize_name($surname) . ')';
 	}
 
 	if(!defined($rc)) {
@@ -7555,7 +7557,7 @@ sub Gedcom::Individual::as_string
 		$rc = 'Unknown person';
 	}
 
-	utf8::decode($rc);
+	# utf8::decode($rc);
 
 	if($args{'include_years'}) {
 		my $dob = dateofbirth($self);
@@ -7715,8 +7717,10 @@ sub normalize_name
 {
 	my $name = shift;
 
-	utf8::decode($name);
-	# if($name =~ /[^\x00-\xFF]/) {
+	# utf8::decode($name);
+	if($name =~ /[^[:ascii:]]/) {
+		return $name;	# It will break encoding, so don't even try
+
 		# my $rc;
 
 		# foreach my $word(split(/-| |'/, lc($name))) {
@@ -7727,7 +7731,7 @@ sub normalize_name
 		# }
 
 		# return $rc;
-	# }
+	}
 
 	return Lingua::EN::NameCase::nc($name);
 }
@@ -8949,8 +8953,6 @@ sub place {
 
 		$rc->en($place);
 
-		# FIXME: doesn't work because none of this code properly handles UTF-8 which is needed for Québec
-		# utf8::decode($province);
 		if(defined(my $p = $ca_en->{province2code}{uc($province)} || $ca_fr->{province2code}{uc($province)})) {
 			my $ca;
 			if($language eq 'French') {
@@ -9029,7 +9031,7 @@ sub place {
 		$place = $1;
 	}
 
-	utf8::decode($place);
+	# utf8::decode($place);
 	if($place =~ /,,/) {
 		complain({ person => $params{'person'}, warning => "Consecutive commas found in '$place'" });
 		$place =~ s/,,/,/g;
@@ -9081,7 +9083,7 @@ sub place {
 	}
 
 	if($address) {
-		utf8::decode($address);
+		# utf8::decode($address);
 		if($params{'nopreposition'}) {
 			$place = " $address, $place";
 			$rc->en(" $address, " . $rc->en());
@@ -9193,7 +9195,7 @@ sub place {
 				# Translate the name of the country into the current locale
 				$c = $lcm->code2country($code, $lang);
 				if($c ne 'United States') {
-					utf8::decode($c);
+					# utf8::decode($c);
 					$rc->set({ lang => $lang, string => "$1, $c" });
 				}
 			}
@@ -9220,7 +9222,7 @@ sub place {
 								$preposition = 'au';
 							}
 						}
-						utf8::decode($place);
+						# utf8::decode($place);
 						$place = " $preposition $place";
 					}
 				}
@@ -11262,7 +11264,7 @@ sub get_location($)
 	} elsif($lcm && ($place =~ /(.+),\s*(.+)$/)) {
 		if($2 ne 'England') {
 			my $c = $2;
-			utf8::encode($c);
+			# utf8::encode($c);
 			if(($language eq 'French') && ($c eq 'Angleterre')) {
 				$place = "$1, England";
 			} elsif(my $code = $lcm->country2code($c, 'LOCALE_CODE_ALPHA_2', get_language_code())) {
