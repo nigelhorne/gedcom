@@ -11820,6 +11820,7 @@ sub person_in_residence_record
 }
 
 # See https://www.compart.com/en/unicode/U+0161 etc.
+#	https://www.compart.com/en/unicode/U+00EB
 sub wide_to_html
 {
 	my $string = shift;
