@@ -6107,18 +6107,23 @@ sub print_person
 						$phrase->append(' ' . year({ person => $person, date => $dateofcremation }));
 						$record = $cremation;
 					}
-					die $person->as_string(), ": type $type, record is not set" if(!defined($record));
-					if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
-						if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
-							$phrase->append(" ($weather)");
+					if(defined($record)) {
+						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+							if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
+								$phrase->append(" ($weather)");
+							}
+							$phrase->append(' following ' .
+								($person->pronoun() eq 'She' ? 'her' : 'his') .
+								" funeral at$place");
+						} elsif($place = place({ person => $person, record => $record, nopreposition => 1 })) {
+							if(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
+								$phrase->append(" ($weather)");
+							}
 						}
-						$phrase->append(' following ' .
-							($person->pronoun() eq 'She' ? 'her' : 'his') .
-							" funeral at$place");
-					} elsif($place = place({ person => $person, record => $record, nopreposition => 1 })) {
-						if(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
-							$phrase->append(" ($weather)");
-						}
+					} elsif(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
+						# Funeral record, but no burial or cremation
+						$phrase->append(" ($weather)");
+						$bio .= " ($weather)";
 					}
 					if(my $n = notes({ record => $record, paragraph => 0 })) {
 						$n =~ s/\.$//;
