@@ -6123,9 +6123,8 @@ sub print_person
 					} elsif(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 						# Funeral record, but no burial or cremation
 						$phrase->append(" ($weather)");
-						$bio .= " ($weather)";
 					}
-					if(my $n = notes({ record => $record, paragraph => 0 })) {
+					if($record && (my $n = notes({ record => $record, paragraph => 0 }))) {
 						$n =~ s/\.$//;
 						$n =~ tr/\r//;
 						$phrase->append(" ($n)");
@@ -6906,6 +6905,7 @@ sub print_person
 		} else {
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+
 				@phrases = ();
 
 				$phrase = Data::Text->new("\n");
@@ -9688,6 +9688,8 @@ sub red_warning
 {
 	if($opts{'w'}) {
 		my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+		die 'What do you want to say?' unless($params{'warning'});
 
 		my @call_details = caller($params{'caller'} || 0);
 		if($opts{'B'}) {
