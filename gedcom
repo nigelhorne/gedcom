@@ -6057,6 +6057,7 @@ sub print_person
 					$phrase = Data::Text->new();
 				}
 
+				my $record;
 				if($dateofburial || $dateofcremation) {
 					if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
 						$phrase->set($pronoun);
@@ -6086,20 +6087,19 @@ sub print_person
 								must_postdate => $birth_dt
 							};
 							if($type eq 'burial') {
+								# Funeral record, but no burial or cremation
+								$record = $burial;
 								$opts->{'place'} = $placeofburial;
-								if(my $address = $burial->address()) {
-									$opts->{'address'} = $address;
-								}
 							} else {
 								$opts->{'place'} = $placeofcremation;
-								if(my $address = $cremation->address()) {
-									$opts->{'address'} = $address;
-								}
+								$record = $cremation;
+							}
+							if($record && (my $address = $record->address())) {
+								$opts->{'address'} = $address;
 							}
 							$phrase->append(place($opts));
 						}
 					}
-					my $record;
 					if($type eq 'burial') {
 						$phrase->append(' ' . year({ person => $person, date => $dateofburial }));
 						$record = $burial;
