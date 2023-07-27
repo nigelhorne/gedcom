@@ -10916,7 +10916,7 @@ sub dateofbirth {
 		$dateofbirth = $d[0];
 	} elsif(scalar(@d)) {
 		# More than one date - are they all the same?
-		while(defined($d[1]) && (datecmp($d[0], $d[1]) == 0)) {
+		while(defined($d[1]) && ($d[1] !~ /\sor\s/) && (datecmp($d[0], $d[1]) == 0)) {
 			shift @d;
 		}
 		if(scalar(@d) == 1) {
