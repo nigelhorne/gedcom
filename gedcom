@@ -1897,9 +1897,9 @@ sub print_person
 			} else {
 				$str .= '/' . make_filename_from_person(person => $person);
 			}
-			$str .= '">' . $person->as_string() . '</a>';
+			$str .= '">' . wide_to_html($person->as_string()) . '</a>';
 		} else {
-			$str .= $person->as_string();
+			$str .= wide_to_html($person->as_string());
 		}
 		if($aob) {
 			if(my $d = $dfg->parse_datetime(date => dateofbirth($person))) {
@@ -2249,8 +2249,11 @@ sub print_person
 		} elsif($c =~ /Can\./) {
 			complain({ person => $person, warning => 'Assuming country of death is Canada' });
 			# $death_country = 'Canada';
-		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
+		# } elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			# $death_country = $b->code_alpha2();
+		} elsif(($c =~ /[A-Z]{2} USA/) && ($us->{code2state}{substr($c, 0, 2)})) {
+			complain({ person => $person, warning => "$c: assuming country of death is USA" });
+			# $death_country = 'United States';
 		} else {
 			complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
 		}
@@ -9869,12 +9872,17 @@ sub make_filename_from_person
 
 	my $person = $params{'person'};
 
+	die if(!defined($person));
+
 	my $rc = $person->as_string(include_years => 1);
 	$rc =~ tr/ /-/s;
+	$rc =~ tr/ /-/s;
 	$rc =~ tr/"/'/s;
+	$rc =~ tr/\//-/s;
 	$rc =~ s/--+/-/g;
 	# $rc =~ s/--/-/g;
 	$rc =~ s/-$//;
+	$rc = Unicode::Diacritic::Strip::strip_diacritics($rc);
 
 	return "$rc.html";
 }
@@ -9946,7 +9954,7 @@ sub date_to_datetime
 
 	if(my $date = $params{'date'}) {
 		# if($date !~ /^(bef|abt|aft).?\s/i) {
-		if($date !~ /^(bef|abt|aft)/i) {
+		if(($date !~ /^(bef|abt|aft)/i) && ($date !~ /\sor\s/)) {
 			return $dfg->parse_datetime(%params);
 		}
 	}
@@ -10353,6 +10361,7 @@ sub get_all_occupations
 	if(scalar(@occupations)) {
 		$occupations[0] =~ tr/\r//;
 		$occupations[0] =~ tr/\n/ /;
+		$occupations[0] =~ s/\.+$//;
 
 		if($occupations[0] =~ /works? on (.+)/i) {
 			$occupations[0] = "$1 worker";
@@ -11829,10 +11838,136 @@ sub person_in_residence_record
 
 # See https://www.compart.com/en/unicode/U+0161 etc.
 #	https://www.compart.com/en/unicode/U+00EB
+#
+# keep_hrefs => 1 means ensure hyperlinks still work
+# keep_apos => 1 means keep apostraphes, useful within <script>
+# TODO: don't transform anything within <script>...</script>
 sub wide_to_html
 {
-	my $string = shift;
+	my %params;
 
+	if(ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	} elsif(scalar(@_) % 2 == 0) {
+		%params = @_;
+	} elsif(scalar(@_) == 1) {
+		$params{'string'} = shift;
+	}
+
+	my $string = $params{'string'};
+
+	# print STDERR __LINE__, ": ($string)";
+	# print STDERR (sprintf '%v02X', $string);
+	# print STDERR "\n";
+	# my $i = 0;
+	# while((my @call_details = caller($i++))) {
+		# print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+	# }
+
+	unless($params{'keep_hrefs'}) {
+		$string =~ s/</&lt;/g;
+		$string =~ s/>/&gt;/g;
+		$string =~ s/"/&quot;/g;
+	}
+
+	$string =~ s/&db=/&amp;db=/g;
+	$string =~ s/&id=/&amp;id=/g;
+
+	$string =~ s/ & / &amp; /g;
+
+	unless($params{'keep_apos'}) {
+		$string =~ s/'/\&apos;/g;
+	}
+
+	$string =~ s/š/&scaron;/g;
+	$string =~ s/č/&ccaron;/g;
+	$string =~ s/ž/&zcaron;/g;
+	$string =~ s/â/&acirc;/g;
+	$string =~ s/é/&eacute;/g;
+	$string =~ s/è/&egrave;/g;
+	$string =~ s/ç/&ccedil;/g;
+	$string =~ s/ê/&ecirc;/g;
+	$string =~ s/ë/&euml;/g;
+	$string =~ s/\N{U+0161}/&scaron;/g;
+	$string =~ s/\N{U+010D}/&ccaron;/g;
+	$string =~ s/\N{U+017E}/&zcaron;/g;
+	$string =~ s/\N{U+00E2}/&acirc;/g;
+	$string =~ s/\N{U+00E4}/&auml;/g;
+	$string =~ s/\N{U+00E8}/&egrave;/g;
+	$string =~ s/\N{U+00E9}/&eacute;/g;
+	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
+	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
+	$string =~ s/\N{U+00C9}/&Eacute;/g;
+	$string =~ s/\N{U+00CA}/&ecirc;/g;
+	$string =~ s/\N{U+00EB}/&euml;/g;
+	$string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
+
+	# utf8::encode($string);
+	# $string =~ s/š/&scaron;/g;
+	# $string =~ s/č/&ccaron;/g;
+	# $string =~ s/ž/&zcaron;/g;
+	# $string =~ s/é/&eacute;/g;
+	# $string =~ s/ç/&ccedil;/g;
+	# $string =~ s/\N{U+0161}/&scaron;/g;
+	# $string =~ s/\N{U+010D}/&ccaron;/g;
+	# $string =~ s/\N{U+017E}/&zcaron;/g;
+	# $string =~ s/\N{U+00E9}/&eacute;/g;
+	# $string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
+	# $string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
+	# $string =~ s/\N{U+00E8}/&egrave;/g;
+	# $string =~ s/\N{U+00E9}/&Eacute;/g;
+
+	# print STDERR __LINE__, ": ($string)";
+	# print STDERR (sprintf '%v02X', $string);
+	# print STDERR "\n";
+
+	# utf8::decode($string);
+
+	# print STDERR __LINE__, ": ($string)";
+	# # print STDERR (sprintf '%v02X', $string);
+	# print STDERR "\n";
+
+	$string =~ s/\xc3\xa2/&acirc;/g;
+	$string =~ s/\xc3\xa4/&auml;/g;
+	$string =~ s/\xc3\xa9/&eacute;/g;
+	$string =~ s/\xc5\xa1/&scaron;/g;
+	$string =~ s/\xc4\x8d/&ccaron;/g;
+	$string =~ s/\xc5\xbe/&zcaron;/g;
+	$string =~ s/\xc3\xa7/&ccedil;/g;
+	$string =~ s/\xc3\x96/&Ouml;/g;	# Ö
+	$string =~ s/\xc3\xa8/&egrave;/g;
+	$string =~ s/\xc3\x89/&Eacute;/g;
+	$string =~ s/\xc3\xaa/&ecirc;/g;
+	$string =~ s/\xc3\xab/&euml;/g;
+	$string =~ s/\xc5\xa0/&Scaron;/g;
+	# $string =~ s/\xe4\x8d/&ccaron;/g;	# ? ACOM strangeness
+	$string =~ s/\N{U+0161}/&scaron;/g;
+	$string =~ s/\N{U+010D}/&ccaron;/g;
+	$string =~ s/\N{U+00E2}/&acirc;/g;
+	$string =~ s/\N{U+00E4}/&auml;/g;
+	$string =~ s/\N{U+00E8}/&egrave;/g;
+	$string =~ s/\N{U+00E9}/&eacute;/g;
+	$string =~ s/\N{U+00EB}/&euml;/g;
+	$string =~ s/\N{U+017E}/&zcaron;/g;
+	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
+	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
+	$string =~ s/\N{U+00C9}/&Eacute;/g;
+	$string =~ s/\N{U+00CA}/&ecirc;/g;
+	$string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
+
+	# if($string =~ /^Maria\(/) {
+		# # print STDERR (unpack 'H*', $string);
+		# print STDERR __LINE__, ': ';
+		# print STDERR (sprintf '%v02X', $string);
+		# print STDERR "\n";
+		# my $i = 0;
+		# while((my @call_details = caller($i++))) {
+			# print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		# }
+		# # die $string;
+	# }
+
+	# print STDERR __LINE__, ": ($string)\n";
 	return $string;
 }
 
