@@ -1897,9 +1897,9 @@ sub print_person
 			} else {
 				$str .= '/' . make_filename_from_person(person => $person);
 			}
-			$str .= '">' . wide_to_html($person->as_string()) . '</a>';
+			$str .= '">' . wide_to_html({ string => $person->as_string(), keep_apos => 1 }) . '</a>';
 		} else {
-			$str .= wide_to_html($person->as_string());
+			$str .= wide_to_html({ string => $person->as_string(), keep_apos => 1 });
 		}
 		if($aob) {
 			if(my $d = $dfg->parse_datetime(date => dateofbirth($person))) {
@@ -11876,7 +11876,7 @@ sub wide_to_html
 	$string =~ s/ & / &amp; /g;
 
 	unless($params{'keep_apos'}) {
-		$string =~ s/'/\&apos;/g;
+		$string =~ s/'/&apos;/g;
 	}
 
 	$string =~ s/š/&scaron;/g;
