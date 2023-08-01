@@ -39,6 +39,7 @@
 # TODO: https://funeral-notices.co.uk/Isle+of+Thanet+Gazette/all-announcements?keyword_search=spratt&cluster=112&loc_search=true
 # TODO: consider Data::Dumper::Names instead of Data::Dumper
 # TODO: investigate User::Identity
+# TODO: fix utf-8 in PDF by adding support for unicode fonts
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -147,6 +148,7 @@ BEGIN {
 		   ($warning !~ /Subroutine Gedcom::Individual::relationship redefined at/)) {
 			if(($warning =~ /^Use of uninitialized value/) ||
 			   ($warning =~ /Wide/) ||
+			   ($warning =~ /: attempt to add consecutive punctuation/) ||
 			   ($warning =~ /isn't numeric in numeric eq /i)) {
 				die $warning;
 			}
@@ -1313,6 +1315,8 @@ sub generate {
 
 	my $surname_initial;
 	if($opts{'B'}) {
+		# $params{'font'} = $pdf->corefont('Times-Roman', -encode => 'utf-8');
+		# FIXME: corefonts don't include UTF-8
 		$params{'font'} = $pdf->corefont('Times-Roman');
 	}
 	my $index = 1;
@@ -1946,6 +1950,7 @@ sub print_person
 	my $text;
 	my %places_printed;
 	if($opts{'B'}) {
+		# Print the person's name in the book in larger text
 		if($pdfpage->full() || ($pdfpage->linesleft() <= 10)) {
 			# Start this person on a new page
 			$pdfpage->text()->textend();
@@ -1957,7 +1962,15 @@ sub print_person
 		$text->font($params{'font'}, 18);
 
 		$text->translate(25, $pdfpage->newline());
-		$text->text($person->as_string($args));
+		my $string = $person->as_string($args);
+
+		# TODO: support UTF-8 fonts
+		# $text->text(sprintf '%v02X', $tulip);
+		# $string =~ s/\xc4\x8d/č/g;
+		utf8::decode($string);
+		$string = Unicode::Diacritic::Strip::strip_diacritics($string);
+
+		$text->text($string);
 
 		$text->font($params{'font'}, 12);
 	} elsif($opts{'M'}) {
@@ -2744,7 +2757,7 @@ sub print_person
 		my $phrase = Data::Text->new();
 		my @phrases;
 
-		if(my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yod => $yod })) {
+		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yod => $yod }))) {
 			# FIXME: add citation
 			# if($opts{'B'}) {
 				# pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
@@ -3825,7 +3838,10 @@ sub print_person
 							my $alive_children = 0;
 							foreach my $child(@childrenofthisspouse) {
 								if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
-									push @childlist, $child->given_names();
+									my $cgiven = $child->given_names();
+									# Remove the '.' from an initial
+									$cgiven =~ s/[\.\s]+$//;
+									push @childlist, $cgiven if(length($cgiven));
 								} else {
 									$alive_children++;
 									# push @childlist, $child->given_names();
@@ -5997,9 +6013,9 @@ sub print_person
 								}
 							} else {
 								if($date) {
-									$phrase->append('YYYYYYYYYY ' . ucfirst($notes) . " $date");
+									$phrase->append(ucfirst($notes) . " $date");
 								} else {
-									$phrase->append('XXXXXXXXXX ' . ucfirst($notes));
+									$phrase->append(ucfirst($notes));
 								}
 							}
 						}
@@ -8950,7 +8966,8 @@ sub place {
 	if($lang ne 'en') {
 		$rc->set({ lang => $lang, string => $place });
 	}
-	$place =~ s/\xc3\xa9/é/g;
+	# $place =~ s/\xc3\xa9/é/g;
+	$place =~ s/\xc3\xa9/\N{U+00E9}/g;
 
 	if(($place =~ /(.+?)\s*United States$/i) || ($place =~ /(.+?)\s*United States of America$/i)) {
 		$place = "$1 USA";
@@ -9151,7 +9168,7 @@ sub place {
 			$str = "$3,$4";
 			if($places_printed->{" in$str"} || $places_printed->{" at$str"}) {
 				if($params{'encode'}) {
-					return HTML::Entities::encode("$1,$2,$3");
+					return wide_to_html("$1,$2,$3");
 				}
 				return "$1,$2,$3";
 			}
@@ -9239,9 +9256,11 @@ sub place {
 			}
 		}
 	}
+
 	if($params{'encode'}) {
 		$rc->encode();
 	}
+
 	return $rc;
 }
 
@@ -10045,8 +10064,12 @@ sub pdfprint
 	if(ref($params{'string'})) {
 		$params{'string'} = $params{'string'}->as_string();
 	}
-
-	my @lines = split(/\n/, wrap($indent, '', ($params{'string'})));
+	
+	# TODO: support UTF-8 fonts
+	my $string = $params{'string'};
+	utf8::decode($string);
+	$string = Unicode::Diacritic::Strip::strip_diacritics($string);
+	my @lines = split(/\n/, wrap($indent, '', $string));
 
 	if(scalar(@lines) >= $pdfpage->linesleft() - 1) {
 		print 'pdfprint: ', scalar(@lines), ' >= ', ($pdfpage->linesleft() - 1), "\n" if($opts{'v'});
@@ -10646,7 +10669,7 @@ sub datecmp($$)
 			# e.g. "Oct/Nov/Dec 1950"
 			$left = $1;
 		}
-			
+
 		if($left !~ /^\d{3,4}$/) {
 			if($left !~ /[a-z]/i) {
 				my $i = 0;
@@ -11836,6 +11859,8 @@ sub person_in_residence_record
 	return 0;
 }
 
+# Encode to HTML whatever the non-ascii encoding scheme has been chosen
+#
 # See https://www.compart.com/en/unicode/U+0161 etc.
 #	https://www.compart.com/en/unicode/U+00EB
 #
@@ -11855,6 +11880,13 @@ sub wide_to_html
 	}
 
 	my $string = $params{'string'};
+	if(!defined($string)) {
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'BUG: string not set';
+	}
 
 	# print STDERR __LINE__, ": ($string)";
 	# print STDERR (sprintf '%v02X', $string);
@@ -11879,28 +11911,49 @@ sub wide_to_html
 		$string =~ s/'/&apos;/g;
 	}
 
-	$string =~ s/š/&scaron;/g;
-	$string =~ s/č/&ccaron;/g;
-	$string =~ s/ž/&zcaron;/g;
-	$string =~ s/â/&acirc;/g;
-	$string =~ s/é/&eacute;/g;
-	$string =~ s/è/&egrave;/g;
-	$string =~ s/ç/&ccedil;/g;
-	$string =~ s/ê/&ecirc;/g;
-	$string =~ s/ë/&euml;/g;
+	$string =~ s/\xc2\xa9/&copy;/g;
+	$string =~ s/\xc2\xae/&reg;/g;
+	$string =~ s/\xc3\xa1/&aacute;/g;
+	$string =~ s/\xc3\xa2/&acirc;/g;
+	$string =~ s/\xc3\xa4/&auml;/g;
+	$string =~ s/\xc3\xa9/&eacute;/g;
+	$string =~ s/\xc3\xb4/&ocirc;/g;	# ô
+	$string =~ s/\xc5\xa1/&scaron;/g;
+	$string =~ s/\xc4\x8d/&ccaron;/g;
+	$string =~ s/\xc5\xbe/&zcaron;/g;
+	$string =~ s/\xc3\xa7/&ccedil;/g;
+	$string =~ s/\xc3\xb3/&oacute;/g;
+	$string =~ s/\xc3\x96/&Ouml;/g;	# Ö
+	$string =~ s/\xc3\xa8/&egrave;/g;
+	$string =~ s/\xc3\x89/&Eacute;/g;
+	$string =~ s/\xc3\xaa/&ecirc;/g;
+	$string =~ s/\xc3\xab/&euml;/g;
+	$string =~ s/\xc3\xbb/&ucirc;/g;
+	$string =~ s/\xc5\x9b/&sacute;/g;
+	$string =~ s/\xc5\xa0/&Scaron;/g;
+	$string =~ s/\xe2\x80\x93/-/g;
+
+	$string =~ s/\N{U+00A9}/&copy;/g;
+	$string =~ s/\N{U+00AE}/&reg;/g;
 	$string =~ s/\N{U+0161}/&scaron;/g;
 	$string =~ s/\N{U+010D}/&ccaron;/g;
 	$string =~ s/\N{U+017E}/&zcaron;/g;
+	$string =~ s/\N{U+00E1}/&aacute;;/g;
 	$string =~ s/\N{U+00E2}/&acirc;/g;
 	$string =~ s/\N{U+00E4}/&auml;/g;
 	$string =~ s/\N{U+00E8}/&egrave;/g;
 	$string =~ s/\N{U+00E9}/&eacute;/g;
 	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
 	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
+	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
 	$string =~ s/\N{U+00C9}/&Eacute;/g;
 	$string =~ s/\N{U+00CA}/&ecirc;/g;
 	$string =~ s/\N{U+00EB}/&euml;/g;
-	$string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
+	$string =~ s/\N{U+00F3}/&oacute;/g;
+	$string =~ s/\N{U+015B}/&sacute;/g;
+	$string =~ s/\N{U+00FB}/&ucirc;/g;
+	$string =~ s/\N{U+0160}/&Scaron;/g;
+	$string =~ s/\N{U+2013}/-/g;
 
 	# utf8::encode($string);
 	# $string =~ s/š/&scaron;/g;
@@ -11927,33 +11980,43 @@ sub wide_to_html
 	# # print STDERR (sprintf '%v02X', $string);
 	# print STDERR "\n";
 
-	$string =~ s/\xc3\xa2/&acirc;/g;
-	$string =~ s/\xc3\xa4/&auml;/g;
-	$string =~ s/\xc3\xa9/&eacute;/g;
-	$string =~ s/\xc5\xa1/&scaron;/g;
-	$string =~ s/\xc4\x8d/&ccaron;/g;
-	$string =~ s/\xc5\xbe/&zcaron;/g;
-	$string =~ s/\xc3\xa7/&ccedil;/g;
-	$string =~ s/\xc3\x96/&Ouml;/g;	# Ö
-	$string =~ s/\xc3\xa8/&egrave;/g;
-	$string =~ s/\xc3\x89/&Eacute;/g;
-	$string =~ s/\xc3\xaa/&ecirc;/g;
-	$string =~ s/\xc3\xab/&euml;/g;
-	$string =~ s/\xc5\xa0/&Scaron;/g;
 	# $string =~ s/\xe4\x8d/&ccaron;/g;	# ? ACOM strangeness
-	$string =~ s/\N{U+0161}/&scaron;/g;
-	$string =~ s/\N{U+010D}/&ccaron;/g;
-	$string =~ s/\N{U+00E2}/&acirc;/g;
-	$string =~ s/\N{U+00E4}/&auml;/g;
-	$string =~ s/\N{U+00E8}/&egrave;/g;
-	$string =~ s/\N{U+00E9}/&eacute;/g;
-	$string =~ s/\N{U+00EB}/&euml;/g;
-	$string =~ s/\N{U+017E}/&zcaron;/g;
-	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
-	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
-	$string =~ s/\N{U+00C9}/&Eacute;/g;
-	$string =~ s/\N{U+00CA}/&ecirc;/g;
-	$string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
+	# $string =~ s/\N{U+0161}/&scaron;/g;
+	# $string =~ s/\N{U+010D}/&ccaron;/g;
+	# $string =~ s/\N{U+00A9}/&copy;/g;
+	# $string =~ s/\N{U+00AE}/&reg;/g;
+	# $string =~ s/\N{U+00E2}/&acirc;/g;
+	# $string =~ s/\N{U+00E4}/&auml;/g;
+	# $string =~ s/\N{U+00E8}/&egrave;/g;
+	# $string =~ s/\N{U+00E9}/&eacute;/g;
+	# $string =~ s/\N{U+00EB}/&euml;/g;
+	# $string =~ s/\N{U+00F3}/&oacute;/g;
+	# $string =~ s/\N{U+00FB}/&ucirc;/g;
+	# $string =~ s/\N{U+017E}/&zcaron;/g;
+	# $string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
+	# $string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
+	# $string =~ s/\N{U+00C9}/&Eacute;/g;
+	# $string =~ s/\N{U+00CA}/&ecirc;/g;
+	# $string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
+	# $string =~ s/\N{U+2013}/-/g;
+
+	$string =~ s/š/&scaron;/g;
+	$string =~ s/č/&ccaron;/g;
+	$string =~ s/ž/&zcaron;/g;
+	$string =~ s/á/&aacute;/g;
+	$string =~ s/â/&acirc;/g;
+	$string =~ s/é/&eacute;/g;
+	$string =~ s/è/&egrave;/g;
+	$string =~ s/ç/&ccedil;/g;
+	$string =~ s/ê/&ecirc;/g;
+	$string =~ s/ë/&euml;/g;
+	$string =~ s/©/&copy;/g;
+	$string =~ s/®/&reg;/g;
+	$string =~ s/ó/&oacute;/g;
+	$string =~ s/ô/&ocirc;/g;
+	$string =~ s/ś/&sacute;/g;
+	$string =~ s/û/&ucirc;/g;
+	$string =~ s/–/-/g;
 
 	# if($string =~ /^Maria\(/) {
 		# # print STDERR (unpack 'H*', $string);
