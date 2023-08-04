@@ -9062,6 +9062,7 @@ sub place {
 	if($place =~ /,,/) {
 		complain({ person => $params{'person'}, warning => "Consecutive commas found in '$place'" });
 		$place =~ s/,,/,/g;
+		$place =~ s/,(\S)/, $1/g;
 	}
 	if($place =~ /,(\S)/) {
 		complain({ person => $params{'person'}, warning => "Space missing after comma in '$place'" });
