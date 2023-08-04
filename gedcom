@@ -2819,7 +2819,7 @@ sub print_person
 						}
 					} else {
 						$phrase->set('The twin ' . i18n((($sex eq 'M') ? 'brother' : 'sister')) .
-							' of');
+							i18n(' of'));
 					}
 				}
 				$phrase->append(' ' . $twins[0]->{'sibling'}->given_names());
