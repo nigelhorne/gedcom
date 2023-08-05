@@ -11913,6 +11913,7 @@ sub wide_to_html
 	unless($params{'keep_apos'}) {
 		$string =~ s/'/&apos;/g;
 		$string =~ s/‘/&apos;/g;
+		$string =~ s/’/&apos;/g;
 	}
 
 	$string =~ s/\xc2\xa9/&copy;/g;
