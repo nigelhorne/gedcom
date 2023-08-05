@@ -11909,6 +11909,7 @@ sub wide_to_html
 	$string =~ s/&id=/&amp;id=/g;
 
 	$string =~ s/ & / &amp; /g;
+	$string =~ tr/\x80/ /;
 
 	unless($params{'keep_apos'}) {
 		$string =~ s/'/&apos;/g;
