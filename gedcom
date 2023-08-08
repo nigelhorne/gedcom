@@ -2175,7 +2175,7 @@ sub print_person
 			complain({ person => $person, warning => "$c: birth country should be Scotland'" });
 			$birth_country = 'United Kingdom';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
-			$birth_country = $b->code_alpha2();
+			$birth_country = $b->name();
 		} else {
 			complain({ person => $person, warning => "Unknown birth country: '$c' in '$placeofbirth'" });
 		}
@@ -2245,6 +2245,11 @@ sub print_person
 		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			complain({ person => $person, warning => "Country 'Canada' missing from death record" });
 			# $death_country = 'Canada';
+			if($opts{'w'} && defined($yod) && ($yod < 1500)) {
+				complain ({ person => $person, warning => "Canada did not exist in $yod, check place of death ($placeofdeath)" });
+				$placeofdeath = undef;
+				# $death_country = '';
+			}
 		} elsif(($c =~ /[A-Z]{2,3}/) && ($au->{code2state}{$c})) {
 			complain({ person => $person, warning => "$c: assuming country of death is Australia" });
 			# $death_country = 'Australia';
@@ -2262,12 +2267,17 @@ sub print_person
 		} elsif($c =~ /Can\./) {
 			complain({ person => $person, warning => 'Assuming country of death is Canada' });
 			# $death_country = 'Canada';
+			if($opts{'w'} && defined($yod) && ($yod < 1500)) {
+				complain ({ person => $person, warning => "Canada did not exist in $yod, check place of death ($placeofdeath)" });
+				$placeofdeath = undef;
+				# $death_country = '';
+			}
 		} elsif(($c =~ /[A-Z]{2} USA/) && ($us->{code2state}{substr($c, 0, 2)})) {
 			complain({ person => $person, warning => "$c: assuming country of death is USA" });
 			# $death_country = 'United States';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			# Country is found, nothing to be done
-			# $death_country = $b->code_alpha2();
+			# $death_country = $b->name();
 		} else {
 			complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
 		}
