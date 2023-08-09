@@ -11908,22 +11908,28 @@ sub wide_to_html
 		# print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 	# }
 
+	$string = HTML::Entities::decode($string);
+	# $string =~ s/ & / &amp; /g;
+	$string =~ s/&/&amp;/g;
+
 	unless($params{'keep_hrefs'}) {
 		$string =~ s/</&lt;/g;
 		$string =~ s/>/&gt;/g;
 		$string =~ s/"/&quot;/g;
 	}
 
-	$string =~ s/&db=/&amp;db=/g;
-	$string =~ s/&id=/&amp;id=/g;
-
-	$string =~ s/ & / &amp; /g;
+	# $string =~ s/&db=/&amp;db=/g;
+	# $string =~ s/&id=/&amp;id=/g;
 
 	unless($params{'keep_apos'}) {
 		$string =~ s/'/&apos;/g;
 		$string =~ s/‘/&apos;/g;
 		$string =~ s/’/&apos;/g;
 		$string =~ s/‘/&apos;/g;
+	}
+
+	if($string !~ /[^[:ascii:]]/) {
+		return $string;
 	}
 
 	$string =~ s/\xc2\xa9/&copy;/g;
@@ -11943,6 +11949,7 @@ sub wide_to_html
 	$string =~ s/\xc3\x89/&Eacute;/g;
 	$string =~ s/\xc3\xaa/&ecirc;/g;
 	$string =~ s/\xc3\xab/&euml;/g;
+	$string =~ s/\xc3\xae/&icirc;/g;
 	$string =~ s/\xc3\xbb/&ucirc;/g;
 	$string =~ s/\xc5\x9b/&sacute;/g;
 	$string =~ s/\xc5\xa0/&Scaron;/g;
@@ -11958,6 +11965,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00E4}/&auml;/g;
 	$string =~ s/\N{U+00E8}/&egrave;/g;
 	$string =~ s/\N{U+00E9}/&eacute;/g;
+	$string =~ s/\N{U+00EE}/&icirc;/g;
 	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
 	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
 	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
