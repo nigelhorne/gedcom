@@ -9913,6 +9913,8 @@ sub make_filename_from_person
 	$rc =~ s/--+/-/g;
 	# $rc =~ s/--/-/g;
 	$rc =~ s/-$//;
+
+	utf8::decode($rc);
 	$rc = Unicode::Diacritic::Strip::strip_diacritics($rc);
 
 	return "$rc.html";
