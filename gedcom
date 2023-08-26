@@ -5759,16 +5759,20 @@ sub print_person
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
 							if(defined(my $date = year(record => $event))) {
-								if($date =~ /^on /) {
-									$phrase->set(ucfirst($date));
-								} elsif($date =~ /^in (\d{4})/) {
-									$phrase->set("During $1,");
-								} elsif($date =~ /(.+)\-(.+)/) {
-									$phrase->set("Between $1 and $2");
+								if($date =~ /^from /) {
+									$phrase->set("$pronoun served in the military $date");
 								} else {
-									$phrase->set(ucfirst($date));
+									if($date =~ /^on /) {
+										$phrase->set(ucfirst($date));
+									} elsif($date =~ /^in (\d{4})/) {
+										$phrase->set("During $1,");
+									} elsif($date =~ /(.+)\-(.+)/) {
+										$phrase->set("Between $1 and $2");
+									} else {
+										$phrase->set(ucfirst($date));
+									}
+									$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
 								}
-								$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
 							} else {
 								$phrase->set("$pronoun served in the military");
 							}
@@ -6090,7 +6094,7 @@ sub print_person
 				my $record;
 				if($dateofburial || $dateofcremation) {
 					if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
-						$phrase->set($pronoun);
+						$phrase->set(text => $firstname // $pronoun);
 					}
 					$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
 					if(my $city = ($placeofburial // $placeofcremation)) {
