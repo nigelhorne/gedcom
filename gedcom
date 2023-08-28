@@ -2768,7 +2768,7 @@ sub print_person
 		my $phrase = Data::Text->new();
 		my @phrases;
 
-		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yod => $yod }))) {
+		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
 			# FIXME: add citation
 			# if($opts{'B'}) {
 				# pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
@@ -12089,7 +12089,7 @@ sub dbpedia
 	my $person = $params{'person'};
 	my $yod = $params{'yod'};
 	my $birth_dt = $params{'birth_dt'};
-	my $yob;
+	my $yob = $params{'yob'};
 
 	if(defined($birth_dt) && $birth_dt) {
 		if(!ref($birth_dt)) {
