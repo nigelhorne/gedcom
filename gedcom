@@ -9120,9 +9120,9 @@ sub place {
 		}
 		if($language eq 'German') {
 			if($params{'nopreposition'}) {
-				return " der Vereinigten Staaten';
+				return ' der Vereinigten Staaten';
 			}
-			return " aus der Vereinigten Staaten';
+			return ' aus der Vereinigten Staaten';
 		}
 		if($params{'nopreposition'}) {
 			return ' USA';
