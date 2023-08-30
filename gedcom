@@ -3679,7 +3679,7 @@ sub print_person
 							$args{'format'} = 'is married to ';
 						}
 					} else {
-						$args{'format'} = 'was married to ';
+						$args{'format'} = 'married ';
 					}
 					$phrase->append(i18n(\%args));
 
@@ -3900,7 +3900,7 @@ sub print_person
 					}
 					$phrase->append(year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt));
 				} else {
-					$phrase->append(' ' . year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt)) if($dateofmarriage);
+					$phrase->append(' ' . year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt, circa => 'around')) if($dateofmarriage);
 					if($placeofmarriage) {
 						my $args = {
 							place => $placeofmarriage,
