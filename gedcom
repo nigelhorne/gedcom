@@ -3980,13 +3980,15 @@ sub print_person
 				}
 				if($all_marriages_have_date) {
 					@spouses = Sort::Key::DateTime::dtkeysort {
-						my $date;
-						if(my $rec = $_->get_record('fams marriage')) {
-							$date = $rec->date();
-						}
-						if((!defined($date)) && (my $rec = $_->get_record('marriage'))) {
-							$date = $rec->date();
-						}
+						my $date = dateofmarriage($_);
+						# my $date;
+						# if(my $rec = $_->get_record('fams marriage')) {
+							# $date = $rec->date();
+						# }
+						# if((!defined($date)) && (my $rec = $_->get_record('marriage'))) {
+							# $date = $rec->date();
+						# }
+						die "BUG: can't find all marriage dates" if(!defined($date));
 						date_to_datetime(date => $date);
 					} @spouses;
 					# Already cached
@@ -9967,9 +9969,9 @@ sub date_parser_cached
 	}
 	if($date =~ /(.+?\d{3,4})\s(.+)$/) {
 		if(my $person = $params{'person'}) {
-			complain({ person => $person, warning => "'date': removing trailing text" });
+			complain({ person => $person, warning => "'$date': removing trailing text" });
 		} else {
-			complain("'date': removing trailing text");
+			complain("'$date': removing trailing text");
 		}
 		$date = $1;
 	}
