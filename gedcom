@@ -1682,13 +1682,14 @@ sub print_person
 	}
 
 	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
-	my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
-	if((!$dateofmarriage) && $marriage) {
-		$dateofmarriage = $marriage->date();
-		if(!defined($dateofmarriage)) {
-			$dateofmarriage = dateofmarriage($person);
-		}
-	}
+	# my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
+	# if((!$dateofmarriage) && $marriage) {
+		# $dateofmarriage = $marriage->date();
+		# if(!defined($dateofmarriage)) {
+			# $dateofmarriage = dateofmarriage($person);
+		# }
+	# }
+	my $dateofmarriage = dateofmarriage($person);
 	if($dateofmarriage && ($dateofmarriage =~ /\s$/)) {
 		complain({ person => $person, warning => 'Removing trailing spaces from date of marriage' });
 		$dateofmarriage =~ s/\s+$//;
@@ -11078,13 +11079,8 @@ sub dateofmarriage
 		return;
 	}
 
-	if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage'))) {
+	if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage') // $person->get_record('fams marriage'))) {
 		$dateofmarriage = $marriage->date();
-		if(!defined($dateofmarriage)) {
-			if(my $marriage = ($person->get_record('marriage') || $person->get_record('fams marriage'))) {
-				$dateofmarriage = $marriage->date();
-			}
-		}
 	}
 	if(defined($dateofmarriage)) {
 		if($dateofmarriage =~ /\s$/) {
