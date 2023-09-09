@@ -5704,10 +5704,7 @@ sub print_person
 						$phrase->append(" $date");
 					}
 
-					if(my $notes = notes(record => $event)) {
-						$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy)/);
-						$notes =~ s/[\s\.]+$//;
-						$phrase->append(" ($notes)");
+					if(append_notes({ phrase => $phrase, record => $event })) {
 						push @phrases, $phrase;
 						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 						$phrase = Data::Text->new();
@@ -5751,7 +5748,11 @@ sub print_person
 						if(!$mentioned_military) {
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
-									$phrase->set("$pronoun served in the military $date");
+									if($firstname) {
+										$phrase->set("\n\t$firstname served in the military $date");
+									} else {
+										$phrase->set("\n\t$pronoun served in the military $date");
+									}
 								} else {
 									if($date =~ /^on /) {
 										$phrase->set(ucfirst($date));
@@ -6085,7 +6086,7 @@ sub print_person
 				my $record;
 				if($dateofburial || $dateofcremation) {
 					if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
-						$phrase->set(text => $firstname // $pronoun);
+						$phrase->set(text => [ "\n\t", $firstname // $pronoun ]);
 					}
 					$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
 					if(my $city = ($placeofburial // $placeofcremation)) {
@@ -11833,8 +11834,40 @@ sub append_notes
 		$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy|Royal Flying Corps)/);
 		$notes =~ s/[\s\.]+$//;
 		$notes =~ tr/\r//;
-		$phrase->append(" ($notes)");
+		# Parse service information
+		if($notes =~ /^regiment:\s+(.+)/i) {
+			my $regiment = $1;
+			my $service_number;
+			if($regiment =~ /(.+)\s+Service number: (.+)/) {
+				$regiment = $1;
+				$service_number = $2;
+			}
+			if($regiment =~ /(.+);\s+Rank:\s+(.+)/i) {
+				$regiment = $1;
+				my $rank = $2;
+
+				if($service_number && ($regiment =~ /(.+)\((.+)\)(.*)/)) {
+					if(defined($3)) {
+						$regiment = "$1($2 - service number $service_number)$3";
+					} else {
+						$regiment = "$1($2 - service number $service_number)";
+					}
+				}
+				$rank =~ s/[\s\.]+$//;
+				if($rank eq 'A/cpl') {
+					$rank = 'Acting Corporal';
+				}
+				$phrase->append(" in the $regiment with the rank of $rank");
+			} else {
+				$regiment =~ s/[\s\.]+$//;
+				$phrase->append(" in the $regiment");
+			}
+		} else {
+			$phrase->append(" ($notes)");
+		}
+		return 1;
 	}
+	return 0;
 }
 
 # Given an array of siblings and my date of birth, return an array of which of them are my twins
