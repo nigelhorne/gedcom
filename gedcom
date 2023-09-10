@@ -5745,7 +5745,9 @@ sub print_person
 					my $type = $event->type();
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
+						my $army;
 						if(!$mentioned_military) {
+							my $notes;
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
 									if($firstname) {
@@ -5765,6 +5767,9 @@ sub print_person
 									}
 									$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
 								}
+							} elsif(($notes = notes(record => $event)) && ($notes =~ /^army\.?$/i)) {
+								$army = 1;
+								$phrase->set("$pronoun served in the army");
 							} else {
 								$phrase->set("$pronoun served in the military");
 							}
@@ -5775,7 +5780,9 @@ sub print_person
 							$mentioned_military = 1;
 						}
 
-						append_notes({ phrase => $phrase, record => $event });
+						if(!$army) {
+							append_notes({ phrase => $phrase, record => $event });
+						}
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
