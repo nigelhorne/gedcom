@@ -11867,13 +11867,20 @@ sub append_notes
 						$regiment = "$1($2 - service number $service_number)";
 					}
 				}
-				$rank =~ s/[\s\.]+$//;
+				$rank =~ s/[\s\.;]+$//;
 				if($rank eq 'A/cpl') {
 					$rank = 'Acting Corporal';
 				}
 				$phrase->append(" in the $regiment with the rank of $rank");
 			} else {
-				$regiment =~ s/[\s\.]+$//;
+				$regiment =~ s/[\s\.;]+$//;
+				if($service_number && ($regiment =~ /(.+)\((.+)\)(.*)/)) {
+					if(defined($3)) {
+						$regiment = "$1($2 - service number $service_number)$3";
+					} else {
+						$regiment = "$1($2 - service number $service_number)";
+					}
+				}
 				$phrase->append(" in the $regiment");
 			}
 		} else {
