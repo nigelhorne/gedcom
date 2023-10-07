@@ -9374,7 +9374,7 @@ sub notes {
 			$note =~ s/Rev\.\s\s/Rev. /g;
 			$note =~ s/St\.\s\s/St. /g;
 			$note =~ s/([A-Z]\.\s)\s/$1/g;
-			if($rc ne $note) {
+			if(defined($rc) && ($rc ne $note)) {
 				if($paragraph) {
 					if($rc) {
 						$rc .= "\n";
