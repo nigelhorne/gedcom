@@ -3127,8 +3127,10 @@ sub print_person
 			$phrase = Data::Text->new();
 		} elsif(scalar(@phrases)) {
 			$phrase->append("$firstname ");
-		} else {
+		} elsif($phrase->length()) {
 			$phrase->append(", $firstname ");
+		} else {
+			$phrase->set("$firstname ");
 		}
 
 		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
@@ -5751,7 +5753,6 @@ sub print_person
 					my $type = $event->type();
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
-						my $army;
 						if(!$mentioned_military) {
 							my $notes;
 							if(defined(my $date = year(record => $event))) {
@@ -5773,8 +5774,8 @@ sub print_person
 									}
 									$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
 								}
-							} elsif(($notes = notes(record => $event)) && ($notes =~ /^army\.?$/i)) {
-								$army = 1;
+							} elsif(($notes = notes(record => $event)) &&
+								(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i))) {
 								$phrase->set("$pronoun served in the army");
 							} else {
 								$phrase->set("$pronoun served in the military");
@@ -5786,9 +5787,7 @@ sub print_person
 							$mentioned_military = 1;
 						}
 
-						if(!$army) {
-							append_notes({ phrase => $phrase, record => $event });
-						}
+						append_notes({ phrase => $phrase, record => $event });
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
@@ -11891,6 +11890,12 @@ sub append_notes
 					}
 				}
 				$phrase->append(" in the $regiment");
+			}
+		} elsif($notes =~ /pFC US Army/) {
+			if($notes =~ /Korea/) {
+				$phrase->append(' in Korea with the rank of private first class');
+			} else {
+				$phrase->append(' with the rank of private first class');
 			}
 		} else {
 			$phrase->append(" ($notes)");
