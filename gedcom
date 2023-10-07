@@ -594,6 +594,12 @@ if((!$opts{'T'}) || $opts{'v'}) {
 	if($logger) {
 		$topts{'logger'} = $logger;
 	}
+	$topts{'cache_duration'} = '1 month';
+	$topts{'cache'} = CHI->new(
+		driver => 'File',
+		root_dir => $cachedir,
+		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 }
+	);
 	$textgeocoder = Geo::Coder::Free->new(%topts);
 	if($ENV{'OPENADDR_HOME'}) {
 		# $geocoder->push({ regex => qr/,[\w\s]+,[\w\s]+$/, geocoder => $textgeocoder });
