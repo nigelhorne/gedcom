@@ -9374,21 +9374,25 @@ sub notes {
 			$note =~ s/Rev\.\s\s/Rev. /g;
 			$note =~ s/St\.\s\s/St. /g;
 			$note =~ s/([A-Z]\.\s)\s/$1/g;
-			if($paragraph) {
-				if($rc) {
-					$rc .= "\n";
+			if($rc ne $note) {
+				if($paragraph) {
+					if($rc) {
+						$rc .= "\n";
+					}
+					if($opts{'B'}) {
+						$rc .= '    ';
+					} else {
+						$rc .= "\t";
+					}
+				} elsif($rc) {
+					$rc =~ s/\.$//;
+					$rc .= '; ';
 				}
-				if($opts{'B'}) {
-					$rc .= '    ';
-				} else {
-					$rc .= "\t";
-				}
-			} elsif($rc) {
-				$rc =~ s/\.$//;
-				$rc .= '; ';
+				$rc .= $note;
+				$rc .= '.' if($note !~ /\."?$/);
+			} else {
+				complain("Note record ($note) is the same as the description");
 			}
-			$rc .= $note;
-			$rc .= '.' if($note !~ /\."?$/);
 		} else {
 			complain('Notes field is empty');
 		}
