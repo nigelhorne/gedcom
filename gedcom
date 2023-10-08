@@ -189,7 +189,7 @@ use Array::Iterator::BiDirectional;
 sub get_location($);
 
 my %opts;
-getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLp:sStTwWxvy:', \%opts);
+getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:sStTwWxvy:', \%opts);
 die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
 
 print "Starting\n" if($opts{'v'});
@@ -202,6 +202,7 @@ my %places;
 my %all_locations;
 my %all_places;
 my %all_residences;
+my %all_occupations;
 # my $pi = atan2(1,1) * 4;
 
 # binmode(STDOUT, ':utf8');
@@ -260,7 +261,7 @@ if($opts{'B'}) {
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';
-} elsif($opts{'T'} || $opts{'i'}) {
+} elsif($opts{'T'} || $opts{'i'} || $opts{'O'}) {
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
 			'Data::ICal::Entry::Event',
@@ -275,7 +276,7 @@ if($opts{'B'}) {
 } else {
 	push @modules, 'GIS::Distance';
 }
-unless($opts{'T'} && !$opts{'v'}) {
+unless(($opts{'T'} || $opts{'O'}) && !$opts{'v'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		# 'Geo::Coder::DataScienceToolkit',
@@ -585,7 +586,7 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
-if((!$opts{'T'}) || $opts{'v'}) {
+if(((!$opts{'T'}) && (!$opts{'O'})) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
 	my %topts;
@@ -800,7 +801,7 @@ if($opts{'x'}) {
 } elsif($opts{'g'} || $opts{'M'}) {
 	$opts{'T'} = 1;
 }
-if($opts{'T'}) {
+if($opts{'T'} || $opts{'O'}) {
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 my $ical;
@@ -848,7 +849,7 @@ if($opts{'w'}) {
 
 my $meteo;
 
-if($opts{'d'} && !$opts{'T'}) {
+if($opts{'d'} && (!$opts{'T'}) && (!$opts{'O'})) {
 	$meteo = Weather::Meteo->new(ua => $cached_browser);
 }
 
@@ -1233,6 +1234,9 @@ if($opts{'H'}) {
 				system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
 			}
 			unlink 'output.png', @files;
+		} elsif($opts{'O'}) {
+			generate(everyone => \@everyone, dbh => $dbh);
+			dump_occupations(\%all_occupations);
 		} else {
 			generate(everyone => \@everyone, dbh => $dbh);
 			dump_places(\%all_places);
@@ -2067,6 +2071,12 @@ sub print_person
 		}
 
 		dump_geocoder_log();
+
+		return;
+	} elsif($opts{'O'}) {
+		foreach my $occupation(get_all_occupations($person)) {
+			push @{$all_occupations{$occupation}}, $person;
+		}
 
 		return;
 	} else {
@@ -8900,6 +8910,8 @@ sub year
 sub place {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
+	return if($opts{'O'});
+
 	my $place = $params{'place'};
 	my $address = $params{'address'};
 
@@ -10435,6 +10447,11 @@ sub get_all_occupations
 		$occupations[0] =~ tr/\n/ /;
 		$occupations[0] =~ s/\.+$//;
 
+		if(($occupations[0] =~ /(.+)\sdomestic$/i) ||
+		   ($occupations[0] =~ /(.+)\sdom$/i)) {
+			$occupations[0] = "Domestic $1";
+		}
+
 		if($occupations[0] =~ /works? on (.+)/i) {
 			$occupations[0] = "$1 worker";
 		} elsif(($occupations[0] eq 'Ag Lab') ||
@@ -10542,12 +10559,11 @@ sub get_all_occupations
 			$occupations[0] =~ s/[\(\)]//g;
 			$occupations[0] =~ s/\s+Own Account//i;
 			if($occupations[0] =~ /works? (on|for) (.+)/i) {
-				$occupations[0] = "$2 Worker";
+				$occupations[0] = "$2 worker";
 			} elsif($occupations[0] =~ /^Cleaner\s+(.+)/i) {
-				$occupations[0] = "$1 Cleaner";
-			} else {
-				$occupations[0] = ucfirst($occupations[0]);
+				$occupations[0] = "$1 cleaner";
 			}
+			$occupations[0] = ucfirst($occupations[0]);
 			$occupations[0] =~ s/\s+heavy worker$//i;
 			$occupations[0] =~ s/\s+own business$//i;
 		} else {
@@ -11343,6 +11359,26 @@ sub dump_places {
 			}
 			return $filename;
 		}
+	}
+}
+
+sub dump_occupations {
+	my $all_occupations = shift;
+
+	return if(scalar(keys(%{$all_occupations})) == 0);
+
+	foreach my $occupation(sort keys %{$all_occupations}) {
+		print "$occupation: ";
+		my $previous;
+		foreach my $person(@{$all_occupations->{$occupation}}) {
+			if($previous && ($person->xref() eq $previous->xref())) {
+				next;
+			}
+			print $person->as_string({ include_years => 1, middle_names => 1, nee => 1 }),
+				';';
+			$previous = $person;
+		}
+		print "\n";
 	}
 }
 

@@ -123,11 +123,12 @@ The options are:
     -H: Print an HTML calendar of this month
     -h: set the home person - useful for calculating relationships with -d
     -i: creates an ICS file
+    -l: include living people
+    -L: include ged2site hyperlinks with -H
     -m: month for -H calendar
     -M: produce a map of a place (currently only Kent is supported) as
 	an animated gif of births into $surname.gif
-    -l: include living people
-    -L: include ged2site hyperlinks with -H
+    -O: print a list of occupations, useful for finding typoes and inconsistencies
     -p: print the biography of the given person
     -t: print tomorrow's information, don't use with -a
     -T: print a list of towns, useful for finding typos and inconsistencies
