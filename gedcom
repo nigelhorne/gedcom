@@ -5432,6 +5432,10 @@ sub print_person
 				push @phrases, $phrase if($phrase->rtrim()->length());
 				if(scalar(@phrases)) {
 					my $text = conjunction(map { $_->as_string() } @phrases);
+					if(!defined($text)) {
+						print STDERR Data::Dumper->new([\@phrases]);
+						die $person->as_string({ include_years => 1 }), ': BUG: residencestring array is unexpectedly empty';
+					}
 					$text =~ s/[\,;]\s*$//;
 					$bio->append("$text.  ");
 					$phrase = Data::Text->new();
