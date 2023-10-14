@@ -5409,8 +5409,10 @@ sub print_person
 									year(date => $date);
 								$spdeath_dt = undef;
 							}
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
+							if($phrase->length()) {
+								push @phrases, $phrase;
+								$phrase = Data::Text->new();
+							}
 						}
 					}
 				}
@@ -5433,7 +5435,6 @@ sub print_person
 				if(scalar(@phrases)) {
 					my $text = conjunction(map { $_->as_string() } @phrases);
 					if(!defined($text)) {
-						print STDERR Data::Dumper->new([\@phrases]);
 						die $person->as_string({ include_years => 1 }), ': BUG: residencestring array is unexpectedly empty';
 					}
 					$text =~ s/[\,;]\s*$//;
