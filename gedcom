@@ -3264,6 +3264,8 @@ sub print_person
 					if($aod && $placeofdeath && ($placeofbirth eq $placeofdeath) && !$death->address()) {
 						if($language eq 'French') {
 							$phrase->append('y ');
+						} elsif($language eq 'German') {
+							$birth_place = ' dort';
 						} else {
 							$birth_place = ' there';
 						}
@@ -3794,6 +3796,8 @@ sub print_person
 							}
 							if($language eq 'French') {
 								$phrase->append("avec qu'");
+							} elsif($language eq 'German') {
+								$phrase->append('mit wem ');
 							} else {
 								$phrase->append('with whom ');
 							}
@@ -10572,6 +10576,12 @@ sub get_all_occupations
 			($occupation !~ /^Manager of /i) &&
 			($occupation !~ /Manager & /i)) {
 			$occupation = "$1 Manager";
+		}
+
+		if($language eq 'German') {
+			if($occupation eq 'Bus driver') {
+				$occupation = ($person->sex() eq 'M') ? 'Busfahrer' : 'Busfahrerin';
+			}
 		}
 
 		if($occupation) {
