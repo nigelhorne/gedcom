@@ -5698,7 +5698,11 @@ sub print_person
 						$phrase->append(' travelled');
 					}
 					my $place = place({ person => $person, record => $events[0] });
-					$place =~ s/^\sin/ from/;
+					if($language eq 'German') {
+						$place =~ s/^\sin/ nach/;
+					} else {
+						$place =~ s/^\sin/ from/;
+					}
 					$phrase->append("$place " .
 						year({ person => $person, record => $events[0] }));
 					append_notes({ phrase => $phrase, record => $event });
@@ -5950,7 +5954,11 @@ sub print_person
 								$phrase->append(' travelled');
 							}
 							my $place = place({ person => $person, record => $event });
-							$place =~ s/^\sin/ from/;
+							if($language eq 'German') {
+								$place =~ s/^\sin/ nach/;
+							} else {
+								$place =~ s/^\sin/ from/;
+							}
 							if($event->date()) {
 								$phrase->append("$place " .
 									year({ person => $person, record => $event }));
@@ -12607,7 +12615,7 @@ during %s life:F:während ihres Lebens
 eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
-from::von
+from::nach
 has had::hatte
 had::hatte
 has lived in %s::hat in %s gelebt
