@@ -11950,6 +11950,7 @@ sub append_notes
 		$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy|Royal Flying Corps)/);
 		$notes =~ s/[\s\.]+$//;
 		$notes =~ tr/\r//;
+		$notes =~ s/hms /HMS /ig;
 		# Parse service information
 		if($notes =~ /^regiment:\s+(.+)/i) {
 			my $regiment = $1;
