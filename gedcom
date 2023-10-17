@@ -40,7 +40,6 @@
 # TODO: consider Data::Dumper::Names instead of Data::Dumper
 # TODO: investigate User::Identity
 # TODO: fix utf-8 in PDF by adding support for unicode fonts
-# TODO: -O: dump all occupations like -T is for places
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -307,17 +306,19 @@ if($opts{'w'}) {
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
 }
-if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
-	push @modules, 'Geo::Coder::OpenCage';
-}
-if($ENV{'GMAP_KEY'}) {
-	push @modules, 'Geo::Coder::GooglePlaces';
-}
-if($ENV{BMAP_KEY}) {
-	push @modules, 'Geo::Coder::Bing';
-}
-if($ENV{'GEONAMES_USER'}) {
-	push @modules, 'Geo::GeoNames';
+if((!$opts{'O'}) && (!$opts{'T'})) {
+	if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
+		push @modules, 'Geo::Coder::OpenCage';
+	}
+	if($ENV{'GMAP_KEY'}) {
+		push @modules, 'Geo::Coder::GooglePlaces';
+	}
+	if($ENV{BMAP_KEY}) {
+		push @modules, 'Geo::Coder::Bing';
+	}
+	if($ENV{'GEONAMES_USER'}) {
+		push @modules, 'Geo::GeoNames';
+	}
 }
 if($ENV{'REDIS_SERVER'}) {
 	push @modules, 'CHI::Driver::Redis';
@@ -622,7 +623,7 @@ if(((!$opts{'T'}) && (!$opts{'O'})) || $opts{'v'}) {
 	}
 
 	# DST isn't that good for the UK
-	# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })
+	# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })`
 	$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
 		->push({ limit => 100, regex => qr/(Canada|USA|United States)$/, geocoder => Geo::Coder::CA->new() })
 		->push({ regex => qr/^[\w\s-]+,\s*[\w\s]+,\s*(UK|United Kingdom|England|Wales)$/i, geocoder => Geo::Coder::Postcodes->new() })
