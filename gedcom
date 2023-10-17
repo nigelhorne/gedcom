@@ -741,14 +741,15 @@ if($opts{'S'} && $opts{'B'}) {
 if($opts{'B'}) {
 	$pdf = PDF::API2->new(-file => $opts{'B'});
 	my $papersize;
-	if((-r '/etc/papersize') && open(my $fin, '<', '/etc/papersize')) {	# Linux
-		$papersize = <$fin>;
-		close $fin;
-		chomp $papersize;
-	} elsif(defined($ENV{'LC_ALL'}) &&($ENV{'LC_ALL'} =~ /^en_US/)) {
+	if(defined($ENV{'LC_ALL'}) &&($ENV{'LC_ALL'} =~ /^en_US/)) {
 		$papersize = 'letter';
 	} elsif(defined($ENV{'LC_PAPER'}) &&($ENV{'LC_PAPER'} =~ /^en_US/)) {
 		$papersize = 'letter';
+	} elsif((-r '/etc/papersize') && open(my $fin, '<', '/etc/papersize')) {
+		# Linux
+		$papersize = <$fin>;
+		close $fin;
+		chomp $papersize;
 	} else {
 		$papersize = 'A4';
 	}
