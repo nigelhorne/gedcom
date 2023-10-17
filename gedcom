@@ -1327,7 +1327,12 @@ if($ical) {
 	print $fout $ical->as_string();
 	close $fout;
 	print "\n" if($pr);
-} elsif($opts{'S'}) {
+} elsif(defined($dbh)) {
+	my $query = "INSERT INTO locations('location') VALUES (?);";
+	my $statement = $dbh->prepare($query);
+	while(my($k, $v) = each(%all_locations)) {
+		die unless($statement->execute($k) == 1);
+	}
 	$dbh->commit();
 	$dbh->disconnect();
 }
@@ -1343,7 +1348,6 @@ sub generate {
 	}
 	my $index = 1;
 	my $generation = 0;
-	my %locations;
 
 	foreach my $person(@{$params{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
@@ -1362,149 +1366,8 @@ sub generate {
 			$pr->write();
 			$| = 0;
 		}
-		if($opts{'S'}) {
-			# Create an SQLite database
-			my $mother = $person->mother() || 'NULL';
-			my $father = $person->father() || 'NULL';
-
-			if($mother ne 'NULL') {
-				$mother = $mother->xref();
-			}
-			if($father ne 'NULL') {
-				$father = $father->xref();
-			}
-
-			my $name = $person->name();
-			$name =~ s/\///g;
-			$nameparser->parse($name);
-			my %name_components = $nameparser->components();
-			my $firstname = $person->given_names() // $name_components{'given_name_1'};
-			if($firstname) {
-				$firstname =~ s/\'/\\\'/g;
-			} else {
-				$firstname = 'NULL';
-			}
-			my $surname = $name_components{'surname_1'};
-			if($surname) {
-				$surname =~ s/\'/\\\'/g;
-			} else {
-				$surname = 'NULL';
-			}
-
-			print "$firstname, $surname\n";
-
-			my $dateofbirth = dateofbirth($person);
-			if($dateofbirth) {
-				$dateofbirth =~ tr/\//-/;
-			} else {
-				$dateofbirth = 'NULL';
-			}
-
-			my $dateofdeath = dateofdeath($person);
-
-			if($dateofdeath) {
-				$dateofdeath =~ tr/\//-/;
-			} else {
-				$dateofdeath = 'NULL';
-			}
-			my $query = "INSERT INTO people('xref', 'givennames', 'surname', 'mother', 'father', 'birth', 'death') VALUES (?, ?, ?, ?, ?, ?, ?);";
-			my $statement = $dbh->prepare($query);
-			print "$xref: $firstname $surname\n";
-			die unless($statement->execute($xref, $firstname, $surname, $mother, $father, $dateofbirth, $dateofdeath) == 1);
-
-			my @siblings = $person->siblings();
-			if(scalar(@siblings)) {
-				$query = "INSERT INTO siblings('xref', 'sibling') VALUES (?, ?);";
-				$statement = $dbh->prepare($query);
-				foreach my $s(@siblings) {
-					print ">$xref: $surname: ", $s->xref(), "\n";
-					die unless($statement->execute($xref, $s->xref()) == 1);
-				}
-			}
-
-			my @children = $person->children();
-			if(scalar(@children)) {
-				$query = "INSERT INTO children('xref', 'child') VALUES (?, ?);";
-				$statement = $dbh->prepare($query);
-				foreach my $c(@children) {
-					print ">>$xref: $surname: ",
-						$c->xref(), ': ',
-						$c->given_names(), "\n";
-					die unless($statement->execute($xref, $c->xref()) == 1);
-				}
-			}
-
-			my @spouses = $person->spouse();
-			@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
-			if(scalar(@spouses)) {
-				$query = "INSERT INTO spouses('xref', 'spouse', 'dateofmarriage', 'placeofmarriage') VALUES (?, ?, ?, ?);";
-				$statement = $dbh->prepare($query);
-				foreach my $spouse(@spouses) {
-					my $date = get_value({ person => $spouse, value => 'marriage date' });
-					my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
-					if((!defined($date)) && $marriage) {
-						$date = $marriage->date();
-					}
-					if(!defined($date)) {
-						$date = 'NULL';
-					}
-					my $place = get_value({
-						person => $person,
-						value => 'marriage place',
-					});
-					if((!defined($place)) && $marriage) {
-						$place = $marriage->place();
-					}
-					if($place) {
-						$place = place({
-							person => $person,
-							record => $place,
-							nopreposition => 1
-						});
-						$place =~ s/^\s+//g;
-					} else {
-						$place = 'NULL';
-					}
-					print ">>>$xref: $surname, $date, $place: ",
-						$spouse->xref(),
-						"\n",
-						$spouse->as_string(),
-						"\n";
-					die unless($statement->execute($xref, $spouse->xref(), $date, $place) == 1);
-				}
-			}
-			my @residences = get_all_residences($person);
-			if(scalar(@residences)) {
-				$query = "INSERT INTO residences('xref', 'date', 'location') VALUES (?, ?, ?);";
-				$statement = $dbh->prepare($query);
-				foreach my $residence(@residences) {
-					my $date = $residence->date() || 'NULL';
-					my $place;
-					if($residence->place()) {
-						$place = place({
-							person => $person,
-							record => $residence,
-							nopreposition => 1
-						});
-						$place =~ s/^\s+//g;
-						$locations{$place} = $residence;
-					} else {
-						$place = 'NULL';
-					}
-					print ">>>>$xref: $date, $place\n";
-					die unless($statement->execute($xref, $date, $place) == 1);
-				}
-			}
-			my @occupations = get_all_occupations(person => $person);
-			if(scalar(@occupations)) {
-				$query = "INSERT INTO occupations('xref', 'occupation') VALUES (?, ?);";
-				$statement = $dbh->prepare($query);
-				foreach my $occupation(@occupations) {
-					print ">>>>>$xref: $occupation\n";
-					die unless($statement->execute($xref, $occupation) == 1);
-				}
-			}
-
+		if($dbh) {
+			sqlite(person => $person);
 			next;
 		} elsif($ical) {
 			my $dateofbirth = dateofbirth($person);
@@ -1610,13 +1473,7 @@ sub generate {
 
 		dump_geocoder_log();
 	}
-	if($opts{'S'}) {
-		my $query = "INSERT INTO locations('location') VALUES (?);";
-		my $statement = $dbh->prepare($query);
-		while(my($k, $v) = each(%locations)) {
-			die unless($statement->execute($k) == 1);
-		}
-	} elsif($opts{'B'}) {
+	if($opts{'B'}) {
 		print "\n";
 	}
 }
@@ -7477,6 +7334,158 @@ sub print_person
 	# It would be nice to remove @tmpfiles here, but the PDF::API2 module needs them until the
 	#	PDF is finally created
 	print Data::Dumper->new([$person->state()])->Dump() if($opts{'v'});
+}
+
+# Create an SQLite database
+sub sqlite
+{
+	my %args = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $args{'person'};
+
+	my $mother = $person->mother() || 'NULL';
+	my $father = $person->father() || 'NULL';
+
+	if($mother ne 'NULL') {
+		$mother = $mother->xref();
+	}
+	if($father ne 'NULL') {
+		$father = $father->xref();
+	}
+
+	my $name = $person->name();
+	$name =~ s/\///g;
+	$nameparser->parse($name);
+	my %name_components = $nameparser->components();
+	my $firstname = $person->given_names() // $name_components{'given_name_1'};
+	if($firstname) {
+		$firstname =~ s/\'/\\\'/g;
+	} else {
+		$firstname = 'NULL';
+	}
+	my $surname = $name_components{'surname_1'};
+	if($surname) {
+		$surname =~ s/\'/\\\'/g;
+	} else {
+		$surname = 'NULL';
+	}
+
+	print "$firstname, $surname\n";
+
+	my $dateofbirth = dateofbirth($person);
+	if($dateofbirth) {
+		$dateofbirth =~ tr/\//-/;
+	} else {
+		$dateofbirth = 'NULL';
+	}
+
+	my $dateofdeath = dateofdeath($person);
+
+	if($dateofdeath) {
+		$dateofdeath =~ tr/\//-/;
+	} else {
+		$dateofdeath = 'NULL';
+	}
+	my $query = "INSERT INTO people('xref', 'givennames', 'surname', 'mother', 'father', 'birth', 'death') VALUES (?, ?, ?, ?, ?, ?, ?);";
+	my $statement = $dbh->prepare($query);
+
+	my $xref = $person->xref();
+	print "$xref: $firstname $surname\n";
+
+	die unless($statement->execute($xref, $firstname, $surname, $mother, $father, $dateofbirth, $dateofdeath) == 1);
+
+	my @siblings = $person->siblings();
+	if(scalar(@siblings)) {
+		$query = "INSERT INTO siblings('xref', 'sibling') VALUES (?, ?);";
+		$statement = $dbh->prepare($query);
+		foreach my $s(@siblings) {
+			print ">$xref: $surname: ", $s->xref(), "\n";
+			die unless($statement->execute($xref, $s->xref()) == 1);
+		}
+	}
+
+	my @children = $person->children();
+	if(scalar(@children)) {
+		$query = "INSERT INTO children('xref', 'child') VALUES (?, ?);";
+		$statement = $dbh->prepare($query);
+		foreach my $c(@children) {
+			print ">>$xref: $surname: ",
+				$c->xref(), ': ',
+				$c->given_names(), "\n";
+			die unless($statement->execute($xref, $c->xref()) == 1);
+		}
+	}
+
+	my @spouses = $person->spouse();
+	@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
+	if(scalar(@spouses)) {
+		$query = "INSERT INTO spouses('xref', 'spouse', 'dateofmarriage', 'placeofmarriage') VALUES (?, ?, ?, ?);";
+		$statement = $dbh->prepare($query);
+		foreach my $spouse(@spouses) {
+			my $date = get_value({ person => $spouse, value => 'marriage date' });
+			my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
+			if((!defined($date)) && $marriage) {
+				$date = $marriage->date();
+			}
+			if(!defined($date)) {
+				$date = 'NULL';
+			}
+			my $place = get_value({
+				person => $person,
+				value => 'marriage place',
+			});
+			if((!defined($place)) && $marriage) {
+				$place = $marriage->place();
+			}
+			if($place) {
+				$place = place({
+					person => $person,
+					record => $place,
+					nopreposition => 1
+				});
+				$place =~ s/^\s+//g;
+			} else {
+				$place = 'NULL';
+			}
+			print ">>>$xref: $surname, $date, $place: ",
+				$spouse->xref(),
+				"\n",
+				$spouse->as_string(),
+				"\n";
+			die unless($statement->execute($xref, $spouse->xref(), $date, $place) == 1);
+		}
+	}
+	my @residences = get_all_residences($person);
+	if(scalar(@residences)) {
+		$query = "INSERT INTO residences('xref', 'date', 'location') VALUES (?, ?, ?);";
+		$statement = $dbh->prepare($query);
+		foreach my $residence(@residences) {
+			my $date = $residence->date() || 'NULL';
+			my $place;
+			if($residence->place()) {
+				$place = place({
+					person => $person,
+					record => $residence,
+					nopreposition => 1
+				});
+				$place =~ s/^\s+//g;
+				$all_locations{$place} = $residence;
+			} else {
+				$place = 'NULL';
+			}
+			print ">>>>$xref: $date, $place\n";
+			die unless($statement->execute($xref, $date, $place) == 1);
+		}
+	}
+	my @occupations = get_all_occupations(person => $person);
+	if(scalar(@occupations)) {
+		$query = "INSERT INTO occupations('xref', 'occupation') VALUES (?, ?);";
+		$statement = $dbh->prepare($query);
+		foreach my $occupation(@occupations) {
+			print ">>>>>$xref: $occupation\n";
+			die unless($statement->execute($xref, $occupation) == 1);
+		}
+	}
 }
 
 sub all_records_have_date
