@@ -5586,16 +5586,14 @@ sub print_person
 					my $date = year(record => $event);
 					if($military_location) {
 						$phrase->append(' when ')->append(lcfirst($pronoun))->append(' was serving in the military');
-					} else {
-						if($date) {
-							if($date =~ /^from /i) {
-								$phrase->append("$pronoun was serving in the military");
-							} else {
-								$phrase->append(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military');
-							}
+					} elsif($date) {
+						if($date =~ /^from /i) {
+							$phrase->append("$pronoun was serving in the military");
 						} else {
-							$phrase->append("$pronoun served in the military");
+							$phrase->append(ucfirst($date) . ' ' . lcfirst($pronoun) . ' was serving in the military');
 						}
+					} else {
+						$phrase->append("$pronoun served in the military");
 					}
 					if(my $place = place({ person => $person, record => $event })) {
 						$phrase->append($place);
@@ -5646,13 +5644,21 @@ sub print_person
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
-							my $notes;
+							my $service;
+							my $notes = notes(record => $event);
+							if($notes =~ /Navy/i) {
+								$service = 'navy';
+							} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i)) {
+								$service = 'army';
+							} else {
+								$service = 'military';
+							}
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
 									if($firstname) {
-										$phrase->set("\n\t$firstname served in the military $date");
+										$phrase->set("\n\t$firstname served in the $service $date");
 									} else {
-										$phrase->set("\n\t$pronoun served in the military $date");
+										$phrase->set("\n\t$pronoun served in the $service $date");
 									}
 								} else {
 									if($date =~ /^on /) {
@@ -5664,13 +5670,10 @@ sub print_person
 									} else {
 										$phrase->set(ucfirst($date));
 									}
-									$phrase->append(' ' . lcfirst($pronoun) . ' was serving in the military');
+									$phrase->append(' ' . lcfirst($pronoun) . " was serving in the $service");
 								}
-							} elsif(($notes = notes(record => $event)) &&
-								(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i))) {
-								$phrase->set("$pronoun served in the army");
-							} else {
-								$phrase->set("$pronoun served in the military");
+							} elsif($notes) {
+								$phrase->set("$pronoun served in the $service");
 							}
 
 							if(my $place = place({ person => $person, record => $event, allow_empty => 1 })) {
@@ -7417,8 +7420,8 @@ sub sqlite
 	}
 
 	my @spouses = $person->spouse();
-	@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
 	if(scalar(@spouses)) {
+		@spouses = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } @spouses;
 		$query = "INSERT INTO spouses('xref', 'spouse', 'dateofmarriage', 'placeofmarriage') VALUES (?, ?, ?, ?);";
 		$statement = $dbh->prepare($query);
 		foreach my $spouse(@spouses) {
