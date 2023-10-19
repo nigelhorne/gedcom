@@ -275,7 +275,7 @@ if($opts{'B'}) {
 } else {
 	push @modules, 'GIS::Distance';
 }
-unless(($opts{'T'} || $opts{'O'}) && !$opts{'v'}) {
+unless(($opts{'T'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		# 'Geo::Coder::DataScienceToolkit',
@@ -306,7 +306,7 @@ if($opts{'w'}) {
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
 }
-if((!$opts{'O'}) && (!$opts{'T'})) {
+if((!$opts{'O'}) && (!$opts{'T'}) && (!$opts{'S'})) {
 	if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		push @modules, 'Geo::Coder::OpenCage';
 	}
@@ -584,7 +584,7 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
-if(((!$opts{'T'}) && (!$opts{'O'})) || $opts{'v'}) {
+if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
 	my %topts;
