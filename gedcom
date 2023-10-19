@@ -7909,7 +7909,7 @@ sub Gedcom::Individual::relationship_up
 	unless(@myancestors) {
 		@myancestors = $self->ancestors();
 	}
-	if($me && ($self eq $me)) {
+	if($me && ($self->xref() eq $me->xref())) {
 		unless(@myancestors) {
 			@myancestors = $me->ancestors();
 		}
@@ -8568,7 +8568,7 @@ sub Gedcom::Individual::relationship_up
 					my $myfather = $self->father();
 					my $mymother = $self->mother();
 					if($myfather && (stepsabove($myfather, $person2, 0) > 0)) {
-						if($me && ($self eq $me)) {
+						if($me && ($self->xref() eq $me->xref())) {
 							$rc .= i18n(" on your father's side");
 						} else {
 							$rc .= ' on ' .
@@ -8576,7 +8576,7 @@ sub Gedcom::Individual::relationship_up
 								" father's side";
 						}
 					} elsif($mymother && (stepsabove($mymother, $person2, 0) > 0)) {
-						if($me && ($self eq $me)) {
+						if($me && ($self->xref() eq $me->xref())) {
 							$rc .= i18n(" on your mother's side");
 						} else {
 							$rc .= ' on ' .
@@ -8601,7 +8601,7 @@ sub Gedcom::Individual::relationship_down
 	my $other = shift;
 	my @descendant;
 
-	if($me && ($self eq $me)) {
+	if($me && ($self->xref() eq $me->xref())) {
 		unless(@mydescendants) {
 			@mydescendants = $me->descendants();
 		}
