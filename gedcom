@@ -5608,6 +5608,18 @@ sub print_person
 						$phrase = Data::Text->new();
 						@phrases = ();
 					}
+				} elsif($type eq 'Newspaper') {
+					if($phrase->length()) {
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
+					}
+					if(scalar(@phrases) == 0) {
+						$phrase->set($firstname // $pronoun)->append(' ');
+					}
+					my $url = $event->source()->tag_record('REF')->value();
+					$phrase->append("appeared in a newspaper ($url)");
+
+					# die $i->page();
 				} elsif($type eq 'Funeral') {
 					$funeral = $event;
 				# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
