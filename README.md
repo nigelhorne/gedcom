@@ -184,7 +184,6 @@ Of course you could also run gedcom as root,
 but I strongly advise you don't do that.
 
 [Library](https://github.com/nigelhorne/lib) - library of code common with
-[ged2site](https://github.com/nigelhorne/ged2site).
 
 ## Acknowledgements
 
