@@ -4670,9 +4670,11 @@ sub print_person
 								# Look if a young child isn't with this parent
 								foreach my $child(@children) {
 									my $cyob = dateofbirth($child);
-									next if(!defined($cyob));
 									if($cyob =~ /(\d{3,4})\s*$/) {
 										$cyob = $1;
+									} else {
+										# Probably missing year e.g. "14 Jul"
+										next;
 									}
 									if($rdate !~ /^Bef/i) {
 										next if(datecmp($cyob, $rdate) >= 0);	# Child was not born yet
