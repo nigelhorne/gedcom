@@ -456,8 +456,9 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	}) || die "$0: $cachedir: $!";
 
 	if($opts{'w'}) {
-		# If you have a locally written module to look up entries, list them in gedcom.config, otherwise use
-		# WWW::Scrape::FindaGrave
+		# If you have a locally written module to look up entries,
+		# list them in gedcom.config,
+		# otherwise use WWW::Scrape::FindaGrave
 		my $config;
 
 		eval { $config = Config::Auto::parse() };
@@ -702,10 +703,13 @@ unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
 		# $a->as_string({ include_years => 1, middle_names => 1 }) cmp $b->as_string({ include_years => 1, middle_names => 1 })
 		# } $ged->individuals();
 	# @everyone = map { Class::Simple::Readonly::Cached->new(object => $_, cache => CHI->new(driver => 'RawMemory', datastore => {})) } $ged->individuals();
+
+	print "Loading all individuals\n" if($opts{'v'});
 	@everyone = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {} }) } $ged->individuals();
 	if(scalar(@everyone) == 0) {
 		die 'No people in the tree';
 	}
+	print scalar(@everyone), " individuals loaded\n" if($opts{'v'});
 }
 
 if($opts{'c'} && !$opts{'d'}) {
@@ -1319,6 +1323,7 @@ if($opts{'H'}) {
 } else {
 	my %args = ('time_zone' => $tz);
 	my $dt = DateTime->now(%args)->add(days => 1);
+	print "Generating the data\n" if($opts{'v'});
 	generate(day => $dt->day(), month => $dt->month() - 1, everyone => \@everyone);
 }
 
