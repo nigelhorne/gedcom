@@ -5931,11 +5931,24 @@ sub print_person
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
 						}
+					} elsif($type eq 'Newspaper') {
+						if($phrase->length()) {
+							push @phrases, $phrase;
+							$phrase = Data::Text->new();
+						}
+						if(scalar(@phrases) == 0) {
+							$phrase->set($firstname // $pronoun)->append(' ');
+						}
+						my $url = $event->source()->tag_record('REF')->value();
+						$phrase->append("appeared in a newspaper ($url)");
+
+						# die $i->page();
 					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif($type eq 'Funeral') {
 						$funeral = $event;
 					} elsif(($type !~ /Census/) &&
 						($type ne 'Register UK 1939') &&
+						($type ne 'Race') &&
 						($type ne 'Race') &&
 						($type ne 'Hospitalisation')) {
 						red_warning({ person => $person, warning => "Unknown event type: $type" });
