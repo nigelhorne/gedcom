@@ -5631,6 +5631,9 @@ sub print_person
 					}
 					my $url = $event->source()->tag_record('REF')->value();
 					$phrase->append("appeared in a newspaper ($url)");
+					if(my $date = $event->date()) {
+						$phrase->append(" on $date");
+					}
 
 					# die $i->page();
 				} elsif($type eq 'Funeral') {
@@ -5947,7 +5950,9 @@ sub print_person
 						}
 						my $url = $event->source()->tag_record('REF')->value();
 						$phrase->append("appeared in a newspaper ($url)");
-
+						if(my $date = $event->date()) {
+							$phrase->append(" on $date");
+						}
 						# die $i->page();
 					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif($type eq 'Funeral') {
