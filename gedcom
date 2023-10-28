@@ -5630,10 +5630,11 @@ sub print_person
 						$phrase->set($firstname // $pronoun)->append(' ');
 					}
 					my $url = $event->source()->tag_record('REF')->value();
-					$phrase->append("appeared in a newspaper ($url)");
+					$phrase->append('appeared in a newspaper');
 					if(my $date = $event->date()) {
 						$phrase->append(" on $date");
 					}
+					$phrase->append(" ($url)");
 
 					# die $i->page();
 				} elsif($type eq 'Funeral') {
@@ -5949,10 +5950,11 @@ sub print_person
 							$phrase->set($firstname // $pronoun)->append(' ');
 						}
 						my $url = $event->source()->tag_record('REF')->value();
-						$phrase->append("appeared in a newspaper ($url)");
+						$phrase->append('appeared in a newspaper');
 						if(my $date = $event->date()) {
 							$phrase->append(" on $date");
 						}
+						$phrase->append(" ($url)");
 						# die $i->page();
 					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif($type eq 'Funeral') {
