@@ -415,7 +415,7 @@ my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	my $cachedir = $ENV{'CACHEDIR'};
 	if($cachedir) {
-		mkdir $cachedir, 0700 if(!-d $cachedir);
+		mkdir $cachedir, 02700 if(!-d $cachedir);
 		$cachedir = File::Spec->catfile($cachedir, 'lwp-cache');
 	} else {
 		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
@@ -9238,7 +9238,7 @@ sub place {
 			if($params{'nopreposition'}) {
 				return ' der Vereinigten Staaten';
 			}
-			return ' aus der Vereinigten Staaten';
+			return ' in den Vereinigten Staaten';
 		}
 		if($params{'nopreposition'}) {
 			return ' USA';
