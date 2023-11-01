@@ -12313,13 +12313,7 @@ sub wide_to_html
 # Experimental code with false positives at the moment
 sub dbpedia
 {
-	my %params;
-
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	}
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $person = $params{'person'};
 	my $yod = $params{'yod'};
