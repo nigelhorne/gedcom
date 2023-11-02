@@ -3111,6 +3111,12 @@ sub print_person
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
 		}
+		if(($aob || $aod) && scalar(@phrases)) {
+			push @phrases, $phrase;
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			$phrase = Data::Text->new();
+			@phrases = ();
+		}
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
 			if((defined($firstname) && ($noun eq $firstname)) || (scalar(@phrases) == 0)) {
