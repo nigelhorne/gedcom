@@ -2996,16 +2996,12 @@ sub print_person
 			if($language eq 'French') {
 				$phrase->append(" de votre $spouserelationship");
 			} else {
-				$phrase->append(" of your $spouserelationship");
+				$phrase->append(" of your $spouserelationship ");
 			}
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append(" $s");
+				$phrase->append("$s ");
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
-			}
-			if($phrase->length()) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 			}
 			$haveprintedspousename = 1;
 		} elsif(($mother || $father) &&
