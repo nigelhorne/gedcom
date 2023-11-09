@@ -2626,7 +2626,7 @@ sub print_person
 						if($second =~ /.*?(\d{3,4})$/) {
 							$second = $1;
 							my $gap = abs($first - $second);
-							if($gap >= 20) {
+							if($gap >= 40) {
 								complain({
 									person => $person,
 									warning => "Large age gap ($gap years) between the two children"
@@ -5353,7 +5353,8 @@ sub print_person
 					$phrase->set(ucfirst(year({ person => $person, date => $rdate, circa => 'About' })));
 				} else {
 					if($opts{'B'}) {
-						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
+						if($bio->length() &&
+						  (!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage))) {
 							$text->textend();
 
 							$pdfpage = NJH::PDFPage->new($pdf);
@@ -5361,8 +5362,8 @@ sub print_person
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
+							$bio = Data::Text->new(' ');
 						}
-						$bio = Data::Text->new(' ');
 					} else {
 						$bio->rtrim()->append("\n\t");
 					}
@@ -7391,7 +7392,14 @@ sub print_person
 				}
 				my $x = 300 - (length($title) / 2);
 				if(!pdfprint(string => $title, pdfpage => $pdfpage, x => $x, centre => 1)) {
-					die "Didn't make enough room for '$title'; y = ", $pdfpage->y();
+					print "Didn't make enough room for '$title'; y = ", $pdfpage->y(), "\n" if($opts{'v'});
+					if($title =~ /^https?:\/\/(.+?)\//) {
+						# e.g. https://tree.findmypast.com/assetHandler?id=100826878&at=1&ok=403385977&w=&h=&rk=&ex=81CDFFBD0A70580195F0C60BDF1D942B17C0A5670AFDA7C1AEC258BE52F02982CECF804E453E6779AE43C81D700C43258C3167FFE76CCCBC845
+						$title = $1;
+					}
+					if(!pdfprint(string => $title, pdfpage => $pdfpage, x => $x, centre => 1)) {
+						die "Didn't make enough room for '$title'; y = ", $pdfpage->y();
+					}
 				}
 				# $text->textend();
 			}
@@ -10234,6 +10242,14 @@ sub pdfprint
 	
 	# TODO: support UTF-8 fonts
 	my $string = $params{'string'};
+	if(!defined($string)) {
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die 'BUG: string not defined';
+	}
 	utf8::decode($string);
 	$string = Unicode::Diacritic::Strip::strip_diacritics($string);
 	my @lines = split(/\n/, wrap($indent, '', $string));
