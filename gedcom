@@ -5694,14 +5694,13 @@ sub print_person
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
-							my $service;
-							my $notes = notes(record => $event);
-							if($notes =~ /Navy/i) {
-								$service = 'navy';
-							} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i)) {
-								$service = 'army';
-							} else {
-								$service = 'military';
+							my $service = 'military';
+							if(my $notes = notes(record => $event)) {
+								if($notes =~ /Navy/i) {
+									$service = 'navy';
+								} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i)) {
+									$service = 'army';
+								}
 							}
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
@@ -5722,7 +5721,7 @@ sub print_person
 									}
 									$phrase->append(' ' . lcfirst($pronoun) . " was serving in the $service");
 								}
-							} elsif($notes) {
+							} else {
 								$phrase->set("$pronoun served in the $service");
 							}
 
