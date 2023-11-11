@@ -3121,10 +3121,6 @@ sub print_person
 			}
 		}
 
-		if($phrase->length()) {
-			push @phrases, $phrase;
-			$phrase = Data::Text->new();
-		}
 		if(($aob || $aod) && scalar(@phrases)) {
 			push @phrases, $phrase;
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
@@ -3136,11 +3132,9 @@ sub print_person
 			if((defined($firstname) && ($noun eq $firstname)) || (scalar(@phrases) == 0)) {
 				if($aod && scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					$phrase = Data::Text->new();
+					$phrase = Data::Text->new(ucfirst($pronoun) . ' ');
 					@phrases = ();
 				}
-				$phrase->set("$noun ");
-				$noun = $pronoun;
 			}
 
 			if($dateofbirth || $placeofbirth) {
