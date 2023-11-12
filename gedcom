@@ -2702,7 +2702,19 @@ sub print_person
 		}
 
 		if($relationship) {
-			$phrase->append(i18n('your'))->append(" $relationship, ");
+			if($aob && $aod) {
+				$phrase->append(i18n('your'))->append(" $relationship, ");
+			} else {
+				$noun = $firstname // $pronoun;
+				$phrase->set("$noun ");	# Overwrites what was stored above
+				$noun = $pronoun;
+				if(is_alive(person => $person)) {
+					$phrase->append('is ');
+				} else {
+					$phrase->append('was ');
+				}
+				$phrase->append(i18n('your'))->append(" $relationship");
+			}
 		} elsif($spouserelationship) {
 			if($language eq 'French') {
 				if($sex eq 'F') {
