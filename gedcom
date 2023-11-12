@@ -2687,8 +2687,8 @@ sub print_person
 			# }
 		}
 
-		my $bio = Data::Text->new("\t");
 		my @phrases;
+		my $bio = Data::Text->new("\t");
 		my $phrase = Data::Text->new();
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
@@ -2696,6 +2696,9 @@ sub print_person
 		if($aob || $aod || $relationship || $spouserelationship) {
 			$phrase->set("$noun, ");
 			$noun = $pronoun;
+			if(my $aka = $person->as_string({ use_aka => 1 })) {
+				$phrase->append("also known as $aka, ");
+			}
 		}
 
 		if($relationship) {
@@ -2729,10 +2732,6 @@ sub print_person
 
 		my @occupations = get_all_occupations(person => $person);
 		my $same_occupation_as_father;
-
-		if(my $aka = $person->as_string({ use_aka => 1 })) {
-			$phrase->append("(also known as $aka) ");
-		}
 
 		if($aob && $aod) {
 			if($aob == $aod) {
@@ -2830,13 +2829,16 @@ sub print_person
 				}
 			} else {
 				if(scalar(@phrases) == 0) {
-					$phrase->set(ucfirst("$noun "));
+					$phrase->set(ucfirst($noun));
 					$noun = $pronoun;
+					if(my $aka = $person->as_string({ use_aka => 1 })) {
+						$phrase->append(", also known as $aka,");
+					}
 				}
 				if(is_alive(person => $person)) {
-					$phrase->append('is ');
+					$phrase->append(' is ');
 				} else {
-					$phrase->append('was ');
+					$phrase->append(' was ');
 				}
 				if($language eq 'French') {
 					$phrase->append('l');
@@ -5332,8 +5334,8 @@ sub print_person
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
 							pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
-							$bio = Data::Text->new(' ');
 						}
+						$bio = Data::Text->new(' ');
 					} else {
 						$bio->rtrim()->append("\n\t");
 					}
@@ -6946,6 +6948,7 @@ sub print_person
 					$text = $pdfpage->text();
 					$text->font($params{'font'}, 12);
 					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
+					$bio = Data::Text->new();
 				}
 				$phrase = undef;
 			}
