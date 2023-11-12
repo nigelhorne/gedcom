@@ -2688,67 +2688,135 @@ sub print_person
 		}
 
 		my $bio = Data::Text->new("\t");
-		my $phrase = Data::Text->new();
 		my @phrases;
+		my $phrase = Data::Text->new();
+		my $haveprintedspousename;
+		my $noun = $firstname // $pronoun;
+
+		if($aob || $aod || $relationship || $spouserelationship) {
+			$phrase->set("$noun, ");
+			$noun = $pronoun;
+		}
+
+		if($relationship) {
+			$phrase->append(i18n('your'))->append(" $relationship, ");
+		} elsif($spouserelationship) {
+			if($language eq 'French') {
+				if($sex eq 'F') {
+					$phrase->append('la femme');
+				} else {
+					$phrase->append('le mari');
+				}
+			} else {
+				if($sex eq 'F') {
+					$phrase->append('the wife');
+				} else {
+					$phrase->append('the husband');
+				}
+			}
+			if($language eq 'French') {
+				$phrase->append(" de votre $spouserelationship, ");
+			} else {
+				$phrase->append(" of your $spouserelationship, ");
+			}
+			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
+				$phrase->append("$s ");
+			} else {
+				complain({ person => $spouse, warning => 'Seems to have no name' });
+			}
+			$haveprintedspousename = 1;
+		}
 
 		my @occupations = get_all_occupations(person => $person);
 		my $same_occupation_as_father;
 
-		if($occupations[0]) {
-			my @foccupations;
-			if($father) {
-				@foccupations = get_all_occupations(person => $father);
-			}
-			if(scalar(@foccupations) && ($occupations[0] eq $foccupations[0])) {
-				$same_occupation_as_father = $occupations[0];
-				@occupations = ();
+		if(my $aka = $person->as_string({ use_aka => 1 })) {
+			$phrase->append("(also known as $aka) ");
+		}
+
+		if($aob && $aod) {
+			if($aob == $aod) {
+				$phrase->append("was born and died $aod years ago ");
 			} else {
-				my $article;
-				if($occupations[0] =~ /^[aeiou]/i) {
-					$article = 'an';
+				$phrase->append("was born $aob years and died $aod years ago ");
+			}
+			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
+			$phrase->append("[$_]") foreach(@birthcitations);
+			$phrase->append("[$_]") foreach(@deathcitations);
+		} elsif($aob) {
+			$phrase->append(i18n({ person => $person, format => 'was born ' }));
+			if($language eq 'French') {
+				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
+					($opts{'t'} ? ' demain' : " aujourd'hui"));
+			} else {
+				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
+					($opts{'t'} ? 'tomorrow' : 'today'));
+			}
+			if($placeofbirth) {
+				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
+				if(!defined($p)) {
+					# Most likely there was more than one birth() record
+					die 'BUG: ', $person->as_string(), ": place() returned undef on '$placeofbirth'";
+				}
+				$phrase->append($p);
+				$places_printed{$p} = 1;
+			} else {
+				complain({ person => $person, warning => 'Date of birth is known, but not place' });
+			}
+			$phrase->append("[$_]") foreach(@birthcitations);
+		} elsif($aod) {
+			if($language eq 'French') {
+				$phrase->append('est mort');
+				if($sex eq 'F') {
+					$phrase->append('e');
+				}
+				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
+					($opts{'t'} ? ' demain' : " aujourd'hui"));
+			} else {
+				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
+					($opts{'t'} ? 'tomorrow' : 'today'));
+			}
+			if($placeofdeath) {
+				$phrase->append(place({ person => $person, record => $death, places_printed => \%places_printed }));
+			}
+			$phrase->append("[$_]") foreach(sort @deathcitations);
+
+			# Cause of death
+			if(my $cause = $person->cause()) {
+				$cause = lc($cause);
+				$phrase->append(" ($cause)");
+			}
+
+			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
+				$notes =~ s/\.$//;
+				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
+				$phrase->append(" ($notes)");
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				if($notes !~ /\."$/) {
+					$bio->append('.');
+				}
+				$phrase = Data::Text->new();
+				@phrases = ();
+				if(length($notes) > 160) {
+					$bio->append("\n\t");
 				} else {
-					$article = 'a';
+					$bio->append('  ');
 				}
-
-				$phrase->set(ucfirst(i18n({
-					person => $person,
-					format => "$article %s",
-					args => lc(conjunction(@occupations))
-				})));
-
-				if(!($father || $mother || $spouserelationship)) {
-					push @phrases, $phrase;
-					$phrase = Data::Text->new();
-				}
+			} elsif(dateofbirth($person) && (scalar(@spouses) >= 1)) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
 			}
 		}
 
-		if($birth_dt) {
-			my @twins = twins({ birth_dt => $birth_dt, siblings => \@siblings });
-
-			if(scalar(@twins) == 1) {	# TODO triplets and higher order
-				if(scalar(@occupations)) {
-					push @phrases, $phrase;
-					$phrase = Data::Text->new();
-					if($language eq 'French') {
-						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
-					} else {
-						$phrase->set('twin of');
-					}
-				} else {
-					if($language eq 'French') {
-						if($sex eq 'M') {
-							$phrase->set("Le jumeau fr\N{U+00E8}re de");
-						} else {
-							$phrase->set('La jumelle sœer de');
-						}
-					} else {
-						$phrase->set('The twin ' . i18n((($sex eq 'M') ? 'brother' : 'sister')) .
-							i18n(' of'));
-					}
-				}
-				$phrase->append(' ' . $twins[0]->{'sibling'}->given_names());
-			}
+		if($phrase->length()) {
+			push @phrases, $phrase;
+			$phrase = Data::Text->new();
+		}
+		if(scalar(@phrases)) {
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			$phrase = Data::Text->new();
+			@phrases = ();
 		}
 
 		my $print_sibling_count = 0;
@@ -2761,10 +2829,19 @@ sub print_person
 					$phrase->append(' and the ');
 				}
 			} else {
-				if($language eq 'French') {
-					$phrase->set('L');
+				if(scalar(@phrases) == 0) {
+					$phrase->set(ucfirst("$noun "));
+					$noun = $pronoun;
+				}
+				if(is_alive(person => $person)) {
+					$phrase->append('is ');
 				} else {
-					$phrase->set('The ');
+					$phrase->append('was ');
+				}
+				if($language eq 'French') {
+					$phrase->append('l');
+				} else {
+					$phrase->append('the ');
 				}
 			}
 
@@ -2942,182 +3019,75 @@ sub print_person
 					$phrase->replace({ ' and the child of ', " et l'enfant de " });
 				}
 			}
+			if($phrase->length()) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
+			}
 		}
 
-		my $haveprintedspousename;
-		my $noun = $firstname // $pronoun;
-
-		if($relationship) {
-			if($father || $mother || $occupations[0]) {
-				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || scalar(@spouses)) {
-					if($noun eq $firstname) {
-						$phrase->append(", $firstname, ");
-						$noun = $pronoun;
-					}
-				} elsif(is_alive(person => $person)) {
-					$phrase->append([$person, ' is ']);
+		if($occupations[0]) {
+			my @foccupations;
+			if($father) {
+				@foccupations = get_all_occupations(person => $father);
+			}
+			if(scalar(@foccupations) && ($occupations[0] eq $foccupations[0])) {
+				$same_occupation_as_father = $occupations[0];
+				@occupations = ();
+			} else {
+				my $article;
+				if($occupations[0] =~ /^[aeiou]/i) {
+					$article = 'an';
 				} else {
-					if($opts{'p'} || $opts{'a'}) {
-						$phrase->append(', ');
-					}
-					if($language eq 'French') {
-						$phrase->append([$person, " \N{U+00E9}tait "]);
+					$article = 'a';
+				}
+
+				if(scalar(@phrases) == 0) {
+					$phrase->set("$firstname ");
+					if(is_alive(person => $person)) {
+						$phrase->append('is ');
 					} else {
-						$phrase->append([$person, ' was ']);
+						$phrase->append('was ');
 					}
 				}
-				$phrase->append(i18n('your'))->append(" $relationship, ");
-			} else {
-				$phrase->set(ucfirst(i18n('your')))->append(" $relationship");
+
+				$phrase->append(i18n({
+					person => $person,
+					format => "$article %s",
+					args => lc(conjunction(@occupations))
+				}));
+
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			}
-		} elsif($spouserelationship) {
-			if($father || $mother || $occupations[0]) {
-				if($phrase->length()) {
-					push @phrases, $phrase;
-					$phrase = Data::Text->new();
-				}
-				$phrase->set($noun);
-				$noun = $pronoun;
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
-			} else {
-				$phrase->append($person);
-				if($aob || $aod || $dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) {
-					push @phrases, $phrase;
-					$phrase = Data::Text->new();
-				} elsif(is_alive(person => $person)) {
-					$phrase->append(i18n(' is '));
-				} else {
-					if($language eq 'French') {
-						$phrase->append(" \N{U+00E9}tait ");
-					} else {
-						$phrase->append(' was ');
-					}
-				}
-			}
-
-			if($language eq 'French') {
-				if($sex eq 'F') {
-					$phrase->append('la femme');
-				} else {
-					$phrase->append('le mari');
-				}
-			} else {
-				if($sex eq 'F') {
-					$phrase->append('the wife');
-				} else {
-					$phrase->append('the husband');
-				}
-			}
-			if($language eq 'French') {
-				$phrase->append(" de votre $spouserelationship");
-			} else {
-				$phrase->append(" of your $spouserelationship ");
-			}
-			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append("$s ");
-			} else {
-				complain({ person => $spouse, warning => 'Seems to have no name' });
-			}
-			$haveprintedspousename = 1;
-		} elsif(($mother || $father) &&
-			($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism || $dateofmarriage) &&
-			($relationship || $spouserelationship)) {
-			push @phrases, $phrase;
-			$phrase = Data::Text->new();
-		} elsif(scalar(@phrases)) {
-			$phrase->append("$firstname ");
-		} elsif($phrase->length()) {
-			$phrase->append(", $firstname ");
-		} else {
-			$phrase->set("$firstname ");
 		}
 
 		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
 			complain({ person => $person, warning => 'Baptism information not used to determine a parent' });
 		}
 
-		if(my $aka = $person->as_string({ use_aka => 1 })) {
-			$phrase->append("(also known as $aka) ");
-		}
+		if($birth_dt) {
+			my @twins = twins({ birth_dt => $birth_dt, siblings => \@siblings });
 
-		if($aob && $aod) {
-			if($aob == $aod) {
-				$phrase->append("was born and died $aod years ago ");
-			} else {
-				$phrase->append("was born $aob years and died $aod years ago ");
-			}
-			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
-			$phrase->append("[$_]") foreach(@birthcitations);
-			$phrase->append("[$_]") foreach(@deathcitations);
-		} elsif($aob) {
-			$phrase->append(i18n({ person => $person, format => 'was born ' }));
-			if($language eq 'French') {
-				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
-					($opts{'t'} ? ' demain' : " aujourd'hui"));
-			} else {
-				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
-			}
-			if($placeofbirth) {
-				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
-				if(!defined($p)) {
-					# Most likely there was more than one birth() record
-					die 'BUG: ', $person->as_string(), ": place() returned undef on '$placeofbirth'";
-				}
-				$phrase->append($p);
-				$places_printed{$p} = 1;
-			} else {
-				complain({ person => $person, warning => 'Date of birth is known, but not place' });
-			}
-			$phrase->append("[$_]") foreach(@birthcitations);
-		} elsif($aod) {
-			if($language eq 'French') {
-				$phrase->append('est mort');
-				if($sex eq 'F') {
-					$phrase->append('e');
-				}
-				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
-					($opts{'t'} ? ' demain' : " aujourd'hui"));
-			} else {
-				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
-			}
-			if($placeofdeath) {
-				$phrase->append(place({ person => $person, record => $death, places_printed => \%places_printed }));
-			}
-			$phrase->append("[$_]") foreach(sort @deathcitations);
-
-			# Cause of death
-			if(my $cause = $person->cause()) {
-				$cause = lc($cause);
-				$phrase->append(" ($cause)");
-			}
-
-			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
-				$notes =~ s/\.$//;
-				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-				$phrase->append(" ($notes)");
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases));
-				if($notes !~ /\."$/) {
-					$bio->append('.');
-				}
-				$phrase = Data::Text->new();
-				@phrases = ();
-				if(length($notes) > 160) {
-					$bio->append("\n\t");
+			if(scalar(@twins) == 1) {	# TODO triplets and higher order
+				if(scalar(@occupations)) {
+					if($language eq 'French') {
+						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
+					} else {
+						$phrase->set('twin of');
+					}
 				} else {
-					$bio->append('  ');
+					if($language eq 'French') {
+						if($sex eq 'M') {
+							$phrase->set("Le jumeau fr\N{U+00E8}re de");
+						} else {
+							$phrase->set('La jumelle sœer de');
+						}
+					} else {
+						$phrase->set('The twin ' . i18n((($sex eq 'M') ? 'brother' : 'sister')) .
+							i18n(' of'));
+					}
 				}
-			} elsif(dateofbirth($person) && (scalar(@spouses) >= 1)) {
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
-				@phrases = ();
-				$noun = $pronoun;
+				$phrase->append(' ' . $twins[0]->{'sibling'}->given_names());
 			}
 		}
 
@@ -3129,13 +3099,6 @@ sub print_person
 		}
 
 		if((!$aob) && ($dateofbirth || $dateofbaptism || $placeofbirth || $placeofbaptism)) {
-			if((defined($firstname) && ($noun eq $firstname)) || (scalar(@phrases) == 0)) {
-				if($aod && scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					$phrase = Data::Text->new(ucfirst($pronoun) . ' ');
-					@phrases = ();
-				}
-			}
 
 			if($dateofbirth || $placeofbirth) {
 				my $birth_place;
@@ -3155,7 +3118,10 @@ sub print_person
 					complain({ person => $person, warning => 'Date of birth is known, but not place' });
 				}
 
-				$phrase->append(i18n({ person => $person, format => 'was born' }));
+				if(scalar(@phrases) == 0) {
+					$phrase->set($pronoun);
+				}
+				$phrase->append(i18n({ person => $person, format => ' was born' }));
 				$phrase->append($birth_place) if($birth_place);
 
 				if($dateofbirth) {
@@ -3575,8 +3541,7 @@ sub print_person
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
-				$phrase->set("$noun ");
-				$noun = $pronoun;
+				$phrase->set("$pronoun ");
 			}
 			if(scalar(@spouses) == 1) {
 				if($placeofmarriage || $dateofmarriage) {
