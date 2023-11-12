@@ -3034,6 +3034,16 @@ sub print_person
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
+				if((!$aob) && (!$aod) && ($mother || $father)) {
+					if($phrase->length()) {
+						push @phrases, $phrase;
+					}
+					if(scalar(@phrases)) {
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+						$phrase = Data::Text->new();
+						@phrases = ();
+					}
+				}
 				my $article;
 				if($occupations[0] =~ /^[aeiou]/i) {
 					$article = 'an';
@@ -3042,7 +3052,8 @@ sub print_person
 				}
 
 				if(scalar(@phrases) == 0) {
-					$phrase->set("$firstname ");
+					$phrase->set("$noun ");
+					$noun = $pronoun;
 					if(is_alive(person => $person)) {
 						$phrase->append('is ');
 					} else {
@@ -3061,7 +3072,7 @@ sub print_person
 			}
 		}
 
-		if(($dateofbaptism || $placeofbaptism) && !($mother || $father) && $relationship) {
+		if(($dateofbaptism || $placeofbaptism) && !($mother || $father)) {
 			complain({ person => $person, warning => 'Baptism information not used to determine a parent' });
 		}
 
@@ -3119,9 +3130,9 @@ sub print_person
 				}
 
 				if(scalar(@phrases) == 0) {
-					$phrase->set($pronoun);
+					$phrase->set("$pronoun ");
 				}
-				$phrase->append(i18n({ person => $person, format => ' was born' }));
+				$phrase->append(i18n({ person => $person, format => 'was born' }));
 				$phrase->append($birth_place) if($birth_place);
 
 				if($dateofbirth) {
