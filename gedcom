@@ -2702,7 +2702,7 @@ sub print_person
 		}
 
 		if($relationship) {
-			if($aob && $aod) {
+			if($aob || $aod) {
 				$phrase->append(i18n('your'))->append(" $relationship, ");
 			} else {
 				$noun = $firstname // $pronoun;
@@ -8851,7 +8851,7 @@ sub year
 		my $start = $1;
 		my $end = $2;
 		if($end !~ /^\d\d\-\d\d$/) {
-			complain({ person => $person, warning => "Changing date '$rdate' to 'bet $start and $end'" });
+			complain({ warning => "Changing date '$string' to 'bet $start and $end'" });
 			$string = "bet $start and $end";
 		}
 	}
