@@ -2842,10 +2842,10 @@ sub print_person
 			} else {
 				if(scalar(@phrases) == 0) {
 					$phrase->set(ucfirst($noun));
-					$noun = $pronoun;
-					if(my $aka = $person->as_string({ use_aka => 1 })) {
+					if(($noun eq $firstname) && (my $aka = $person->as_string({ use_aka => 1 }))) {
 						$phrase->append(", also known as $aka,");
 					}
+					$noun = $pronoun;
 				}
 				if(is_alive(person => $person)) {
 					$phrase->append(' is ');
