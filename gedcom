@@ -2848,9 +2848,9 @@ sub print_person
 					$noun = $pronoun;
 				}
 				if(is_alive(person => $person)) {
-					$phrase->append(' is ');
+					$phrase->append(i18n(' is '));
 				} else {
-					$phrase->append(' was ');
+					$phrase->append(i18n(' was '));
 				}
 				if($language eq 'French') {
 					$phrase->append('l');
@@ -12615,6 +12615,7 @@ they::they
 times::times
 to::to
 twice::twice
+was::was
 was buried::was buried
 was born::was born
 was living::was living
@@ -12691,6 +12692,7 @@ they:F:elles
 times::temps
 to::à
 twice::deux fois
+was::était
 was buried:M:a été inhumé
 was buried:F:a été inhumée
 was born:M:est né
