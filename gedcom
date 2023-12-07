@@ -1904,6 +1904,7 @@ sub print_person
 				push @{$all_places{$p}}, $person;
 			}
 		}
+		# FIXME: if there is more than one marriage, only gets one
 		for my $event('birth', 'baptism', 'marriage', 'death', 'burial') {
 			my $p;
 			if(my $r = $person->get_record($event)) {
