@@ -4750,11 +4750,7 @@ sub print_person
 						}
 					}
 				}
-				if((!($opts{'c'} && $residence->source())) && (my $notes = notes({ record => $residence }))) {
-					$notes =~ s/\.$//;
-					$notes = lcfirst($notes);
-					$residencestring .= " ($notes)";
-				} elsif($opts{'c'}) {
+				if($opts{'c'}) {
 					if($residencecitations{$residence}) {
 						my $remove_comma = 0;
 						if($residencestring =~ s/,$//) {
@@ -4776,6 +4772,11 @@ sub print_person
 							}
 						}
 					}
+				} elsif($residence->source() && (my $notes = notes({ record => $residence }))) {
+					$notes =~ s/\.$//;
+					$notes =~ s/\xc3\xa9/\N{U+00E9}/g;
+					$notes = lcfirst($notes);
+					$residencestring .= " ($notes)";
 				}
 				$count++;
 				if(($count == 1) && (scalar(@residencelist) == 2)) {
