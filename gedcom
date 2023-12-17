@@ -9079,6 +9079,7 @@ sub place {
 	# Google maps (and possibly others) sometimes works better with full names
 	my $on_road;
 	if($address) {
+		$address =~ s/\xc3\xb1/\N{U+00F1}/g;	# ñ
 		if($address =~ /(.+)\sSt\.?$/) {
 			$address = "$1 Street";
 			$on_road = 1;
@@ -9125,6 +9126,7 @@ sub place {
 	}
 	# $place =~ s/\xc3\xa9/é/g;
 	$place =~ s/\xc3\xa9/\N{U+00E9}/g;
+	$place =~ s/\xc3\xb1/\N{U+00F1}/g;	# ñ
 
 	if(($place =~ /(.+?)\s*United States$/i) || ($place =~ /(.+?)\s*United States of America$/i)) {
 		$place = "$1 USA";
@@ -9499,24 +9501,39 @@ sub notes {
 			$note =~ s/Rev\.\s\s/Rev. /g;
 			$note =~ s/St\.\s\s/St. /g;
 			$note =~ s/([A-Z]\.\s)\s/$1/g;
-			if(defined($rc) && ($rc ne $note)) {
-				if($paragraph) {
-					if($rc) {
-						$rc .= "\n";
+
+			# FIXME: a lot of duplicated code here
+			if(defined($rc)) {
+				if($rc ne $note) {
+					if($paragraph) {
+						if($rc) {
+							$rc =~ s/\.$//;
+							$rc .= ".\n";
+						}
+						if($opts{'B'}) {
+							$rc .= '    ';
+						} else {
+							$rc .= "\t";
+						}
+					} elsif($rc) {
+						$rc =~ s/\.$//;
+						$rc .= '; ';
 					}
-					if($opts{'B'}) {
-						$rc .= '    ';
-					} else {
-						$rc .= "\t";
-					}
-				} elsif($rc) {
-					$rc =~ s/\.$//;
-					$rc .= '; ';
+					$rc .= $note;
+					$rc .= '.' if($note !~ /\."?$/);
+				} else {
+					# complain("Note record ($note) is the same as the description");
 				}
-				$rc .= $note;
-				$rc .= '.' if($note !~ /\."?$/);
 			} else {
-				# complain("Note record ($note) is the same as the description");
+				if($paragraph) {
+					if($opts{'B'}) {
+						$rc = "    $note";
+					} else {
+						$rc = "\t$note";
+					}
+				} else {
+					$rc = $note;
+				}
 			}
 		} else {
 			complain('Notes field is empty');
@@ -12248,6 +12265,7 @@ sub wide_to_html
 	$string =~ s/\xc5\x9b/&sacute;/g;
 	$string =~ s/\xc5\xa0/&Scaron;/g;
 	$string =~ s/\xe2\x80\x93/&ndash;/g;
+	$string =~ s/\xc3\xb1/&ntilde;/g;	# ñ
 
 	$string =~ s/\N{U+00A9}/&copy;/g;
 	$string =~ s/\N{U+00AE}/&reg;/g;
@@ -12335,6 +12353,7 @@ sub wide_to_html
 	$string =~ s/û/&ucirc;/g;
 	$string =~ s/£/&pound;/g;
 	$string =~ s/–/&ndash;/g;
+	$string =~ s/ñ/&#x0F1;/g;
 	$string =~ tr/\x80/ /;
 
 	# if($string =~ /^Maria\(/) {
