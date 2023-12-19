@@ -5956,6 +5956,7 @@ sub print_person
 						}
 					} elsif($type eq 'Newspaper') {
 						# FIMXE: duplicate code with one event
+						# This is a non-standard thing that FMP has evented.
 						if($phrase->length()) {
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
@@ -5963,13 +5964,25 @@ sub print_person
 						if(scalar(@phrases) == 0) {
 							$phrase->set($firstname // $pronoun)->append(' ');
 						}
-						my $url = $event->source()->tag_record('REF')->value();
-						$phrase->append('appeared in a newspaper');
-						if(my $date = $event->date()) {
+						if((!defined($prev_type)) || ($prev_type ne 'Newspaper')) {
+							$phrase->append('appeared ');
+						}
+						my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
+						$phrase->append('in ' . $newspaper->title());
+						if(my $date = $newspaper->date()) {
 							$phrase->append(" on $date");
 						}
-						$phrase->append(" ($url)");
-						# die $i->page();
+						if(my $page = $newspaper->page()) {
+							$phrase->append(" on page $page");
+						}
+						if(my $url = $newspaper->url()) {
+							$phrase->append(" ($url)");
+						}
+						push @phrases, $phrase;
+						$phrase = Data::Text->new();
+
+						$previous = $event;
+						$prev_type = 'Newspaper';
 					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif($type eq 'Funeral') {
 						$funeral = $event;
@@ -12583,6 +12596,48 @@ sub dbpedia
 			complain({ person => $person, warning => "dbpedia: $firstname $surname failed: " . $resp->status_line() });
 		}
 	}
+}
+
+# Parse a Newspaper event
+# These are in FindMyPast records
+sub newspaper
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $event = $params{'event'};
+
+	my $rc = Class::Simple->new();
+	
+	if(my $date = $event->date()) {
+		$date =~ s/^0//;
+		$rc->date($date);
+	}
+
+	# my $source = $event->source();
+	if(ref(my $source = $event->source())) {
+		$rc->url($source->tag_record('REF')->value());
+		$rc->title('a newspaper');
+	} else {
+		$source = get_source({ source => $source, %params });
+		if(my $title = $source->title()) {
+			$title =~ s/\.$//;
+			$rc->title($title);
+		}
+
+		$source = $event->tag_record('SOUR');
+		$rc->url($source->tag_record('REF')->value());
+
+		if(my $page = $source->tag_record('PAGE')->value()) {
+			$page =~ s/^0+//;
+			$rc->page($page);
+		}
+
+		# my @items = $source->items();
+		# $Data::Dumper::Maxdepth = 2;
+		# die Data::Dumper->new([\@items])->Dump();
+	}
+
+	return $rc;
 }
 
 # Must all be in lower case
