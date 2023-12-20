@@ -2695,11 +2695,19 @@ sub print_person
 		my $noun = $firstname // $pronoun;
 
 		if($aob || $aod || $relationship || $spouserelationship) {
-			$phrase->set("$noun, ");
+			my $str = $noun;
+
 			$noun = $pronoun;
 			if(my $aka = $person->as_string({ use_aka => 1 })) {
-				$phrase->append("also known as $aka, ");
+				$str .= " (also known as $aka)";
 			}
+			if($relationship || $spouserelationship) {
+				$str .= ',';
+			}
+
+			$str .= ' ';
+
+			$phrase->append($str);
 		}
 
 		if($relationship) {
@@ -2730,15 +2738,16 @@ sub print_person
 					$phrase->append('the husband');
 				}
 			}
-			if($language eq 'French') {
-				$phrase->append(" de votre $spouserelationship, ");
-			} else {
-				$phrase->append(" of your $spouserelationship, ");
-			}
+			$phrase->append(i18n(' of '));
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append("$s ");
+				$phrase->append("$s, ");
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
+			}
+			if($language eq 'French') {
+				$phrase->append("votre $spouserelationship, ");
+			} else {
+				$phrase->append("your $spouserelationship, ");
 			}
 			$haveprintedspousename = 1;
 		}
