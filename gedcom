@@ -5653,11 +5653,12 @@ sub print_person
 					if(scalar(@phrases) == 0) {
 						$phrase->set($firstname // $pronoun)->append(' ');
 					}
-					my $url = $event->source()->tag_record('REF')->value();
+					my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
 					$phrase->append('appeared in a newspaper');
-					if(my $date = $event->date()) {
+					if(my $date = $newspaper->date()) {
 						$phrase->append(" on $date");
 					}
+					my $url = $newspaper->url();
 					$phrase->append(" ($url)");
 
 					# die $i->page();
