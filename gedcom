@@ -12553,10 +12553,6 @@ sub dbpedia
 										}
 										if($uri =~ /Category:(\d{4})_deaths$/) {
 											my $d = $1;
-											if(defined($yob) && ($yob > $d)) {
-												# Born after this person died
-												next RESULT;
-											}
 											if($yod != $d) {
 												# Died different year from the dbpedia person died
 												next RESULT;
@@ -12589,6 +12585,12 @@ sub dbpedia
 											my $c = ($1 + 1) * 100;
 											if($yob > $c) {
 												# Born after dbpedia person died
+												next RESULT;
+											}
+										} elsif($uri =~ /Category:(\d{4})_deaths$/) {
+											my $d = $1;
+											if($yob > $d) {
+												# Born after this person died
 												next RESULT;
 											}
 										}
