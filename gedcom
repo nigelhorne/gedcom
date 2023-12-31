@@ -11222,6 +11222,9 @@ sub dateofbirth {
 		my @b = $person->birth();
 
 		for my $i(0..1) {
+			if(!ref($b[$i])) {
+				die 'FIXME: ', $person->as_string(), ': ', $b[$i], ' is not a ref';
+			}
 			foreach my $item(@{$b[$i]->{'items'}}) {
 				if(($item->tag() eq '_PRIM') && ($item->value() eq 'Y')) {
 					$dateofbirth = $b[$i]->date();
