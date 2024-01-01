@@ -435,7 +435,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		cachename_spec => {
 			_body => '',
 			_headers => []
-		}
+		},
 	);
 	$cached_browser->env_proxy(1);
 	$cached_browser->conn_cache->total_capacity(undef);
@@ -670,6 +670,7 @@ if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 			'api.geonames.org' => 1,
 			'yboss.yahooapis.com' => 1,	# Geo::Coder::PlaceFinder
 			'www.familysearch.org' => 1,
+			'lookup.dbpedia.org' => 1,
 		});
 		# G::C::GooglePlaces
 		$browser->throttle({ 'maps.googleapis.com' => 0.1 }) unless($ENV{GMAP_KEY});
@@ -12461,7 +12462,7 @@ sub dbpedia
 
 	my $url = "https://lookup.dbpedia.org/api/search?query=$firstname%20$surname";
 	print "$url\n" if($opts{'v'});
-	if(($firstname ne '?') && (my $resp = $cached_browser->get($url))) {
+	if(($firstname ne '?') && (my $resp = $browser->get($url))) {
 		if($resp->is_success()) {
 			if(my $arrayofresults = XML::Hash->new()->fromXMLStringtoHash($resp->decoded_content())->{'ArrayOfResults'}) {
 				RESULT: foreach my $result(@{$arrayofresults->{'Result'}}) {
