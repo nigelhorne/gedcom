@@ -70,6 +70,7 @@ BEGIN {
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'Data::Text', 'DateTime::Format::Genealogy', 'Parse::RecDescent',
+		'Mozilla::CA',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
 		'File::Spec', 'Net::OAuth',
@@ -439,6 +440,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	);
 	$cached_browser->env_proxy(1);
 	$cached_browser->conn_cache->total_capacity(undef);
+	$cached_browser->ssl_opts(verify_hostname => 1, SSL_ca_file => Mozilla::CA::SSL_ca_file());
 
 	$browser = LWP::UserAgent::Throttled->new(agent => basename($0), keep_alive => 1, timeout => 30);
 	$browser->env_proxy(1);
