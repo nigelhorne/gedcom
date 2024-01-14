@@ -2845,8 +2845,6 @@ sub print_person
 			@phrases = ();
 		}
 
-		my $print_sibling_count = 0;
-
 		if($father || $mother) {
 			if($phrase->length() > 0) {
 				if($language eq 'French') {
@@ -2906,7 +2904,6 @@ sub print_person
 						@siblings = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => dateofbirth($_))}[0]->{'canonical'}) } @siblings;
 					}
 					my $age_index = 1;	# count of siblings born before $person + 1 (i.e. where $person is in the date order)
-					$print_sibling_count = 1;
 					foreach my $sibling(@siblings) {
 						if(my $dob = dateofbirth($sibling)) {
 							if($dob =~ /\s$/) {
