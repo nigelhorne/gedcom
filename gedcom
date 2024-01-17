@@ -12132,6 +12132,8 @@ sub append_notes
 	if(my $notes = notes(\%params)) {
 		my $phrase = $params{'phrase'};
 
+		$phrase->append(' ') if($phrase->length());
+
 		$notes = lcfirst($notes) unless($notes =~ /^(RAF|Royal Navy|Royal Flying Corps)/);
 		$notes =~ s/[\s\.]+$//;
 		$notes =~ tr/\r//;
@@ -12159,7 +12161,7 @@ sub append_notes
 				if($rank eq 'A/cpl') {
 					$rank = 'Acting Corporal';
 				}
-				$phrase->append(" in the $regiment with the rank of $rank");
+				$phrase->append("in the $regiment with the rank of $rank");
 			} else {
 				$regiment =~ s/[\s\.;]+$//;
 				if($service_number && ($regiment =~ /(.+)\((.+)\)(.*)/)) {
@@ -12169,16 +12171,16 @@ sub append_notes
 						$regiment = "$1($2 - service number $service_number)";
 					}
 				}
-				$phrase->append(" in the $regiment");
+				$phrase->append("in the $regiment");
 			}
 		} elsif($notes =~ /pFC US Army/) {
 			if($notes =~ /Korea/) {
-				$phrase->append(' in Korea with the rank of private first class');
+				$phrase->append('in Korea with the rank of private first class');
 			} else {
-				$phrase->append(' with the rank of private first class');
+				$phrase->append('with the rank of private first class');
 			}
 		} else {
-			$phrase->append(" ($notes)");
+			$phrase->append("($notes)");
 		}
 		return 1;
 	}
