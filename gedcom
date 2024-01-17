@@ -7713,10 +7713,27 @@ sub Gedcom::Individual::as_string
 
 	my $rc;
 
-	if($args{'title'} && $name_components{'title_1'}) {
-		$rc = $name_components{'title_1'};
-		if($rc) {
-			$rc .= ' ';
+	if($args{'title'}) {
+		if($name_components{'title_1'}) {
+			$rc = $name_components{'title_1'};
+			if($rc) {
+				$rc .= ' ';
+			}
+		} else {
+			# FIXME: how do I get to the NPFX (e.g. "Cpl") value for the person?
+			#	none of these methods works
+			my $npfx = $self->npfx();
+			if($npfx) {
+				die $npfx;
+			}
+			$npfx = $self->tag_record('NPFX');
+			if($npfx) {
+				die $npfx;
+			}
+			$npfx = get_value({ person => $self, value => 'npfx' });
+			if($npfx) {
+				die $npfx;
+			}
 		}
 	}
 
