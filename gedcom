@@ -4122,6 +4122,7 @@ sub print_person
 							$phrase->append(i18n(person => $person, format => $format, args => $parentofall->as_string()));
 							my $decoded = conjunction(map { $_->given_names() } @children);
 							# utf8::decode($decoded);
+							$decoded =~ s/ë/\N{U+00EB}/;
 							$phrase->append(": $decoded");
 						} else {
 							# List children by the same parent together
