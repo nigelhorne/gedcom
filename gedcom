@@ -10772,6 +10772,8 @@ sub get_all_occupations
 				if($occupation eq 'Teacher') {
 					$occupation = (($person->sex() eq 'M') ? 'Lehrer' : 'Lehrerin');
 				}
+				$occupation =~ s/retired/im ruhestand/i;
+				$occupation =~ s/self-employed/slbststa\N{U+00E4}ndig/;
 			}
 			if($occupation =~ /works? (on|for) (.+)/i) {
 				$occupation = "$2 worker";
