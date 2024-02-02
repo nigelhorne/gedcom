@@ -2723,9 +2723,9 @@ sub print_person
 				$phrase->set("$noun ");	# Overwrites what was stored above
 				$noun = $pronoun;
 				if(is_alive(person => $person)) {
-					$phrase->append('is ');
+					$phrase->append(i18n('is '));
 				} else {
-					$phrase->append('was ');
+					$phrase->append(i18n('was '));
 				}
 				$phrase->append(i18n('your'))->append(" $relationship");
 			}
@@ -3077,9 +3077,9 @@ sub print_person
 				}
 
 				if(is_alive(person => $person)) {
-					$phrase->append('is ');
+					$phrase->append(i18n('is '));
 				} else {
-					$phrase->append('was ');
+					$phrase->append(i18n('was '));
 				}
 
 				my $article;
@@ -3215,6 +3215,7 @@ sub print_person
 						# } else {
 							# die 'BUG: Impossible case';
 						# }
+					} #
 					if(defined($yob)) {
 						foreach my $dc(@deathcitations) {
 							my $citation = $citations{$dc};
@@ -3240,6 +3241,7 @@ sub print_person
 						# } else {
 							# die "BUG: Impossible case";
 						# }
+					# }
 					if(defined($yod)) {
 						foreach my $bc(@birthcitations) {
 							my $citation = $citations{$bc};
@@ -4273,7 +4275,7 @@ sub print_person
 				$phrase->append(' ' . lc($same_occupation_as_father));
 			} else {
 				$phrase->set('Like ' . lcfirst($person->possessive()) . ' father, ' . lcfirst($pronoun) .
-					(is_alive(person => $person) ? ' is' : ' was'));
+					i18n((is_alive(person => $person) ? ' is' : ' was')));
 				$phrase->append(' ' . Lingua::EN::Inflect::A(lc($same_occupation_as_father)));
 			}
 			push @phrases, $phrase;
@@ -12900,6 +12902,7 @@ the same day as::die gleichen Tag als
 times::fache
 they::Sie
 to::nach
+was::war
 was born::wurde geboren
 was married to %s::war mit %s verheiratet
 wife::Frau
