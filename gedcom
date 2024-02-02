@@ -3215,7 +3215,7 @@ sub print_person
 						# } else {
 							# die 'BUG: Impossible case';
 						# }
-					} #
+					# }
 					if(defined($yob)) {
 						foreach my $dc(@deathcitations) {
 							my $citation = $citations{$dc};
