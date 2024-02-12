@@ -3881,6 +3881,7 @@ sub print_person
 					$phrase->append(scalar(@spouses) . i18n(' times'));
 				}
 
+				# Sort the order of the marriages by date
 				my $all_marriages_have_date = 1;
 				foreach my $spouse(@spouses) {
 					if(!date_to_datetime(dateofmarriage($spouse))) {
@@ -3888,6 +3889,7 @@ sub print_person
 						last;
 					}
 				}
+
 				if($all_marriages_have_date) {
 					@spouses = Sort::Key::DateTime::dtkeysort {
 						my $date = dateofmarriage($_);
