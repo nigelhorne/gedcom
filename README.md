@@ -184,6 +184,7 @@ Of course you could also run gedcom as root,
 but I strongly advise you don't do that.
 
 [Library](https://github.com/nigelhorne/lib) - library of code common with
+[ged2site](https://github.com/nigelhorne/ged2site).
 
 ## Acknowledgements
 
@@ -198,7 +199,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2015-2023 Nigel Horne.
+Copyright 2015-2024 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)
