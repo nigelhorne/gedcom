@@ -869,7 +869,9 @@ if($opts{'w'}) {
 		$opts->{'logger'} = $logger;
 	}
 	$obituaries = Genealogy::ObituaryDailyTimes->new($opts);
+	die if(!defined($obituaries));
 	$wills = Genealogy::Wills->new($opts);
+	die if(!defined($wills));
 }
 
 my $meteo;
