@@ -259,7 +259,7 @@ if($opts{'B'}) {
 		$magick = 'Image::Magick';
 	}
 	push @modules, 'File::Temp', 'Image::Resize', $magick,
-		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent',
+		'Image::Magick::Thumbnail',
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';

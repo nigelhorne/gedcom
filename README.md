@@ -171,9 +171,11 @@ That will be fixed.
 Gedcom uses many CPAN modules which it will try to install if they are not
 on your system.
 If it doesn't have the necessary privilege to install the modules it will
-fail on starting up.
+fail on starting up with "permission denied" errors.
 This is most likely because you're not running as root
-(which is of course how it should be) and you're not using local::lib.
+(which is of course how it should be)
+and you're not using [local::lib](https://metacpan.org/pod/local::lib),
+or [Perlbrew](https://perlbrew.pl/).
 
 Running the program for the first time with no
 arguments should install them,
