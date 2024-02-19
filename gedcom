@@ -2768,7 +2768,7 @@ sub print_person
 			} else {
 				$phrase->append("was born $aob years and died $aod years ago ");
 			}
-			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
+			$phrase->append(i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			$phrase->append("[$_]") foreach(@birthcitations);
 			$phrase->append("[$_]") foreach(@deathcitations);
 		} elsif($aob) {
@@ -2778,7 +2778,7 @@ sub print_person
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
+					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			}
 			if($placeofbirth) {
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
@@ -2802,7 +2802,7 @@ sub print_person
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
+					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			}
 			if($placeofdeath) {
 				$phrase->append(place({ person => $person, record => $death, places_printed => \%places_printed }));
@@ -12780,6 +12780,8 @@ the same day as::the same day as
 they::they
 times::times
 to::to
+today::today
+tomorrow::tomorrow
 twice::twice
 was::was
 was buried::was buried
@@ -12852,6 +12854,8 @@ she::elle
 sister::sœur
 sisters::sœurs
 son::fils
+today::aujourd'hui
+tomorrow::demain
 the same day as::le même jour comme
 they:M:ils
 they:F:elles
@@ -12925,6 +12929,7 @@ the same day as::die gleichen Tag als
 times::fache
 they::Sie
 to::nach
+today::heute
 was::war
 was born::wurde geboren
 was married to %s::war mit %s verheiratet
