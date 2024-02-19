@@ -27,7 +27,7 @@ or
 
 ## Gedcom validation
 
-Gedcom also includes santity checking of your Gedcom file, including missing,
+Gedcom also includes sanity checking of your Gedcom file, including missing,
 impossible and inconsistent information.
 You can enable this mode with -w, which will print warnings of anything it finds.
 It's a sort of lint for Gedcom files.
