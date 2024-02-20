@@ -2686,14 +2686,14 @@ sub print_person
 			}
 		}
 
-		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
+		# if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
 			# FIXME: add citation
 			# if($opts{'B'}) {
 				# pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
 			# } else {
 				# print "\t$dbpedia\n\t";
 			# }
-		}
+		# }
 
 		my @phrases;
 		my $bio = Data::Text->new("\t");
@@ -6712,7 +6712,8 @@ sub print_person
 			}
 
 			my $ufinder = URI::Find::Schemeless->new(sub {
-				my($uri, $orig_uri) = @_;
+				# my($uri, $orig_uri) = @_;
+				my $orig_uri = $_[1];
 
 				if($opts{'w'}) {
 					my $u = URI->new($orig_uri);
