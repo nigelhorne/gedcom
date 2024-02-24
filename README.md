@@ -188,7 +188,7 @@ but I strongly advise you don't do that.
 [Library](https://github.com/nigelhorne/lib) - library of code common with
 [ged2site](https://github.com/nigelhorne/ged2site).
 
-On FreeBSD you'll need to "pkg install pkgconf gdlib"
+To use the -B option on FreeBSD you'll need to "sudo pkg install pkgconf gdlib ImageMagick7"
 
 ## Acknowledgements
 
