@@ -5407,7 +5407,7 @@ sub print_person
 					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
 				}
 
-				# print Data::Dumper->new([\@residencestringarray])->Dump();
+				print 'residencestringarray: ', Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 
 				# Because peek above only looks ahead one element:
 				# [
