@@ -188,6 +188,8 @@ but I strongly advise you don't do that.
 [Library](https://github.com/nigelhorne/lib) - library of code common with
 [ged2site](https://github.com/nigelhorne/ged2site).
 
+On FreeBSD you'll need to "pkg install pkgconf gdlib"
+
 ## Acknowledgements
 
 So many Perl CPAN modules that if I list them all I'll miss one, but special
