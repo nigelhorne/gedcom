@@ -249,7 +249,7 @@ my $language = get_language();
 print "Language = $language\n" if($opts{'v'});
 
 @needfull = ();
-my @modules = ('NJH::Normalize');
+my @modules = ();
 if($opts{'B'}) {
 	# yum install gd-devel ImageMagick-devel
 	my $magick;
@@ -706,6 +706,7 @@ if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
 	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
+my $abbr = Geo::Coder::Abbreviations->new();
 
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
@@ -9843,10 +9844,10 @@ sub places_are_the_same
 		$place1 = "$1 USA";
 	}
 	if(my $address = $record1->address()) {
-		$place1 = NJH::Normalize::normalize($address) . ", $place1";
+		$place1 = $abbr->normalize($address) . ", $place1";
 	}
 	if(my $address = $record2->address()) {
-		$place2 = NJH::Normalize::normalize($address) . ", $place2";
+		$place2 = $abbr->normalize($address) . ", $place2";
 	}
 
 	if($place2 =~ /(.+?)\s*United States$/i) {
