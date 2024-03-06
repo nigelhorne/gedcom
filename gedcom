@@ -2757,10 +2757,11 @@ sub print_person
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
 			}
-			if($language eq 'French') {
-				$phrase->append("votre $spouserelationship, ");
+			$phrase->append(i18n('your ') . $spouserelationship);
+			if($aob || $aod) {
+				$phrase->append(', ');
 			} else {
-				$phrase->append("your $spouserelationship, ");
+				$phrase->append(' ');
 			}
 			$haveprintedspousename = 1;
 		}
