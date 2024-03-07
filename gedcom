@@ -5560,8 +5560,8 @@ sub print_person
 			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
 			if($events[0]->type() ne $events[1]->type()) {
 				# Simple case - one journey made
-				$bio->append(journey({ person => $person, arrival => $arrival, departure => $departure, spouses => \@spouses, children => \@children }));
-				$bio->append('.  ');
+				$bio->append(journey({ person => $person, arrival => $arrival, departure => $departure, spouses => \@spouses, children => \@children }))
+					->append('.  ');
 			} else {
 				my $date1 = year(record => $events[0]);
 				my $date2 = year(record => $events[1]);
