@@ -6521,7 +6521,7 @@ sub print_person
 			# if($person->marriage_bann()) {
 				# die 'foo';
 			# }
-			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
+			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && (scalar(@events) == 0)) {
 				if($language eq 'French') {
 					if($phrase->length() == 0) {
 						$phrase->set("C'est");
@@ -6579,6 +6579,10 @@ sub print_person
 						' ',
 						between(year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }))
 					]);
+					if((scalar(@events) > 0) && (my $place = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
+						# Place hasn't already been printed with "that is also where she died"
+						$phrase->append($place);
+					}
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					my $p = $1;
 					if($dateofdeath =~ /\s$/) {
@@ -10865,7 +10869,7 @@ sub arrival
 	my $rc;
 
 	foreach my $event(@events) {
-		if($event->type() eq 'Arrival') {
+		if((ref($event) eq 'Gedcom::Record') && ($event->type() eq 'Arrival')) {
 			return if($rc);
 			$rc = $event;
 		}
