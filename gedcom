@@ -5576,7 +5576,9 @@ sub print_person
 					my @childnames;
 					foreach my $child(@children) {
 						if(($opts{'l'} || !is_alive(person => $child))) {
-							push(@childnames, $child->given_names());
+							my $given_names = $child->given_names();
+							$given_names =~ s/\.$//;
+							push(@childnames, $given_names);
 						}
 					}
 					if(scalar(@childnames)) {
@@ -10930,7 +10932,7 @@ sub journey
 
 	if($doa && ($doa =~ /(\d{3,4})$/)) {
 		$yoa = $1;
-		$doa =~ s/\s?\d{3,4}//;
+		$doa =~ s/\s+?\d{3,4}//;
 		if($dod && ($dod =~ /(\d{3,4})$/)) {
 			$yod = $1;
 			$dod =~ s/\s?\d{3,4}//;
@@ -10961,6 +10963,11 @@ sub journey
 			$rc = "En $year " . lc($rc);
 		} else {
 			$rc = "In $year " . lc($rc);
+		}
+		if($year eq $doa) {
+			# Nothing more to print, avoid "In 1914 he arrived in 1914"
+			# But keep "In 1914 he arrived on 1 Jul"
+			undef $doa;
 		}
 	} else {
 		die 'TODO: ', $person->as_string(), ': handle departure only record';
@@ -11015,7 +11022,10 @@ sub journey
 		return "$rc, departing $dod";
 	}
 
-	return "$rc, arriving $doa";
+	if(defined($doa)) {
+		return "$rc, arriving $doa";
+	}
+	return $rc
 }
 
 sub count_descendants_at_level
