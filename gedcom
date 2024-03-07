@@ -5561,36 +5561,39 @@ sub print_person
 			if($events[0]->type() ne $events[1]->type()) {
 				# Simple case - one journey made
 				$bio->append(journey({ person => $person, arrival => $arrival, departure => $departure }));
-				if($spouses[0] && ($opts{'l'} || !is_alive(person => $spouses[0]))) {
-					if(my $sarrival = arrival({ person => $spouses[0] })) {
+				if($arrival->date()) {
+					my $with_spouse;
+					if($spouses[0] && ($opts{'l'} || !is_alive(person => $spouses[0])) &&
+					   (my $sarrival = arrival({ person => $spouses[0] }))) {
 						if($sarrival->date() eq $arrival->date()) {
 							$bio->append(i18n(' with ') .
 								lcfirst($person->possessive()) . ' ' .
 								(($sex eq 'M') ? 'wife' : 'husband') .
 								', ' . $spouse->given_names());
+							$with_spouse++;
 						}
 					}
-				}
-				my @childnames;
-				foreach my $child(@children) {
-					if(($opts{'l'} || !is_alive(person => $child))) {
-						push(@childnames, $child->given_names());
+					my @childnames;
+					foreach my $child(@children) {
+						if(($opts{'l'} || !is_alive(person => $child))) {
+							push(@childnames, $child->given_names());
+						}
 					}
-				}
-				if(scalar(@childnames)) {
-					$bio->append(i18n(' and '));
-					if(scalar(@childnames) == scalar(@children)) {
-						$bio->append('all of ' )
-							->append(lcfirst($person->possessive()))
-							->append(i18n(' children'));
-					} elsif(scalar(@childnames) == 1) {
-						$bio->append(lcfirst($person->possessive()))
-							->append(i18n(' child '))
-							->append($childnames[0]);
-					} elsif(scalar(@childnames) > 1) {
-						$bio->append(lcfirst($person->possessive()))
-							->append(i18n(' children'))
-							->append(': ' . conjunction(@childnames));
+					if(scalar(@childnames)) {
+						$bio->append(i18n(($with_spouse) ? ' and ' : ' with '));
+						if(scalar(@childnames) == scalar(@children)) {
+							$bio->append('all of ' )
+								->append(lcfirst($person->possessive()))
+								->append(i18n(' children'));
+						} elsif(scalar(@childnames) == 1) {
+							$bio->append(lcfirst($person->possessive()))
+								->append(i18n(' child '))
+								->append($childnames[0]);
+						} elsif(scalar(@childnames) > 1) {
+							$bio->append(lcfirst($person->possessive()))
+								->append(i18n(' children'))
+								->append(': ' . conjunction(@childnames));
+						}
 					}
 				}
 				$bio->append('.  ');
