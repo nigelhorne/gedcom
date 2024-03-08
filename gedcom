@@ -6652,9 +6652,9 @@ sub print_person
 			if($opts{'B'}) {
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					@phrases = ();
 				}
 				$phrase = Data::Text->new();
-				@phrases = ();
 
 				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
@@ -6671,6 +6671,7 @@ sub print_person
 			} else {
 				if($phrase->length() > 0) {
 					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 				}
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
