@@ -193,6 +193,9 @@ To use the -B option on FreeBSD you'll need to
 cd /usr/local/lib;
 sudo ln -s libMagick++-7.so libMagickCore-7.Q16HDRI.so"
 
+To use the -M option on FreeBSD you'll need to
+"sudo pkg install apngasm"
+
 ## Acknowledgements
 
 So many Perl CPAN modules that if I list them all I'll miss one, but special
