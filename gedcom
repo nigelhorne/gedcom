@@ -426,7 +426,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
 	if(!-d $cachedir) {
-		mkdir $cachedir, 0700 || die "$cachedir: $!";
+		mkdir $cachedir, 02700 || die "$cachedir: $!";
 	}
 	print "Cachedir $cachedir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(
@@ -5501,6 +5501,7 @@ sub print_person
 				}
 				if(!$military_location) {
 					if($phrase->length()) {
+						$phrase =~ s/,$//;
 						push @phrases, $phrase;
 					}
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
