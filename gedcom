@@ -417,7 +417,7 @@ my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	my $cachedir = $ENV{'CACHEDIR'};
+	my $cachedir = $ENV{'CACHE_DIR'};
 	if($cachedir) {
 		mkdir $cachedir, 02700 if(!-d $cachedir);
 		$cachedir = File::Spec->catfile($cachedir, 'lwp-cache');
@@ -450,7 +450,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser->ua($cached_browser);
 
 	# Cache calls to openstreetmap etc.
-	$cachedir = $ENV{'CACHEDIR'};
+	$cachedir = $ENV{'CACHE_DIR'};
 	if($cachedir) {
 		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
 	} else {
@@ -555,7 +555,7 @@ my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
 # my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
 my $cachedir;
-if(my $e = $ENV{'CACHEDIR'}) {
+if(my $e = $ENV{'CACHE_DIR'}) {
 	$cachedir = File::Spec->catfile($e, basename($0));
 } else {
 	# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
@@ -12157,7 +12157,7 @@ sub add_death_notes
 		if((!$opts{'B'}) || (length($notes) < 4000)) {
 			$notes =~ tr/\r//;
 			$notes =~ tr/\n/ /;
-			$notes =~ s/\.$//;
+			$notes =~ s/[\.,]$//;
 			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 			$phrase->append(" ($notes)");
 		}
