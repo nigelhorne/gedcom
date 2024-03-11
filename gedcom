@@ -5501,7 +5501,6 @@ sub print_person
 				}
 				if(!$military_location) {
 					if($phrase->length()) {
-						$phrase =~ s/,$//;
 						push @phrases, $phrase;
 					}
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
