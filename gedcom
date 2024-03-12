@@ -972,10 +972,10 @@ if($opts{'H'}) {
 		# February
 		if(($year % 100) == 0) {
 			if(($year % 400) == 0) {
-				generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
+				generate(day => 29, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
 			}
 		} elsif(($year % 4) == 0) {
-			generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
+			generate(day => 29, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
 		}
 	} else {
 		generate(day => 29, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
@@ -1356,7 +1356,8 @@ if($ical) {
 	$dbh->disconnect();
 }
 
-sub generate {
+sub generate
+{
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $surname_initial;
@@ -1785,6 +1786,13 @@ sub print_person
 		die "BUG: row cannot be 8 or greater" if($row >= 8);
 
 		my $table = $params{'table'};
+		if(!defined($table)) {
+			my $i = 0;
+			while((my @call_details = caller($i++))) {
+				print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+			}
+			die 'BUG: table not set';
+		}
 
 		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
@@ -4915,7 +4923,7 @@ sub print_person
 								$residencestring =~ s/^\s//;
 							}
 							if(scalar(@siblings_living_with) == 1) {
-								$residencestring .= 
+								$residencestring .=
 									i18n(($sex eq 'F') ? ' sister, ' : ' brother, ') .
 									$siblings_living_with[0]->given_names();
 							} else {
@@ -10365,7 +10373,7 @@ sub pdfprint
 	if(ref($params{'string'})) {
 		$params{'string'} = $params{'string'}->as_string();
 	}
-	
+
 	# TODO: support UTF-8 fonts
 	my $string = $params{'string'};
 	if(!defined($string)) {
@@ -12796,7 +12804,7 @@ sub newspaper
 	my $event = $params{'event'};
 
 	my $rc = Class::Simple->new();
-	
+
 	if(my $date = $event->date()) {
 		$date =~ s/^0//;
 		$rc->date($date);
