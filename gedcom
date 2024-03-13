@@ -2766,14 +2766,11 @@ sub print_person
 			}
 			$phrase->append(i18n(' of '));
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append("$s, ");
+				$phrase->append("$s (");
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
 			}
-			$phrase->append(i18n('your ') . $spouserelationship);
-			if($aob || $aod) {
-				$phrase->append(', ');
-			}
+			$phrase->append(i18n('your ') . $spouserelationship)->append(') ');
 			$haveprintedspousename = 1;
 		}
 
