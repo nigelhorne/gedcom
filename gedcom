@@ -2839,16 +2839,11 @@ sub print_person
 				if($notes !~ /\."$/) {
 					$bio->append('.');
 				}
-				$phrase = Data::Text->new();
-				@phrases = ();
 				if(length($notes) > 160) {
 					$bio->append("\n\t");
 				} else {
 					$bio->append('  ');
 				}
-			} elsif(dateofbirth($person) && (scalar(@spouses) >= 1)) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 			}
 		}
 
