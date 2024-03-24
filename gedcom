@@ -10167,7 +10167,7 @@ sub is_alive
 			if(my $edate = $event->date()) {
 				if(my $eyear = get_year_from_date($edate)) {
 					if($eyear <= 1900) {
-						complain({ person => $person, warning => "Was alive in $eyear, can't find death information" });
+						complain({ person => $person, warning => "Was alive in $eyear but can't find death information" });
 						return 0;
 					}
 				}
