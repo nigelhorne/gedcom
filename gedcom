@@ -417,20 +417,20 @@ my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	my $cachedir = $ENV{'CACHE_DIR'};
-	if($cachedir) {
-		mkdir $cachedir, 02700 if(!-d $cachedir);
-		$cachedir = File::Spec->catfile($cachedir, 'lwp-cache');
+	my $cache_dir = $ENV{'CACHE_DIR'};
+	if($cache_dir) {
+		mkdir $cache_dir, 02700 if(!-d $cache_dir);
+		$cache_dir = File::Spec->catfile($cache_dir, 'lwp-cache');
 	} else {
-		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
+		# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+		$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
-	if(!-d $cachedir) {
-		mkdir $cachedir, 02700 || die "$cachedir: $!";
+	if(!-d $cache_dir) {
+		mkdir $cache_dir, 02700 || die "$cache_dir: $!";
 	}
-	print "Cachedir $cachedir\n" if($opts{'v'});
+	print "Cachedir $cache_dir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(
-		cache_dir => $cachedir,
+		cache_dir => $cache_dir,
 		agent => basename($0),
 		keep_alive => 1,
 		timeout => 30,
@@ -450,20 +450,20 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser->ua($cached_browser);
 
 	# Cache calls to openstreetmap etc.
-	$cachedir = $ENV{'CACHE_DIR'};
-	if($cachedir) {
-		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
+	$cache_dir = $ENV{'CACHE_DIR'};
+	if($cache_dir) {
+		$cache_dir = File::Spec->catfile($cache_dir, 'http-cache-transparent');
 	} else {
-		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'http-cache-transparent');
+		# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
+		$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'http-cache-transparent');
 	}
 
 	HTTP::Cache::Transparent::init({
-		BasePath => $cachedir,
+		BasePath => $cache_dir,
 		Verbose => $opts{'v'} ? 1 : 0,
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
-	}) || die "$0: $cachedir: $!";
+	}) || die "$0: $cache_dir: $!";
 
 	if($opts{'w'}) {
 		# If you have a locally written module to look up entries,
@@ -554,12 +554,12 @@ my $dfg = DateTime::Format::Genealogy->new();
 my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
 # my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
-my $cachedir;
+my $cache_dir;
 if(my $e = $ENV{'CACHE_DIR'}) {
-	$cachedir = File::Spec->catfile($e, basename($0));
+	$cache_dir = File::Spec->catfile($e, basename($0));
 } else {
-	# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
-	$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
+	# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
+	$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
 }
 
 my $gopts;
@@ -576,7 +576,7 @@ if(my $redis = $ENV{'REDIS_SERVER'}) {
 	# FIXME: The location of the geo-coding cache should be configurable
 	$gopts->{'cache'} = CHI->new(
 		driver => 'File',
-		root_dir => $cachedir,
+		root_dir => $cache_dir,
 		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 }
 	);
 	# $gopts->{'cache'} = CHI->new(
@@ -608,7 +608,7 @@ if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$topts{'cache_duration'} = '1 month';
 	$topts{'cache'} = CHI->new(
 		driver => 'File',
-		root_dir => $cachedir,
+		root_dir => $cache_dir,
 		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 }
 	);
 	$textgeocoder = Geo::Coder::Free->new(%topts);
@@ -864,7 +864,7 @@ if($opts{'w'}) {
 	} else {
 		$opts->{'cache'} = CHI->new(
 			driver => 'File',
-			root_dir => $cachedir,
+			root_dir => $cache_dir,
 		);
 	}
 	if($logger) {
