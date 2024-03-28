@@ -130,6 +130,7 @@ The options are:
 	an animated gif of births into $surname.gif
     -O: print a list of occupations, useful for finding typoes and inconsistencies
     -p: print the biography of the given person
+    -P: print a list of places, useful for finding typoes of inconsistencies
     -r: print a list of residences, useful for finding typos and inconsistencies
     -t: print tomorrow's information, don't use with -a
     -s: only print entries matching the home person's surname
