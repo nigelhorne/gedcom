@@ -130,8 +130,8 @@ The options are:
 	an animated gif of births into $surname.gif
     -O: print a list of occupations, useful for finding typoes and inconsistencies
     -p: print the biography of the given person
+    -r: print a list of residences, useful for finding typos and inconsistencies
     -t: print tomorrow's information, don't use with -a
-    -T: print a list of towns, useful for finding typos and inconsistencies
     -s: only print entries matching the home person's surname
     -S: create an SQLite database from a Gedcom
     -v: verbose - for debugging

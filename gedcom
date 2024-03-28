@@ -192,8 +192,8 @@ use Array::Iterator::BiDirectional;
 sub get_location($);
 
 my %opts;
-getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
+getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:rsStwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -r ] [ -s ] [ -S ] [ -t ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
 
 print "Starting\n" if($opts{'v'});
 
@@ -264,7 +264,7 @@ if($opts{'B'}) {
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';
-} elsif($opts{'T'} || $opts{'i'} || $opts{'O'}) {
+} elsif($opts{'r'} || $opts{'i'} || $opts{'O'}) {
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
 			'Data::ICal::Entry::Event',
@@ -279,7 +279,7 @@ if($opts{'B'}) {
 } else {
 	push @modules, 'GIS::Distance';
 }
-unless(($opts{'T'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
+unless(($opts{'r'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		# 'Geo::Coder::DataScienceToolkit',
@@ -310,7 +310,7 @@ if($opts{'w'}) {
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
 }
-if((!$opts{'O'}) && (!$opts{'T'}) && (!$opts{'S'})) {
+if((!$opts{'O'}) && (!$opts{'r'}) && (!$opts{'S'})) {
 	if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		push @modules, 'Geo::Coder::OpenCage';
 	}
@@ -595,7 +595,7 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
-if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
+if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
 	my %topts;
@@ -733,8 +733,8 @@ if($opts{'F'} && !$opts{'B'}) {
 if($opts{'m'} && !$opts{'H'}) {
 	die '-m only makes sense with the -H option';
 }
-if($opts{'y'} && (!$opts{'H'}) && (!$opts{'T'})) {
-	die '-y only makes sense with the -H or -T options';
+if($opts{'y'} && (!$opts{'H'}) && (!$opts{'r'})) {
+	die '-y only makes sense with the -H or -r options';
 }
 if($opts{'e'} && ((!$opts{'L'}) || (!$opts{'H'}))) {
 	die '-e only makes sense with the -L option and -H options';
@@ -812,17 +812,17 @@ if($opts{'x'}) {
 	if($opts{'M'}) {
 		die '-g and -x option are exclusive'
 	}
-	$opts{'T'} = 1;
+	$opts{'r'} = 1;
 } elsif($opts{'g'} || $opts{'M'}) {
-	$opts{'T'} = 1;
+	$opts{'r'} = 1;
 }
-if($opts{'T'} || $opts{'O'}) {
+if($opts{'r'} || $opts{'O'}) {
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 my $ical;
 if($opts{'i'}) {
-	if($opts{'T'}) {
-		die '-i and -T are exclusive';
+	if($opts{'r'}) {
+		die '-i and -r are exclusive';
 	}
 	$ical = Data::ICal->new();
 	$ical->add_properties(
@@ -878,7 +878,7 @@ if($opts{'w'}) {
 
 my $meteo;
 
-if($opts{'d'} && (!$opts{'T'}) && (!$opts{'O'})) {
+if($opts{'d'} && (!$opts{'r'}) && (!$opts{'O'})) {
 	$meteo = Weather::Meteo->new(ua => $cached_browser);
 }
 
@@ -1897,7 +1897,7 @@ sub print_person
 			}
 		}
 		return;
-	} elsif($opts{'T'}) {
+	} elsif($opts{'r'}) {
 		foreach my $place(get_all_residences($person)) {
 			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
 				if($opts{'y'}) {
@@ -9325,7 +9325,7 @@ sub place {
 		validate_place({ person => $params{'person'}, place => $rc });
 	}
 
-	if($birth_country && (!$opts{'T'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
+	if($birth_country && (!$opts{'r'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
 		$place = $1;
 	}
 
@@ -9340,7 +9340,7 @@ sub place {
 		$place =~ s/,(\S)/, $1/g;
 	}
 
-	if((!$opts{'T'}) && ($place =~ /^\d/)) {
+	if((!$opts{'r'}) && ($place =~ /^\d/)) {
 		if(my $places_printed = $params{'places_printed'}) {
 			$places_printed->{" at$place"} = 1;
 			if($place =~ /(.+),(.+?),(.+?),(.+?),(.+?)$/) {
@@ -9413,7 +9413,7 @@ sub place {
 	}
 	$rc->set({ lang => $lang, string => $place });
 
-	if((!$opts{'T'}) && (my $places_printed = $params{'places_printed'})) {
+	if((!$opts{'r'}) && (my $places_printed = $params{'places_printed'})) {
 		if(($language eq 'French') && ($place =~ /(.+), London, England/)) {
 			$place = "$1, Londres, Angleterre";
 			$rc->fr($place);
@@ -11701,7 +11701,7 @@ sub dump_places {
 			}
 			next;
 		} else {
-			# $opts{'T'}
+			# $opts{'r'}
 			print "$place: ";
 		}
 		my $previous;
