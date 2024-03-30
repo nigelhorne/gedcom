@@ -1465,9 +1465,9 @@ sub generate
 					if($generation >= 5) {
 						$t = ($generation - 2) . ' times great-grandchildren';
 					} elsif($generation == 1) {
-						$t = 'Children';
+						$t = ucfirst(i18n('children'));
 					} elsif($generation == 2) {
-						$t = 'Grandchildren';
+						$t = ucfirst(i18n('grandchildren'));
 					} elsif($generation == 3) {
 						$t = 'Great-grandchilden';
 					} elsif($generation == 4) {
@@ -12878,6 +12878,7 @@ eldest::eldest
 father::father
 following the death of::following the death of
 from::from
+grandchildren::grandchildren
 had::had
 has had::has had
 has lived::has lived
@@ -13033,6 +13034,7 @@ eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
 from::von
+grandchildren::Enkelkinder
 has had::hatte
 had::hatte
 has lived in %s::hat in %s gelebt
