@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2023, Nigel Horne
+# Copyright (C) 2015-2024, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -10905,14 +10905,16 @@ sub journey
 	my $person = $params{'person'};
 	my $arrival = $params{'arrival'};
 	my $departure = $params{'departure'};
-	my @spouses = @{$params{'spouses'}} if($params{'spouses'});
-	my @children = @{$params{'children'}} if($params{'children'});
-
+	my @spouses;
+	my @children;
 	my $yod;
 	my $yoa;
 	my $dod = $departure->date();
 	my $doa = $arrival->date();
 	my $only_have_departure_year;
+
+	@spouses = @{$params{'spouses'}} if($params{'spouses'});
+	@children = @{$params{'children'}} if($params{'children'});
 
 	# my $i = 0;
 	# while((my @call_details = (caller($i++)))) {
