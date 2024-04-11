@@ -3126,11 +3126,7 @@ sub print_person
 
 			if(scalar(@twins) == 1) {	# TODO triplets and higher order
 				if((scalar(@phrases) > 0) && ($phrase->length == 0)) {
-					if($language eq 'French') {
-						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
-					} else {
-						$phrase->set('twin of');
-					}
+					$phrase->set(i18n({ person => $person, format => 'twin of' }));
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
@@ -12917,6 +12913,7 @@ to::to
 today::today
 tomorrow::tomorrow
 twice::twice
+twin of::twin of
 was::was
 was buried::was buried
 was born::was born
@@ -12997,6 +12994,8 @@ they:F:elles
 times::temps
 to::à
 twice::deux fois
+twin of:F:jumelle de
+twin of:M:jumeau de
 was::était
 was buried:M:a été inhumé
 was buried:F:a été inhumée
