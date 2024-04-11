@@ -3125,7 +3125,7 @@ sub print_person
 			my @twins = twins({ birth_dt => $birth_dt, siblings => \@siblings });
 
 			if(scalar(@twins) == 1) {	# TODO triplets and higher order
-				if(scalar(@occupations)) {
+				if((scalar(@phrases) > 0) && ($phrase->length == 0)) {
 					if($language eq 'French') {
 						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
 					} else {
