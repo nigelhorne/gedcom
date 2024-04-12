@@ -79,7 +79,7 @@ this is an opportunity to find locations in your map that are incorrect
 
 ## Family History Book
 
-You can create a genealogy book as a PDF of your family history to give to
+You can create a genealogy book as a PDF of your family history and research to give to
 your dad on father's day:
 
     # Note that this will only print people related to your father, even if you give -a
