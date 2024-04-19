@@ -1542,6 +1542,8 @@ sub print_person
 				$dateofbirth = undef;
 			}
 		}
+	} else {
+		undef $dateofbirth;
 	}
 
 	my $onlybirthdays = $params{'onlybirthdays'};
@@ -1565,13 +1567,9 @@ sub print_person
 
 	my $yob;	# Year of birth
 	if($dateofbirth) {
-		if(($dateofbirth eq 'UNKNOWN') || ($dateofbirth eq '?')) {
-			$dateofbirth = undef;
-		} else {
-			$yob = get_year_from_date($dateofbirth);
-			if(!defined($yob)) {
-				complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
-			}
+		$yob = get_year_from_date($dateofbirth);
+		if(!defined($yob)) {
+			complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
 		}
 	}
 
@@ -1731,7 +1729,7 @@ sub print_person
 	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
 	my $lastname = ucfirst(lc($person->surname())); # RT109786
 
-	if(defined($opts{'h'}) && ($opts{'s'} && defined($lastname))) {
+	if(defined($opts{'h'}) && $opts{'s'} && defined($lastname)) {
 		my $surname;
 
 		if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
@@ -2435,7 +2433,6 @@ sub print_person
 	}
 
 	my $birth_dt = date_to_datetime(date => $dateofbirth);
-	my $death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($birth_dt && (my $spouse = $spouses[0])) {
 		my $sdob = dateofbirth($spouse);
@@ -2465,6 +2462,8 @@ sub print_person
 			warning => 'married when less than 16 years old'
 		});
 	}
+
+	my $death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($opts{'d'} || $opts{'B'}) {
 		my $baptism = $person->get_record('baptism');
