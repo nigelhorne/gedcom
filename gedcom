@@ -4226,7 +4226,7 @@ sub print_person
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			} elsif(scalar(@phrases) == 0) {
-				$phrase->set($pronoun);
+				$phrase->set("$pronoun ");
 			}
 			if(is_alive(person => $person)) {
 				$phrase->append('has ');
@@ -6219,7 +6219,7 @@ sub print_person
 							}
 							$phrase->append(' following ' .
 								($person->pronoun() eq 'She' ? 'her' : 'his') .
-								i18n(' funeral ') .
+								i18n(' funeral') .
 								$place);
 						} elsif($place = place({ person => $person, record => $record, nopreposition => 1 })) {
 							if(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
@@ -6473,7 +6473,7 @@ sub print_person
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 						$phrase->append(' following ' .
 							($person->pronoun() eq 'She' ? 'her' : 'his') .
-							i18n(' funeral ') .
+							i18n(' funeral') .
 							$place);
 					}
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
