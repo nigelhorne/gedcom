@@ -6213,13 +6213,14 @@ sub print_person
 						$record = $cremation;
 					}
 					if(defined($record)) {
-						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 							if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
 							}
 							$phrase->append(' following ' .
 								($person->pronoun() eq 'She' ? 'her' : 'his') .
-								" funeral at$place");
+								i18n(' funeral ') .
+								$place);
 						} elsif($place = place({ person => $person, record => $record, nopreposition => 1 })) {
 							if(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
@@ -6469,10 +6470,11 @@ sub print_person
 					if($burial && $placeofburial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
 						$phrase->append(" ($weather)");
 					}
-					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 						$phrase->append(' following ' .
 							($person->pronoun() eq 'She' ? 'her' : 'his') .
-							" funeral at$place");
+							i18n(' funeral ') .
+							$place);
 					}
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
@@ -12902,6 +12904,7 @@ eldest::eldest
 father::father
 following the death of::following the death of
 from::from
+funeral::funeral
 grandchildren::grandchildren
 great-grandchildren::great-grandchildren
 had::had
@@ -13062,6 +13065,7 @@ eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
 from::von
+funeral::funeral
 grandchildren::Enkelkinder
 great-grandchildren::Urenkelkinder
 has had::hatte
