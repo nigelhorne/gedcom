@@ -6168,9 +6168,14 @@ sub print_person
 						$phrase->set(text => [ "\n\t", $firstname // $pronoun ]);
 					}
 					$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
-					if(my $city = ($placeofburial // $placeofcremation)) {
+					# Neither burial nor cremation could be set if we guessed information from the funeral
+					if(($burial || $cremation) && (my $city = ($placeofburial // $placeofcremation))) {
 						if($placeofbirth && places_are_the_same(first => $city, second => $placeofbirth)) {
-							if(my $address = $burial->address()) {
+							if($burial) {
+								if(my $address = $burial->address()) {
+									$phrase->append(" at $address");
+								}
+							} elsif(my $address = $cremation->address()) {
 								$phrase->append(" at $address");
 							}
 							$phrase->append(' in ' .
