@@ -4515,6 +4515,7 @@ sub print_person
 				my $residencestring;
 				my $latitude;
 				my $longitude;
+				my %living_with;
 
 				print __LINE__, ": count = $count\n" if($opts{'v'});
 
@@ -4881,6 +4882,11 @@ sub print_person
 										# false positives when only a city is known
 										if(($place =~ /^\s\d/ && (my $ssp = place({ person => $ss, record => $ssr, nopreposition => 1 })))) {
 											if($ssp eq $place) {
+												if($ss->sex() eq 'F') {
+													$living_with{'sister-in-law'} = $ss
+												} else {
+													$living_with{'brother-in-law'} = $ss
+												}
 												if($first) {
 													$residencestring .= i18n(' when ') . i18n(lc($person->pronoun())) .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
@@ -4924,15 +4930,22 @@ sub print_person
 						if(scalar(@siblings_living_with)) {
 							# Print out all the siblings this person was living with
 							# as an adult
+							$living_with{'siblings'} = \@siblings_living_with;
 							if($first) {
-								$residencestring .= ' (' . i18n('with ') . ($person->pronoun() eq 'She' ? 'her' : 'his');
+								$residencestring .= ' (' .
+									i18n('when ') .
+									i18n(($sex eq 'M') ? 'he' : 'she') .
+									i18n(' was living') .
+									i18n(' with ') .
+									($sex eq 'M' ? 'his' : 'her');
+								$first = 0;
 							} else {
 								$residencestring =~ s/^\s//;
 							}
 							if(scalar(@siblings_living_with) == 1) {
 								$residencestring .=
 									i18n(($sex eq 'F') ? ' sister, ' : ' brother, ') .
-									$siblings_living_with[0]->given_names();
+									$siblings_living_with[0]->given_names() . ',';
 							} else {
 								my $sex = $siblings_living_with[0]->sex();
 								foreach my $sibling(@siblings_living_with) {
@@ -4997,6 +5010,7 @@ sub print_person
 									if($p eq $place) {
 										if($mdate eq $rdate) {
 											$with_mother++;
+											$living_with{'mother'} = $mother;
 											last;
 										} elsif(!$printed_mother_same_place) {
 											$mother_date = $mdate;
@@ -5033,6 +5047,7 @@ sub print_person
 									if($p eq $place) {
 										if($fdate eq $rdate) {
 											$with_father++;
+											$living_with{'father'} = $father;
 											last;
 										} elsif(!$printed_father_same_place) {
 											$father_date = $fdate;
@@ -5058,9 +5073,10 @@ sub print_person
 								if($bdiff->in_units('years') >= 30) {
 									$residencestring .= ' ';
 									if($first) {
-										$residencestring .= '(';
+										$residencestring .= '(' .
+											i18n('when ') .
+											i18n(($sex eq 'M') ? 'he' : 'she') . i18n(' was living');
 									}
-									$residencestring .= i18n('when ') . i18n(($sex eq 'M') ? 'he' : 'she') . i18n(' was living');
 									if($language eq 'French') {
 										$residencestring =~ s/lorsque elle/lorsqu'elle/;
 									}
@@ -5371,6 +5387,11 @@ sub print_person
 									if((ref($event) eq 'Gedcom::Record') &&
 									   $event->date() && ($event->date() eq $rdate) &&
 									   places_are_the_same({ person => $child, first => $residence, second => $event })) {
+									   	if($child->sex() eq 'F') {
+											push @{$living_with{'daughter'}}, $child;
+										} else {
+											push @{$living_with{'son'}}, $child;
+										}
 										$residencestring .= i18n(' when ') .
 											lcfirst(i18n($person->pronoun())) .
 											' was living with ' .
@@ -5412,8 +5433,13 @@ sub print_person
 					}
 					$residencestring =~ s/\sand$//;
 					$residencestring =~ s/,$//;
+					print __LINE__, ": adding '$residencestring' to residencestringarray\n" if($opts{'v'});
 					push @residencestringarray, $residencestring;
 					$printed_residence = 1;
+					if(scalar(keys %living_with)) {
+						$Data::Dumper::Maxdepth = 2;
+						print __LINE__, ': TODO: ', Data::Dumper->new([\%living_with])->Dump();
+					}
 				}
 			}
 
@@ -5454,7 +5480,7 @@ sub print_person
 					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
 				}
 
-				print 'residencestringarray: ', Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
+				print __LINE__, ': residencestringarray: ', Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 
 				# Because peek above only looks ahead one element:
 				# [
