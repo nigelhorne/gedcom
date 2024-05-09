@@ -5438,7 +5438,7 @@ sub print_person
 					$printed_residence = 1;
 					if(scalar(keys %living_with)) {
 						$Data::Dumper::Maxdepth = 2;
-						print __LINE__, ': TODO: ', Data::Dumper->new([\%living_with])->Dump();
+						print __LINE__, ": TODO ($rdate): ", Data::Dumper->new([\%living_with])->Dump();
 					}
 				}
 			}
@@ -6535,7 +6535,7 @@ sub print_person
 							$phrase->append(i18n({ person => $person, format => 'is buried' }));
 						}
 						if($b eq ' there') {
-							if($b = $cremation->address()) {
+							if($b = $burial->address()) {
 								$phrase->append(i18n(' at '))->append($b);
 							}
 							$phrase->append(' ');
@@ -6543,7 +6543,7 @@ sub print_person
 							$phrase->append("$b ");
 						}
 						if($dateofburial) {
-							$phrase->append(' ' . year({ person => $person, date => $dateofburial }));
+							$phrase->append(year({ person => $person, date => $dateofburial }));
 						}
 						$weather = weather({ person => $person, record => $burial, meteo => $meteo });
 					} else {
@@ -9224,7 +9224,7 @@ sub place {
 				return;
 			}
 		}
-	} elsif(ref($address) eq 'Gedcom::Record') {
+	} elsif(ref($address)) {
 		$place = getaddress($address);
 		$address = undef;
 	}
@@ -9244,6 +9244,7 @@ sub place {
 	my $on_road;
 	if($address) {
 		$address =~ s/\xc3\xb1/\N{U+00F1}/g;	# ñ
+		$address =~ s/\xc3\xa9/\N{U+00E9}/g;	# é
 		if($address =~ /(.+)\sSt\.?$/) {
 			$address = "$1 Street";
 			$on_road = 1;
