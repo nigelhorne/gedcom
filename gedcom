@@ -2634,6 +2634,7 @@ sub print_person
 				}
 			}
 		}
+
 		my @children = map { $_->children() } $person->fams();
 		my $numberofchildren = scalar(@children);
 
@@ -5390,7 +5391,7 @@ sub print_person
 									if((ref($event) eq 'Gedcom::Record') &&
 									   $event->date() && ($event->date() eq $rdate) &&
 									   places_are_the_same({ person => $child, first => $residence, second => $event })) {
-									   	if($child->sex() eq 'F') {
+										if($child->sex() eq 'F') {
 											push @{$living_with{'daughter'}}, $child;
 										} else {
 											push @{$living_with{'son'}}, $child;
