@@ -2863,7 +2863,7 @@ sub print_person
 		}
 
 		if($phrase->length()) {
-			push @phrases, $phrase;
+			push @phrases, $phrase->trim();
 			$phrase = Data::Text->new();
 		}
 		if(scalar(@phrases)) {
