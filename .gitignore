@@ -20,3 +20,5 @@ nytprof.out
 .*.swp
 local/
 pdf/
+cals/
+csv/

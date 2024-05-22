@@ -18,7 +18,7 @@ jobs:
         os:
           - name: freebsd
             version: '13.0'
-            pkginstall: pkg install -y p5-LWP-UserAgent-Cached p5-CHI p5-autodie p5-Date-Manip p5-Data-ICal p5-Data-Section p5-Sort-Key-DateTime p5-GIS-Distance p5-Marpa p5-Lingua-EN-Numbers-Ordinate p5-JSON p5-Net-OAuth p5-LWP-Protocol-https p5-CPAN-DistnameInfo p5-XML-Parser
+            pkginstall: pkg install -y p5-LWP-UserAgent-Cached p5-CHI p5-autodie p5-Date-Manip p5-Data-ICal p5-Data-Section p5-Sort-Key-DateTime p5-GIS-Distance p5-Marpa p5-Lingua-EN-Numbers-Ordinate p5-JSON p5-Net-OAuth p5-LWP-Protocol-https p5-CPAN-DistnameInfo p5-XML-Parser p5-Array-Iterator p5-HTML-Parser
           - name: openbsd
             version: '7.1'
             pkginstall: pkg_add p5-LWP-Protocol-https
@@ -37,7 +37,7 @@ jobs:
             sudo hostname example.com
             sudo ${{ matrix.os.pkginstall }}
             yes | sudo cpan -i App::cpanminus
-            sudo cpanm -iqn --skip-satisfied Array::Iterator Data::Section::Simple Date::Manip FindBin Gedcom Genealogy::Gedcom::Date Date::Parse IPC::System::Simple CHI File::HomeDir String::Compare HTML::Entities Lingua::Conjunction Lingua::EN::NameCase Lingua::EN::NameParse Lingua::EN::ABC Lingua::String Lingua::EN::Inflect DateTime::Format::Natural Locale::AU Locale::CA Locale::US Data::Text DateTime::Format::Genealogy Parse::RecDescent Sort::Key::DateTime Text::Names::GB Class::Simple::Cached Class::Simple::Readonly::Cached File::Spec Net::OAuth Getopt::Std File::Basename Locale::Object::Country Term::ANSIColor Geo::Coder::Abbreviations Roman Unicode::Diacritic::Strip utf8::all Marpa::R2 B::Lint warnings::unused Lingua::EN::Numbers::Ordinate CPAN::DistnameInfo CHI XML::Hash
+            sudo cpanm -iqn --skip-satisfied Array::Iterator Data::Section::Simple Date::Manip FindBin  Database::Abstraction Gedcom Genealogy::Gedcom::Date Date::Parse IPC::System::Simple CHI File::HomeDir String::Compare HTML::Entities Lingua::Conjunction Lingua::EN::NameCase Lingua::EN::NameParse Lingua::EN::ABC Lingua::String Lingua::EN::Inflect DateTime::Format::Natural Locale::AU Locale::CA Locale::US Data::Text DateTime::Format::Genealogy Parse::RecDescent Sort::Key::DateTime Text::Names::GB Class::Simple::Cached Class::Simple::Readonly::Cached File::Spec Net::OAuth Getopt::Std File::Basename Locale::Object::Country Term::ANSIColor Geo::Coder::Abbreviations Roman Unicode::Diacritic::Strip utf8::all Marpa::R2 B::Lint warnings::unused Lingua::EN::Numbers::Ordinate CPAN::DistnameInfo CHI XML::Hash
             sudo cpanm -iqn F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz
             sudo chown -R runner:runner .
             perl -MO=Lint ./gedcom

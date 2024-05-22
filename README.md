@@ -1,4 +1,4 @@
-[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=A+general+purport+utility+for+gedcom+files+#genealogy&url=https://github.com/nigelhorne/gedcom&via=nigelhorne)
+[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://x.com/intent/tweet?text=A+general+purpose+utility+for+gedcom+files+#genealogy&url=https://github.com/nigelhorne/gedcom&via=nigelhorne)
 
 # gedcom
 
@@ -27,7 +27,7 @@ or
 
 ## Gedcom validation
 
-Gedcom also includes santity checking of your Gedcom file, including missing,
+Gedcom also includes sanity checking of your Gedcom file, including missing,
 impossible and inconsistent information.
 You can enable this mode with -w, which will print warnings of anything it finds.
 It's a sort of lint for Gedcom files.
@@ -79,7 +79,7 @@ this is an opportunity to find locations in your map that are incorrect
 
 ## Family History Book
 
-You can create a genealogy book as a PDF of your family history to give to
+You can create a genealogy book as a PDF of your family history and research to give to
 your dad on father's day:
 
     # Note that this will only print people related to your father, even if you give -a
@@ -130,8 +130,9 @@ The options are:
 	an animated gif of births into $surname.gif
     -O: print a list of occupations, useful for finding typoes and inconsistencies
     -p: print the biography of the given person
+    -P: print a list of places, useful for finding typoes of inconsistencies
+    -r: print a list of residences, useful for finding typos and inconsistencies
     -t: print tomorrow's information, don't use with -a
-    -T: print a list of towns, useful for finding typos and inconsistencies
     -s: only print entries matching the home person's surname
     -S: create an SQLite database from a Gedcom
     -v: verbose - for debugging
@@ -171,9 +172,11 @@ That will be fixed.
 Gedcom uses many CPAN modules which it will try to install if they are not
 on your system.
 If it doesn't have the necessary privilege to install the modules it will
-fail on starting up.
+fail on starting up with "permission denied" errors.
 This is most likely because you're not running as root
-(which is of course how it should be) and you're not using local::lib.
+(which is of course how it should be)
+and you're not using [local::lib](https://metacpan.org/pod/local::lib),
+or [Perlbrew](https://perlbrew.pl/).
 
 Running the program for the first time with no
 arguments should install them,
@@ -184,6 +187,15 @@ Of course you could also run gedcom as root,
 but I strongly advise you don't do that.
 
 [Library](https://github.com/nigelhorne/lib) - library of code common with
+[ged2site](https://github.com/nigelhorne/ged2site).
+
+To use the -B option on FreeBSD you'll need to
+"sudo pkg install pkgconf gdlib ImageMagick7;
+cd /usr/local/lib;
+sudo ln -s libMagick++-7.so libMagickCore-7.Q16HDRI.so"
+
+To use the -M option on FreeBSD you'll need to
+"sudo pkg install apngasm"
 
 ## Acknowledgements
 
@@ -198,7 +210,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2015-2023 Nigel Horne.
+Copyright 2015-2024 Nigel Horne.
 
 This program is released under the following licence: GPL for personal use on a single computer.
 All other users (including Commercial, Charity, Educational, Government)

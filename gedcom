@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2023, Nigel Horne
+# Copyright (C) 2015-2024, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -20,7 +20,7 @@
 #	all BMD, baptism and burials
 # TODO: look at census records to note the different places that a person's children
 #	were born and note if the residences of the person don't include those places
-# TODO: add an option for -Aw to create output as a CSV
+# TODO: add an option for -Adw to create output as a CSV
 # TODO:	remove date_to_datetime
 # TODO: finish the -M option.  Note that UK is:
 #	https://static-maps.yandex.ru/1.x/?lang=en_US&ll=-2.51,54.20&z=5&l=map&size=650,450
@@ -40,6 +40,7 @@
 # TODO: consider Data::Dumper::Names instead of Data::Dumper
 # TODO: investigate User::Identity
 # TODO: fix utf-8 in PDF by adding support for unicode fonts
+# TODO: use Geo::Coder::Abreviate->normalize once that's completed
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -191,8 +192,8 @@ use Array::Iterator::BiDirectional;
 sub get_location($);
 
 my %opts;
-getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:sStTwWxvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -s ] [ -S ] [ -t ] [ -T ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
+getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:PrsStwWxvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -P ] [ -r ] [ -s ] [ -S ] [ -t ] [ -w [ -W ] [ -g | -x ]] filename [ filename2 ]" unless($ARGV[0]);
 
 print "Starting\n" if($opts{'v'});
 
@@ -240,6 +241,9 @@ if($opts{h}) {
 if($opts{'f'}) {
 	$opts{'w'} = 1;
 }
+if($opts{'P'}) {
+	$opts{'r'} = 1;
+}
 
 die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'d'});
 
@@ -248,7 +252,7 @@ my $language = get_language();
 print "Language = $language\n" if($opts{'v'});
 
 @needfull = ();
-my @modules = ('NJH::Normalize');
+my @modules = ();
 if($opts{'B'}) {
 	# yum install gd-devel ImageMagick-devel
 	my $magick;
@@ -259,11 +263,11 @@ if($opts{'B'}) {
 		$magick = 'Image::Magick';
 	}
 	push @modules, 'File::Temp', 'Image::Resize', $magick,
-		'Image::Magick::Thumbnail', 'HTTP::Cache::Transparent',
+		'Image::Magick::Thumbnail',
 		'NJH::PDFPage' ,'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';
-} elsif($opts{'T'} || $opts{'i'} || $opts{'O'}) {
+} elsif($opts{'r'} || $opts{'i'} || $opts{'O'}) {
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
 			'Data::ICal::Entry::Event',
@@ -278,7 +282,7 @@ if($opts{'B'}) {
 } else {
 	push @modules, 'GIS::Distance';
 }
-unless(($opts{'T'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
+unless(($opts{'r'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		# 'Geo::Coder::DataScienceToolkit',
@@ -309,7 +313,7 @@ if($opts{'w'}) {
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
 }
-if((!$opts{'O'}) && (!$opts{'T'}) && (!$opts{'S'})) {
+if((!$opts{'O'}) && (!$opts{'r'}) && (!$opts{'S'})) {
 	if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		push @modules, 'Geo::Coder::OpenCage';
 	}
@@ -416,20 +420,20 @@ my $us = Locale::US->new();
 my $birth_country;
 my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
-	my $cachedir = $ENV{'CACHEDIR'};
-	if($cachedir) {
-		mkdir $cachedir, 02700 if(!-d $cachedir);
-		$cachedir = File::Spec->catfile($cachedir, 'lwp-cache');
+	my $cache_dir = $ENV{'CACHE_DIR'};
+	if($cache_dir) {
+		mkdir $cache_dir, 02700 if(!-d $cache_dir);
+		$cache_dir = File::Spec->catfile($cache_dir, 'lwp-cache');
 	} else {
-		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
+		# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'lwp');
+		$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'lwp-cache')
 	}
-	if(!-d $cachedir) {
-		mkdir $cachedir, 0700 || die "$cachedir: $!";
+	if(!-d $cache_dir) {
+		mkdir $cache_dir, 02700 || die "$cache_dir: $!";
 	}
-	print "Cachedir $cachedir\n" if($opts{'v'});
+	print "Cachedir $cache_dir\n" if($opts{'v'});
 	$cached_browser = LWP::UserAgent::Cached->new(
-		cache_dir => $cachedir,
+		cache_dir => $cache_dir,
 		agent => basename($0),
 		keep_alive => 1,
 		timeout => 30,
@@ -449,20 +453,20 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	$browser->ua($cached_browser);
 
 	# Cache calls to openstreetmap etc.
-	$cachedir = $ENV{'CACHEDIR'};
-	if($cachedir) {
-		$cachedir = File::Spec->catfile($cachedir, 'http-cache-transparent');
+	$cache_dir = $ENV{'CACHE_DIR'};
+	if($cache_dir) {
+		$cache_dir = File::Spec->catfile($cache_dir, 'http-cache-transparent');
 	} else {
-		# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
-		$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'http-cache-transparent');
+		# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', 'http-cache-transparent');
+		$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', 'http-cache-transparent');
 	}
 
 	HTTP::Cache::Transparent::init({
-		BasePath => $cachedir,
+		BasePath => $cache_dir,
 		Verbose => $opts{'v'} ? 1 : 0,
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
-	}) || die "$0: $cachedir: $!";
+	}) || die "$0: $cache_dir: $!";
 
 	if($opts{'w'}) {
 		# If you have a locally written module to look up entries,
@@ -553,12 +557,12 @@ my $dfg = DateTime::Format::Genealogy->new();
 my $tz = $ENV{'TZ'} // DateTime::TimeZone->new(name => 'local');
 
 # my $geocoder = Geo::Coder::List->new(cache => CHI->new(driver => 'Memcached', servers => [ '192.168.1.15:11211', '127.0.0.1:11211' ]));
-my $cachedir;
-if(my $e = $ENV{'CACHEDIR'}) {
-	$cachedir = File::Spec->catfile($e, basename($0));
+my $cache_dir;
+if(my $e = $ENV{'CACHE_DIR'}) {
+	$cache_dir = File::Spec->catfile($e, basename($0));
 } else {
-	# $cachedir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
-	$cachedir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
+	# $cache_dir = File::Spec->catfile(File::Spec->tmpdir(), 'cache', basename($0));
+	$cache_dir = File::Spec->catfile(File::HomeDir->my_home(), '.cache', basename($0));
 }
 
 my $gopts;
@@ -575,7 +579,7 @@ if(my $redis = $ENV{'REDIS_SERVER'}) {
 	# FIXME: The location of the geo-coding cache should be configurable
 	$gopts->{'cache'} = CHI->new(
 		driver => 'File',
-		root_dir => $cachedir,
+		root_dir => $cache_dir,
 		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 }
 	);
 	# $gopts->{'cache'} = CHI->new(
@@ -594,7 +598,7 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
-if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
+if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
 	my %topts;
@@ -607,7 +611,7 @@ if(((!$opts{'T'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$topts{'cache_duration'} = '1 month';
 	$topts{'cache'} = CHI->new(
 		driver => 'File',
-		root_dir => $cachedir,
+		root_dir => $cache_dir,
 		l1_cache => { driver => 'RawMemory', global => 1, max_size => 1024*1024 }
 	);
 	$textgeocoder = Geo::Coder::Free->new(%topts);
@@ -705,6 +709,7 @@ if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
 	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
+my $abbr = Geo::Coder::Abbreviations->new();
 
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
@@ -731,8 +736,8 @@ if($opts{'F'} && !$opts{'B'}) {
 if($opts{'m'} && !$opts{'H'}) {
 	die '-m only makes sense with the -H option';
 }
-if($opts{'y'} && (!$opts{'H'}) && (!$opts{'T'})) {
-	die '-y only makes sense with the -H or -T options';
+if($opts{'y'} && (!$opts{'H'}) && (!$opts{'r'})) {
+	die '-y only makes sense with the -H or -r options';
 }
 if($opts{'e'} && ((!$opts{'L'}) || (!$opts{'H'}))) {
 	die '-e only makes sense with the -L option and -H options';
@@ -810,17 +815,17 @@ if($opts{'x'}) {
 	if($opts{'M'}) {
 		die '-g and -x option are exclusive'
 	}
-	$opts{'T'} = 1;
+	$opts{'r'} = 1;
 } elsif($opts{'g'} || $opts{'M'}) {
-	$opts{'T'} = 1;
+	$opts{'r'} = 1;
 }
-if($opts{'T'} || $opts{'O'}) {
+if($opts{'r'} || $opts{'O'}) {
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 my $ical;
 if($opts{'i'}) {
-	if($opts{'T'}) {
-		die '-i and -T are exclusive';
+	if($opts{'r'}) {
+		die '-i and -r are exclusive';
 	}
 	$ical = Data::ICal->new();
 	$ical->add_properties(
@@ -862,19 +867,21 @@ if($opts{'w'}) {
 	} else {
 		$opts->{'cache'} = CHI->new(
 			driver => 'File',
-			root_dir => $cachedir,
+			root_dir => $cache_dir,
 		);
 	}
 	if($logger) {
 		$opts->{'logger'} = $logger;
 	}
 	$obituaries = Genealogy::ObituaryDailyTimes->new($opts);
+	die if(!defined($obituaries));
 	$wills = Genealogy::Wills->new($opts);
+	die if(!defined($wills));
 }
 
 my $meteo;
 
-if($opts{'d'} && (!$opts{'T'}) && (!$opts{'O'})) {
+if($opts{'d'} && (!$opts{'r'}) && (!$opts{'O'})) {
 	$meteo = Weather::Meteo->new(ua => $cached_browser);
 }
 
@@ -968,10 +975,10 @@ if($opts{'H'}) {
 		# February
 		if(($year % 100) == 0) {
 			if(($year % 400) == 0) {
-				generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
+				generate(day => 29, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
 			}
 		} elsif(($year % 4) == 0) {
-			generate(day => 29, month => $month, everyone => \@everyone, dtl => $dtl);
+			generate(day => 29, month => $month, everyone => \@everyone, table => $table, dtl => $dtl);
 		}
 	} else {
 		generate(day => 29, month => $month, year => $year, everyone => \@everyone, table => $table, dtl => $dtl);
@@ -1352,7 +1359,8 @@ if($ical) {
 	$dbh->disconnect();
 }
 
-sub generate {
+sub generate
+{
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $surname_initial;
@@ -1457,11 +1465,11 @@ sub generate {
 					if($generation >= 5) {
 						$t = ($generation - 2) . ' times great-grandchildren';
 					} elsif($generation == 1) {
-						$t = 'Children';
+						$t = ucfirst(i18n('children'));
 					} elsif($generation == 2) {
-						$t = 'Grandchildren';
+						$t = ucfirst(i18n('grandchildren'));
 					} elsif($generation == 3) {
-						$t = 'Great-grandchilden';
+						$t = ucfirst(i18n('great-grandchildren'));
 					} elsif($generation == 4) {
 						$t = 'Great-great-grandchildren';
 					} else {
@@ -1516,7 +1524,7 @@ sub print_person
 		} elsif($dateofbirth =~ /^(.+)\s*\?/i) {
 			$dateofbirth = "ABT$1";
 		}
-		if(length($dateofbirth) && ($dateofbirth !~ /^[\d\sA-Z\/]+$/i) && ($dateofbirth !~ /^Abt\./)) {
+		if(($dateofbirth !~ /^[\d\sA-Z\/]+$/i) && ($dateofbirth !~ /^Abt\./)) {
 			if($dateofbirth =~ /(\d{4})\s*(.+)/) {
 				my $d = $1;
 				my $t = $2;
@@ -1534,6 +1542,8 @@ sub print_person
 				$dateofbirth = undef;
 			}
 		}
+	} else {
+		undef $dateofbirth;
 	}
 
 	my $onlybirthdays = $params{'onlybirthdays'};
@@ -1557,13 +1567,9 @@ sub print_person
 
 	my $yob;	# Year of birth
 	if($dateofbirth) {
-		if(($dateofbirth eq 'UNKNOWN') || ($dateofbirth eq '?')) {
-			$dateofbirth = undef;
-		} else {
-			$yob = get_year_from_date($dateofbirth);
-			if(!defined($yob)) {
-				complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
-			}
+		$yob = get_year_from_date($dateofbirth);
+		if(!defined($yob)) {
+			complain({ person => $person, warning => "Invalid date of birth $dateofbirth" });
 		}
 	}
 
@@ -1723,7 +1729,7 @@ sub print_person
 	# my $lastname = $name_components{'surname_2'} || $name_components{'surname_1'};
 	my $lastname = ucfirst(lc($person->surname())); # RT109786
 
-	if(defined($opts{'h'}) && ($opts{'s'} && defined($lastname))) {
+	if(defined($opts{'h'}) && $opts{'s'} && defined($lastname)) {
 		my $surname;
 
 		if($opts{'h'} =~ /\s*([A-Z]+?)$/i) {
@@ -1781,6 +1787,13 @@ sub print_person
 		die "BUG: row cannot be 8 or greater" if($row >= 8);
 
 		my $table = $params{'table'};
+		if(!defined($table)) {
+			my $i = 0;
+			while((my @call_details = caller($i++))) {
+				print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+			}
+			die 'BUG: table not set';
+		}
 
 		# print STDERR "$row, $column\n";
 		my $str = $table->getCell($row, $column);
@@ -1885,7 +1898,7 @@ sub print_person
 			}
 		}
 		return;
-	} elsif($opts{'T'}) {
+	} elsif($opts{'r'}) {
 		foreach my $place(get_all_residences($person)) {
 			if(my $p = place({ person => $person, record => $place, places_printed => \%places_printed, nopreposition => 1 })) {
 				if($opts{'y'}) {
@@ -2420,7 +2433,6 @@ sub print_person
 	}
 
 	my $birth_dt = date_to_datetime(date => $dateofbirth);
-	my $death_dt = date_to_datetime(date => $dateofdeath);
 
 	if($birth_dt && (my $spouse = $spouses[0])) {
 		my $sdob = dateofbirth($spouse);
@@ -2451,11 +2463,20 @@ sub print_person
 		});
 	}
 
+	my $death_dt = date_to_datetime(date => $dateofdeath);
+
 	if($opts{'d'} || $opts{'B'}) {
 		my $baptism = $person->get_record('baptism');
 		my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
 		if((!$dateofbaptism) && $baptism) {
 			$dateofbaptism = $baptism->date();
+		}
+		if(defined($dateofbaptism) && ($dateofbaptism =~ /^0/)) {
+			complain({ person => $person, warning => "Removing leading 0 from baptism date '$dateofbaptism'" });
+			$dateofbaptism =~ s/^0//;
+		}
+		if($dateofbaptism && $dateofbirth && ($dateofbirth !~ /^abt\s/i) && ($dateofbaptism !~ /^bet \d{3,4} and \d{3,4}$/) && (datecmp($dateofbaptism, $dateofbirth) <= 0)) {
+			complain({ person => $person, warning => "Date of baptism ($dateofbaptism) before date of birth ($dateofbirth)" });
 		}
 		my $placeofbaptism = get_value({ person => $person, value => 'baptism place' });
 		if((!$placeofbaptism) && $baptism) {
@@ -2613,6 +2634,7 @@ sub print_person
 				}
 			}
 		}
+
 		my @children = map { $_->children() } $person->fams();
 		my $numberofchildren = scalar(@children);
 
@@ -2622,6 +2644,13 @@ sub print_person
 					complain({ person => $person, warning => 'person is own parent' });
 					# Avoid loops in G::I::Relationship
 					return;
+				}
+				if($dateofdeath && (my $cdob = dateofbirth($child))) {
+					if(($cdob =~ /\d{3,4}$/) && (datecmp($cdob, $dateofdeath) > 0)) {
+						complain({ person => $person,
+							warning => "Date of birth $pronoun child " . $child->as_string() . " ($cdob) is later than " . ($sex eq 'M' ? 'his' : 'her') . " own date of death ($dateofdeath)"
+						})
+					}
 				}
 			}
 			if($numberofchildren >= 2) {
@@ -2684,14 +2713,14 @@ sub print_person
 			}
 		}
 
-		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
+		# if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
 			# FIXME: add citation
 			# if($opts{'B'}) {
 				# pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
 			# } else {
 				# print "\t$dbpedia\n\t";
 			# }
-		}
+		# }
 
 		my @phrases;
 		my $bio = Data::Text->new("\t");
@@ -2706,13 +2735,11 @@ sub print_person
 			if(my $aka = $person->as_string({ use_aka => 1 })) {
 				$str .= " (also known as $aka)";
 			}
-			if($relationship || $spouserelationship) {
+			if($aob || $aod) {
 				$str .= ',';
 			}
 
-			$str .= ' ';
-
-			$phrase->append($str);
+			$phrase->append("$str ");
 		}
 
 		if($relationship) {
@@ -2723,13 +2750,20 @@ sub print_person
 				$phrase->set("$noun ");	# Overwrites what was stored above
 				$noun = $pronoun;
 				if(is_alive(person => $person)) {
-					$phrase->append('is ');
+					$phrase->append(i18n('is '));
 				} else {
-					$phrase->append('was ');
+					$phrase->append(i18n('was '));
 				}
 				$phrase->append(i18n('your'))->append(" $relationship");
 			}
 		} elsif($spouserelationship) {
+			if((!$aob) && (!$aod)) {
+				if(is_alive(person => $person)) {
+					$phrase->append(i18n('is '));
+				} else {
+					$phrase->append(i18n('was '));
+				}
+			}
 			if($language eq 'French') {
 				if($sex eq 'F') {
 					$phrase->append('la femme');
@@ -2745,15 +2779,11 @@ sub print_person
 			}
 			$phrase->append(i18n(' of '));
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
-				$phrase->append("$s, ");
+				$phrase->append("$s (");
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
 			}
-			if($language eq 'French') {
-				$phrase->append("votre $spouserelationship, ");
-			} else {
-				$phrase->append("your $spouserelationship, ");
-			}
+			$phrase->append(i18n('your ') . $spouserelationship)->append(') ');
 			$haveprintedspousename = 1;
 		}
 
@@ -2766,7 +2796,7 @@ sub print_person
 			} else {
 				$phrase->append("was born $aob years and died $aod years ago ");
 			}
-			$phrase->append(($opts{'t'} ? 'tomorrow' : 'today'));
+			$phrase->append(i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			$phrase->append("[$_]") foreach(@birthcitations);
 			$phrase->append("[$_]") foreach(@deathcitations);
 		} elsif($aob) {
@@ -2776,7 +2806,7 @@ sub print_person
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
+					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			}
 			if($placeofbirth) {
 				my $p = place({ person => $person, record => $birth, places_printed => \%places_printed, encode => 0 });
@@ -2800,7 +2830,7 @@ sub print_person
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
-					($opts{'t'} ? 'tomorrow' : 'today'));
+					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
 			}
 			if($placeofdeath) {
 				$phrase->append(place({ person => $person, record => $death, places_printed => \%places_printed }));
@@ -2819,24 +2849,21 @@ sub print_person
 				$phrase->append(" ($notes)");
 				push @phrases, $phrase;
 				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				undef @phrases;
+				$phrase = Data::Text->new();
 				if($notes !~ /\."$/) {
 					$bio->append('.');
 				}
-				$phrase = Data::Text->new();
-				@phrases = ();
 				if(length($notes) > 160) {
 					$bio->append("\n\t");
 				} else {
 					$bio->append('  ');
 				}
-			} elsif(dateofbirth($person) && (scalar(@spouses) >= 1)) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 			}
 		}
 
 		if($phrase->length()) {
-			push @phrases, $phrase;
+			push @phrases, $phrase->trim();
 			$phrase = Data::Text->new();
 		}
 		if(scalar(@phrases)) {
@@ -3077,9 +3104,9 @@ sub print_person
 				}
 
 				if(is_alive(person => $person)) {
-					$phrase->append('is ');
+					$phrase->append(i18n('is '));
 				} else {
-					$phrase->append('was ');
+					$phrase->append(i18n('was '));
 				}
 
 				my $article;
@@ -3108,12 +3135,8 @@ sub print_person
 			my @twins = twins({ birth_dt => $birth_dt, siblings => \@siblings });
 
 			if(scalar(@twins) == 1) {	# TODO triplets and higher order
-				if(scalar(@occupations)) {
-					if($language eq 'French') {
-						$phrase->set(($sex eq 'M') ? 'jumeau de' : 'jumelle de');
-					} else {
-						$phrase->set('twin of');
-					}
+				if((scalar(@phrases) > 0) && ($phrase->length == 0)) {
+					$phrase->set(i18n({ person => $person, format => 'twin of' }));
 				} else {
 					if($language eq 'French') {
 						if($sex eq 'M') {
@@ -3215,6 +3238,7 @@ sub print_person
 						# } else {
 							# die 'BUG: Impossible case';
 						# }
+					# }
 					if(defined($yob)) {
 						foreach my $dc(@deathcitations) {
 							my $citation = $citations{$dc};
@@ -3240,6 +3264,7 @@ sub print_person
 						# } else {
 							# die "BUG: Impossible case";
 						# }
+					# }
 					if(defined($yod)) {
 						foreach my $bc(@birthcitations) {
 							my $citation = $citations{$bc};
@@ -3670,6 +3695,12 @@ sub print_person
 								push @childrenofthisspouse, $child;
 							}
 						}
+						if($opts{'w'} && $yob && (my $cdob = dateofbirth($child))) {
+							my $age = get_year_from_date($cdob) - $yob;
+							if($age <= 14) {
+								complain({ person => $person, warning => "Only $age years old at time of birth of their child " . $child->as_string() });
+							}
+						}
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
 						if($placeofmarriage || $dateofmarriage) {
@@ -3879,6 +3910,7 @@ sub print_person
 					$phrase->append(scalar(@spouses) . i18n(' times'));
 				}
 
+				# Sort the order of the marriages by date
 				my $all_marriages_have_date = 1;
 				foreach my $spouse(@spouses) {
 					if(!date_to_datetime(dateofmarriage($spouse))) {
@@ -3886,6 +3918,7 @@ sub print_person
 						last;
 					}
 				}
+
 				if($all_marriages_have_date) {
 					@spouses = Sort::Key::DateTime::dtkeysort {
 						my $date = dateofmarriage($_);
@@ -4194,7 +4227,7 @@ sub print_person
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
 			} elsif(scalar(@phrases) == 0) {
-				$phrase->set($pronoun);
+				$phrase->set("$pronoun ");
 			}
 			if(is_alive(person => $person)) {
 				$phrase->append('has ');
@@ -4273,7 +4306,7 @@ sub print_person
 				$phrase->append(' ' . lc($same_occupation_as_father));
 			} else {
 				$phrase->set('Like ' . lcfirst($person->possessive()) . ' father, ' . lcfirst($pronoun) .
-					(is_alive(person => $person) ? ' is' : ' was'));
+					i18n((is_alive(person => $person) ? ' is' : ' was')));
 				$phrase->append(' ' . Lingua::EN::Inflect::A(lc($same_occupation_as_father)));
 			}
 			push @phrases, $phrase;
@@ -4316,23 +4349,24 @@ sub print_person
 
 		my $diedathome;
 		my $military_location;
+		my $living_alone = 1;
 
 		my @residences = get_all_residences($person);
 		print scalar(@residences), " residences found\n" if($opts{'v'});
-
-		if((scalar(@residences) == 1) && (scalar(@events) == 1) &&
-		   $residences[0]->date() && ref($events[0]) && $events[0]->date() &&
-		   (year(string => $residences[0]->date()) eq year(string => $events[0]->date())) &&
-		   (($events[0]->type() eq 'Military service') || ($events[0]->type() eq 'Military'))) {
-			# There's just one residence and one event which is military, and they are at the same time
-			# so put them together: "in 1970 he was living in London when he was serving in the military"
-			$military_location = 1;
-		}
 
 		if(scalar(@residences)) {
 			# FIXME: handle duplicate locations better
 			my @residencelist;
 			my %residencecitations;
+
+			if((scalar(@residences) == 1) && (scalar(@events) == 1) &&
+			   $residences[0]->date() && ref($events[0]) && $events[0]->date() &&
+			   (year(string => $residences[0]->date()) eq year(string => $events[0]->date())) &&
+			   (($events[0]->type() eq 'Military service') || ($events[0]->type() eq 'Military'))) {
+				# There's just one residence and one event which is military, and they are at the same time
+				# so put them together: "in 1970 he was living in London when he was serving in the military"
+				$military_location = 1;
+			}
 
 			# This is an attempt to handle
 			# https://github.com/pjcj/Gedcom.pm/issues/13
@@ -4472,26 +4506,35 @@ sub print_person
 			my %printed_dates;
 
 			print "Sanity checking the residences\n" if($opts{'v'});
+
 			# Create a list of residence strings
 			my @residencestringarray;
-
 			my $printed_father_same_place;
 			my $printed_mother_same_place;
+
 			my $iterator = Array::Iterator::BiDirectional->new({ __array__ => \@residencelist });
 			while(my $residence = $iterator->get_next()) {
 				my $rdate = $residence->date();
 				my $residencestring;
 				my $latitude;
 				my $longitude;
+				my %living_with;
 
 				print __LINE__, ": count = $count\n" if($opts{'v'});
 
-				if(defined($rdate) && ($rdate =~ /^\s*(.+\d\d)\s*\-\s*(.+\d\d)\s*$/)) {
-					my $start = $1;
-					my $end = $2;
-					if($end !~ /^\d\d\-\d\d$/) {
-						complain({ person => $person, warning => "Changing date '$rdate' to 'bet $start and $end'" });
-						$rdate = "bet $start and $end";
+				if(defined($rdate)) {
+					if($rdate =~ /^0/) {
+						complain({ person => $person, warning => "Removing leading 0 from residence date '$rdate'" });
+						# FIXME: Don't do this - it won't print this residence if you do
+						# $rdate =~ s/^0//;
+					}
+					if($rdate =~ /^\s*(.+\d\d)\s*\-\s*(.+\d\d)\s*$/) {
+						my $start = $1;
+						my $end = $2;
+						if($end !~ /^\d\d\-\d\d$/) {
+							complain({ person => $person, warning => "Changing date '$rdate' to 'bet $start and $end'" });
+							$rdate = "bet $start and $end";
+						}
 					}
 				}
 
@@ -4503,7 +4546,7 @@ sub print_person
 						$count++;
 						next;
 					}
-					if($birth && places_are_the_same({ person => $person, first => $birth, second => $residence})) {
+					if($birth && places_are_the_same({ person => $person, first => $birth, second => $residence })) {
 						$residencestring = i18n(' at ');
 						if($language eq 'French') {
 							$residencestring .= 'sa';
@@ -4535,12 +4578,7 @@ sub print_person
 					if($rdate && (my $rdate_dt = date_to_datetime($rdate))) {
 						my $year = $rdate_dt->year();
 						my $strftime = $rdate_dt->strftime('%x');
-						my $place = place({
-							person => $person,
-							record => $residence,
-							nopreposition => 1,
-						});
-						if($place) {
+						if(my $place = place({ person => $person, record => $residence, nopreposition => 1 })) {
 							if(my $location = get_location($place)) {
 								push @{$all_locations{$year}}, {
 									'residence' => $residence,
@@ -4695,9 +4733,6 @@ sub print_person
 									if($relationship) {
 										complain({ person => $person, warning => 'Census information not used to determine a parent' });
 									}
-								} elsif(!$found_parent) {
-									# FIXME: both parents could be dead
-									complain({ person => $person, warning => "Residence information in $yoe, but no residence information found for either parent" });
 								}	# TODO: else warn if both parents locations are different
 							} elsif($numberofchildren && ($rdate !~ /^bet\s/i) && ($rdate !~ /\d{4}, \d{4}/)) {
 								# Look if a young child isn't with this parent
@@ -4738,7 +4773,7 @@ sub print_person
 						}
 						my $this_date = year({ person => $person, date => $rdate });
 						if($prev_residence && (year(record => $prev_residence) eq $this_date)) {
-							if(place(record => $prev_residence) ne place(record => $residence)) {
+							if(!places_are_the_same({ person => $person, first => $prev_residence, second => $residence })) {
 								complain({ person => $person, warning => "Two residence records for $rdate differ in location" });
 							}
 						} else {
@@ -4750,11 +4785,10 @@ sub print_person
 							} elsif((!defined($residencestring)) && (my $p = pop(@residencestringarray))) {
 								if($language eq 'French') {
 									$p =~ s/ et /, /g;
-									$residencestring = "$p et $this_date";
 								} else {
 									$p =~ s/ and /, /g;
-									$residencestring = "$p and $this_date";
 								}
+								$residencestring = conjunction($p, $this_date);
 								# We could just added a comma after a sibling's name
 								$residencestring =~ s/,,/,/g;
 							} else {
@@ -4826,13 +4860,14 @@ sub print_person
 						$bdiff = $dfn->parse_datetime($rdate) - $birth_dt;
 					}
 					# Find if they are an adult living with an adult sibling or in-law
-					if($all_residences_have_date && scalar(@siblings) && $birth_dt) {
+					if($all_residences_have_date && $birth_dt) {
 						my $printed_sibling = 0;
 						my $r = $residence;
 						next if($r->date() ne $rdate);
 						my $place = place({ person => $person, record => $r, nopreposition => 1 });
 						next if(!defined($place));
 						my $first = 1;
+						my @siblings_living_with;
 
 						foreach my $sibling(@siblings) {
 							if(my $ss = $sibling->spouse()) {
@@ -4847,6 +4882,11 @@ sub print_person
 										# false positives when only a city is known
 										if(($place =~ /^\s\d/ && (my $ssp = place({ person => $ss, record => $ssr, nopreposition => 1 })))) {
 											if($ssp eq $place) {
+												if($ss->sex() eq 'F') {
+													$living_with{'sister-in-law'} = $ss
+												} else {
+													$living_with{'brother-in-law'} = $ss
+												}
 												if($first) {
 													$residencestring .= i18n(' when ') . i18n(lc($person->pronoun())) .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
@@ -4882,24 +4922,70 @@ sub print_person
 								next if(!defined($sdate));
 								next if($sdate ne $rdate);
 								if(($place =~ /^\s\d/) && (place({ person => $sibling, record => $sr, nopreposition => 1 }) eq $place)) {
-									$residencestring =~ s/^\s//;
-									push @residencestringarray, $residencestring;
-									if($first) {
-										$residencestring = ' there ' . i18n('with ') . ($person->pronoun() eq 'She' ? 'her' : 'his');
-										$first = 0;
-									} else {
-										$residencestring = undef;
-									}
-									$residencestring .= ' ' .
-										i18n(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
-										$sibling->given_names() . ',';
-									$printed_sibling = 1;
+									push @siblings_living_with, $sibling;
 									last;
 								}
 							}
 						}
-						# FIXME: only checks when there are @siblings
-						if(($bdiff->in_units('years') >= 30) || ($bdiff->in_units('years') < 16)) {
+						if(scalar(@siblings_living_with)) {
+							# Print out all the siblings this person was living with
+							# as an adult
+							$living_with{'siblings'} = \@siblings_living_with;
+							if($first) {
+								$residencestring .= ' (' .
+									i18n('when ') .
+									i18n(($sex eq 'M') ? 'he' : 'she') .
+									i18n(' was living') .
+									i18n(' with ') .
+									($sex eq 'M' ? 'his' : 'her');
+								$first = 0;
+							} else {
+								$residencestring =~ s/^\s//;
+							}
+							if(scalar(@siblings_living_with) == 1) {
+								$residencestring .=
+									i18n(($sex eq 'F') ? ' sister, ' : ' brother, ') .
+									$siblings_living_with[0]->given_names() . ',';
+							} else {
+								my $sex = $siblings_living_with[0]->sex();
+								foreach my $sibling(@siblings_living_with) {
+									if($sibling->sex() ne $sex) {
+										undef $sex;
+										last;
+									}
+								}
+								if($sex) {
+									# living with more than one sibling all of the same gender
+									$residencestring .= i18n(($sex eq 'F') ? ' sisters, ' : ' brothers, ') .
+										conjunction(map { $_->given_names() } @siblings_living_with);
+								} elsif(scalar(@siblings_living_with) == 2) {
+									# Living with one brother and one sister
+									my $brother;
+									my $sister;
+									if($siblings_living_with[0]->sex() eq 'M') {
+										$brother = $siblings_living_with[0];
+										$sister = $siblings_living_with[1];
+									} else {
+										$sister = $siblings_living_with[0];
+										$brother = $siblings_living_with[1];
+									}
+									$residencestring .= i18n(' brother ') .
+										$brother->given_names() .
+										i18n(' and ') .
+										i18n('sister ') .
+										$sister->given_names();
+								} else {
+									die 'TODO: ', $person->as_string(include_years => 1), ' living with ', scalar(@siblings_living_with), ' siblings of differing genders';
+								}
+							}
+							if($first) {
+								$residencestring .= ')';
+								$first = 0;
+							}
+							$printed_sibling = 1;
+						}
+						# if(($bdiff->in_units('years') >= 30) || ($bdiff->in_units('years') < 16)) {
+						if(1) {
 							my $with_mother;
 							my $same_road_as_mother = 0;
 							my $road = $residence->address();
@@ -4924,6 +5010,7 @@ sub print_person
 									if($p eq $place) {
 										if($mdate eq $rdate) {
 											$with_mother++;
+											$living_alone = 0;
 											last;
 										} elsif(!$printed_mother_same_place) {
 											$mother_date = $mdate;
@@ -4932,6 +5019,9 @@ sub print_person
 
 									if(($rdate eq $mdate) && $road && ($mr->place() eq $residence->place())) {
 										if(my $mroad = $mr->address()) {
+											if($mroad eq $road) {
+												$living_with{'mother'} = $mother;
+											}
 											if($mroad =~ /,\s*(.+)/) {
 												$mroad = $1;
 											}
@@ -4960,6 +5050,7 @@ sub print_person
 									if($p eq $place) {
 										if($fdate eq $rdate) {
 											$with_father++;
+											$living_alone = 0;
 											last;
 										} elsif(!$printed_father_same_place) {
 											$father_date = $fdate;
@@ -4968,6 +5059,9 @@ sub print_person
 
 									if(($rdate eq $fdate) && $road && ($fr->place() eq $residence->place())) {
 										if(my $froad = $fr->address()) {
+											if($froad eq $road) {
+												$living_with{'father'} = $father;
+											}
 											if($froad =~ /,\s*(.+)/) {
 												$froad = $1;
 											}
@@ -4981,13 +5075,14 @@ sub print_person
 									}
 								}
 							}
-							if($with_mother || $with_father) {
+							if($living_with{'mother'} || $living_with{'father'}) {
 								if($bdiff->in_units('years') >= 30) {
 									$residencestring .= ' ';
 									if($first) {
-										$residencestring .= '(';
+										$residencestring .= '(' .
+											i18n('when ') .
+											i18n(($sex eq 'M') ? 'he' : 'she') . i18n(' was living');
 									}
-									$residencestring .= i18n('when ') . i18n(($sex eq 'M') ? 'he' : 'she') . i18n(' was living');
 									if($language eq 'French') {
 										$residencestring =~ s/lorsque elle/lorsqu'elle/;
 									}
@@ -5056,8 +5151,11 @@ sub print_person
 									}
 								}
 							} elsif(($mother || $father) && ($bdiff->in_units('years') < 16)) {
-								complain({ person => $person, warning => [ 'Not living with either parent in childhood when aged ', $bdiff->in_units('years') ] });
-							} elsif($father_date) {
+								if(!($with_mother || $with_father)) {
+									complain({ person => $person, warning => [ 'Not living with either parent in childhood when aged ', $bdiff->in_units('years') ] });
+								}
+								$living_alone = 0;
+							} elsif($father_date && (datecmp($rdate, $father_date) >= 0)) {
 								# FIXME: This test never succeeds,
 								#	perhaps Array:Iterator:BiDirectional doesn't work as I expect?
 								#	https://rt.cpan.org/Ticket/Display.html?id=143344&results=af04c74d05626a62cf0c32f2953f3e4f
@@ -5078,6 +5176,8 @@ sub print_person
 									}
 									if(datecmp($rdate, $father_date) > 0) {
 										$residencestring .= 'had been';
+									} elsif($printed_mother_same_place) {
+										$residencestring .= 'were';
 									} else {
 										$residencestring .= 'was';
 									}
@@ -5086,7 +5186,7 @@ sub print_person
 										')';
 								# }
 								$printed_father_same_place = 1;
-							} elsif($mother_date) {
+							} elsif($mother_date && (datecmp($rdate, $mother_date) >= 0)) {
 								$residencestring .= ' (the same place as ' .
 									($person->pronoun() eq 'She' ? 'her' : 'his') . i18n(' mother ');
 								if(datecmp($rdate, $mother_date) > 0) {
@@ -5263,6 +5363,8 @@ sub print_person
 										}
 									}
 
+									$Data::Dumper::Maxdepth = 2;
+									print STDERR Data::Dumper->new([$l])->Dump() if($opts{'v'});
 									$residencestring .= place({ record => $l->{'residence'}, there => $p2, places_printed => \%places_printed });
 									$residencestring .= ' -' if($printed_person);
 									$printed_person = 1;
@@ -5293,21 +5395,22 @@ sub print_person
 									if(($type !~ /Census/) && ($type ne 'Register UK 1939')) {
 										next EVENT;
 									}
+									if($opts{'v'} && $event->date() && ($event->date() eq $rdate)) {
+										print __LINE__, ">> check if living with children\n",
+										print "\t$type, ", ref($event), "\n",
+										"\t", $event->date(), " $rdate ", $residence->address(), "\n";
+									}
 									if((ref($event) eq 'Gedcom::Record') &&
 									   $event->date() && ($event->date() eq $rdate) &&
-									   places_are_the_same({ person => $child, first => $residence, second => $event })) {
-										$residencestring .= i18n(' when ') .
-											lcfirst(i18n($person->pronoun())) .
-											' was living with ' .
-											lcfirst($person->possessive()) .
-											(i18n(($child->sex() eq 'F') ? ' daughter, ' : ' son, ')) .
-											$child->given_names() . ',' .
-											i18n(' following the death of ') .
-											(($sex eq 'M') ? 'his wife ' : 'her husband ') .
-											year(date => dateofdeath($spouses[0]));
-
-										$residencestring .= ',' if($iterator->peek());
-										$spdeath_dt = undef;
+									   $residence->address() &&
+									   places_are_the_same({ person => $child, first => $residence, second => $event, exact => 1 })) {
+										if($child->sex() eq 'F') {
+											push @{$living_with{'daughters'}}, $child;
+											$spdeath_dt = undef;
+										} else {
+											push @{$living_with{'sons'}}, $child;
+											$spdeath_dt = undef;
+										}
 										last CHILD;
 									}
 								}
@@ -5325,10 +5428,6 @@ sub print_person
 									year(date => $date);
 								$spdeath_dt = undef;
 							}
-							if($phrase->length()) {
-								push @phrases, $phrase;
-								$phrase = Data::Text->new();
-							}
 						}
 					}
 				}
@@ -5339,7 +5438,28 @@ sub print_person
 					} else {
 						$residencestring =~ s/(.+), (his|her) /$1 and $2 /;
 					}
+					if(scalar(keys %living_with)) {
+						$Data::Dumper::Maxdepth = 2;
+						print STDERR __LINE__, ": TODO ($rdate): ", Data::Dumper->new([\%living_with])->Dump();
+						if($living_with{'daughters'}) {
+							# TODO: more than one daughter
+							my @daughters = @{$living_with{'daughters'}};
+							$residencestring .= i18n('when ') .
+								lcfirst(i18n($person->pronoun())) .
+								' was living with ' .
+								lcfirst($person->possessive()) .
+								i18n((scalar(@daughters) > 1) ? ' daughters, ' : ' daughter ') .
+								conjunction(map { $_->given_names() } @daughters) . ',' .
+								i18n(' following the death of ') .
+								(($sex eq 'M') ? 'his wife ' : 'her husband ') .
+								year(date => dateofdeath($spouses[0]));
+							delete $living_with{'daughters'};
+						}
+						$living_alone = 0;
+					}
 					$residencestring =~ s/\sand$//;
+					$residencestring =~ s/,$//;
+					print __LINE__, ": adding '$residencestring' to residencestringarray\n" if($opts{'v'});
 					push @residencestringarray, $residencestring;
 					$printed_residence = 1;
 				}
@@ -5354,6 +5474,7 @@ sub print_person
 						die $person->as_string({ include_years => 1 }), ': BUG: residencestring array is unexpectedly empty';
 					}
 					$text =~ s/[\,;]\s*$//;
+					$text =~ s/\s\-;/;/g;
 					$bio->append("$text.  ");
 					$phrase = Data::Text->new();
 					@phrases = ();
@@ -5381,7 +5502,7 @@ sub print_person
 					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
 				}
 
-				# print Data::Dumper->new([\@residencestringarray])->Dump();
+				print __LINE__, ': residencestringarray: ', Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 
 				# Because peek above only looks ahead one element:
 				# [
@@ -5409,6 +5530,7 @@ sub print_person
 					$s = 'was living';
 				}
 
+				print Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 				Lingua::Conjunction->separator_phrase(';');
 				Lingua::Conjunction->penultimate(1);
 				$phrase->append(', ' . lcfirst($pronoun) . i18n(" $s ") . conjunction(@residencestringarray));
@@ -5445,22 +5567,31 @@ sub print_person
 					}
 				}
 				if(!$military_location) {
-					push @phrases, $phrase;
+					if($phrase->length()) {
+						push @phrases, $phrase;
+					}
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					@phrases = ();
 					$phrase = Data::Text->new();
 				}
 			}
-		} elsif(scalar(@phrases)) {
-			if($phrase->length()) {
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
+		} else {	# scalar(@residences) == 0
+			if(scalar(@phrases)) {
+				if($phrase->length()) {
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+				}
+				# No residences - remove any trailing commas
+				my $text = conjunction(map { $_->as_string() } @phrases);
+				$text =~ s/[\,;]\s*$//;
+				$bio->append("$text.  ");
+				@phrases = ();
 			}
-			# No residences - remove any trailing commas
-			my $text = conjunction(map { $_->as_string() } @phrases);
-			$text =~ s/[\,;]\s*$//;
-			$bio->append("$text.  ");
-			@phrases = ();
+		}
+		# FIXME - these start and end dates for censuses should depend on countries
+		if($living_alone && $yob && $yod && (($yod - $yob) > 10) && ($yob >= 1842) && ($yob <= 1920)) {
+			# Age at death > 10 years - should have at least appeared on one census
+			complain({ person => $person, warning => 'No records of living with anyone' });
 		}
 		# $phrase =~ s/,;/;/g;
 		# $phrase =~ s/;$//;
@@ -5503,7 +5634,8 @@ sub print_person
 			my $departure = ($events[0]->type() eq 'Departure') ? $events[0] : $events[1];
 			if($events[0]->type() ne $events[1]->type()) {
 				# Simple case - one journey made
-				$bio->append(journey({ person => $person, arrival => $arrival, departure => $departure }))->append('.  ');
+				$bio->append(journey({ person => $person, arrival => $arrival, departure => $departure, spouses => \@spouses, children => \@children }))
+					->append('.  ');
 			} else {
 				my $date1 = year(record => $events[0]);
 				my $date2 = year(record => $events[1]);
@@ -5710,7 +5842,7 @@ sub print_person
 							if(my $notes = notes(record => $event)) {
 								if($notes =~ /Navy/i) {
 									$service = 'navy';
-								} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i)) {
+								} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i) || ($notes =~ /\sregiment/i)) {
 									$service = 'army';
 								}
 							}
@@ -6091,9 +6223,14 @@ sub print_person
 						$phrase->set(text => [ "\n\t", $firstname // $pronoun ]);
 					}
 					$phrase->append(($type eq 'burial') ? i18n({ person => $person, format => ' was buried' }) : ' was cremated');
-					if(my $city = ($placeofburial // $placeofcremation)) {
+					# Neither burial nor cremation could be set if we guessed information from the funeral
+					if(($burial || $cremation) && (my $city = ($placeofburial // $placeofcremation))) {
 						if($placeofbirth && places_are_the_same(first => $city, second => $placeofbirth)) {
-							if(my $address = $burial->address()) {
+							if($burial) {
+								if(my $address = $burial->address()) {
+									$phrase->append(" at $address");
+								}
+							} elsif(my $address = $cremation->address()) {
 								$phrase->append(" at $address");
 							}
 							$phrase->append(' in ' .
@@ -6136,13 +6273,14 @@ sub print_person
 						$record = $cremation;
 					}
 					if(defined($record)) {
-						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 							if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
 							}
 							$phrase->append(' following ' .
 								($person->pronoun() eq 'She' ? 'her' : 'his') .
-								" funeral at$place");
+								i18n(' funeral') .
+								$place);
 						} elsif($place = place({ person => $person, record => $record, nopreposition => 1 })) {
 							if(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
@@ -6253,7 +6391,7 @@ sub print_person
 											if($cp eq $p) {
 												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
-													i18n('child '), $child->as_string());
+													i18n('child ') . $child->as_string());
 												last;
 											}
 										}
@@ -6273,7 +6411,7 @@ sub print_person
 											if($fp eq $p) {
 												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
-													i18n('father '), $father->as_string());
+													i18n('father ') . $father->as_string());
 												last;
 											}
 										}
@@ -6292,7 +6430,7 @@ sub print_person
 											if($mp eq $p) {
 												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
 													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
-													i18n('mother '), $mother->as_string());
+													i18n('mother ') . $mother->as_string());
 												last;
 											}
 										}
@@ -6392,10 +6530,11 @@ sub print_person
 					if($burial && $placeofburial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
 						$phrase->append(" ($weather)");
 					}
-					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral, nopreposition => 1 }))) {
+					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 						$phrase->append(' following ' .
 							($person->pronoun() eq 'She' ? 'her' : 'his') .
-							" funeral at$place");
+							i18n(' funeral') .
+							$place);
 					}
 				} elsif($placeofdeath && $placeofburial && ($placeofburial eq $placeofdeath) &&
 				   $burial->address() && !$death->address()) {
@@ -6425,7 +6564,7 @@ sub print_person
 							$phrase->append(i18n({ person => $person, format => 'is buried' }));
 						}
 						if($b eq ' there') {
-							if($b = $cremation->address()) {
+							if($b = $burial->address()) {
 								$phrase->append(i18n(' at '))->append($b);
 							}
 							$phrase->append(' ');
@@ -6433,7 +6572,7 @@ sub print_person
 							$phrase->append("$b ");
 						}
 						if($dateofburial) {
-							$phrase->append(' ' . year({ person => $person, date => $dateofburial }));
+							$phrase->append(year({ person => $person, date => $dateofburial }));
 						}
 						$weather = weather({ person => $person, record => $burial, meteo => $meteo });
 					} else {
@@ -6463,7 +6602,7 @@ sub print_person
 			# if($person->marriage_bann()) {
 				# die 'foo';
 			# }
-			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && !$printed_residence) {
+			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && (scalar(@events) == 0)) {
 				if($language eq 'French') {
 					if($phrase->length() == 0) {
 						$phrase->set("C'est");
@@ -6521,6 +6660,10 @@ sub print_person
 						' ',
 						between(year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }))
 					]);
+					if((scalar(@events) > 0) && (my $place = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
+						# Place hasn't already been printed with "that is also where she died"
+						$phrase->append($place);
+					}
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					my $p = $1;
 					if($dateofdeath =~ /\s$/) {
@@ -6590,9 +6733,9 @@ sub print_person
 			if($opts{'B'}) {
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					@phrases = ();
 				}
 				$phrase = Data::Text->new();
-				@phrases = ();
 
 				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
@@ -6609,6 +6752,7 @@ sub print_person
 			} else {
 				if($phrase->length() > 0) {
 					push @phrases, $phrase;
+					$phrase = Data::Text->new();
 				}
 				if(scalar(@phrases)) {
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
@@ -6686,7 +6830,8 @@ sub print_person
 			}
 
 			my $ufinder = URI::Find::Schemeless->new(sub {
-				my($uri, $orig_uri) = @_;
+				# my($uri, $orig_uri) = @_;
+				my $orig_uri = $_[1];
 
 				if($opts{'w'}) {
 					my $u = URI->new($orig_uri);
@@ -8367,7 +8512,7 @@ sub Gedcom::Individual::relationship_up
 				);
 				my %de_male_relationships = (
 					1 << 24 | 1 => 'Brude',
-					1 << 24 | 2 => 'nephew',
+					1 << 24 | 2 => 'Neffe',
 					1 << 24 | 3 => 'great-nephew',
 					1 << 24 | 4 => 'great-great-nephew',
 					2 << 24 | 1 => 'Onkle',
@@ -9108,7 +9253,7 @@ sub place {
 				return;
 			}
 		}
-	} elsif(ref($address) eq 'Gedcom::Record') {
+	} elsif(ref($address)) {
 		$place = getaddress($address);
 		$address = undef;
 	}
@@ -9128,6 +9273,7 @@ sub place {
 	my $on_road;
 	if($address) {
 		$address =~ s/\xc3\xb1/\N{U+00F1}/g;	# ñ
+		$address =~ s/\xc3\xa9/\N{U+00E9}/g;	# é
 		if($address =~ /(.+)\sSt\.?$/) {
 			$address = "$1 Street";
 			$on_road = 1;
@@ -9247,9 +9393,8 @@ sub place {
 				# die "TODO: add language $language";
 			# }
 			# FIXME: should be table driven
-			my $to = $lang;
 			$rc->en($place);
-			if(my $t = $places->translate({ place => $1, from => 'en', to => $to })) {
+			if(my $t = $places->translate({ place => $1, from => 'en', to => $lang })) {
 				$place = "$t$2, $3";
 				$rc->set(lang => $lang, string => $place);
 			}
@@ -9260,7 +9405,7 @@ sub place {
 		validate_place({ person => $params{'person'}, place => $rc });
 	}
 
-	if($birth_country && (!$opts{'T'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
+	if($birth_country && (!$opts{'r'}) && ($place =~ /(.+),\s*\Q$birth_country\E$/i)) {
 		$place = $1;
 	}
 
@@ -9275,7 +9420,7 @@ sub place {
 		$place =~ s/,(\S)/, $1/g;
 	}
 
-	if((!$opts{'T'}) && ($place =~ /^\d/)) {
+	if((!$opts{'r'}) && ($place =~ /^\d/)) {
 		if(my $places_printed = $params{'places_printed'}) {
 			$places_printed->{" at$place"} = 1;
 			if($place =~ /(.+),(.+?),(.+?),(.+?),(.+?)$/) {
@@ -9348,7 +9493,7 @@ sub place {
 	}
 	$rc->set({ lang => $lang, string => $place });
 
-	if((!$opts{'T'}) && (my $places_printed = $params{'places_printed'})) {
+	if((!$opts{'r'}) && (my $places_printed = $params{'places_printed'})) {
 		if(($language eq 'French') && ($place =~ /(.+), London, England/)) {
 			$place = "$1, Londres, Angleterre";
 			$rc->fr($place);
@@ -9756,6 +9901,7 @@ sub validate_place
 	return 1;
 }
 
+# Are two places the same? exact => 1 means must be equal, otherwise use fuzzy logic
 sub places_are_the_same
 {
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
@@ -9785,10 +9931,10 @@ sub places_are_the_same
 		$place1 = "$1 USA";
 	}
 	if(my $address = $record1->address()) {
-		$place1 = NJH::Normalize::normalize($address) . ", $place1";
+		$place1 = $abbr->normalize($address) . ", $place1";
 	}
 	if(my $address = $record2->address()) {
-		$place2 = NJH::Normalize::normalize($address) . ", $place2";
+		$place2 = $abbr->normalize($address) . ", $place2";
 	}
 
 	if($place2 =~ /(.+?)\s*United States$/i) {
@@ -9822,6 +9968,8 @@ sub places_are_the_same
 		# $place2 = "$1 Road";
 	# }
 	return 1 if(lc($place1) eq lc($place2));
+	return 1 if(place(record => $record1) eq place(record => $record2));
+	return 0 if($params{'exact'});
 	if(compare($place1, $place2) > 0.5) {
 		if($person) {
 			complain({ $person => $person, warning => "The places '$place1' and '$place2' seem similar; is there a typo?" });
@@ -10097,6 +10245,17 @@ sub is_alive
 	my $dob = dateofbirth($person);
 
 	if(!defined($dob)) {
+		# If the residences of this person was some time ago, they should be dead by now
+		foreach my $event(get_all_residences($person)) {
+			if(my $edate = $event->date()) {
+				if(my $eyear = get_year_from_date($edate)) {
+					if($eyear <= 1900) {
+						complain({ person => $person, warning => "Was alive in $eyear but can't find death information" });
+						return 0;
+					}
+				}
+			}
+		}
 		return 0;	# Err on the side of caution
 				# TODO: Look at children's lifespan for a clue
 	}
@@ -10302,7 +10461,7 @@ sub pdfprint
 	if(ref($params{'string'})) {
 		$params{'string'} = $params{'string'}->as_string();
 	}
-	
+
 	# TODO: support UTF-8 fonts
 	my $string = $params{'string'};
 	if(!defined($string)) {
@@ -10616,6 +10775,9 @@ sub get_all_occupations
 	while($occupations[0] && ($occupations[0] =~ /Unpaid domestic duties/i)) {
 		shift @occupations;
 	}
+	while($occupations[0] && ($occupations[0] =~ /home duties/i)) {
+		shift @occupations;
+	}
 	while($occupations[0] && ($occupations[0] eq 'Retired')) {
 		shift @occupations;
 	}
@@ -10772,6 +10934,8 @@ sub get_all_occupations
 				if($occupation eq 'Teacher') {
 					$occupation = (($person->sex() eq 'M') ? 'Lehrer' : 'Lehrerin');
 				}
+				$occupation =~ s/retired/im ruhestand/i;
+				$occupation =~ s/self-employed/slbststa\N{U+00E4}ndig/;
 			}
 			if($occupation =~ /works? (on|for) (.+)/i) {
 				$occupation = "$2 worker";
@@ -10794,6 +10958,25 @@ sub get_all_occupations
 	return @rc;
 }
 
+# Return the arrival record of the given person, or undef if none or more than one
+sub arrival
+{
+	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+
+	my $person = $params{'person'};
+
+	my @events = $person->event();
+	my $rc;
+
+	foreach my $event(@events) {
+		if((ref($event) eq 'Gedcom::Record') && ($event->type() eq 'Arrival')) {
+			return if($rc);
+			$rc = $event;
+		}
+	}
+	return $rc
+}
+
 # Document a complete journey when both a departure and an arrival record exist
 sub journey
 {
@@ -10802,12 +10985,16 @@ sub journey
 	my $person = $params{'person'};
 	my $arrival = $params{'arrival'};
 	my $departure = $params{'departure'};
-
+	my @spouses;
+	my @children;
 	my $yod;
 	my $yoa;
 	my $dod = $departure->date();
 	my $doa = $arrival->date();
 	my $only_have_departure_year;
+
+	@spouses = @{$params{'spouses'}} if($params{'spouses'});
+	@children = @{$params{'children'}} if($params{'children'});
 
 	# my $i = 0;
 	# while((my @call_details = (caller($i++)))) {
@@ -10816,7 +11003,7 @@ sub journey
 
 	if($doa && ($doa =~ /(\d{3,4})$/)) {
 		$yoa = $1;
-		$doa =~ s/\s?\d{3,4}//;
+		$doa =~ s/\s+?\d{3,4}//;
 		if($dod && ($dod =~ /(\d{3,4})$/)) {
 			$yod = $1;
 			$dod =~ s/\s?\d{3,4}//;
@@ -10847,6 +11034,11 @@ sub journey
 			$rc = "En $year " . lc($rc);
 		} else {
 			$rc = "In $year " . lc($rc);
+		}
+		if($year eq $doa) {
+			# Nothing more to print, avoid "In 1914 he arrived in 1914"
+			# But keep "In 1914 he arrived on 1 Jul"
+			undef $doa;
 		}
 	} else {
 		die 'TODO: ', $person->as_string(), ': handle departure only record';
@@ -10896,12 +11088,54 @@ sub journey
 
 	if(defined($dod) && !$only_have_departure_year) {
 		if($language eq 'French') {
-			return "$rc, partant $dod";
+			$rc .= ", partant $dod";
+		} else {
+			$rc .= ", departing $dod";
 		}
-		return "$rc, departing $dod";
 	}
 
-	return "$rc, arriving $doa";
+	if(defined($doa)) {
+		$rc .= ", arriving $doa";
+	}
+
+	if($arrival->date()) {
+		my $with_spouse;
+		if($spouses[0] && ($opts{'l'} || !is_alive(person => $spouses[0])) &&
+		   (my $sarrival = arrival({ person => $spouses[0] }))) {
+			if($sarrival->date() eq $arrival->date()) {
+				$rc .= i18n(' with ') .
+					lcfirst($person->possessive()) . ' ' .
+					((get_value({ person => $person, value => 'sex' }) eq 'M') ? 'wife' : 'husband') .
+					', ' . $spouses[0]->given_names();
+				$with_spouse++;
+			}
+		}
+		my @childnames;
+		foreach my $child(@children) {
+			if(($opts{'l'} || !is_alive(person => $child))) {
+				my $given_names = $child->given_names();
+				$given_names =~ s/\.$//;
+				push(@childnames, $given_names);
+			}
+		}
+		if(scalar(@childnames)) {
+			$rc .= (i18n(($with_spouse) ? ' and ' : ' with '));
+			if(scalar(@childnames) == scalar(@children)) {
+				$rc .= 'all of ' .
+					lcfirst($person->possessive()) .
+					i18n(' children');
+			} elsif(scalar(@childnames) == 1) {
+				$rc .= lcfirst($person->possessive()) .
+					i18n(' child ') .
+					$childnames[0];
+			} elsif(scalar(@childnames) > 1) {
+				$rc .= lcfirst($person->possessive()) .
+					i18n(' children') .
+					': ' . conjunction(@childnames);
+			}
+		}
+	}
+	return $rc
 }
 
 sub count_descendants_at_level
@@ -10972,7 +11206,7 @@ sub datecmp($$)
 				while((my @call_details = caller($i++))) {
 					print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 				}
-				die "Date parse failure: ($left)";
+				die "Date parse failure: left = ($left)";
 			}
 			my @l = $dfg->parse_datetime($left);
 			my $rc = $l[1] || $l[0];
@@ -10981,7 +11215,7 @@ sub datecmp($$)
 				while((my @call_details = caller($i++))) {
 					print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 				}
-				die "Date parse failure: ($left)";
+				die "Date parse failure: left = ($left)";
 			}
 			$left = $rc;
 		}
@@ -11003,6 +11237,9 @@ sub datecmp($$)
 		}
 		if($right =~ /^(Abt|ca?)\.?\s+(.+)/i) {
 			$right = $2;
+		} elsif(($right =~ /\//) && ($right =~ /^[a-z\/]+\s+(.+)/i)) {
+			# e.g. "Oct/Nov/Dec 1950"
+			$right = $1;
 		}
 		if($right =~ /^\d{3,4}$/) {
 			if(ref($left)) {
@@ -11232,10 +11469,9 @@ sub dateofbirth {
 		if($d[1] =~ /(\d{3,4})/) {
 			$year2 = $1;
 		}
-		if(defined($year1) && defined($year2)) {
-			if(abs($year1 - $year2) > 30) {
-				complain({ person => $person, warning => 'More than one date of birth separated by many years' });
-			}
+
+		if((defined($year1) && defined($year2)) && (abs($year1 - $year2) > 30)) {
+			complain({ person => $person, warning => 'More than one date of birth separated by many years' });
 		}
 
 		# Get the primary date.
@@ -11296,6 +11532,10 @@ sub dateofbirth {
 		if($dateofbirth =~ /\s$/) {
 			complain({ person => $person, warning => "Removing trailing spaces from date of birth '$dateofbirth'" });
 			$dateofbirth =~ s/\s+$//;
+		}
+		if($dateofbirth =~ /^0\d{3}/) {
+			complain({ person => $person, warning => "Removing leading zeroes from date of birth '$dateofbirth'" });
+			$dateofbirth =~ s/^0+//;
 		}
 		return parse_date({ date => $dateofbirth, type => 'Birth', person => $person });
 	}
@@ -11373,6 +11613,11 @@ sub dateofmarriage
 		if($dateofmarriage =~ /\s$/) {
 			complain({ person => $person, warning => "Removing trailing spaces from date of marriage '$dateofmarriage'" });
 			$dateofmarriage =~ s/\s+$//;
+		}
+		if($opts{'w'} && ($dateofmarriage =~ /\d{3,4}$/) && (my $dateofbirth = dateofbirth($person))) {
+			if(($dateofbirth =~ /\d{3,4}$/) && (datecmp($dateofmarriage, $dateofbirth) <= 0)) {
+				complain({ person => $person, warning => "Date of marriage ($dateofmarriage) is before date of birth ($dateofbirth)" });
+			}
 		}
 		return parse_date({ date => $dateofmarriage, type => 'Marriage', person => $person });
 	}
@@ -11490,7 +11735,7 @@ sub parse_date
 			while((my @call_details = caller($i++))) {
 				print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 			}
-			die "BUG: handle '$date' on ", $person->as_string();
+			die 'BUG: handle "', $params{'date'}, ' on ', $person->as_string();
 		}
 		if($about) {
 			$date = "abt $date";
@@ -11553,8 +11798,11 @@ sub dump_places {
 				warn "'$place' not found";
 			}
 			next;
+		} elsif($opts{'P'}) {
+			print "$place\n";
+			next;
 		} else {
-			# $opts{'T'}
+			# $opts{'r'}
 			print "$place: ";
 		}
 		my $previous;
@@ -11796,6 +12044,7 @@ sub get_year_from_date($)
 		return $year;
 	}
 	if(my $year = UnixDate(ParseDate($string), '%Y')) {	# Date::Manip
+		$year =~ s/^0+//;	# Strip leading zeros
 		return $year;
 	}
 	complain("Can't parse string '$string'");
@@ -11978,10 +12227,7 @@ sub between
 {
 	if(my $phrase = shift) {
 		if($phrase =~ /^fro?m (.+) to (.+)/i) {
-			if($language eq 'French') {
-				return "entre $1 et $2";
-			}
-			return "between $1 and $2";
+			return i18n('between ') . conjunction($1, $2);
 		}
 		return $phrase;
 	}
@@ -12026,7 +12272,7 @@ sub add_death_notes
 		if((!$opts{'B'}) || (length($notes) < 4000)) {
 			$notes =~ tr/\r//;
 			$notes =~ tr/\n/ /;
-			$notes =~ s/\.$//;
+			$notes =~ s/[\.,]$//;
 			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 			$phrase->append(" ($notes)");
 		}
@@ -12064,8 +12310,7 @@ sub weather
 
 	if((my $d = $dfg->parse_datetime(date => $date)) &&
 	   (my $location = get_location($record->place()))) {
-		my $date = $d->strftime('%F');
-		my $weather = $meteo->weather($location, $date);
+		my $weather = $meteo->weather($location, $d->strftime('%F'));
 
 		return unless(defined($weather));
 
@@ -12665,7 +12910,7 @@ sub newspaper
 	my $event = $params{'event'};
 
 	my $rc = Class::Simple->new();
-	
+
 	if(my $date = $event->date()) {
 		$date =~ s/^0//;
 		$rc->date($date);
@@ -12685,7 +12930,8 @@ sub newspaper
 		$source = $event->tag_record('SOUR');
 		$rc->url($source->tag_record('REF')->value());
 
-		if(my $page = $source->tag_record('PAGE')->value()) {
+		if(my $page = $source->tag_record('PAGE')) {
+			$page = $page->value();
 			$page =~ s/^0+//;
 			$rc->page($page);
 		}
@@ -12712,6 +12958,7 @@ and::and
 arrived::arrived
 at::at
 before %s::before %s
+between::between
 birthplace::birthplace
 both with %s::both with %s
 brother::brother
@@ -12727,6 +12974,9 @@ eldest::eldest
 father::father
 following the death of::following the death of
 from::from
+funeral::funeral
+grandchildren::grandchildren
+great-grandchildren::great-grandchildren
 had::had
 has had::has had
 has lived::has lived
@@ -12755,7 +13005,10 @@ the same day as::the same day as
 they::they
 times::times
 to::to
+today::today
+tomorrow::tomorrow
 twice::twice
+twin of::twin of
 was::was
 was buried::was buried
 was born::was born
@@ -12784,6 +13037,7 @@ arrived:M:est arrivé
 arrived:F:est arrivée
 at::à
 before %s::avant le %s
+between::entre
 birthplace::ville natale
 both with %s::tous les deux avec %s
 brother::frère
@@ -12827,12 +13081,16 @@ she::elle
 sister::sœur
 sisters::sœurs
 son::fils
+today::aujourd'hui
+tomorrow::demain
 the same day as::le même jour comme
 they:M:ils
 they:F:elles
 times::temps
 to::à
 twice::deux fois
+twin of:F:jumelle de
+twin of:M:jumeau de
 was::était
 was buried:M:a été inhumé
 was buried:F:a été inhumée
@@ -12861,6 +13119,7 @@ and::und
 arrived::kam
 at::in der
 before %s::vor %s
+between::zwischen
 birthplace::Geburtsort
 both with %s::beide mit %s
 brother::Bruder
@@ -12876,6 +13135,9 @@ eldest::älteste
 father::Vater
 following the death of::Nach dem Tod von
 from::von
+funeral::funeral
+grandchildren::Enkelkinder
+great-grandchildren::Urenkelkinder
 has had::hatte
 had::hatte
 has lived in %s::hat in %s gelebt
@@ -12900,10 +13162,13 @@ the same day as::die gleichen Tag als
 times::fache
 they::Sie
 to::nach
+today::heute
+was::war
 was born::wurde geboren
 was married to %s::war mit %s verheiratet
 wife::Frau
 with::mit
+youngest::jüngsten
 your::Ihr
 @@ Latin
 and::et
