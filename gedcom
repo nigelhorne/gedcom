@@ -5454,7 +5454,7 @@ sub print_person
 								' was living with ' .
 								lcfirst($person->possessive()) .
 								i18n(' brother-in-law, ') .
-								$in_law->given_names();
+								$in_law->as_string();
 							delete $living_with{'brother-in-law'};
 						}
 						$living_alone = 0;
