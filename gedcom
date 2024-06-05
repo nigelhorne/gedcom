@@ -5436,8 +5436,10 @@ sub print_person
 						$residencestring =~ s/(.+), (his|her) /$1 and $2 /;
 					}
 					if(scalar(keys %living_with)) {
-						$Data::Dumper::Maxdepth = 2;
-						print STDERR __LINE__, ": TODO ($rdate): ", Data::Dumper->new([\%living_with])->Dump();
+						if($opts{'w'}) {
+							$Data::Dumper::Maxdepth = 2;
+							print STDERR __LINE__, ": TODO ($rdate): ", Data::Dumper->new([\%living_with])->Dump();
+						}
 						if($living_with{'daughters'}) {
 							# TODO: more than one daughter
 							my @daughters = @{$living_with{'daughters'}};
