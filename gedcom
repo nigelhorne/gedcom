@@ -3310,7 +3310,11 @@ sub print_person
 								$phrase->append(($sex eq 'M' ? 'his' : 'her') . ' twin ' .
 									i18n(($ssex eq 'F') ? 'sister ' : 'brother '));
 							}
-							$phrase->append($sibling->given_names());
+							if(my $given = $sibling->given_names()) {
+								# Avoid end of sentences such as "with his twin sister Jane E.."
+								$given =~ s/\.$//;
+								$phrase->append($given);
+							}
 						}
 					}
 
