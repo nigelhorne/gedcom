@@ -12573,6 +12573,7 @@ sub wide_to_html
 
 	$string = HTML::Entities::decode($string);
 	# $string =~ s/ & / &amp; /g;
+	$string =~ s/&ccaron;/č/g;	# I don't think HTML::Entities does this
 	$string =~ s/&/&amp;/g;
 
 	unless($params{'keep_hrefs'}) {
