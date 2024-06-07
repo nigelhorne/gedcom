@@ -11194,7 +11194,7 @@ sub datecmp($$)
 	return 0 if($left eq $right);
 
 	if(!ref($left)) {
-		if((!ref($right)) && ($left =~ /(^|[\s\/])\d{4}$/) && ($right =~ /(^|[\s\/])(\d{4})$/)) {
+		if((!ref($right)) && ($left =~ /(^|[\s\/])\d{4}$/) && ($right =~ /(^|[\s\/,])(\d{4})$/)) {
 			my $ryear = $2;
 			$left =~ /(^|[\s\/])(\d{4})$/;
 			my $lyear = $2;
@@ -12574,6 +12574,7 @@ sub wide_to_html
 	$string = HTML::Entities::decode($string);
 	# $string =~ s/ & / &amp; /g;
 	$string =~ s/&ccaron;/č/g;	# I don't think HTML::Entities does this
+	$string =~ s/&zcaron;/ž/g;	# I don't think HTML::Entities does this
 	$string =~ s/&/&amp;/g;
 
 	unless($params{'keep_hrefs'}) {
