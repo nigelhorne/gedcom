@@ -4144,7 +4144,12 @@ sub print_person
 						} else {
 							$phrase->append([' with an unknown ', i18n(($sex eq 'M') ? 'mother' : 'father')]);
 						}
-						$phrase->append(', ' . $children[0]->given_names());
+						# TODO: make hyperlink to the person's record, unless surviving
+						if(my $given = $children[0]->given_names()) {
+							# Avoid end of sentences such as "Jane E.."
+							$given =~ s/\.$//;
+							$phrase->append(", $given");
+						}
 					} else {
 						if($all_children_are_alive) {
 							$phrase->append("$numberofchildren surviving children");
