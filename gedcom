@@ -1510,10 +1510,15 @@ sub print_person
 	# Gather the information on this person
 	my $person = $params{'person'};
 
-	my $dateofbirth = dateofbirth($person);
+	my $dateofbirth;
+
+	# https://github.com/nigelhorne/ged2site/compare/master...jhannah:ged2site:115-bday-of-living-is-private?expand=1
+	if(!is_alive($person)) {
+		$dateofbirth = dateofbirth($person);
+	}
 
 	# ACOM starts approximate dates with "Abt." instead of "ABT".
-	if(defined($dateofbirth) && length($dateofbirth) && ($dateofbirth ne '?')) {
+	if(defined($dateofbirth) && length($dateofbirth)) {
 		$dateofbirth =~ tr/\.\-/  /;
 		$dateofbirth =~ s/\s{2,}/ /gs;
 		# FIXME: ../../../gedcoms/gl120368.ged puts dates *inside*
@@ -7782,6 +7787,7 @@ sub all_records_have_date
 	return 1;
 }
 
+# nee: Born, used to denote a woman's maiden name (e.g., Anne Gibson nee West)
 sub Gedcom::Individual::as_string
 {
 	my $self = shift;
@@ -11575,6 +11581,9 @@ sub dateofbirth {
 		$dateofbirth = $birth->date();
 	}
 	if(defined($dateofbirth)) {
+		if($dateofbirth eq '?') {
+			return undef;
+		}
 		if($dateofbirth =~ /\s$/) {
 			complain({ person => $person, warning => "Removing trailing spaces from date of birth '$dateofbirth'" });
 			$dateofbirth =~ s/\s+$//;
