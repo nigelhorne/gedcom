@@ -9539,6 +9539,9 @@ sub place {
 					if($language eq 'French') {
 						return "$road \N{U+00E0}$town";
 					}
+					# Avoid "in in Paris"
+					$road =~ s/^\s*in//;
+					$road =~ s/\s+$//;
 					return "$road in$town";
 				}
 				return $address;
@@ -11001,7 +11004,7 @@ sub arrival
 	my $rc;
 
 	foreach my $event(@events) {
-		if((ref($event) eq 'Gedcom::Record') && ($event->type() eq 'Arrival')) {
+		if($event->can('type') && ($event->type() eq 'Arrival')) {
 			return if($rc);
 			$rc = $event;
 		}
