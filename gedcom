@@ -3765,7 +3765,6 @@ sub print_person
 							if($placeofmarriage || $dateofmarriage) {
 								$phrase->append(',');
 							}
-							$phrase->append(' ');
 						} else {
 							if($all_children_are_alive) {
 								$phrase->append("$numberofchildrenwiththisspouse surviving children");
@@ -3777,8 +3776,8 @@ sub print_person
 							if($placeofmarriage || $dateofmarriage) {
 								$phrase->append(':');
 							}
-							$phrase->append(' ');
 						}
+						$phrase->append(' ');
 						if((!$placeofmarriage) && !$dateofmarriage) {
 							if(length(my $spouse_name = $spouse->as_string({ middle_names => 1, title => 1 }))) {
 								$phrase->append(i18n({ format => 'with %s', args => $spouse_name }));
@@ -4347,7 +4346,7 @@ sub print_person
 						red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
 					}
 				}
-				if(ref($event) eq 'Gedcom::Record') {
+				if($event->can('type')) {
 					my $type = $event->type();
 					if(!defined($type)) {
 						red_warning({ person => $person, warning => "Can't determine type of event, or the event type is empty" });
@@ -5713,7 +5712,7 @@ sub print_person
 					@phrases = ();
 				}
 			}
-			if(ref($event) eq 'Gedcom::Record') {
+			if($event->can('type')) {
 				my $type = $event->type();
 				if(!defined($type)) {
 					red_warning({ person => $person, warning => "Can't determine type of event, or the event type is empty" });
@@ -9727,6 +9726,7 @@ sub notes {
 			# FIXME: a lot of duplicated code here
 			if(defined($rc)) {
 				if($rc ne $note) {
+					$rc =~ s/\s$//g;
 					if($paragraph) {
 						if($rc) {
 							$rc =~ s/\.$//;
@@ -10830,6 +10830,8 @@ sub get_all_occupations
 		$occupation =~ tr/\n/ /;
 		$occupation =~ s/\.+$//;
 		$occupation =~ s/[\(\)]//g;
+		$occupation =~ s/\s\s/ /g;
+		$occupation =~ s/\./;/g;
 
 		$occupation =~ s/\s+Own Account//i;
 		$occupation =~ s/^Formerly //i;
