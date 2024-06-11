@@ -9542,6 +9542,10 @@ sub place {
 					# Avoid "in in Paris"
 					$road =~ s/^\s*in//;
 					$road =~ s/\s+$//;
+					$town =~ s/\s+$//;
+					if(($road eq '') && ($town eq '')) {
+						return "in$country";
+					}
 					return "$road in$town";
 				}
 				return $address;
