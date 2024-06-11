@@ -9535,6 +9535,7 @@ sub place {
 				}
 				my $road = $1;
 				my $town = $2;
+				my $country = $4;
 				if(($town !~ /,/) || !defined($address)) {
 					if($language eq 'French') {
 						return "$road \N{U+00E0}$town";
