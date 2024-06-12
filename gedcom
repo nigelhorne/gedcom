@@ -4272,7 +4272,7 @@ sub print_person
 					}
 				}
 				if($all_children_have_names) {
-					$phrase->append(', ' . conjunction(map { $_->given_names() } @children));
+					$phrase->append(', ' . conjunction(map { given_names($_) } @children));
 				}
 			}
 			if($phrase->length()) {
