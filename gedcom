@@ -4347,12 +4347,13 @@ sub print_person
 						red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
 					}
 				}
-				if($event->can('type')) {
+				if($event->can('type') || $event->isa('Class::Simple::Readonly::Cached')) {
 					my $type = $event->type();
 					if(!defined($type)) {
 						red_warning({ person => $person, warning => "Can't determine type of event, or the event type is empty" });
 						next;
 					}
+					print "Event type: $type\n" if($opts{'v'});
 
 					# if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939')) {
 					if(($type =~ /Census/) || ($type eq 'Register UK 1939')) {
@@ -5713,7 +5714,7 @@ sub print_person
 					@phrases = ();
 				}
 			}
-			if($event->can('type')) {
+			if($event->can('type') || $event->isa('Class::Simple::Readonly::Cached')) {
 				my $type = $event->type();
 				if(!defined($type)) {
 					red_warning({ person => $person, warning => "Can't determine type of event, or the event type is empty" });
@@ -10701,7 +10702,7 @@ sub get_all_residences
 				$event = $e;
 			}
 		}
-		next if(!$event->can('type'));
+		next if($event->can('type') || $event->isa('Class::Simple::Readonly::Cached'));
 		my $type = $event->type();
 		next if(!defined($type));
 		# if(($type =~ /^Census U[KS] \d{4}$/) || ($type eq 'Register UK 1939') || ($type eq 'Hospitalisation')) {
@@ -11010,7 +11011,7 @@ sub arrival
 	my $rc;
 
 	foreach my $event(@events) {
-		if($event->can('type') && ($event->type() eq 'Arrival')) {
+		if(($event->can('type') || $event->isa('Class::Simple::Readonly::Cached')) && ($event->type() eq 'Arrival')) {
 			return if($rc);
 			$rc = $event;
 		}
