@@ -5707,7 +5707,7 @@ sub print_person
 					$event = $e;
 				} else {
 					red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
-					$phrase->append(' ' . ucfirst($event));
+					$phrase->rtrim()->append(' ' . ucfirst($event));
 					push @phrases, $phrase;
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new();
@@ -6170,6 +6170,7 @@ sub print_person
 							my $date = year(record => $event);
 							if($phrase->length()) {
 								$notes = lcfirst($notes);
+								$phrase->rtrim();
 								if($date) {
 									$phrase->append(" ($date, $notes)");
 								} else {
