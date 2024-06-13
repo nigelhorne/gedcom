@@ -3162,7 +3162,7 @@ sub print_person
 							i18n(' of'));
 					}
 				}
-				$phrase->append(' ' . $twins[0]->{'sibling'}->given_names());
+				$phrase->append(' ' . given_names($twins[0]->{'sibling'}));
 			}
 		}
 
@@ -3815,9 +3815,7 @@ sub print_person
 							my $alive_children = 0;
 							foreach my $child(@childrenofthisspouse) {
 								if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
-									my $cgiven = $child->given_names();
-									# Remove the '.' from an initial
-									$cgiven =~ s/[\.\s]+$//;
+									my $cgiven = given_names($child);
 									push @childlist, $cgiven if(length($cgiven));
 								} else {
 									$alive_children++;
@@ -4051,7 +4049,7 @@ sub print_person
 								$death_of_first_spouse =~ s/\s+$//;
 							}
 							$name .= i18n('following the death of ') .
-								$spouses[0]->given_names() . ' ' .
+								given_names($spouses[0]) . ' ' .
 								year({
 									person => $spouses[0],
 									record => $death_of_first_spouse,
@@ -4170,7 +4168,7 @@ sub print_person
 								$format = ' with %s';
 							}
 							$phrase->append(i18n(person => $person, format => $format, args => $parentofall->as_string()));
-							my $decoded = conjunction(map { $_->given_names() } @children);
+							my $decoded = conjunction(map { given_names($_) } @children);
 							# utf8::decode($decoded);
 							$decoded =~ s/ë/\N{U+00EB}/;
 							$phrase->append(": $decoded");
@@ -4182,7 +4180,7 @@ sub print_person
 								foreach my $child(@children) {
 									if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
 										if(my $mother = $child->mother()) {
-											push @{$childmap{$mother->given_names()}}, $child;
+											push @{$childmap{given_names($mother)}}, $child;
 										} else {
 											push @{$childmap{'unknown mother'}}, $child;
 										}
@@ -4194,7 +4192,7 @@ sub print_person
 								foreach my $child(@children) {
 									if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
 										if(my $father = $child->father()) {
-											push @{$childmap{$father->given_names()}}, $child;
+											push @{$childmap{given_names($father)}}, $child;
 										} else {
 											push @{$childmap{'unknown father'}}, $child;
 										}
@@ -4207,7 +4205,7 @@ sub print_person
 							my @childnames;
 							while(my ($key, $value) = each %childmap) {
 								push @childnames,
-									conjunction(map { $_->given_names() } @{$value}) .
+									conjunction(map { given_names($_) } @{$value}) .
 									i18n(' with ') .
 									$key
 							}
@@ -4257,8 +4255,7 @@ sub print_person
 				$phrase->append((($numberofchildren == 1) ? '1 child' : "$numberofchildren children"));
 			}
 			if($numberofchildren == 1) {
-				if(my $first_name = $children[0]->given_names()) {
-					$first_name =~ s/\.$//;
+				if(my $first_name = given_names($children[0])) {
 					$phrase->append(", $first_name");
 				}
 			} else {
@@ -4267,7 +4264,7 @@ sub print_person
 				# $phrase->append(", $childnames");
 				my $all_children_have_names = 1;
 				foreach my $child(@children) {
-					if(length($child->given_names()) == 0) {
+					if(length(given_names($child)) == 0) {
 						$all_children_have_names = 0;
 						last;
 					}
@@ -4297,7 +4294,7 @@ sub print_person
 			} else {
 				$phrase->append(i18n('children, '));
 			}
-			$phrase->append(conjunction(map { $_->given_names() } @childrenunknownparent) .
+			$phrase->append(conjunction(map { given_names($_) } @childrenunknownparent) .
 				', whose ' .
 				(($sex eq 'F') ? 'father' : 'mother') .
 				' is unknown');
@@ -4944,7 +4941,7 @@ sub print_person
 							if(scalar(@siblings_living_with) == 1) {
 								$residencestring .=
 									i18n(($sex eq 'F') ? ' sister, ' : ' brother, ') .
-									$siblings_living_with[0]->given_names() . ',';
+									given_names($siblings_living_with[0]);
 							} else {
 								my $sex = $siblings_living_with[0]->sex();
 								foreach my $sibling(@siblings_living_with) {
@@ -4956,7 +4953,7 @@ sub print_person
 								if($sex) {
 									# living with more than one sibling all of the same gender
 									$residencestring .= i18n(($sex eq 'F') ? ' sisters, ' : ' brothers, ') .
-										conjunction(map { $_->given_names() } @siblings_living_with);
+										conjunction(map { given_names($_) } @siblings_living_with);
 								} elsif(scalar(@siblings_living_with) == 2) {
 									# Living with one brother and one sister
 									my $brother;
@@ -4969,10 +4966,10 @@ sub print_person
 										$brother = $siblings_living_with[1];
 									}
 									$residencestring .= i18n(' brother ') .
-										$brother->given_names() .
+										given_names($brother) .
 										i18n(' and ') .
 										i18n('sister ') .
-										$sister->given_names();
+										given_names($sister);
 								} else {
 									die 'TODO: ', $person->as_string(include_years => 1), ' living with ', scalar(@siblings_living_with), ' siblings of differing genders';
 								}
@@ -5120,9 +5117,9 @@ sub print_person
 									if($with_mother && $with_father) {
 										$residencestring .= i18n(' parents');
 									} elsif($with_mother) {
-										$residencestring .= i18n(' mother, ') . $mother->given_names();
+										$residencestring .= i18n(' mother, ') . given_names($mother);
 									} elsif($with_father) {
-										$residencestring .= i18n(' father, ') . $father->given_names();
+										$residencestring .= i18n(' father, ') . given_names($father);
 									}
 									if($first) {
 										$residencestring .= ')';
@@ -5222,11 +5219,11 @@ sub print_person
 										if($language eq 'French') {
 											$residencestring .= ($printed_sibling ? ' et ' : ' avec ') .
 												($person->pronoun() eq 'She' ? 'son futur mari, ' : 'sa futur femme, ') .
-												$spouse->given_names();
+												given_names($spouse);
 										} else {
 											$residencestring .= i18n($printed_sibling ? ' and ' : ' with ') .
 												($person->pronoun() eq 'She' ? 'her future husband, ' : 'his future wife, ') .
-												$spouse->given_names();
+												given_names($spouse);
 										}
 										last;
 									}
@@ -5340,7 +5337,7 @@ sub print_person
 											" $relationship ";
 									}
 									if($l->{'person'}->surname() eq $lastname) {
-										$first_string .= $l->{'person'}->given_names();
+										$first_string .= given_names($l->{'person'});
 									} else {
 										$first_string .= $l->{'person'}->as_string();
 									}
@@ -5462,7 +5459,7 @@ sub print_person
 								' was living with ' .
 								lcfirst($person->possessive()) .
 								i18n((scalar(@daughters) > 1) ? ' daughters, ' : ' daughter ') .
-								conjunction(map { $_->given_names() } @daughters) . ',' .
+								conjunction(map { given_names($_) } @daughters) . ',' .
 								i18n(' following the death of ') .
 								(($sex eq 'M') ? 'his wife ' : 'her husband ') .
 								year(date => dateofdeath($spouses[0]));
@@ -5748,7 +5745,7 @@ sub print_person
 									$phrase->append(i18n(' with ') .
 										lcfirst($person->possessive()) . ' ' .
 										(($sex eq 'M') ? 'wife' : 'husband') .
-										' ' . $spouse->given_names());
+										' ' . given_names($spouse));
 								}
 							}
 						}
@@ -6793,7 +6790,7 @@ sub print_person
 					unless($opts{'B'}) {
 						$phrase->append("\n\t");
 					}
-					$phrase->append($child->given_names() .
+					$phrase->append(given_names($child) .
 						' was born ' .
 						year({ person => $child, date => $dob }));
 					if($opts{'w'} && ($birth_dt || $death_dt) &&
@@ -6824,7 +6821,7 @@ sub print_person
 					}
 					$phrase->append('.');
 				} elsif(my $bd = get_value({ person => $child, value => 'baptism date' })) {
-					$phrase->append("\t" . $child->given_names() .
+					$phrase->append("\t" . given_names($child) .
 						" was born c. $bd.");
 				}
 			}
@@ -7682,7 +7679,7 @@ sub sqlite
 		foreach my $c(@children) {
 			print ">>$xref: $surname: ",
 				$c->xref(), ': ',
-				$c->given_names(), "\n";
+				given_names($c), "\n";
 			die unless($statement->execute($xref, $c->xref()) == 1);
 		}
 	}
@@ -7910,8 +7907,8 @@ sub Gedcom::Individual::as_string
 
 	if($first_name) {
 		$rc .= $first_name;
-	} elsif($self->given_names()) {
-		$rc .= $self->given_names();
+	} elsif(given_names($self)) {
+		$rc .= given_names($self);
 	} elsif($args{'print_unknown'}) {
 		$rc .= ' ?';
 	}
@@ -8019,7 +8016,7 @@ sub Gedcom::Individual::as_sort_key
 {
 	my $self = shift;
 	my $surname = $self->surname();
-	my $given_names = $self->given_names();
+	my $given_names = given_names($self);
 
 	if($surname && length($surname)) {
 		if($given_names) {
@@ -10064,7 +10061,7 @@ sub sibling_baptism_string
 	if($allsamesex) {
 		return ', ' . i18n('the same day as ') . lcfirst($person->possessive()) . ' ' .
 			i18n(($onsameday[0]->sex() eq 'M' ? 'brothers ' : 'sisters ')) .
-			conjunction(map { $_->given_names() } @onsameday);
+			conjunction(map {given_names($_) } @onsameday);
 	}
 
 	my @baptisms;
@@ -10086,7 +10083,7 @@ sub sibling_baptism_string
 			}
 		}
 		$baptism .= i18n(($sibling->sex() eq 'M' ? 'brother ' : 'sister ')) .
-			$sibling->given_names();
+			given_names($sibling);
 		push @baptisms, $baptism;
 	}
 	return ', ' . i18n('the same day as ') . conjunction(@baptisms);
@@ -11150,16 +11147,14 @@ sub journey
 				$rc .= i18n(' with ') .
 					lcfirst($person->possessive()) . ' ' .
 					((get_value({ person => $person, value => 'sex' }) eq 'M') ? 'wife' : 'husband') .
-					', ' . $spouses[0]->given_names();
+					', ' . given_names($spouses[0]);
 				$with_spouse++;
 			}
 		}
 		my @childnames;
 		foreach my $child(@children) {
 			if(($opts{'l'} || !is_alive(person => $child))) {
-				my $given_names = $child->given_names();
-				$given_names =~ s/\.$//;
-				push(@childnames, $given_names);
+				push(@childnames, given_names($child));
 			}
 		}
 		if(scalar(@childnames)) {
@@ -11691,7 +11686,7 @@ sub dateofmarriage
 				complain({ person => $person, warning => "Date of marriage ($dateofmarriage) is before date of birth ($dateofbirth)" });
 			}
 		}
-		if($dateofmarriage =~ /d/) {
+		if($dateofmarriage =~ /\d/) {
 			return parse_date({ date => $dateofmarriage, type => 'Marriage', person => $person });
 		}
 		complain({ person => $person, warning => "'$dateofmarriage' is not a valid date of marriage" });
@@ -12801,7 +12796,7 @@ sub dbpedia
 	$name =~ s/\///g;
 	$nameparser->parse($name);
 	my %name_components = $nameparser->components();
-	my $firstname = $name_components{'given_name_1'} // $person->given_names // $name_components{'initials_1'};
+	my $firstname = $name_components{'given_name_1'} // $person->given_names() // $name_components{'initials_1'};
 	if($firstname) {
 		$firstname =~ s/\'/\\\'/g;
 		$firstname = Unicode::Diacritic::Strip::strip_diacritics($firstname);
