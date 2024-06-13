@@ -2949,7 +2949,8 @@ sub print_person
 								complain({ person => $sibling, warning => 'Removing trailing spaces from date of birth' });
 								$dob =~ s/\s+$//;
 							}
-							if(my $d = date_parser_cached(date => $dob)) {
+							if(($dob =~ /\d{3,4}$/) &&
+							   (my $d = date_parser_cached(date => $dob))) {
 								$d = $dfn->parse_datetime($d->{'canonical'});
 								if($opts{'w'} &&
 								  ($dob =~ /^\d/) && ($dob !~ /[a-z]$/i) &&
@@ -3799,7 +3800,7 @@ sub print_person
 						if($numberofchildrenwiththisspouse == 1) {
 							my $child = $children[0];
 							if($opts{'l'} || (!is_alive(person => $child)) || (defined($me) && ($child->xref() eq $me->xref()))) {
-								if(my $first_name = $child->given_names()) {
+								if(my $first_name = given_names($child)) {
 									$phrase->append($first_name);
 								} else {
 									$phrase->append('whose first name is unknown');
