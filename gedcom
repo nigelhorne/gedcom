@@ -12648,6 +12648,7 @@ sub wide_to_html
 	$string =~ s/\xc3\xa4/&auml;/g;
 	$string =~ s/\xc3\xa9/&eacute;/g;
 	$string =~ s/\xc3\xb4/&ocirc;/g;	# ô
+	$string =~ s/\xc3\xb6/&ouml;/g;
 	$string =~ s/\xc5\xa1/&scaron;/g;
 	$string =~ s/\xc4\x8d/&ccaron;/g;
 	$string =~ s/\xc5\xbe/&zcaron;/g;
@@ -12656,6 +12657,7 @@ sub wide_to_html
 	$string =~ s/\xc3\x96/&Ouml;/g;	# Ö
 	$string =~ s/\xc3\xa8/&egrave;/g;
 	$string =~ s/\xc3\x89/&Eacute;/g;
+	$string =~ s/\xc3\x9f/&szlig;/g;
 	$string =~ s/\xc3\xaa/&ecirc;/g;
 	$string =~ s/\xc3\xab/&euml;/g;
 	$string =~ s/\xc3\xae/&icirc;/g;
@@ -12670,6 +12672,7 @@ sub wide_to_html
 	$string =~ s/\N{U+0161}/&scaron;/g;
 	$string =~ s/\N{U+010D}/&ccaron;/g;
 	$string =~ s/\N{U+017E}/&zcaron;/g;
+	$string =~ s/\N{U+00DF}/&szlig;/g;	# ß
 	$string =~ s/\N{U+00E1}/&aacute;;/g;
 	$string =~ s/\N{U+00E2}/&acirc;/g;
 	$string =~ s/\N{U+00E4}/&auml;/g;
@@ -12679,6 +12682,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
 	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
 	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
+	$string =~ s/\N{U+00F6}/&ouml;/g;
 	$string =~ s/\N{U+00C9}/&Eacute;/g;
 	$string =~ s/\N{U+00CA}/&ecirc;/g;
 	$string =~ s/\N{U+00EB}/&euml;/g;
@@ -12747,6 +12751,7 @@ sub wide_to_html
 	$string =~ s/®/&reg;/g;
 	$string =~ s/ó/&oacute;/g;
 	$string =~ s/ô/&ocirc;/g;
+	$string =~ s/ö/&ouml;/g;
 	$string =~ s/ś/&sacute;/g;
 	$string =~ s/û/&ucirc;/g;
 	$string =~ s/£/&pound;/g;
@@ -12767,6 +12772,18 @@ sub wide_to_html
 	# }
 
 	# print STDERR __LINE__, ": ($string)\n";
+	if($string =~ /[^[:ascii:]]/) {
+		print STDERR (unpack 'H*', $string);
+		print STDERR __LINE__, ': ';
+		print STDERR (sprintf '%v02X', $string), "\n";
+		print STDERR "\n";
+		my $i = 0;
+		while((my @call_details = caller($i++))) {
+			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+		}
+		die "BUG: wide_to_html($string)";
+	}
+
 	return $string;
 }
 
