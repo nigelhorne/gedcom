@@ -9682,8 +9682,9 @@ sub getaddress {
 	return $rc;
 }
 
-# paragraph => 1: ignore spacing and put it all into one paragraph
-sub notes {
+# paragraph => 0: ignore spacing and put it all into one paragraph
+sub notes
+{
 	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
 
 	my $record = $params{'record'};
@@ -9719,12 +9720,13 @@ sub notes {
 			}
 			$note =~ s/\r//g;
 			next if($note =~ /^\s*$/);
-			$note =~ s/\s\s+/ /g;
+			$note =~ s/ \n/\n/g;
 			if($paragraph) {
 				$note =~ s/\n+/\n\t/g;
 			} else {
 				$note =~ s/\n+/; /g;
 			}
+			$note =~ s/\s\s+/ /g;
 			$note =~ s/\s+$//g;
 			$note =~ s/\. /.  /g;
 			$note =~ s/Dr\.\s\s/Dr. /g;
