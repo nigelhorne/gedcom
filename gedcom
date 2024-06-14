@@ -11249,6 +11249,9 @@ sub datecmp($$)
 		}
 		if($left =~ /^(Abt|ca?)\.?\s+(.+)/i) {
 			$left = $2;
+		} elsif($left =~ /(.+?)\s?\?$/) {
+			# "1828 ?"
+			$left = $1;
 		} elsif(($left =~ /\//) && ($left =~ /^[a-z\/]+\s+(.+)/i)) {
 			# e.g. "Oct/Nov/Dec 1950"
 			$left = $1;
@@ -11306,8 +11309,39 @@ sub datecmp($$)
 		if($right =~ /^\d{3,4}$/) {
 			if(ref($left)) {
 				return $left->year() <=> $right;
+			}
+			return $left <=> $right;
+		}
+
+		if($right =~ /^(\d{3,4})\-(\d{3,4})$/) {
+			# Comparing with a date range
+			my ($from, $to) = ($1, $2);
+			if($from == $to) {
+				complain("from == to, $from");
+				$right = $from;
+			} elsif($from > $to) {
+				print STDERR "datecmp(): $from > $to in daterange '$right'\n";
+				my $i = 0;
+				while((my @call_details = caller($i++))) {
+					print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+				}
+				return 0;
 			} else {
-				return $left <=> $right;
+				if(ref($left)) {
+					$left = $left->year();
+				}
+				if($left < $from) {
+					return -1;
+				}
+				if($left > $to) {
+					return 1;
+				}
+				print STDERR "datecmp(): Can't compare $left with $right\n";
+				my $i = 0;
+				while((my @call_details = caller($i++))) {
+					print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
+				}
+				return 0;
 			}
 		}
 		# if(!$dfg->parse_datetime($right)) {
@@ -12625,6 +12659,8 @@ sub wide_to_html
 		$string =~ s/</&lt;/g;
 		$string =~ s/>/&gt;/g;
 		$string =~ s/"/&quot;/g;
+		$string =~ s/“/&quot;/g;	# U+201C
+		$string =~ s/”/&quot;/g;	# U+201D
 	}
 
 	# $string =~ s/&db=/&amp;db=/g;
@@ -12662,16 +12698,20 @@ sub wide_to_html
 	$string =~ s/\xc3\xab/&euml;/g;
 	$string =~ s/\xc3\xae/&icirc;/g;
 	$string =~ s/\xc3\xbb/&ucirc;/g;
+	$string =~ s/\xc3\xbc/&uuml;/g;	# ü
 	$string =~ s/\xc5\x9b/&sacute;/g;
 	$string =~ s/\xc5\xa0/&Scaron;/g;
 	$string =~ s/\xe2\x80\x93/&ndash;/g;
 	$string =~ s/\xc3\xb1/&ntilde;/g;	# ñ
+	$string =~ s/\xe2\x80\x9c/-/g;
+	$string =~ s/\xe2\x80\x9d/-/g;
 
 	$string =~ s/\N{U+00A9}/&copy;/g;
 	$string =~ s/\N{U+00AE}/&reg;/g;
 	$string =~ s/\N{U+0161}/&scaron;/g;
 	$string =~ s/\N{U+010D}/&ccaron;/g;
 	$string =~ s/\N{U+017E}/&zcaron;/g;
+	$string =~ s/\N{U+00C9}/&Eacute;/g;
 	$string =~ s/\N{U+00DF}/&szlig;/g;	# ß
 	$string =~ s/\N{U+00E1}/&aacute;;/g;
 	$string =~ s/\N{U+00E2}/&acirc;/g;
@@ -12683,7 +12723,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00E7}/&ccedil;/g;	# ç
 	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
 	$string =~ s/\N{U+00F6}/&ouml;/g;
-	$string =~ s/\N{U+00C9}/&Eacute;/g;
+	$string =~ s/\N{U+00FC}/&uuml;/g;	# ü
 	$string =~ s/\N{U+00CA}/&ecirc;/g;
 	$string =~ s/\N{U+00EB}/&euml;/g;
 	$string =~ s/\N{U+00F3}/&oacute;/g;
@@ -12691,6 +12731,8 @@ sub wide_to_html
 	$string =~ s/\N{U+00FB}/&ucirc;/g;
 	$string =~ s/\N{U+0160}/&Scaron;/g;
 	$string =~ s/\N{U+2013}/&ndash;/g;
+	$string =~ s/\N{U+201C}/-/g;
+	$string =~ s/\N{U+201D}/-/g;
 
 	# utf8::encode($string);
 	# $string =~ s/š/&scaron;/g;
@@ -12755,8 +12797,12 @@ sub wide_to_html
 	$string =~ s/ś/&sacute;/g;
 	$string =~ s/û/&ucirc;/g;
 	$string =~ s/£/&pound;/g;
+	$string =~ s/ß/&szlig;/g;
 	$string =~ s/–/&ndash;/g;
 	$string =~ s/ñ/&#x0F1;/g;
+	$string =~ s/ü/&uuml;/g;
+	$string =~ s/“/-/g;
+	$string =~ s/”/-/g;
 	$string =~ tr/\x80/ /;
 
 	# if($string =~ /^Maria\(/) {
