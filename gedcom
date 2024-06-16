@@ -5813,8 +5813,8 @@ sub print_person
 					if(scalar(@phrases) == 0) {
 						$phrase->set($firstname // $pronoun)->append(' ');
 					}
-					my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
 					$phrase->append('appeared in a newspaper');
+					my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
 					if(my $date = $newspaper->date()) {
 						$phrase->append(" on $date");
 					}
@@ -6125,8 +6125,9 @@ sub print_person
 							$phrase = Data::Text->new();
 						}
 					} elsif($type eq 'Newspaper') {
-						# FIMXE: duplicate code with one event
+						# FIXME: duplicate code with one event
 						# This is a non-standard thing that FMP has evented.
+						# FIXME: handle more than one newspaper
 						if($phrase->length()) {
 							push @phrases, $phrase;
 							$phrase = Data::Text->new();
@@ -12650,7 +12651,7 @@ sub wide_to_html
 		while((my @call_details = caller($i++))) {
 			print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 		}
-		die 'BUG: string not set';
+		die 'BUG: wide_to_html() string not set';
 	}
 
 	# print STDERR __LINE__, ": ($string)";
