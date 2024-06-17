@@ -12694,6 +12694,7 @@ sub wide_to_html
 	$string =~ s/\xc2\xa3/&pound;/g;
 	$string =~ s/\xc2\xa9/&copy;/g;
 	$string =~ s/\xc2\xae/&reg;/g;
+	$string =~ s/\xc3\x83/&Icirc;/g;	# Î
 	$string =~ s/\xc3\xa1/&aacute;/g;
 	$string =~ s/\xc3\xa2/&acirc;/g;
 	$string =~ s/\xc3\xa4/&auml;/g;
@@ -12727,6 +12728,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00A3}/&pound;/g,
 	$string =~ s/\N{U+00A9}/&copy;/g;
 	$string =~ s/\N{U+00AE}/&reg;/g;
+	$string =~ s/\N{U+00CE}/&Icirc;/g;	# Î
 	$string =~ s/\N{U+0161}/&scaron;/g;
 	$string =~ s/\N{U+010D}/&ccaron;/g;
 	$string =~ s/\N{U+017E}/&zcaron;/g;
@@ -12812,6 +12814,7 @@ sub wide_to_html
 	$string =~ s/ê/&ecirc;/g;
 	$string =~ s/ë/&euml;/g;
 	$string =~ s/í/&iacute;/g;
+	$string =~ s/Î/&Iicrc;/g;
 	$string =~ s/©/&copy;/g;
 	$string =~ s/®/&reg;/g;
 	$string =~ s/ó/&oacute;/g;
