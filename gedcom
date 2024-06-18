@@ -12705,6 +12705,7 @@ sub wide_to_html
 	$string =~ s/\xc5\xa1/&scaron;/g;
 	$string =~ s/\xc4\x8d/&ccaron;/g;
 	$string =~ s/\xc5\xbe/&zcaron;/g;
+	$string =~ s/\xc3\xa5/&aring;/g;	# å
 	$string =~ s/\xc3\xa7/&ccedil;/g;
 	$string =~ s/\xc3\xb3/&oacute;/g;
 	$string =~ s/\xc3\x96/&Ouml;/g; # Ö
@@ -12737,6 +12738,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00E1}/&aacute;;/g;
 	$string =~ s/\N{U+00E2}/&acirc;/g;
 	$string =~ s/\N{U+00E4}/&auml;/g;
+	$string =~ s/\N{U+00E5}/&aring;/g;	# å
 	$string =~ s/\N{U+00E8}/&egrave;/g;
 	$string =~ s/\N{U+00E9}/&eacute;/g;
 	$string =~ s/\N{U+00ED}/&iacute;/g;	# í
@@ -12802,6 +12804,7 @@ sub wide_to_html
 	# $string =~ s/\N{U+0160}/&Scaron;/g;	# FIXME: also above
 	# $string =~ s/\N{U+2013}/-/g;
 
+	$string =~ s/å/&aring;/g;
 	$string =~ s/š/&scaron;/g;
 	$string =~ s/Š/&Scaron;/g;
 	$string =~ s/č/&ccaron;/g;
