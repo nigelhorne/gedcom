@@ -600,6 +600,8 @@ if($opts{'v'}) {
 
 my $geocoder;
 my $textgeocoder;
+my $geonames;
+
 if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	$geocoder = Geo::Coder::List->new($gopts)->push(Geo::Coder::Free::Local->new());
 
@@ -2202,6 +2204,16 @@ sub print_person
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			# Country is found, nothing to be done
 			# $death_country = $b->name();
+		} elsif(my $user = $ENV{'GEONAMES_USER'}) {
+			$geonames //= Geo::GeoNames->new(username => $user);
+			$geonames->ua($cached_browser);
+			my $result = $geonames->search(q => $placeofdeath, style => 'FULL');
+			$result = @{$result}[0];
+			if(my $death_country = $result->{'countryName'}) {
+				# complain({ person => $person, warning => "$c: Assuming country of death is $death_country" });
+			} else {
+				complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
+			}
 		} else {
 			complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
 		}
