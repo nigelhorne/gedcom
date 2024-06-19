@@ -4596,7 +4596,7 @@ sub print_person
 						if(my $place = place({ person => $person, record => $residence, nopreposition => 1 })) {
 							if(my $location = get_location($place)) {
 								push @{$all_locations{$year}}, {
-									'residence' => $residence,
+									'record' => $residence,
 									'person' => $person,
 									'date' => $strftime,
 									'latitude' => $location->lat(),
@@ -4614,7 +4614,7 @@ sub print_person
 									if(($l->{'person'}->xref() eq $spouses[0]->xref()) &&
 									   ($l->{'date'} eq $strftime)) {
 										my $r1 = place(record => $residence, nopreposition => 1);
-										my $r2 = place(record => $l->{'residence'}, nopreposition => 1);
+										my $r2 = place(record => $l->{'record'}, nopreposition => 1);
 										if($r1 ne $r2) {
 											$r1 =~ s/^\s+//;
 											$r2 =~ s/^\s+//;
@@ -5257,7 +5257,7 @@ sub print_person
 							   (my $relationship = $person->relationship($l->{'person'})) &&
 							    ((stepsabove($l->{'person'}, $person, 0) <= 3) &&
 							     (stepsabove($person, $l->{'person'}, 0) <= 3)))) {
-								my $p1 = place({ record => $l->{'residence'}, nopreposition => 1 });
+								my $p1 = place({ record => $l->{'record'}, nopreposition => 1 });
 								# This stops verbosity when the list is:
 								#	high street, 33 high street, high street
 								next unless($p1 =~ /^\s?\d/);
