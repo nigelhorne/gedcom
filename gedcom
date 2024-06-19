@@ -67,19 +67,16 @@ BEGIN {
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'File::HomeDir', 'String::Compare',
 		'HTML::Entities',
-		'Lingua::Conjunction',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'Data::Text', 'DateTime::Format::Genealogy', 'Parse::RecDescent',
-		'Mozilla::CA',
 		'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
-		'File::Spec', 'Net::OAuth',
+		'File::Spec',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
-		'Geo::Coder::Abbreviations',
 		'Roman', 'Unicode::Diacritic::Strip',
 		'utf8::all',
 		# 'Devel::FIXME',
@@ -333,7 +330,8 @@ if($ENV{'REDIS_SERVER'}) {
 	push @modules, 'CHI::Driver::Redis';
 }
 if($opts{'d'}) {
-	push @modules, 'Weather::Meteo', 'XML::Hash';
+	push @modules, 'Geo::Coder::Abbreviations', 'Weather::Meteo',
+		'XML::Hash', 'Lingua::Conjunction';
 }
 if($opts{'d'} || $opts{'B'}) {
 	push @modules, 'DateTime::Format::Text';
@@ -341,6 +339,9 @@ if($opts{'d'} || $opts{'B'}) {
 
 if($opts{'v'}) {
 	push @modules, 'Log::Any::Adapter';
+}
+if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
+	push @modules, 'Mozilla::CA';
 }
 
 my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
@@ -410,8 +411,10 @@ foreach my $module(@modules) {
 
 umask(0077);	# Don't let PII become publicly readable
 
-Lingua::Conjunction->separator_phrase(',');
-Lingua::Conjunction->penultimate(0);
+if($opts{'d'}) {
+	Lingua::Conjunction->separator_phrase(',');
+	Lingua::Conjunction->penultimate(0);
+}
 
 my $browser;
 my $cached_browser;
@@ -713,7 +716,8 @@ if($ARGV[1]) {
 	$ged2 = Gedcom->new(gedcom_file => $ARGV[1], read_only => 1);
 	$ged2 = Class::Simple::Cached->new(object => $ged2, cache => CHI->new(driver => 'RawMemory', datastore => {}));
 }
-my $abbr = Geo::Coder::Abbreviations->new();
+my $abbr;
+$abbr = Geo::Coder::Abbreviations->new() if($opts{'d'});
 
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
