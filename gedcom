@@ -2396,6 +2396,14 @@ sub print_person
 
 	my @events = $person->event();
 
+	if(scalar(@events) == 2) {
+		my $event = $events[1];
+		if(!ref($event)) {
+			red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
+			pop @events;
+		}
+	}
+
 	if(scalar(@events) > 1) {
 		# my $all_have_dates = 1;
 		# foreach my $event(@events) {
@@ -2433,11 +2441,11 @@ sub print_person
 				my $event = $person->event();
 				if(!ref($event)) {
 					my $e = $person->tag_record('EVEN');
-					if(ref($e) eq 'Gedcom::Record') {
+					if($e->isa('Gedcom::Record')) {
 						$event = $e;
 					}
 				}
-				if((ref($event) eq 'Gedcom::Record') &&
+				if($event->can('type') && defined($event->type()) &&
 				  ($event->type() eq 'Custom Marriage')) {
 					# FindMyPast
 					$marriage = $event;
@@ -5654,8 +5662,7 @@ sub print_person
 		my $funeral;
 
 		if((scalar(@events) == 2) &&
-		   (ref($events[0]) eq 'Gedcom::Record') &&
-		   (ref($events[1]) eq 'Gedcom::Record') &&
+		   $events[0]->can('type') && $events[1]->can('type') &&
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
 			if($phrase->rtrim()->length() > 0) {
@@ -12202,6 +12209,9 @@ sub get_year_from_date($)
 		return $year;
 	}
 	complain("Can't parse string '$string'");
+	if($string =~ /(\d{4})/) {
+		return $1;
+	}
 }
 
 # https://www.gnu.org/software/gettext/manual/html_node/Locale-Environment-Variables.html
