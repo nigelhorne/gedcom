@@ -6163,7 +6163,11 @@ sub print_person
 							$phrase->append('appeared ');
 						}
 						my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
-						$phrase->append('in ' . $newspaper->title());
+						if(my $title = $newspaper->title()) {
+							$phrase->append("in $title");
+						} else {
+							$phrase->append('in a newspaper');
+						}
 						if(my $date = $newspaper->date()) {
 							$phrase->append(" on $date");
 						}
@@ -11249,6 +11253,17 @@ sub datecmp($$)
 
 	return 0 if($left eq $right);
 
+	if((!ref($left)) && (!ref($right)) && ($left =~ /(\d{3,4})$/)) {
+		# Simple year test for fast comparison
+		my $yol = $1;
+		if($right =~ /(\d{3,4})$/) {
+			my $yor = $1;
+			if($yol != $yor) {
+				return $yol <=> $yor;
+			}
+		}
+	}
+
 	if(!ref($left)) {
 		if((!ref($right)) && ($left =~ /(^|[\s\/])\d{4}$/) && ($right =~ /(^|[\s\/,])(\d{4})$/)) {
 			my $ryear = $2;
@@ -13164,7 +13179,7 @@ sub newspaper
 	# my $source = $event->source();
 	if(ref(my $source = $event->source())) {
 		$rc->url($source->tag_record('REF')->value());
-		$rc->title('a newspaper');
+		# $rc->title('a newspaper');
 	} else {
 		$source = get_source({ source => $source, %params });
 		if(my $title = $source->title()) {
@@ -13452,5 +13467,6 @@ wife::uxor
 he::él
 father::padre
 is::es
+mother::madre
 she::ella
 __END__
