@@ -4897,12 +4897,16 @@ sub print_person
 					}
 				}
 				if($rdate) {	# residence has a date?
-					my $bdiff;
+					my $age;
 					if($birth_dt) {
-						$bdiff = $dfn->parse_datetime($rdate) - $birth_dt;
+						$age = $dfn->parse_datetime($rdate) - $birth_dt;
+						$age = $age->in_units('years');
+					} else {
+						$age = get_year_from_date($rdate) - $yob;
 					}
 					# Find if they are an adult living with an adult sibling or in-law
-					if($all_residences_have_date && $birth_dt) {
+					# if($all_residences_have_date && $birth_dt) {
+					if($all_residences_have_date) {
 						my $printed_sibling = 0;
 						my $r = $residence;
 						next if($r->date() ne $rdate);
@@ -4912,7 +4916,7 @@ sub print_person
 
 						foreach my $sibling(@siblings) {
 							if(my $ss = $sibling->spouse()) {
-								next if($bdiff->in_units('years') < 20);
+								next if($age < 20);
 								# If they are living with an in-law, assume both are adults
 								$ss = Class::Simple::Readonly::Cached->new({ object => $ss, cache => {}, quiet => 1 });
 								my @ssr = get_all_residences(person => $ss);
@@ -4936,7 +4940,7 @@ sub print_person
 									}
 								}
 							}
-							next if($bdiff->in_units('years') < 40);
+							next if($age < 40);
 							# Safe to assume both are adults at this time
 							my @sr = get_all_residences(person => $sibling);
 							foreach my $sr(@sr) {
@@ -5054,7 +5058,7 @@ sub print_person
 								}
 							}
 							if($living_with{'mother'} || $living_with{'father'}) {
-								if($bdiff->in_units('years') >= 30) {
+								if($age >= 30) {
 									$residencestring .= ' ';
 									if($first) {
 										$residencestring .= '(' .
@@ -5099,7 +5103,7 @@ sub print_person
 									}
 								}
 							} elsif(($same_road_as_mother || $same_road_as_father) && !$printed_sibling) {
-								if($bdiff->in_units('years') >= 30) {
+								if($age >= 30) {
 									$residencestring .= ' on the same road as ' .
 												($person->pronoun() eq 'She' ? 'her' : 'his');
 									$printed_sibling = 1;
@@ -5128,9 +5132,9 @@ sub print_person
 										}
 									}
 								}
-							} elsif(($mother || $father) && ($bdiff->in_units('years') < 16)) {
+							} elsif(($mother || $father) && ($age < 16)) {
 								if(!($with_mother || $with_father)) {
-									complain({ person => $person, warning => [ "$rdate: Not living with either parent in childhood when aged ", $bdiff->in_units('years') ] });
+									complain({ person => $person, warning => "$rdate: Not living with either parent in childhood when aged $age" });
 								}
 								$living_alone = 0;
 							} elsif($father_date && (datecmp($rdate, $father_date) >= 0)) {
@@ -5201,7 +5205,7 @@ sub print_person
 							}
 						}
 					}
-					if(defined($latitude) && defined($bdiff) &&
+					if(defined($latitude) && defined($age) &&
 					  (my $dt = date_to_datetime($rdate))) {
 						# Print close relatives living close by
 						# This really only works when printing a lot of people, for example with the -a
@@ -5277,7 +5281,7 @@ sub print_person
 											if($year < $1) {
 												$future_spouse = 1;
 											}
-										} elsif($bdiff->in_units('years') < 16) {
+										} elsif($age < 16) {
 											$future_spouse = 1;
 										}
 									}
@@ -5291,7 +5295,7 @@ sub print_person
 										}
 									} else {
 										next unless($relationship);
-										if($bdiff->in_units('years') < 21) {
+										if($age < 21) {
 											if(my $mother = $person->mother()) {
 												if($l->{'person'}->xref() eq $mother->xref()) {
 													next;
