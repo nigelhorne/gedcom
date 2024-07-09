@@ -2669,7 +2669,7 @@ sub print_person
 		}
 
 		# my @children = map { $_->children() } $person->fams();
-		my @children = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) } 
+		my @children = map { Class::Simple::Readonly::Cached->new({ object => $_, cache => {}, quiet => 1 }) }
 			map { $_->children() } $person->fams();
 		my $numberofchildren = scalar(@children);
 
@@ -2902,7 +2902,7 @@ sub print_person
 			$phrase = Data::Text->new();
 		}
 		if(scalar(@phrases)) {
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			$bio->appendconjunction(@phrases)->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
@@ -3133,7 +3133,7 @@ sub print_person
 						push @phrases, $phrase;
 					}
 					if(scalar(@phrases)) {
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+						$bio->appendconjunction(@phrases)->append('.  ');
 						$phrase = Data::Text->new();
 						@phrases = ();
 					}
