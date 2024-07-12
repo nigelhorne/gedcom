@@ -3926,7 +3926,21 @@ sub print_person
 				}
 				$phrase->append("[$marriagecitation]") if($marriagecitation);
 				if(defined($marriage)) {
-					append_notes({ phrase => $phrase, record => $marriage });
+					my $do_marriage_notes = 1;
+					if($placeofmarriage && (my $addr = $marriage->address()) && (my $notes = $marriage->get_value())) {
+						if("$addr, $placeofmarriage" =~ /^\Q$notes\E/) {
+							# This can happen with things like this
+							# 1 MARR Ebenezer Chapel, Meeting Street, Ramsgate
+							# 2 _PRIM Y
+							# 2 DATE 10 Dec 1882
+							# 2 PLAC Ramsgate, Kent, England
+							# 2 ADDR Ebenezer Chapel, Meeting Street
+							$do_marriage_notes = 0;
+						}
+					}
+					if($do_marriage_notes) {
+						append_notes({ phrase => $phrase, record => $marriage });
+					}
 				}
 			} else {	# scalar(@spouses) > 1
 				if(is_alive(person => $person)) {
