@@ -262,7 +262,7 @@ if($opts{'B'}) {
 	}
 	push @modules, 'File::Temp', 'Image::Resize', $magick,
 		'Image::Magick::Thumbnail',
-		'NJH::PDFPage' ,'LWP::Simple::WithCache',
+		'NJH::PDFPage', 'List::Uniq', 'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';
 } elsif($opts{'r'} || $opts{'i'} || $opts{'O'}) {
@@ -705,6 +705,7 @@ my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fortyyears = DateTime::Duration->new(years => 40);
 my $pdf;
 my $pdfpage;
+my %people2pages;
 my @tmpfiles;
 my $pr;
 my $dbh;
@@ -1066,7 +1067,6 @@ if($opts{'H'}) {
 				$text->font($font, 12);
 				$text->translate(220, 40);
 				$text->text('Produced by gedcom - https://github.com/nigelhorne/gedcom');
-				$text->textend();
 
 				# my $gfx = $page->gfx();
 				# my $image = $pdf->image_png('/Users/njh/src/njh/ged2site/dynamic-site/images/printer.png');
@@ -1284,6 +1284,35 @@ if($opts{'H'}) {
 		}
 
 		if($opts{'B'}) {
+			$pdfpage = NJH::PDFPage->new($pdf);
+			my $page = $pdf->page();
+
+			my $text = $pdfpage->text();
+
+			$text->translate(300, $pdfpage->newline());
+
+			my $font = $pdf->corefont('Times-Bold');
+			$text->font($font, 18);
+			$text->text_center('INDEX');
+			$font = $pdf->corefont('Times');
+			$text->font($font, 12);
+			$pdfpage->newline();
+			$text->translate(25, $pdfpage->newline());
+
+			my %args;
+
+			foreach my $person(sort keys %people2pages) {
+				if($pdfpage->full() || ($pdfpage->linesleft() <= 8)) {
+					$pdfpage = NJH::PDFPage->new($pdf);
+					$text = $pdfpage->text();
+					$text->font($font, 12);
+				} else {
+					$pdfpage->newline();
+				}
+
+				$text->translate(25, $pdfpage->newline());
+				$text->text("$person - " . join(', ', List::Uniq::uniq(@{$people2pages{$person}})));
+			}
 			$pdf->save();
 			unlink @tmpfiles;
 		}
@@ -1876,7 +1905,6 @@ sub print_person
 		# Print the person's name in the book in larger text
 		if($pdfpage->full() || ($pdfpage->linesleft() <= 10)) {
 			# Start this person on a new page
-			$pdfpage->text()->textend();
 			$pdfpage = NJH::PDFPage->new($pdf);
 		} else {
 			$pdfpage->newline();
@@ -1896,6 +1924,12 @@ sub print_person
 		$text->text($string);
 
 		$text->font($params{'font'}, 12);
+		if(my $key = $person->surname()) {
+			if(my $given = given_names($person)) {
+				$key .= ", $given";
+			}
+			push @{$people2pages{$key}}, $pdfpage->page_number();
+		}
 	} elsif($opts{'M'}) {
 		return if((!defined($yob)) || ($yob != $year));
 		my $p;
@@ -3589,8 +3623,6 @@ sub print_person
 
 				if($opts{'B'} && $bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-						$text->textend();
-
 						$pdfpage = NJH::PDFPage->new($pdf);
 
 						$text = $pdfpage->text();
@@ -5541,8 +5573,6 @@ sub print_person
 					if($opts{'B'}) {
 						if($bio->length() &&
 						  (!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage))) {
-							$text->textend();
-
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
@@ -6405,8 +6435,6 @@ sub print_person
 						if($opts{'B'}) {
 							if($bio->length()) {
 								if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-									$text->textend();
-
 									$pdfpage = NJH::PDFPage->new($pdf);
 
 									$text = $pdfpage->text();
@@ -6699,8 +6727,6 @@ sub print_person
 
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$text->textend();
-
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
@@ -6803,8 +6829,6 @@ sub print_person
 
 				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-						$text->textend();
-
 						$pdfpage = NJH::PDFPage->new($pdf);
 
 						$text = $pdfpage->text();
@@ -6945,8 +6969,6 @@ sub print_person
 
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$text->textend();
-
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
@@ -7183,8 +7205,6 @@ sub print_person
 							my @lines = split(/\n/, wrap('', '', ($p)));
 							foreach my $l(@lines) {
 								if(!pdfprint(string => $l, text => $text, pdfpage => $pdfpage, noindent => 1)) {
-									$text->textend();
-
 									$pdfpage = NJH::PDFPage->new($pdf);
 
 									$text = $pdfpage->text();
@@ -7193,8 +7213,6 @@ sub print_person
 								}
 							}
 						} elsif(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
-							$text->textend();
-
 							$pdfpage = NJH::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
@@ -7203,8 +7221,6 @@ sub print_person
 						}
 					}
 				} elsif(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-					$text->textend();
-
 					$pdfpage = NJH::PDFPage->new($pdf);
 
 					$text = $pdfpage->text();
@@ -7460,9 +7476,9 @@ sub print_person
 				push @tmpfiles, $filename if(defined($filename));
 			}
 		}
-		if(scalar(@images)) {
-			$text->textend();
-		}
+		# if(scalar(@images)) {
+			# $text->textend();
+		# }
 		while(my $i = shift @images) {
 			my $title = $i->{'title'};
 
@@ -10198,8 +10214,6 @@ sub red_warning
 			$message = params{'warning'};
 		}
 		if(!pdfprint(string => $message, text => $text, pdfpage => $pdfpage)) {
-			$text->textend();
-
 			$pdfpage = NJH::PDFPage->new($pdf);
 
 			$text = $pdfpage->text();
