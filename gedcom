@@ -705,7 +705,7 @@ my $sixteenyears = DateTime::Duration->new(years => 16);
 my $fortyyears = DateTime::Duration->new(years => 40);
 my $pdf;
 my $pdfpage;
-my %people2pages;
+my %names2pages;
 my @tmpfiles;
 my $pr;
 my $dbh;
@@ -1291,27 +1291,54 @@ if($opts{'H'}) {
 
 			$text->translate(300, $pdfpage->newline());
 
-			my $font = $pdf->corefont('Times-Bold');
-			$text->font($font, 18);
+			my $times_bold = $pdf->corefont('Times-Bold');
+			$text->font($times_bold, 18);
 			$text->text_center('INDEX');
-			$font = $pdf->corefont('Times');
-			$text->font($font, 12);
+			my $times = $pdf->corefont('Times');
+			$text->font($times, 12);
 			$pdfpage->newline();
 			$text->translate(25, $pdfpage->newline());
+			my $times_italic = $pdf->corefont('Times-Italic');
 
-			my %args;
+			my $current_surname;
+			my $current_initial;
 
-			foreach my $person(sort keys %people2pages) {
+			foreach my $name(sort keys %names2pages) {
 				if($pdfpage->full() || ($pdfpage->linesleft() <= 8)) {
 					$pdfpage = NJH::PDFPage->new($pdf);
 					$text = $pdfpage->text();
-					$text->font($font, 12);
-				} else {
-					$pdfpage->newline();
+					$text->font($times, 12);
 				}
 
-				$text->translate(25, $pdfpage->newline());
-				$text->text("$person - " . join(', ', List::Uniq::uniq(@{$people2pages{$person}})));
+				my $surname;
+				my $given_names;
+				if($name =~ /(.+)?, (.+)/) {
+					$surname = $1;
+					$given_names = normalize_name($2);
+				} else {
+					$surname = $name;
+					$given_names = 'UNKNOWN';
+				}
+				if((!defined($current_surname)) || ($surname ne $current_surname)) {
+					$current_surname = $surname;
+					my $initial = uc(substr($surname, 0, 1));
+					if((!defined($current_initial)) || ($initial ne $current_initial)) {
+						$current_initial = $initial;
+
+						$text->font($times_bold, 20);
+						$text->translate(25, $pdfpage->newline());
+						$text->translate(25, $pdfpage->newline());
+						$text->text($initial);
+						$text->translate(25, $pdfpage->newline());
+					}
+
+					$text->font($times_italic, 16);
+					$text->translate(25, $pdfpage->newline());
+					$text->text(normalize_name($surname));
+					$text->font($times, 12);
+				}
+				$text->translate(35, $pdfpage->newline());
+				$text->text("$given_names - " . join(', ', List::Uniq::uniq(@{$names2pages{$name}})));
 			}
 			$pdf->save();
 			unlink @tmpfiles;
@@ -1928,7 +1955,7 @@ sub print_person
 			if(my $given = given_names($person)) {
 				$key .= ", $given";
 			}
-			push @{$people2pages{$key}}, $pdfpage->page_number();
+			push @{$names2pages{$key}}, $pdfpage->page_number();
 		}
 	} elsif($opts{'M'}) {
 		return if((!defined($yob)) || ($yob != $year));
