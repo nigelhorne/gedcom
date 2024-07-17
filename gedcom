@@ -1549,7 +1549,7 @@ sub print_person
 	my $dateofbirth;
 
 	# https://github.com/nigelhorne/ged2site/compare/master...jhannah:ged2site:115-bday-of-living-is-private?expand=1
-	if(!is_alive($person)) {
+	if($opts{'l'} || !is_alive($person)) {
 		$dateofbirth = dateofbirth($person);
 	}
 
