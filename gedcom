@@ -1284,6 +1284,7 @@ if($opts{'H'}) {
 		}
 
 		if($opts{'B'}) {
+			# Add the index pages at the end of the book
 			$pdfpage = NJH::PDFPage->new($pdf);
 			my $page = $pdf->page();
 
@@ -1652,6 +1653,8 @@ sub print_person
 		# they were born after 1900
 		return;
 	}
+
+	return if((!$opts{'l'}) && is_alive($person));
 
 	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
 	# my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
