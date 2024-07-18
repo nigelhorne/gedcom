@@ -5856,14 +5856,16 @@ sub print_person
 					} else {
 						$phrase->append(' travelled');
 					}
-					my $place = place({ person => $person, record => $events[0] });
+					my $place = place({ person => $person, record => $event });
 					if($language eq 'German') {
 						$place =~ s/^\sin/ von/;
 					} else {
 						$place =~ s/^\sin/ from/;
 					}
-					$phrase->append("$place " .
-						year({ person => $person, record => $events[0] }));
+					$phrase->append($place);
+					if($event->date()) {
+						$phrase->append(' ' . year({ person => $person, record => $event }));
+					}
 					append_notes({ phrase => $phrase, record => $event });
 					push @phrases, $phrase;
 					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
@@ -12862,6 +12864,7 @@ sub wide_to_html
 	$string =~ s/\xc3\xb4/&ocirc;/g;	# ô
 	$string =~ s/\xc3\xb6/&ouml;/g;
 	$string =~ s/\xc3\xb8/&oslash;/g;	# ø
+	$string =~ s/\xc3\xba/&uacute;/g;	# ú
 	$string =~ s/\xc5\xa1/&scaron;/g;
 	$string =~ s/\xc4\x8d/&ccaron;/g;
 	$string =~ s/\xc5\xbe/&zcaron;/g;
@@ -12917,6 +12920,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
 	$string =~ s/\N{U+00F6}/&ouml;/g;
 	$string =~ s/\N{U+00F8}/&oslash;/g;	# ø
+	$string =~ s/\N{U+00FA}/&uacute;/g;	# ú
 	$string =~ s/\N{U+00FC}/&uuml;/g;	# ü
 	$string =~ s/\N{U+00FE}/&thorn;/g;	# þ
 	$string =~ s/\N{U+00C1}/&Aacute;/g;	# Á
@@ -13004,6 +13008,7 @@ sub wide_to_html
 	$string =~ s/ś/&sacute;/g;
 	$string =~ s/Þ/&THORN;/g;
 	$string =~ s/þ/&thorn;/g;
+	$string =~ s/ú/&uacute;/g;
 	$string =~ s/û/&ucirc;/g;
 	$string =~ s/ü/&uuml;/g;
 	$string =~ s/£/&pound;/g;
