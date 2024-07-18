@@ -1319,23 +1319,25 @@ if($opts{'H'}) {
 					$surname = $name;
 					$given_names = 'UNKNOWN';
 				}
-				if((!defined($current_surname)) || ($surname ne $current_surname)) {
-					$current_surname = $surname;
-					my $initial = uc(substr($surname, 0, 1));
-					if((!defined($current_initial)) || ($initial ne $current_initial)) {
-						$current_initial = $initial;
+				if(!$opts{'s'}) {
+					if((!defined($current_surname)) || ($surname ne $current_surname)) {
+						$current_surname = $surname;
+						my $initial = uc(substr($surname, 0, 1));
+						if((!defined($current_initial)) || ($initial ne $current_initial)) {
+							$current_initial = $initial;
 
-						$text->font($times_bold, 20);
+							$text->font($times_bold, 20);
+							$text->translate(25, $pdfpage->newline());
+							$text->translate(25, $pdfpage->newline());
+							$text->text($initial);
+							$text->translate(25, $pdfpage->newline());
+						}
+
+						$text->font($times_italic, 16);
 						$text->translate(25, $pdfpage->newline());
-						$text->translate(25, $pdfpage->newline());
-						$text->text($initial);
-						$text->translate(25, $pdfpage->newline());
+						$text->text(normalize_name($surname));
+						$text->font($times, 12);
 					}
-
-					$text->font($times_italic, 16);
-					$text->translate(25, $pdfpage->newline());
-					$text->text(normalize_name($surname));
-					$text->font($times, 12);
 				}
 				$text->translate(35, $pdfpage->newline());
 				$text->text("$given_names - " . join(', ', List::Uniq::uniq(@{$names2pages{$name}})));
@@ -1952,6 +1954,7 @@ sub print_person
 
 		$text->font($params{'font'}, 12);
 		if(my $key = $person->surname()) {
+			$key = normalize_name($key);
 			if(my $given = given_names($person)) {
 				$key .= ", $given";
 			}
@@ -6864,7 +6867,7 @@ sub print_person
 						$text->font($params{'font'}, 12);
 						pdfprint(string => $bio, text => $text, pdfpage => $pdfpage);
 					}
-					$bio = Data::Text->new(' ');
+					$bio = Data::Text->new('    ');
 				}
 			} else {
 				if($phrase->length() > 0) {
@@ -6872,12 +6875,12 @@ sub print_person
 					$phrase = Data::Text->new();
 				}
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n");
 					@phrases = ();
 				}
 			}
 			$notes =~ s/\.$//;
-			$phrase = Data::Text->new("\n")->append($notes);
+			$phrase = Data::Text->new($notes);
 		}
 
 		if($opts{'C'}) {
