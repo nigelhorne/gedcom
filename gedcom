@@ -2815,14 +2815,14 @@ sub print_person
 			}
 		}
 
-		# if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
+		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
 			# FIXME: add citation
-			# if($opts{'B'}) {
-				# pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
-			# } else {
-				# print "\t$dbpedia\n\t";
-			# }
-		# }
+			if($opts{'B'}) {
+				pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
+			} else {
+				print "\t$dbpedia\n\t";
+			}
+		}
 
 		my @phrases;
 		my $bio = Data::Text->new("\t");
@@ -3805,7 +3805,9 @@ sub print_person
 						}
 						if($opts{'w'} && $yob && (my $cdob = dateofbirth($child))) {
 							my $age = get_year_from_date($cdob) - $yob;
-							if($age <= 14) {
+							if($age < 0) {
+								complain({ person => $person, warning => 'Child ' . $child->as_string() . " $cdob which is before date of birth of $yob" });
+							} elsif($age <= 14) {
 								complain({ person => $person, warning => "Only $age years old at time of birth of their child " . $child->as_string() });
 							}
 						}
@@ -11927,7 +11929,7 @@ sub parse_date
 		if(ref($date)) {
 			# Caused by empty value, e.g.:
 			#	1 BIRT
-			#	2 DATE 
+			#	2 DATE
 			#	2 PLAC VERMONT
 
 			# $Data::Dumper::Maxdepth = 2;
@@ -13069,7 +13071,7 @@ sub dbpedia
 	my $birth_dt = $params{'birth_dt'};
 	my $yob = $params{'yob'};
 
-	if(defined($birth_dt) && $birth_dt) {
+	if(defined($birth_dt)) {
 		if(!ref($birth_dt)) {
 			print STDERR "\n";
 			my $i = 0;
