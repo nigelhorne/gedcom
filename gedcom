@@ -2815,15 +2815,6 @@ sub print_person
 			}
 		}
 
-		if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod }))) {
-			# FIXME: add citation
-			if($opts{'B'}) {
-				pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
-			} else {
-				print "\t$dbpedia\n\t";
-			}
-		}
-
 		my @phrases;
 		my $bio = Data::Text->new("\t");
 		my $phrase = Data::Text->new();
@@ -6949,6 +6940,10 @@ sub print_person
 			push @phrases, $phrase;
 		}
 		if($opts{'c'}) {
+			# Output the citations field
+			print "Create $citationcount citations\n" if($opts{'v'});
+
+			# TODO: add cititions from dbpedia
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases));
 				if($phrase->as_string() !~ /\."$/) {
@@ -7288,7 +7283,16 @@ sub print_person
 					$bio->append(conjunction(map { $_->as_string() } @phrases));
 				}
 			}
-			print $bio->rtrim()->as_string(), "\n", '-' x 80, "\n";
+			print $bio->rtrim()->as_string();
+			if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod, birth_country => $birth_country }))) {
+				# FIXME: add citation
+				if($opts{'B'}) {
+					pdfprint(string => "\t$dbpedia\n\t", text => $text, pdfpage => $pdfpage);
+				} else {
+					print "\n\t$dbpedia";
+				}
+			}
+			print "\n", '-' x 80, "\n";
 		}
 	} else {
 		my ($dob, $dod);
@@ -13080,6 +13084,7 @@ sub dbpedia
 	my $yod = $params{'yod'};
 	my $birth_dt = $params{'birth_dt'};
 	my $yob = $params{'yob'};
+	my $birth_country = $params{'birth_country'};
 
 	if(defined($birth_dt)) {
 		if(!ref($birth_dt)) {
@@ -13221,6 +13226,11 @@ sub dbpedia
 									   ($uri =~ /Category:Seismological_observatories/)) {
 										next RESULT;
 									}
+									if(defined($birth_country)) {
+										if($uri =~ /of_Switzerland$/) {
+											next RESULT if($birth_country ne 'Switzerland');
+										}
+									}
 									if(defined($yod)) {
 										if($uri =~ /Living_people$/) {
 											# dbpedia person is alive, ours is not
@@ -13275,6 +13285,10 @@ sub dbpedia
 							}
 							$Data::Dumper::Maxdepth = 0;
 							print STDERR Data::Dumper->new([\$result])->Dump();
+							if($opts{'c'}) {
+								$t =~ s/\.$//;
+								return "$t ($url).";
+							}
 							return $t;
 						}
 					}
