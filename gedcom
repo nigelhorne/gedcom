@@ -1262,19 +1262,32 @@ if($opts{'H'}) {
 				%printed = ();
 			}
 
-			my $version;
+			if(scalar(glob('frame*.png'))) {
+				my $version;
 
-			IPC::Run::run([ 'apngasm', '-v' ], '>', \$version);
-			if($version =~ /v3\.1\.\d+/) {
-				system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
-			} else {
-				# If this fails, try this:
-				#	system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
+				IPC::Run::run([ 'apngasm', '-v' ], '>', \$version);
+				if($version =~ /v3\.1\.\d+/) {
+					if($surname) {
+						system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
+					} else {
+						system('apngasm -o output.png -d 750 frame*.png && apng2gif output.png all.gif');
+					}
+				} else {
+					# If this fails, try this:
+					#	system("apngasm -o output.png -d 750 frame*.png && apng2gif output.png $surname.gif");
 
-				# apngasm version 2.91
-				system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+					# apngasm version 2.91
+					if($surname) {
+						system("apngasm output.png frame*.png 3 4 && apng2gif output.png $surname.gif");
+					} else {
+						system('apngasm output.png frame*.png 3 4 && apng2gif output.png all.gif');
+					}
+				}
+				unlink 'output.png', @files;
+			} elsif(scalar(@files)) {
+				die 'BUG: created files but no frame*.png';
+				unlink @files;
 			}
-			unlink 'output.png', @files;
 		} elsif($opts{'O'}) {
 			generate(everyone => \@everyone, dbh => $dbh);
 			dump_occupations(\%all_occupations);
