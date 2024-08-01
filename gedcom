@@ -1493,7 +1493,7 @@ sub generate
 					summary => 'Baptism of ' . $person->as_string()
 				);
 			}
-			if(my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage')) {
+			if(my $marriage = get_marriage($person)) {
 				if(my $dateofmarriage = $marriage->date()) {
 					if($dateofmarriage && ($dateofmarriage =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
 						# FIXME: work with more than one spouse
@@ -1669,7 +1669,7 @@ sub print_person
 
 	return if((!$opts{'l'}) && is_alive($person));
 
-	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
+	my $marriage = get_marriage($person);
 	# my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	# if((!$dateofmarriage) && $marriage) {
 		# $dateofmarriage = $marriage->date();
@@ -2561,31 +2561,35 @@ sub print_person
 
 	if((!defined($marriage)) && scalar(@spouses)) {
 		$marriage = $spouses[0]->get_record('marriage');
-		if(!defined($marriage)) {
-			if(scalar(@events) == 1) {
-				my $event = $person->event();
-				if(!ref($event)) {
-					my $e = $person->tag_record('EVEN');
-					if($e->isa('Gedcom::Record')) {
-						$event = $e;
-					}
+	}
+	if(!defined($marriage)) {
+		if(scalar(@events) == 1) {
+			my $event = $person->event();
+			if(!ref($event)) {
+				my $e = $person->tag_record('EVEN');
+				if($e->isa('Gedcom::Record')) {
+					$event = $e;
 				}
-				if($event->can('type') && defined($event->type()) &&
+			}
+			if($event->can('type') && defined($event->type()) &&
+			  ($event->type() eq 'Custom Marriage')) {
+				# FindMyPast
+				$marriage = $event;
+			}
+		} else {
+			foreach my $event(@events) {
+				if((ref($event) eq 'Gedcom::Record') &&
 				  ($event->type() eq 'Custom Marriage')) {
 					# FindMyPast
 					$marriage = $event;
-				}
-			} else {
-				foreach my $event(@events) {
-					if((ref($event) eq 'Gedcom::Record') &&
-					  ($event->type() eq 'Custom Marriage')) {
-						# FindMyPast
-						$marriage = $event;
-						last;
-					}
+					last;
 				}
 			}
 		}
+	}
+
+	if(defined($marriage) && (scalar(@spouses) == 0)) {
+		complain({ person => $person, warning => 'Marriage record not used to determine spouse' });
 	}
 
 	my $birth_dt = date_to_datetime(date => $dateofbirth);
@@ -6376,15 +6380,18 @@ sub print_person
 						# TODO - difficult to handle because the field is broken
 						my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
 						complain({ person => $person, warning => 'Ignoring Newspaper Death Notice from ' . $newspaper->date() });
-					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif($type eq 'Funeral') {
 						$funeral = $event;
+					} elsif($type eq 'Custom Marriage') {
+						die 'BUG: ', $person->as_string(), ' missed custom marriage' if(!defined($marriage));
+					# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 					} elsif(($type !~ /Census/) &&
 						($type ne 'Register UK 1939') &&
 						($type ne 'Race') &&
 						($type ne 'Race') &&
 						($type ne 'Hospitalisation')) {
-						red_warning({ person => $person, warning => "Unknown event type: $type" });
+						complain({ person => $person, warning => "Unhandled event type: $type" });
+						die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1}), " event type $type";
 						if(my $notes = notes(record => $event)) {
 							$notes =~ s/\.$//;
 							my $date = year(record => $event);
@@ -10225,7 +10232,7 @@ sub places_are_the_same
 	return 0 if($params{'exact'});
 	if(compare($place1, $place2) > 0.5) {
 		if($person) {
-			complain({ $person => $person, warning => "The places '$place1' and '$place2' seem similar; is there a typo?" });
+			complain({ person => $person, warning => "The places '$place1' and '$place2' seem similar; is there a typo?" });
 		} else {
 			complain("The places '$place1' and '$place2' seem similar; is there a typo?");
 		}
@@ -11897,19 +11904,53 @@ sub dateofbirth
 	return;	# return undef
 }
 
+# Try hard to get the marriage record
+sub get_marriage
+{
+	my $params = get_params('person', @_);
+	my $person = $params->{'person'};
+
+	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
+	if(!defined($marriage)) {
+		my @spouses = $person->spouse();
+		if(scalar(@spouses)) {
+			# FIXME: only looks at the first spouse
+			$marriage = $spouses[0]->get_record('marriage') || $spouses[0]->get_record('fams marriage');
+			return $marriage if(defined($marriage));
+		}
+
+		my @events = $person->event();
+		if(scalar(@events) == 1) {
+			my $event = $person->event();
+			if(!ref($event)) {
+				my $e = $person->tag_record('EVEN');
+				if($e->isa('Gedcom::Record')) {
+					$event = $e;
+				}
+			}
+			if($event->can('type') && defined($event->type()) &&
+			  ($event->type() eq 'Custom Marriage')) {
+				# FindMyPast
+				return $event;
+			}
+		} else {
+			foreach my $event(@events) {
+				if((ref($event) eq 'Gedcom::Record') &&
+				  ($event->type() eq 'Custom Marriage')) {
+					# FindMyPast
+					return $event;
+				}
+			}
+		}
+	}
+	return $marriage;
+}
+
 sub dateofmarriage
 {
-	my %params;
+	my $params = get_params('person', @_);
 
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	} else {
-		$params{'person'} = shift;
-	}
-
-	my $person = $params{'person'};
+	my $person = $params->{'person'};
 
 	# my $dateofmarriage = get_value({ person => $person, value => 'marriage date' });
 	# if((!defined($dateofmarriage)) && (my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage'))) {
@@ -11920,6 +11961,10 @@ sub dateofmarriage
 
 	my @d = get_value({ person => $person, value => 'marriage date' });
 	my $dateofmarriage;
+
+	if((scalar(@d) == 0) && (my $marriage = get_marriage($person))) {
+		@d = $marriage->date();
+	}
 
 	if(scalar(@d) == 2) {	# TODO: && dates not the same
 		my ($year1, $year2);
