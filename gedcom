@@ -4059,7 +4059,7 @@ sub print_person
 				}
 			} else {	# scalar(@spouses) > 1
 				if(is_alive(person => $person)) {
-					$phrase->append('has been married');
+					$phrase->append(i18n(person => $person, format => 'has been married'));
 				} elsif($language eq 'French') {
 					$phrase->append("a \N{U+00E9}t\N{U+00E9} mari\N{U+00E9}");
 					if($sex eq 'F') {
@@ -13581,6 +13581,7 @@ funeral::funeral
 grandchildren::grandchildren
 great-grandchildren::great-grandchildren
 had::had
+has been married::has been married
 has had::has had
 has lived::has lived
 has lived at %s::has lived at %s
@@ -13662,6 +13663,8 @@ following the death of::suite au mort de
 from::de
 has had::a eu
 had::a eu
+has been married:M:a été marrié
+has been married:F:a été marriée
 has lived::a habité
 has lived at %s::a habité à %s
 has lived in %s::a habité en %s
@@ -13778,6 +13781,11 @@ wife::Frau
 with::mit
 youngest::jüngsten
 your::Ihr
+@@ Danish
+brother::bror
+child::barn
+father::far
+sister::søster
 @@ Latin
 and::et
 brother::frāter
