@@ -1853,6 +1853,12 @@ sub print_person
 				if(my $pdob = dateofbirth($possible)) {
 					my $year = get_year_from_date($pdob);
 					next if(abs($yob - $year) > 2);
+					if((my $f1 = $person->father()) && (my $f2 = $possible->father())) {
+						if((my $fdob = dateofbirth($person)) && (my $pfdob = dateofbirth($f2))) {
+							# Fathers born more than 10 years apart - not a dup
+							next if(abs(get_year_from_date($fdob) - get_year_from_date($pfdob)) > 10);
+						}
+					}
 					complain({ person => $person, warning => 'potential duplicate person found' });
 					# DEBUG: warn while looking for false positives
 					warn 'Potential match: ', $person->as_string($string_args), "/$yob/$year/", $possible->as_string($string_args);
@@ -4195,7 +4201,7 @@ sub print_person
 					   (scalar(@spouses) == 2) &&
 					   ($spouse_number == 2) &&
 					   (my $death_of_first_spouse = dateofdeath($spouses[0]))) {
-					   	# Determine if the second marriage was after a divorce or death
+						# Determine if the second marriage was after a divorce or death
 						if(datecmp($dateofmarriage, $death_of_first_spouse) > 0) {
 							if($printed_bracket) {
 								$name .= ', ';
@@ -6092,6 +6098,22 @@ sub print_person
 						$phrase->set($pronoun);
 					}
 					$phrase->append(' was granted a coat of arms');
+				} elsif($type eq 'Employment') {
+					if($phrase->length()) {
+						push @phrases, $phrase;
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('. ');
+						$phrase = Data::Text->new();
+						@phrases = ();
+					}
+					if(my $date = year(record => $event)) {
+						$date = ucfirst($date);
+						$phrase->append("$date " . lcfirst($pronoun) . ' was working');
+					} else {
+						$phrase->append("$pronoun worked");
+					}
+					if(my $place = place(person => $person, record => $event)) {
+						$phrase->append($place);
+					}
 				# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 				} elsif(($type !~ /Census/) &&
 					($type ne 'Race') &&
@@ -6443,7 +6465,7 @@ sub print_person
 						($type ne 'Race') &&
 						($type ne 'Hospitalisation')) {
 						complain({ person => $person, warning => "Unhandled event type: $type" });
-						die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1}), " event type $type";
+						die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1 }), " event type $type";
 						if(my $notes = notes(record => $event)) {
 							$notes =~ s/\.$//;
 							my $date = year(record => $event);
@@ -13018,17 +13040,10 @@ sub person_in_residence_record
 # TODO: a lot of this should be table driven
 sub wide_to_html
 {
-	my %params;
+	my $params = get_params('string', @_);
 
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	} elsif(scalar(@_) == 1) {
-		$params{'string'} = shift;
-	}
+	my $string = $params->{'string'};
 
-	my $string = $params{'string'};
 	if(!defined($string)) {
 		my $i = 0;
 		while((my @call_details = caller($i++))) {
@@ -13052,7 +13067,7 @@ sub wide_to_html
 	$string =~ s/&Scaron;/Š/g;	# I don't think HTML::Entities does this
 	$string =~ s/&/&amp;/g;
 
-	unless($params{'keep_hrefs'}) {
+	unless($params->{'keep_hrefs'}) {
 		$string =~ s/</&lt;/g;
 		$string =~ s/>/&gt;/g;
 		$string =~ s/"/&quot;/g;
@@ -13063,7 +13078,7 @@ sub wide_to_html
 	# $string =~ s/&db=/&amp;db=/g;
 	# $string =~ s/&id=/&amp;id=/g;
 
-	unless($params{'keep_apos'}) {
+	unless($params->{'keep_apos'}) {
 		$string =~ s/'/&apos;/g;
 		$string =~ s/‘/&apos;/g;
 		$string =~ s/’/&apos;/g;
@@ -13665,6 +13680,7 @@ sister::sister
 sister-in-law::sister-in-law
 sisters::sisters
 son::son
+sons::sons
 the same day as::the same day as
 they::they
 times::times
