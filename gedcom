@@ -5088,7 +5088,6 @@ sub print_person
 											if(($place =~ /^\s\d/ && (my $ssp = place({ person => $ss, record => $ssr, nopreposition => 1 })))) {
 												if($ssp eq $place) {
 													if($ss->sex() eq 'F') {
-														die;
 														$living_with{'sister-in-law'} = $ss
 													} else {
 														$living_with{'brother-in-law'} = $ss
