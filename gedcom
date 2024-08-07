@@ -9556,8 +9556,7 @@ sub place {
 			if(ref($address) eq 'Gedcom::Record') {
 				$place = getaddress($address);
 				$address = undef;
-			} else {
-				$place = $place->place();
+			} elsif($place = $place->place()) {
 				$place = undef if($place eq '-');
 			}
 			if(!defined($place)) {
