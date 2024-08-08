@@ -27,8 +27,9 @@ or
 
 ## Gedcom validation
 
-Gedcom also includes sanity checking of your Gedcom file, including missing,
-impossible and inconsistent information.
+Gedcom also includes sanity checking and validation of your Gedcom file, including missing,
+impossible and inconsistent information allowing for greater error correction.
+Date formats are standardized and duplicate people are detected.
 You can enable this mode with -w, which will print warnings of anything it finds.
 It's a sort of lint for Gedcom files.
 
@@ -127,7 +128,7 @@ The options are:
     -L: include ged2site hyperlinks with -H
     -m: month for -H calendar
     -M: produce a map of a place (currently only Kent is supported) as
-	an animated gif of births into $surname.gif
+	an animated gif of births and migration pattern into $surname.gif
     -O: print a list of occupations, useful for finding typoes and inconsistencies
     -p: print the biography of the given person
     -P: print a list of places, useful for finding typoes of inconsistencies
@@ -166,6 +167,13 @@ from gedcomlibrary.com.
 
 With the -T option, countries and counties can be optimized out.
 That will be fixed.
+
+Different people use different ways to format and enter information,
+ged2site goes out of its way to support all of these,
+such as different location and date formats.
+If your data shows issues with this aim, let me know.
+
+The story telling format is hard coded, it would be useful if it were configurable.
 
 ## Pre-Requisites
 
