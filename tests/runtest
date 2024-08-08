@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
+set -x
+
 unset https_proxy
+unset GMAP_KEY
+unset REDIS_SERVER
+unset HTTP_PROXY
 
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | grep --colour '   '
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour '\. [A-Z]'
