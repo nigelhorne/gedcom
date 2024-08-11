@@ -6626,7 +6626,7 @@ sub print_person
 						$record = $cremation;
 					}
 					if(defined($record)) {
-						if($funeral && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
+						if($funeral && $record->date() && (datecmp($funeral->date(), $record->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 							if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
 							}
