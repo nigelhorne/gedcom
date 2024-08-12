@@ -2975,6 +2975,9 @@ sub print_person
 			if($language eq 'French') {
 				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
+			} elsif($language eq 'German') {
+				$phrase->append("vor $aob " . (($aob == 1) ? 'Jahr' : 'Jahre') .
+					($opts{'t'} ? ' morgen' : ' heute'));
 			} else {
 				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
 					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
@@ -2999,6 +3002,9 @@ sub print_person
 				}
 				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
+			} elsif($language eq 'German') {
+				$phrase->append("vor $aod " . (($aob == 1) ? 'Jahr' : 'Jahre') .
+					($opts{'t'} ? ' morgen' : ' heute'));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
 					i18n(($opts{'t'} ? 'tomorrow' : 'today')));
@@ -13907,6 +13913,9 @@ husband::maritus
 mother::mater
 sister::soror
 wife::uxor
+@@ Norweigan
+brother::far
+sister::søster
 @@ Spanish
 aunt::tia
 he::él
