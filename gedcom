@@ -6138,17 +6138,34 @@ sub print_person
 				} elsif($type eq 'Employment') {
 					if($phrase->length()) {
 						push @phrases, $phrase;
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('. ');
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 						$phrase = Data::Text->new();
 						@phrases = ();
 					}
 					if(my $date = year(record => $event)) {
 						$date = ucfirst($date);
-						$phrase->append("$date " . lcfirst($pronoun) . ' was working');
+						$phrase->set("$date " . lcfirst($pronoun) . ' was working');
 					} else {
-						$phrase->append("$pronoun worked");
+						$phrase->set("$pronoun worked");
 					}
 					if(my $place = place(person => $person, record => $event)) {
+						$phrase->append($place);
+					}
+				} elsif($type eq 'Custom') {
+					# TODO: Custom records will be, by definition, difficult to parse and standardise.
+					if($phrase->length()) {
+						push @phrases, $phrase;
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+						$phrase = Data::Text->new();
+						@phrases = ();
+					}
+					if(my $date = year(record => $event)) {
+						$phrase->set("$date " . lcfirst($pronoun));
+					}
+					if(my $place = place(person => $person, record => $event)) {
+						if($phrase->length() == 0) {
+							$place = ucfirst($place);
+						}
 						$phrase->append($place);
 					}
 				# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
