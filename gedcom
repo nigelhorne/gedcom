@@ -7572,6 +7572,7 @@ sub print_person
 					$bio->append(conjunction(map { $_->as_string() } @phrases));
 				}
 			}
+			print $bio->rtrim()->as_string();
 			if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod, birth_country => $birth_country }))) {
 				# FIXME: add citation
 				if($opts{'B'}) {
