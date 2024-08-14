@@ -1111,7 +1111,7 @@ if($opts{'H'}) {
 			$pr = String::ProgressBar->new(max => scalar(@everyone), length => 60);
 		} elsif($opts{'X'}) {
 			if($me) {
-				print '"xref","relationship","given names","surname","date of birth","date of death"', "\n";
+				print '"xref","given names","surname","date of birth","date of death","relationship"', "\n";
 			} else {
 				print '"xref","given names","surname","date of birth","date of death"', "\n";
 			}
@@ -2132,11 +2132,7 @@ sub print_person
 
 		return;
 	} elsif($opts{'X'}) {
-		print '"', $person->xref(), '",';
-		if($me && ($person->xref() ne $me->xref())) {
-			print '"', $me->relationship($person), '",';
-		}
-		print '"', given_names($person), '","', ucfirst(lc($person->surname())), '",';
+		print '"', $person->xref(), '","', given_names($person), '","', ucfirst(lc($person->surname())), '",';
 		if($dateofbirth) {
 			if($dateofbirth =~ /\D/) {
 				print "\"$dateofbirth\"";
@@ -2150,6 +2146,29 @@ sub print_person
 				print "\"$dateofdeath\"";
 			} else {
 				print $dateofdeath;
+			}
+		}
+		if($me && ($person->xref() ne $me->xref())) {
+			my $relationship = $me->relationship($person);
+			if((!$relationship) && scalar(@spouses)) {
+				if($person->spouse()->xref() eq $me->xref()) {
+					$relationship = i18n(($person->sex() eq 'F') ? 'wife' : 'husband');
+				} else {
+					foreach my $s(@spouses) {
+						if(my $spouserelationship = $me->relationship($s)) {
+							if($s->sex() eq 'M') {
+								$relationship = "the wife of $spouserelationship"
+							} else {
+								$relationship = "the husband of $spouserelationship"
+							}
+							last;
+						}
+					}
+				}
+			}
+			print ',';
+			if($relationship) {
+				print "\"$relationship\"";
 			}
 		}
 		print "\n";
