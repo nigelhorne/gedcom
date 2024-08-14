@@ -128,7 +128,7 @@ The options are:
     -L: include ged2site hyperlinks with -H
     -m: month for -H calendar
     -M: produce a map of a place (currently only Kent is supported) as
-	an animated gif of births and migration pattern into $surname.gif
+	an animated gif of births and migration pattern into $surname.gif or all.gif
     -O: print a list of occupations, useful for finding typos and inconsistencies
     -p: print the biography of the given person
     -P: print a list of places, useful for finding typos of inconsistencies
@@ -140,6 +140,7 @@ The options are:
     -w: print warning about inconsistent data - a sort of lint for Gedcom files
     -W: don't colorize warning output
     -x: prints a list of towns in a format suitable to import into a google map
+    -X: prints a CSV of information
     -y: year for -H calendar, or -T to give a list of places for a specific year
 
 ## Running on Windows
