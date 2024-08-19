@@ -195,7 +195,6 @@ To install by hand you'll either have to use local::lib or perlbrew.
 Of course you could also run gedcom as root,
 but I strongly advise you don't do that.
 
-[Library](https://github.com/nigelhorne/lib) - library of code common with
 [ged2site](https://github.com/nigelhorne/ged2site).
 
 To use the -B option on FreeBSD you'll need to

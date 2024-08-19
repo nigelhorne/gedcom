@@ -263,7 +263,7 @@ if($opts{'B'}) {
 	}
 	push @modules, 'File::Temp', 'Image::Resize', $magick,
 		'Image::Magick::Thumbnail',
-		'NJH::PDFPage', 'List::Uniq', 'LWP::Simple::WithCache',
+		'List::Uniq', 'LWP::Simple::WithCache',
 		'PDF::API2', 'PDF::API2::XS',
 		'Text::Soundex', 'Text::Wrap';
 } elsif($opts{'r'} || $opts{'i'} || $opts{'O'}) {
@@ -344,14 +344,14 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'Mozilla::CA';
 }
 
-my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
-if(-d $libdir1) {
-	unshift @INC, ($libdir1);
-}
-my $libdir2 = File::Spec->catfile(File::HomeDir->my_home(), 'lib');
-if(($libdir2 ne $libdir1) && (-d $libdir2)) {
-	unshift @INC, ($libdir2);
-}
+# my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
+# if(-d $libdir1) {
+	# unshift @INC, ($libdir1);
+# }
+# my $libdir2 = File::Spec->catfile(File::HomeDir->my_home(), 'lib');
+# if(($libdir2 ne $libdir1) && (-d $libdir2)) {
+	# unshift @INC, ($libdir2);
+# }
 
 foreach my $module(@modules) {
 	my $version;
@@ -1172,11 +1172,11 @@ if($opts{'H'}) {
 					$image = $pdf->image_png($png);
 					push @tmpfiles, $png;
 				}
-				$pdfpage = NJH::PDFPage->new($pdf);
+				$pdfpage = gedcom::PDFPage->new($pdf);
 				my $x = 300 - ($image->width() / 2);
 				my $y = $pdfpage->y() - $image->height();
 				$pdfpage->page()->gfx()->image($image, $x, $y);
-				$pdfpage = NJH::PDFPage->new($pdf);
+				$pdfpage = gedcom::PDFPage->new($pdf);
 			}
 
 			# FIXME: This sorting only works when all people are descendants of $me,
@@ -1250,7 +1250,7 @@ if($opts{'H'}) {
 					$image = $pdf->image_png($png);
 					push @tmpfiles, $png;
 				}
-				$pdfpage = NJH::PDFPage->new($pdf);
+				$pdfpage = gedcom::PDFPage->new($pdf);
 				my $x = 300 - ($image->width() / 2);
 				my $y = $pdfpage->y() - $image->height();
 				$pdfpage->page()->gfx()->image($image, $x, $y);
@@ -1308,7 +1308,7 @@ if($opts{'H'}) {
 
 		if($opts{'B'}) {
 			# Add the index pages at the end of the book
-			$pdfpage = NJH::PDFPage->new($pdf);
+			$pdfpage = gedcom::PDFPage->new($pdf);
 			my $page = $pdf->page();
 
 			my $text = $pdfpage->text();
@@ -1329,7 +1329,7 @@ if($opts{'H'}) {
 
 			foreach my $name(sort keys %names2pages) {
 				if($pdfpage->full() || ($pdfpage->linesleft() <= 8)) {
-					$pdfpage = NJH::PDFPage->new($pdf);
+					$pdfpage = gedcom::PDFPage->new($pdf);
 					$text = $pdfpage->text();
 					$text->font($times, 12);
 				}
@@ -1542,7 +1542,7 @@ sub generate
 			if($me && $opts{'G'}) {
 				if(stepsabove($person, $me, 0) != $generation) {
 					# FIXME:  only do this if the generation contains dead people if the -l flag is not given
-					$pdfpage = NJH::PDFPage->new($pdf);
+					$pdfpage = gedcom::PDFPage->new($pdf);
 					$generation = stepsabove($person, $me, 0);
 
 					my $font = $pdf->corefont('Times-Bold');
@@ -1576,7 +1576,7 @@ sub generate
 				my $surname = $person->surname() || '?';
 				my $initial = substr $surname, 0, 1;
 				if((!defined($surname_initial)) || ($initial ne $surname_initial)) {
-					$pdfpage = NJH::PDFPage->new($pdf);
+					$pdfpage = gedcom::PDFPage->new($pdf);
 					$surname_initial = $initial;
 				}
 			}
@@ -2010,7 +2010,7 @@ sub print_person
 		# Print the person's name in the book in larger text
 		if($pdfpage->full() || ($pdfpage->linesleft() <= 10)) {
 			# Start this person on a new page
-			$pdfpage = NJH::PDFPage->new($pdf);
+			$pdfpage = gedcom::PDFPage->new($pdf);
 		} else {
 			$pdfpage->newline();
 		}
@@ -3782,7 +3782,7 @@ sub print_person
 
 				if($opts{'B'} && $bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-						$pdfpage = NJH::PDFPage->new($pdf);
+						$pdfpage = gedcom::PDFPage->new($pdf);
 
 						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
@@ -5831,7 +5831,7 @@ sub print_person
 					if($opts{'B'}) {
 						if($bio->length() &&
 						  (!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage))) {
-							$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = gedcom::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
@@ -6778,7 +6778,7 @@ sub print_person
 						if($opts{'B'}) {
 							if($bio->length()) {
 								if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-									$pdfpage = NJH::PDFPage->new($pdf);
+									$pdfpage = gedcom::PDFPage->new($pdf);
 
 									$text = $pdfpage->text();
 									$text->font($params{'font'}, 12);
@@ -7070,7 +7070,7 @@ sub print_person
 
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = gedcom::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
@@ -7172,7 +7172,7 @@ sub print_person
 
 				if($bio->length()) {
 					if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-						$pdfpage = NJH::PDFPage->new($pdf);
+						$pdfpage = gedcom::PDFPage->new($pdf);
 
 						$text = $pdfpage->text();
 						$text->font($params{'font'}, 12);
@@ -7316,7 +7316,7 @@ sub print_person
 
 					if($bio->length()) {
 						if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-							$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = gedcom::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
@@ -7552,7 +7552,7 @@ sub print_person
 							my @lines = split(/\n/, wrap('', '', ($p)));
 							foreach my $l(@lines) {
 								if(!pdfprint(string => $l, text => $text, pdfpage => $pdfpage, noindent => 1)) {
-									$pdfpage = NJH::PDFPage->new($pdf);
+									$pdfpage = gedcom::PDFPage->new($pdf);
 
 									$text = $pdfpage->text();
 									$text->font($params{'font'}, 12);
@@ -7560,7 +7560,7 @@ sub print_person
 								}
 							}
 						} elsif(!pdfprint(string => $p, text => $text, pdfpage => $pdfpage)) {
-							$pdfpage = NJH::PDFPage->new($pdf);
+							$pdfpage = gedcom::PDFPage->new($pdf);
 
 							$text = $pdfpage->text();
 							$text->font($params{'font'}, 12);
@@ -7568,7 +7568,7 @@ sub print_person
 						}
 					}
 				} elsif(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage)) {
-					$pdfpage = NJH::PDFPage->new($pdf);
+					$pdfpage = gedcom::PDFPage->new($pdf);
 
 					$text = $pdfpage->text();
 					$text->font($params{'font'}, 12);
@@ -7848,7 +7848,7 @@ sub print_person
 				if(($image->height() >= ($pdfpage->y() - 80)) ||
 				   ($pdfpage->linesleft() <= 15)) {
 					print "New page to fit image on it\n" if($opts{'v'});
-					$pdfpage = NJH::PDFPage->new($pdf);
+					$pdfpage = gedcom::PDFPage->new($pdf);
 					$newpage = 1;
 				}
 				my $y = $pdfpage->newline() - $image->height();
@@ -8010,7 +8010,7 @@ sub print_person
 				# $text->textend();
 			}
 			if($trigger_page_throw) {
-				$pdfpage = NJH::PDFPage->new($pdf);
+				$pdfpage = gedcom::PDFPage->new($pdf);
 			}
 		}
 	}
@@ -10558,7 +10558,7 @@ sub red_warning
 			$message = params{'warning'};
 		}
 		if(!pdfprint(string => $message, text => $text, pdfpage => $pdfpage)) {
-			$pdfpage = NJH::PDFPage->new($pdf);
+			$pdfpage = gedcom::PDFPage->new($pdf);
 
 			$text = $pdfpage->text();
 			$text->font($pdf->corefont('Times-Roman'), 12);
@@ -13715,6 +13715,122 @@ sub get_params
 
 	return \%rc;
 }
+
+1;
+
+package gedcom::PDFPage;
+
+use strict;
+use warnings;
+
+# Add text to a page on a PDF document
+
+our $pixelsperline = 16;	# point size 12
+our $page_number = 1;
+
+sub new
+{
+	my $class = shift;
+	my $pdf = shift;	# PDF::API2 object
+
+	$pixelsperline = 16;
+
+	return bless { y => 750, page => $pdf->page(), page_number => $page_number++ }, $class;
+}
+
+sub newline
+{
+	my $self = shift;
+
+	$self->{'y'} -= $pixelsperline;
+
+	if($self->{'y'} <= 10) {
+		my $i = 0;
+		while((my @call_details = (caller($i++)))) {
+			print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
+		}
+		die 'BUG: fallen too low vertically; y = ', $self->{'y'};
+	}
+
+	return $self->{'y'};
+}
+
+sub full
+{
+	my $self = shift;
+
+	return $self->{'y'} <= $pixelsperline * 2;
+}
+
+sub linesleft
+{
+	my $self = shift;
+
+	return ($self->{'y'} / $pixelsperline) - 1;	# round fractions down
+}
+
+sub y
+{
+	my $self = shift;
+	my $y = shift;
+
+	if($y) {
+		if($y <= 10) {
+			my $i = 0;
+			while((my @call_details = (caller($i++)))) {
+				print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
+			}
+			die "BUG: fallen too low vertically; y = $y";
+		}
+
+		$self->{'y'} = $y;
+	}
+
+	return $self->{'y'};
+}
+
+sub page
+{
+	my $self = shift;
+
+	return $self->{'page'};
+}
+
+sub page_number
+{
+	my $self = shift;
+
+	return $self->{'page_number'};
+}
+
+sub text
+{
+	my $self = shift;
+
+	if(!defined($self->{'text'})) {
+		my $text = $self->{'text'} = $self->{'page'}->text();
+		$text->textstart();
+	}
+	return $self->{'text'};
+}
+
+sub DESTROY {
+	if(defined($^V) && ($^V ge 'v5.14.0')) {
+		return if ${^GLOBAL_PHASE} eq 'DESTRUCT';	# >= 5.14.0 only
+	}
+	my $self = shift;
+
+	if(my $text = $self->{'text'}) {
+		# Print the page number
+		# FIXME: not all page numbers get printed
+		$text->translate(300, $pixelsperline * 2);
+		my $string = '- ' . $self->{'page_number'} . ' -';
+		$text->text($string);
+		$text->textend();
+	}
+}
+
+1;
 
 # Must all be in lower case
 __DATA__
