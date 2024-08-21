@@ -9,6 +9,7 @@ unset HTTP_PROXY
 
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | grep --colour '   '
 LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour '\. [A-Z]'
+LANG=en_GB ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i 'and\s?$'
 ./gedcom -dlh 'Nigel Horne' "$*" | spell 2>&1 | egrep -v '^[A-Z]' | less
 LANG=fr_FR ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i "\ss?he\s"
 LANG=de_DE ./gedcom -dlh 'Nigel Horne' "$*" | egrep --colour -i "\ss?he\s"
