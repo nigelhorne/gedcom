@@ -3058,7 +3058,7 @@ sub print_person
 				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} elsif($language eq 'German') {
-				$phrase->append("vor $aod " . (($aob == 1) ? 'Jahr' : 'Jahre') .
+				$phrase->append("vor $aod " . (($aod == 1) ? 'Jahr' : 'Jahre') .
 					($opts{'t'} ? ' morgen' : ' heute'));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
@@ -5346,7 +5346,7 @@ sub print_person
 							} elsif(($same_road_as_mother || $same_road_as_father) && !$printed_sibling) {
 								if($age >= 30) {
 									$residencestring .= ' on the same road as ' .
-												($person->pronoun() eq 'She' ? 'her' : 'his');
+											($person->pronoun() eq 'She' ? 'her' : 'his');
 									$printed_sibling = 1;
 									$first = 0;
 
@@ -7213,7 +7213,7 @@ sub print_person
 						$phrase->append("\n\t");
 					}
 					$phrase->append(given_names($child) .
-						' was born ' .
+						i18n(' was born ') .
 						year({ person => $child, date => $dob }));
 					if($opts{'w'} && ($birth_dt || $death_dt) &&
 					   ($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/) &&
@@ -13843,6 +13843,8 @@ sub DESTROY {
 }
 
 1;
+
+package main;
 
 # Must all be in lower case
 __DATA__
