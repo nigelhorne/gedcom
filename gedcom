@@ -6253,7 +6253,7 @@ sub print_person
 						$phrase->append(' ' . ucfirst($event) . '. ');
 					}
 				}
-				if(ref($event) eq 'Gedcom::Record') {
+				if($event->can('type')) {
 					my $type = $event->type();
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
@@ -6295,7 +6295,9 @@ sub print_person
 							$mentioned_military = 1;
 						}
 
-						append_notes({ phrase => $phrase, record => $event });
+						if((!$mentioned_military) || (notes(record => $event) ne 'Royal Navy.')) {
+							append_notes({ phrase => $phrase, record => $event });
+						}
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
