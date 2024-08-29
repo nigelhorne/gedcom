@@ -636,10 +636,6 @@ if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 
 	$geocoder->push({ regex => qr/^[\w\s]+,\s*[\w\s]+,\s*(UK|England|Wales|Scotland)$/i, geocoder => $textgeocoder });
 
-	if(my $username = $ENV{'GEONAMES_USER'}) {
-		$geocoder->push(Geo::GeoNames->new(username => $username));
-	}
-
 	# DST isn't that good for the UK
 	# $geocoder->push({ regex => qr/(UK|United Kingdom|England|USA|US|United States|Wales)$/i, geocoder => Geo::Coder::DataScienceToolkit->new() })`
 	$geocoder->push({ regex => qr/^\d.+?,.+?,\s*(USA|US|United States)$/i, geocoder => Geo::Coder::US::Census->new() })
@@ -651,6 +647,10 @@ if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 		# ->push({ limit => 200, geocoder => Geo::Coder::XYZ->new()})
 		->push(Geo::Coder::Ovi->new());
 		# ->push(Geo::Coder::GeocodeFarm->new());	# Needs GT#1 to be fixed
+
+	if(my $username = $ENV{'GEONAMES_USER'}) {	# Rather slow
+		$geocoder->push(Geo::GeoNames->new(username => $username));
+	}
 
 	if(my $key = $ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
