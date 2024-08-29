@@ -4068,9 +4068,7 @@ sub print_person
 						$phrase->append(', ' . Lingua::EN::Inflect::A(lc($spouse_occupations[0])) . ',');
 					}
 				}
-				if(($dateofmarriage || $placeofmarriage) && $numberofchildren) {
-					$phrase->append(',');
-				}
+
 				if($placeofmarriage && $dateofmarriage &&
 				   (($placeofbaptism and ($placeofmarriage eq $placeofbaptism)) ||
 				    ($aod && $placeofbirth && ($placeofmarriage eq $placeofbirth)))) {
