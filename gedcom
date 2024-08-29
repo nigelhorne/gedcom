@@ -2886,7 +2886,7 @@ sub print_person
 				if($dateofdeath && (my $cdob = dateofbirth($child))) {
 					if(($cdob =~ /\d{3,4}$/) && (datecmp($cdob, $dateofdeath) > 0)) {
 						complain({ person => $person,
-							warning => 'Date of birth of child ' . $child->as_string() . " ($cdob) is later than " . ($sex eq 'M' ? 'his' : 'her') . " own date of death ($dateofdeath)"
+							warning => 'Date of birth of child ' . $child->as_string() . " ($cdob) is later than " . $child->possessive() . " own date of death ($dateofdeath)"
 						})
 					}
 				}
@@ -3556,7 +3556,7 @@ sub print_person
 							if($language eq 'French') {
 								$phrase->append(($ssex eq 'M' ? "son jumeau fr\N{U+00E8}re " : "sa jumelle s\N{U+0153}er "));
 							} else {
-								$phrase->append(($sex eq 'M' ? 'his' : 'her') . ' twin ' .
+								$phrase->append($sibling->possessive() . ' twin ' .
 									i18n(($ssex eq 'F') ? 'sister ' : 'brother '));
 							}
 							if(my $given = given_names($sibling)) {
@@ -3773,7 +3773,7 @@ sub print_person
 				$phrase->append('was orphaned ');
 				if($myod == $fyod) {
 					$phrase->append('when both of ')
-						->append(($person->pronoun() eq 'She') ? 'her' : 'his')
+						->append($person->possessive())
 						->append(" parents died in $myod when ")
 						->append(lcfirst($person->pronoun()))
 						->append(' was ')
@@ -3782,12 +3782,12 @@ sub print_person
 				} elsif($myod > $fyod) {
 					$phrase->append('at the age of ' . ($myod - $yob) .
 						i18n(' following the death of ') .
-						(($person->pronoun() eq 'She') ? 'her' : 'his') .
+						$person->possessive() .
 						" father in $fyod and mother in $myod");
 				} else {
 					$phrase->append('at the age of ' . ($fyod - $yob) .
 						i18n(' following the death of ') .
-						(($person->pronoun() eq 'She') ? 'her' : 'his') .
+						$person->possessive() .
 						" mother in $myod and father in $fyod");
 				}
 				push @phrases, $phrase;
@@ -3878,7 +3878,7 @@ sub print_person
 
 					# Note if this person married a relative
 					if(my $srelationship = $person->relationship($spouses[0])) {
-						$phrase->append(($person->pronoun() eq 'She') ? 'her ' : 'his ')
+						$phrase->append($person->possessive())
 							->append("$srelationship ");
 					}
 
@@ -3904,10 +3904,10 @@ sub print_person
 						if(my $soccupation = $spouse_occupations[0]) {
 							$parentheses = 1;
 							if($language eq 'English') {
-								$phrase->append(' (' . Lingua::EN::Inflect::A(lc($soccupation)) . ' ');
+								$phrase->append(', ' . Lingua::EN::Inflect::A(lc($soccupation)) . ', ');
 							} else {
 								# FIXME - handle feminine versions for women
-								$phrase->append(' (un ' . lc($soccupation) . ' ');
+								$phrase->append(', un ' . lc($soccupation) . ', ');
 							}
 						}
 					}
@@ -5856,7 +5856,11 @@ sub print_person
 					} else {
 						$bio->rtrim()->append("\n\t");
 					}
-					$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
+					if(scalar(@residencelist) > 2) {
+						$phrase->set('Throughout ' . lc($person->possessive()) . ' life');
+					} else {
+						$phrase->set(ucfirst(i18n('during %s life', lc($person->possessive()))));
+					}
 				}
 
 				print __LINE__, ': residencestringarray: ', Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
@@ -5880,17 +5884,26 @@ sub print_person
 				}
 				# $phrase->append(', ' . lcfirst($pronoun) . i18n(' was living ') .
 					# Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => i18n('and')});
-				my $s;
-				if(is_alive($person) && !$first->date()) {
-					$s = 'has lived';
+				my $s = ', ';
+				if(scalar(@residencelist) < 3) {
+					$s .= lcfirst($pronoun);
+					if(is_alive($person) && !$first->date()) {
+						$s .= i18n(' has lived');
+					} else {
+						$s .= i18n(' was living');
+					}
 				} else {
-					$s = 'was living';
+					$s .= "$firstname ";
+					if(is_alive($person) && !$first->date()) {
+						$s .= 'has ';
+					}
+					$s .= 'lived in several places:';
 				}
 
 				print Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 				Lingua::Conjunction->separator_phrase(';');
 				Lingua::Conjunction->penultimate(1);
-				$phrase->append(', ' . lcfirst($pronoun) . i18n(" $s ") . conjunction(@residencestringarray));
+				$phrase->append("$s " . conjunction(@residencestringarray));
 				Lingua::Conjunction->separator_phrase(',');
 				Lingua::Conjunction->penultimate(0);
 
@@ -6311,7 +6324,7 @@ sub print_person
 							$mentioned_military = 1;
 						}
 
-						if((!$mentioned_military) || (notes(record => $event) ne 'Royal Navy.')) {
+						if((!$mentioned_military) || ($event->get_value() && (notes(record => $event) ne 'Royal Navy.'))) {
 							append_notes({ phrase => $phrase, record => $event });
 						}
 						push @phrases, $phrase;
@@ -6747,7 +6760,7 @@ sub print_person
 								$place = i18n(' at ') . $funeral->address() if($funeral->address());
 							}
 							$phrase->append(' following ' .
-								($person->pronoun() eq 'She' ? 'her' : 'his') .
+								lcfirst($person->possessive()) .
 								i18n(' funeral') .
 								$place);
 						} elsif(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
@@ -10120,9 +10133,9 @@ sub getaddress {
 # paragraph => 0: ignore spacing and put it all into one paragraph
 sub notes
 {
-	my %params = (ref($_[0]) eq 'HASH') ? %{$_[0]} : @_;
+	my $params = get_params('record', @_);
 
-	my $record = $params{'record'};
+	my $record = $params->{'record'};
 	if(!$record) {
 		print STDERR "\n";
 		my $i = 0;
@@ -10132,7 +10145,7 @@ sub notes
 		die 'Usage: notes(record => $record)';
 	}
 
-	my $paragraph = $params{'paragraph'};
+	my $paragraph = $params->{'paragraph'};
 	my @notes = $record->get_record('note');
 
 	# my @deathnotes = get_value({ person => $person, value => 'death note' });
