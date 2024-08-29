@@ -3580,13 +3580,13 @@ sub print_person
 					$phrase = Data::Text->new("$pronoun ");
 					@phrases = ();
 				}
-				unless($dateofbirth || $placeofbirth) {
-					if($language eq 'French') {
-						if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-							$phrase->append('y ');
-						}
-					}
-				}
+				# unless($dateofbirth || $placeofbirth) {
+					# if($language eq 'French') {
+						# if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
+							# $phrase->append('y ');
+						# }
+					# }
+				# }
 				if($language eq 'French') {
 					$phrase->append("a \N{U+00E9}t\N{U+00E9} baptis\N{U+00E9}");
 					if($sex eq 'F') {
@@ -3599,7 +3599,7 @@ sub print_person
 				}
 				if($placeofbaptism) {
 					if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
-						$phrase->append(' there') unless($language eq 'French');
+						# $phrase->append(' there') unless($language eq 'French');
 						if(my $address = $baptism->address()) {
 							if($address =~ /(.+),\s*$placeofbirth$/) {
 								$address = $1;
@@ -3711,7 +3711,7 @@ sub print_person
 							$phrase->append(" \N{U+00E0} $address");
 						}
 					} else {
-						$phrase->append(' there');
+						# $phrase->append(' there');
 						if(my $address = $baptism->address()) {
 							$phrase->append(" at $address");
 						}
