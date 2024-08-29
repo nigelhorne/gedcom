@@ -3897,12 +3897,10 @@ sub print_person
 					}
 				}
 
-				my $parentheses = 0;
 				if($numberofchildren) {
 					if($placeofmarriage || $dateofmarriage) {
 						my @spouse_occupations = get_all_occupations($spouses[0]);
 						if(my $soccupation = $spouse_occupations[0]) {
-							$parentheses = 1;
 							if($language eq 'English') {
 								$phrase->append(', ' . Lingua::EN::Inflect::A(lc($soccupation)) . ', ');
 							} else {
@@ -3955,10 +3953,6 @@ sub print_person
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
 						if($placeofmarriage || $dateofmarriage) {
-							if(!$parentheses) {
-								$phrase->append(' (');
-								$parentheses = 1;
-							}
 							if($language eq 'French') {
 								$phrase->append("avec qu'");
 							} elsif($language eq 'German') {
@@ -4068,16 +4062,13 @@ sub print_person
 							}
 						}
 					}
-				} else {
+				} else {	# no children
 					my @spouse_occupations = get_all_occupations($spouses[0]);
 					if($spouse_occupations[0]) {
-						$phrase->append(' (' . Lingua::EN::Inflect::A(lc($spouse_occupations[0])));
-						$parentheses = 1;
+						$phrase->append(', ' . Lingua::EN::Inflect::A(lc($spouse_occupations[0])) . ',');
 					}
 				}
-				if($parentheses) {
-					$phrase->append(')');
-				} elsif(($dateofmarriage || $placeofmarriage) && $numberofchildren) {
+				if(($dateofmarriage || $placeofmarriage) && $numberofchildren) {
 					$phrase->append(',');
 				}
 				if($placeofmarriage && $dateofmarriage &&
@@ -5890,7 +5881,7 @@ sub print_person
 					if(is_alive($person) && !$first->date()) {
 						$s .= i18n(' has lived');
 					} else {
-						$s .= i18n(' was living');
+						$s .= ' lived';
 					}
 				} else {
 					$s .= "$firstname ";
@@ -6867,8 +6858,8 @@ sub print_person
 										# false positives when only a city is known
 										if(($p =~ /^\s\d/) && (my $cp = place({ person => $child, record => $cr }))) {
 											if($cp eq $p) {
-												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+												$phrase->append(i18n(' when ') . lcfirst($person->pronoun()) .
+													' was living with ' . $person->possessive() .
 													i18n('child ') . $child->as_string());
 												last;
 											}
@@ -6887,8 +6878,8 @@ sub print_person
 										# false positives when only a city is known
 										if(($p =~ /^\s\d/) && (my $fp = place({ person => $father, record => $fr }))) {
 											if($fp eq $p) {
-												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+												$phrase->append(i18n(' when ') . lcfirst($person->pronoun()) .
+													' was living with ' . $person->possessive() .
 													i18n('father ') . $father->as_string());
 												last;
 											}
@@ -6906,8 +6897,8 @@ sub print_person
 										# false positives when only a city is known
 										if(($p =~ /^\s\d/) && (my $mp = place({ person => $mother, record => $mr }))) {
 											if($mp eq $p) {
-												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+												$phrase->append(i18n(' when ') . lcfirst($person->pronoun()) .
+													' was living with ' . $person->possessive() .
 													i18n('mother ') . $mother->as_string());
 												last;
 											}
@@ -6925,8 +6916,8 @@ sub print_person
 										# false positives when only a city is known
 										if(($p =~ /^\s\d/) && (my $sp = place({ person => $sibling, record => $sr }))) {
 											if($sp eq $p) {
-												$phrase->append(i18n(' when ') . ($person->pronoun() eq 'She' ? 'her' : 'his') .
-													' was living with ' . ($person->pronoun() eq 'She' ? 'her ' : 'his ') .
+												$phrase->append(i18n(' when ') . lcfirst($pronoun) .
+													' was living with ' . $person->possessive() .
 													i18n(($sibling->sex() eq 'F') ? 'sister, ' : 'brother, ') .
 													$sibling->as_string());
 												last;
@@ -7010,7 +7001,7 @@ sub print_person
 					}
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 						$phrase->append(' following ' .
-							($person->pronoun() eq 'She' ? 'her' : 'his') .
+							lcfirst($person->possessive()) .
 							i18n(' funeral') .
 							$place);
 					}
@@ -7275,7 +7266,7 @@ sub print_person
 					$phrase->append('.');
 				} elsif(my $bd = get_value({ person => $child, value => 'baptism date' })) {
 					$phrase->append("\t" . given_names($child) .
-						" was born c. $bd.");
+						" was born around $bd.");
 				}
 			}
 
