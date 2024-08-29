@@ -3268,10 +3268,11 @@ sub print_person
 							}
 						}
 						if($language eq 'French') {
-							$phrase->append(" (un $occupation)");
+							$phrase->append(", un $occupation");
 						} else {
-							$phrase->append(' (' . Lingua::EN::Inflect::A($occupation) . ')');
+							$phrase->append(', ' . Lingua::EN::Inflect::A($occupation));
 						}
+						$phrase->append(',') if($mother);
 					}
 				}
 				if($mother) {
@@ -3291,7 +3292,7 @@ sub print_person
 				my @occupations = get_all_occupations($mother);
 				# TODO: print all occupations
 				if($occupations[0]) {
-					$phrase->append(' (' . Lingua::EN::Inflect::A(lc($occupations[0])) . ')');
+					$phrase->append(', ' . Lingua::EN::Inflect::A(lc($occupations[0])));
 				}
 				if($opts{'w'} && $birth_dt && (my $mdod = dateofdeath($mother))) {
 					if(my $dt = date_to_datetime(date => $mdod)) {
@@ -3312,6 +3313,10 @@ sub print_person
 			}
 			if($phrase->length()) {
 				push @phrases, $phrase;
+			}
+			if(scalar(@phrases)) {
+				$bio->appendconjunction(@phrases)->append('.  ');
+				@phrases = ();
 				$phrase = Data::Text->new();
 			}
 		}
@@ -3325,26 +3330,32 @@ sub print_person
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
 			} else {
-				if((!$aob) && (!$aod) && ($mother || $father)) {
-					if($phrase->length()) {
-						push @phrases, $phrase;
-					}
-					if(scalar(@phrases)) {
-						$bio->appendconjunction(@phrases)->append('.  ');
-						$phrase = Data::Text->new();
-						@phrases = ();
-					}
+				if($phrase->length()) {
+					push @phrases, $phrase;
+				}
+				if(scalar(@phrases)) {
+					$bio->appendconjunction(@phrases)->append('.  ');
+					$phrase = Data::Text->new();
+					@phrases = ();
 				}
 
 				if(scalar(@phrases) == 0) {
-					$phrase->set("$noun ");
+					$phrase->set($firstname // $pronoun)->append(' ');
 					$noun = $pronoun;
 				}
 
-				if(is_alive(person => $person)) {
-					$phrase->append(i18n('is '));
+				if(scalar(@occupations) == 1) {
+					if(is_alive(person => $person)) {
+						$phrase->append('works as ');
+					} else {
+						$phrase->append('worked as ');
+					}
 				} else {
-					$phrase->append(i18n('was '));
+					if(is_alive(person => $person)) {
+						$phrase->append(i18n('is '));
+					} else {
+						$phrase->append(i18n('was '));
+					}
 				}
 
 				my $article;
@@ -5964,6 +5975,7 @@ sub print_person
 
 		if((scalar(@events) == 2) &&
 		   $events[0]->can('type') && $events[1]->can('type') &&
+		   $events[0]->type() && $events[1]->type() &&
 		   ((($events[0]->type() eq 'Arrival') && ($events[1]->type() eq 'Departure')) ||
 		    (($events[1]->type() eq 'Arrival') && ($events[0]->type() eq 'Departure')))) {
 			if($phrase->rtrim()->length() > 0) {
@@ -6255,6 +6267,10 @@ sub print_person
 				}
 				if($event->can('type')) {
 					my $type = $event->type();
+					if(!defined($type)) {
+						red_warning({ person => $person, warning => "Can't determine type of event, or the event type is empty" });
+						next;
+					}
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
@@ -6422,7 +6438,7 @@ sub print_person
 							next;
 						}
 						if(my $e = $events[$index]) {
-							if(ref($e) && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
+							if(ref($e) && $e->type() && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
 								$previous = $event;
 								$prev_type = $event->type();
 								# FIXME: not all locations will be noted or notes printed
