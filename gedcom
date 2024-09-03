@@ -6252,10 +6252,80 @@ sub print_person
 				}
 			}
 		} elsif(scalar(@events) > 0) {
-			my $mentioned_military;
+			my @newspapers;
+			foreach my $event(@events) {
+				# This is a non-standard thing that FMP has invented :-(
+				if($event->type() eq 'Newspaper') {
+					push @newspapers, $event;
+				}
+			}
+
+			if(scalar(@newspapers) == 1) {
+				# FIXME: duplicate code with one event
+				if($phrase->length()) {
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+				}
+				if(scalar(@phrases) == 0) {
+					$phrase->set($firstname // $pronoun)->append(' ');
+				}
+				$phrase->append('appeared ');
+				my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $events[0] });
+				if(my $title = $newspaper->title()) {
+					$phrase->append("in $title");
+				} else {
+					$phrase->append('in a newspaper');
+				}
+				if(my $date = $newspaper->date()) {
+					$phrase->append(" on $date");
+				}
+				if(my $page = $newspaper->page()) {
+					$phrase->append(" on page $page");
+				}
+				if(my $url = $newspaper->url()) {
+					$phrase->append(" ($url)");
+				}
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
+			} elsif(scalar(@newspapers) > 1) {
+				if($phrase->length()) {
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+				}
+				if(scalar(@phrases) == 0) {
+					$phrase->set($firstname // $pronoun)->append(' ');
+				}
+				$phrase->append('appeared in ' . scalar(@newspapers) . ' newspapers: ');
+				#>>>>>>>>>>>
+				my @newspaper_list;
+				foreach my $n(@newspapers) {
+					my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $n });
+					my $string;
+					if(my $title = $newspaper->title()) {
+						$string = "in $title ";
+					}
+					if(my $date = $newspaper->date()) {
+						$string .= "on $date ";
+					}
+					if(my $page = $newspaper->page()) {
+						$string = "on page $page ";
+					}
+					if(my $url = $newspaper->url()) {
+						$string .= "($url)";
+					}
+					push @newspaper_list, $string;
+				}
+				$phrase->appendconjunction(@newspaper_list);
+				push @phrases, $phrase;
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new();
+				@phrases = ();
+			}
 			my $index = 0;
+			my $mentioned_military;
 			my $previous;
 			my $prev_type;
+
 			foreach my $event(@events) {
 				$index++;
 				if(!ref($event)) {
@@ -6545,39 +6615,7 @@ sub print_person
 							$phrase = Data::Text->new();
 						}
 					} elsif($type eq 'Newspaper') {
-						# FIXME: duplicate code with one event
-						# This is a non-standard thing that FMP has invented :-(
-						# FIXME: handle more than one newspaper
-						if($phrase->length()) {
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
-						}
-						if(scalar(@phrases) == 0) {
-							$phrase->set($firstname // $pronoun)->append(' ');
-						}
-						if((!defined($prev_type)) || ($prev_type ne 'Newspaper')) {
-							$phrase->append('appeared ');
-						}
-						my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $event });
-						if(my $title = $newspaper->title()) {
-							$phrase->append("in $title");
-						} else {
-							$phrase->append('in a newspaper');
-						}
-						if(my $date = $newspaper->date()) {
-							$phrase->append(" on $date");
-						}
-						if(my $page = $newspaper->page()) {
-							$phrase->append(" on page $page");
-						}
-						if(my $url = $newspaper->url()) {
-							$phrase->append(" ($url)");
-						}
-						push @phrases, $phrase;
-						$phrase = Data::Text->new();
-
-						$previous = $event;
-						$prev_type = 'Newspaper';
+						next;	# Handled earlier
 					} elsif($type eq 'Newspaper Death Notice') {
 						# More non-standard FMP stuff
 						# TODO - difficult to handle because the field is broken
