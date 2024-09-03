@@ -6255,8 +6255,10 @@ sub print_person
 			my @newspapers;
 			foreach my $event(@events) {
 				# This is a non-standard thing that FMP has invented :-(
-				if($event->type() eq 'Newspaper') {
-					push @newspapers, $event;
+				if(ref($event) && $event->can('type')) {
+					if(my $type = $event->type()) {
+						push @newspapers, $event if($type eq 'Newspaper');
+					}
 				}
 			}
 
@@ -6296,19 +6298,20 @@ sub print_person
 					$phrase->set($firstname // $pronoun)->append(' ');
 				}
 				$phrase->append('appeared in ' . scalar(@newspapers) . ' newspapers: ');
-				#>>>>>>>>>>>
 				my @newspaper_list;
 				foreach my $n(@newspapers) {
 					my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $n });
 					my $string;
 					if(my $title = $newspaper->title()) {
 						$string = "in $title ";
+					} else {
+						$string = 'in an unknown newspaper ';
 					}
 					if(my $date = $newspaper->date()) {
 						$string .= "on $date ";
 					}
 					if(my $page = $newspaper->page()) {
-						$string = "on page $page ";
+						$string .= "on page $page ";
 					}
 					if(my $url = $newspaper->url()) {
 						$string .= "($url)";
@@ -6317,7 +6320,7 @@ sub print_person
 				}
 				$phrase->appendconjunction(@newspaper_list);
 				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$bio->append("\n\t")->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 				$phrase = Data::Text->new();
 				@phrases = ();
 			}
