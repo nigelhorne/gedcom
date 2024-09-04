@@ -2295,6 +2295,16 @@ sub print_person
 				$birth_country = 'Slovenia';
 			} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 				$birth_country = $b->name();
+			} elsif(my $user = $ENV{'GEONAMES_USER'}) {
+				$geonames //= Geo::GeoNames->new(username => $user);
+				$geonames->ua($cached_browser);
+				my $result = $geonames->search(q => $placeofbirth, style => 'FULL');
+				$result = @{$result}[0];
+				if($birth_country = $result->{'countryName'}) {
+					complain({ person => $person, warning => "$c: Assuming country of birth is $birth_country" });
+				} else {
+					complain({ person => $person, warning => "Unknown birth country: '$c' in '$placeofbirth'" });
+				}
 			} else {
 				complain({ person => $person, warning => "Unknown birth country: '$c' in '$placeofbirth'" });
 			}
@@ -2408,7 +2418,7 @@ sub print_person
 			my $result = $geonames->search(q => $placeofdeath, style => 'FULL');
 			$result = @{$result}[0];
 			if(my $death_country = $result->{'countryName'}) {
-				# complain({ person => $person, warning => "$c: Assuming country of death is $death_country" });
+				complain({ person => $person, warning => "$c: Assuming country of death is $death_country" });
 			} else {
 				complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
 			}
@@ -6397,7 +6407,7 @@ sub print_person
 							next;
 						}
 						if(my $e = $events[$index]) {
-							if(ref($e) && ($e->type() eq 'Departure') && $event->date() && $e->date()) {
+							if(ref($e) && defined($e->type()) && ($e->type() eq 'Arrival') && $event->date() && $e->date()) {
 								$previous = $event;
 								$prev_type = $event->type();
 								# FIXME: not all locations will be noted or notes printed
@@ -7468,8 +7478,7 @@ sub print_person
 					});
 				}
 				foreach my $event(@events) {
-					if($event->can('type')) {
-						my $type = $event->type();
+					if($event->can('type') && defined(my $type = $event->type())) {
 						my $year;
 						if($type =~ /^Census U[KS] (\d{4})$/) {
 							$year = $1;
@@ -13772,7 +13781,7 @@ sub get_params
 
 	my %rc;
 
-	if(scalar(@_) % 2 == 0) {
+	if((scalar(@_) % 2) == 0) {
 		%rc = @_;
 	} elsif(scalar(@_) == 1) {
 		if(defined($default)) {
