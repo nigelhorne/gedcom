@@ -195,7 +195,9 @@ To install by hand you'll either have to use local::lib or perlbrew.
 Of course you could also run gedcom as root,
 but I strongly advise you don't do that.
 
-[ged2site](https://github.com/nigelhorne/ged2site).
+You can also try
+```cpan -i lazy && perl -Mlazy gedcom```
+though I've not tested that.
 
 To use the -B option on FreeBSD you'll need to
 "sudo pkg install pkgconf gdlib ImageMagick7;
