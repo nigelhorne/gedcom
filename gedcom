@@ -6437,10 +6437,14 @@ sub print_person
 									$year2 = $2;
 									$date2 =~ s/,\s//;
 								}
-								push @phrases, $phrase;
-								$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-								$phrase = Data::Text->new();
-								@phrases = ();
+								if($phrase->length()) {
+									push @phrases, $phrase;
+								}
+								if(scalar(@phrases)) {
+									$bio->appendconjunction(@phrases)->append('.  ');
+									$phrase = Data::Text->new();
+									@phrases = ();
+								}
 								if(defined($year1) && defined($year2) && ($year1 == $year2)) {
 									if($date1 eq 'in ') {
 										$date1 = '';
