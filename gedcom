@@ -4615,7 +4615,7 @@ sub print_person
 				$index++;
 				if(!ref($event)) {
 					my $e = $person->tag_record('EVEN', $index);
-					if(ref($e) eq 'Gedcom::Record') {
+					if($e->isa('Gedcom::Record')) {
 						$event = $e;
 					} else {
 						red_warning({ person => $person, warning => "Event record is just description ($event), information has been lost" });
@@ -6248,6 +6248,8 @@ sub print_person
 						}
 						$phrase->append($place);
 					}
+				} elsif($type eq 'Unknown') {
+					append_notes({ phrase => $phrase, record => $event });
 				# } elsif(($type !~ /^Census U[KS] \d{4}$/) &&
 				} elsif(($type !~ /Census/) &&
 					($type ne 'Race') &&
@@ -6653,24 +6655,39 @@ sub print_person
 						($type ne 'Race') &&
 						($type ne 'Hospitalisation')) {
 						complain({ person => $person, warning => "Unhandled event type: $type" });
-						die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1 }), " event type $type";
-						if(my $notes = notes(record => $event)) {
-							$notes =~ s/\.$//;
-							my $date = year(record => $event);
-							if($phrase->length()) {
-								$notes = lcfirst($notes);
-								$phrase->rtrim();
-								if($date) {
-									$phrase->append(" ($date, $notes)");
-								} else {
-									$phrase->append(" ($notes)");
-								}
+						# die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1 }), " event type $type";
+						# TODO: How do I get the WWW information from this?
+						# 1 EVEN
+						# 2 TYPE Feb 1, 1957 The Cumberland News
+						# 2 DATE 1 Feb 1957
+						# 2 PLAC Cumberland, Maryland
+						# 2 SOUR @S1376455579@
+						# 3 PAGE Feb 1, 1957 The Cumberland News 1 Feb 1957
+						# 3 DATA
+						# 4 WWW https://www.newspapers.com/clip/20559043/feb_1_1957_the_cumberland_news/?xid=637
+						# 3 OBJE @O163@
+						# 2 OBJE @O163@
+
+						my $notes = $type;
+						if(my $n = notes(record => $event, paragraph => 0)) {
+							$n =~ s/[\s\.]+$//;
+							$notes = "$type: $n";
+						}
+						$notes =~ s/\.$//;
+						my $date = year(record => $event);
+						if($phrase->length()) {
+							$notes = lcfirst($notes);
+							$phrase->rtrim();
+							if($date) {
+								$phrase->append(" ($date, $notes)");
 							} else {
-								if($date) {
-									$phrase->append(ucfirst($notes) . " $date");
-								} else {
-									$phrase->append(ucfirst($notes));
-								}
+								$phrase->append(" ($notes)");
+							}
+						} else {
+							if($date) {
+								$phrase->append(ucfirst($notes) . " $date");
+							} else {
+								$phrase->append(ucfirst($notes));
 							}
 						}
 					}
@@ -8930,6 +8947,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-uncle',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-uncle',
 					15 << 24 | 1 => 'thirteen times great-uncle',
 					16 << 24 | 1 => 'fourteen times great-uncle',
@@ -9236,6 +9254,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-aunt',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-aunt',
 					15 << 24 | 1 => 'thirteen times great-aunt',
 					16 << 24 | 1 => 'fourteen times great-aunt',
@@ -9312,6 +9331,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-aunt',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-aunt',
 					15 << 24 | 1 => 'thirteen times great-aunt',
 					16 << 24 | 1 => 'fourteen times great-aunt',
