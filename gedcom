@@ -2661,7 +2661,7 @@ sub print_person
 			}
 		} else {
 			foreach my $event(@events) {
-				if((ref($event) eq 'Gedcom::Record') &&
+				if(ref($event) && $event->can('type') && defined($event->type()) &&
 				  ($event->type() eq 'Custom Marriage')) {
 					# FindMyPast
 					$marriage = $event;
@@ -12211,14 +12211,14 @@ sub get_marriage
 					$event = $e;
 				}
 			}
-			if($event->can('type') && defined($event->type()) &&
+			if(ref($event) && $event->can('type') && defined($event->type()) &&
 			  ($event->type() eq 'Custom Marriage')) {
 				# FindMyPast
 				return $event;
 			}
 		} else {
 			foreach my $event(@events) {
-				if((ref($event) eq 'Gedcom::Record') &&
+				if(ref($event) && $event->can('type') && defined($event->type()) &&
 				  ($event->type() eq 'Custom Marriage')) {
 					# FindMyPast
 					return $event;
