@@ -3884,6 +3884,10 @@ sub print_person
 					} else {
 						$args{'format'} = 'married ';
 					}
+					if($person->marriage_bann()) {
+						die 'TODO';
+					}
+
 					$phrase->append(i18n(\%args));
 
 					# Note if this person married a relative
@@ -7138,10 +7142,9 @@ sub print_person
 			}
 			$phrase->append("[$_]") foreach(sort @burialcitations);
 		} elsif((!$aod) && ($placeofdeath || $dateofdeath) && !$diedathome) {
-			# TODO - extract marriage banns information
-			# if($person->marriage_bann()) {
-				# die 'foo';
-			# }
+			if($person->marriage_bann()) {
+				die 'TODO';
+			}
 			if($placeofdeath && (scalar(@spouses) <= 1) && $placeofmarriage && ($placeofdeath eq $placeofmarriage) && (scalar(@events) == 0)) {
 				if($language eq 'French') {
 					if($phrase->length() == 0) {
@@ -8325,9 +8328,6 @@ sub Gedcom::Individual::as_string
 
 		# See https://github.com/pjcj/Gedcom.pm/issues/28
 		$suffix = get_value({ person => $self, value => 'NAME NSFX' });
-		if($suffix) {
-			complain("TODO: add suffix: $name, $suffix");
-		}
 	}
 
 	$name =~ s/\///g;
@@ -8488,6 +8488,10 @@ sub Gedcom::Individual::as_string
 			}
 		}
 
+		if($suffix) {
+			$rc .= " $suffix";
+		}
+
 		$rc .= ' ' if($yob || $yod);
 
 		if($yob) {
@@ -8507,6 +8511,10 @@ sub Gedcom::Individual::as_string
 	}
 
 	$rc =~ tr/"/'/;	# fix issues with Graphviz and others - compatibility with ged2site
+
+	if($suffix) {
+		return "$rc $suffix";
+	}
 
 	return $rc;
 }
