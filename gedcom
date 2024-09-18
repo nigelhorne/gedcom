@@ -1506,7 +1506,6 @@ sub generate
 			if(my $marriage = get_marriage($person)) {
 				if(my $dateofmarriage = $marriage->date()) {
 					if($dateofmarriage && ($dateofmarriage =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
-						# FIXME: work with more than one spouse
 						my @spouses = $person->spouse();
 						if(scalar(@spouses) == 1) {
 							add_to_ical(
@@ -1514,6 +1513,9 @@ sub generate
 								datetime => date_to_datetime(date => $dateofmarriage),
 								summary => 'Marriage of ' . $person->as_string() . ' and ' . $spouses[0]->as_string()
 							);
+						} elsif(scalar(@spouses) > 1) {
+							# TODO: work with more than one spouse
+							die 'TODO: more than one spouse';
 						}
 					}
 				}
