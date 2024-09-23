@@ -1466,6 +1466,12 @@ sub generate
 	foreach my $person(@{$params->{'everyone'}}) {
 	# foreach my $person(sort { $a->get_value('last name') cmp $b->get_value('last name') } $ged->individuals()) {
 		my $xref = $person->xref();
+		if(!defined($xref)) {
+			$index++;
+			complain({ person => $person, warning => 'has no xref' });
+			next;
+		}
+			
 		if($me && ($xref eq $me->xref()) && !$opts{'a'}) {
 			$index++;
 			next;
@@ -8328,7 +8334,6 @@ sub Gedcom::Individual::as_string
 	} else {
 		$name = $self->name();
 
-		# See https://github.com/pjcj/Gedcom.pm/issues/28
 		$suffix = get_value({ person => $self, value => 'NAME NSFX' });
 	}
 
