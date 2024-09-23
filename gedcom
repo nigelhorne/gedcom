@@ -3930,7 +3930,6 @@ sub print_person
 								$phrase->append(', un ' . lc($soccupation) . ',');
 							}
 						}
-						$phrase->append(' ');
 					}
 					my @childrenofthisspouse;
 					my $numberofchildrenwiththisspouse = $numberofchildren;
@@ -3975,6 +3974,7 @@ sub print_person
 						}
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
+						$phrase->append(' ');
 						if($placeofmarriage || $dateofmarriage) {
 							if($language eq 'French') {
 								$phrase->append("avec qu'");
@@ -4569,7 +4569,9 @@ sub print_person
 		}
 
 		if(scalar(@childrenunknownparent)) {
-			push @phrases, $phrase;
+			if($phrase->length()) {
+				push @phrases, $phrase;
+			}
 			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new("$pronoun ");
 			@phrases = ();
@@ -5958,11 +5960,11 @@ sub print_person
 				}
 			}
 		} else {	# scalar(@residences) == 0
+			if($phrase->length()) {
+				push @phrases, $phrase;
+				$phrase = Data::Text->new();
+			}
 			if(scalar(@phrases)) {
-				if($phrase->length()) {
-					push @phrases, $phrase;
-					$phrase = Data::Text->new();
-				}
 				# No residences - remove any trailing commas
 				my $text = conjunction(map { $_->as_string() } @phrases);
 				$text =~ s/[\,;]\s*$//;
