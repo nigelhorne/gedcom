@@ -7304,9 +7304,10 @@ sub print_person
 					$phrase = Data::Text->new();
 				}
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n");
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 					@phrases = ();
 				}
+				$notes = "\n$notes";
 			}
 			$notes =~ s/\.$//;
 			$phrase = Data::Text->new($notes);
