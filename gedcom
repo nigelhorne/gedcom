@@ -4845,7 +4845,7 @@ sub print_person
 				}
 
 				if(($count == 0) || !places_are_the_same({ person => $person, first => $residence, second => $residencelist[$count - 1] })) {
-					if($birth && $dateofbirth && $rdate && (datecmp($rdate, $dateofbirth) == 0) &&
+					if($birth && $dateofbirth && $rdate && ($rdate !~ /^\d{3,4}$/) && (datecmp($rdate, $dateofbirth) == 0) &&
 					   places_are_the_same({ person => $person, first => $birth, second => $residence})) {
 						# This residence record is for the place of birth, which is
 						# printed elsewhere
@@ -13325,7 +13325,7 @@ sub wide_to_html
 	$string =~ s/\xc3\x81/&Aacute;/g;	# Á
 	$string =~ s/\xc3\x83/&Icirc;/g;	# Î
 	$string =~ s/\xc3\x9e/&THORN;/g;	# Þ
-	$string =~ s/\xc3\xa1/&aacute;/g;
+	$string =~ s/\xc3\xa1/&aacute;/g;	# á
 	$string =~ s/\xc3\xa2/&acirc;/g;
 	$string =~ s/\xc3\xa4/&auml;/g;
 	$string =~ s/\xc3\xa9/&eacute;/g;
@@ -13377,7 +13377,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00C9}/&Eacute;/g;
 	$string =~ s/\N{U+00D6}/&Ouml;/g;	# Ö
 	$string =~ s/\N{U+00DF}/&szlig;/g;	# ß
-	$string =~ s/\N{U+00E1}/&aacute;;/g;
+	$string =~ s/\N{U+00E1}/&aacute;/g;	# á
 	$string =~ s/\N{U+00E2}/&acirc;/g;
 	$string =~ s/\N{U+00E4}/&auml;/g;
 	$string =~ s/\N{U+00E5}/&aring;/g;	# å
@@ -13388,6 +13388,7 @@ sub wide_to_html
 	$string =~ s/\N{U+00EE}/&icirc;/g;
 	$string =~ s/\N{U+00EF}/&iuml;/g;	# ï
 	$string =~ s/\N{U+00F0}/&eth;/g;	# ð
+	$string =~ s/\N{U+00F1}/&ntilde;/g;	# ñ
 	$string =~ s/\N{U+00F4}/&ocirc;/g;	# ô
 	$string =~ s/\N{U+00F6}/&ouml;/g;
 	$string =~ s/\N{U+00F8}/&oslash;/g;	# ø
@@ -13748,7 +13749,7 @@ sub dbpedia
 											}
 										}
 									}
-									warn ">>>>>>>>>> dbpedia allowig possibility $uri" if($opts{'w'});
+									warn ">>>>>>>>>> dbpedia allowing possibility $uri" if($opts{'w'});
 								}
 							}
 							$Data::Dumper::Maxdepth = 0;
