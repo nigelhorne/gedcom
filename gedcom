@@ -4011,13 +4011,13 @@ sub print_person
 								} else {
 									$phrase->append('1 surviving child');
 								}
+								if($opts{'l'}) {
+									$phrase->append(', ');
+								}
 							} elsif($language eq 'French') {
-								$phrase->append('1 enfant');
+								$phrase->append('1 enfant, ');
 							} else {
-								$phrase->append('1 child');
-							}
-							if($placeofmarriage || $dateofmarriage) {
-								$phrase->append(',');
+								$phrase->append('1 child, ');
 							}
 						} else {
 							if($all_children_are_alive) {
@@ -4030,8 +4030,8 @@ sub print_person
 							if($placeofmarriage || $dateofmarriage) {
 								$phrase->append(':');
 							}
+							$phrase->append(' ');
 						}
-						$phrase->append(' ');
 						if((!$placeofmarriage) && !$dateofmarriage) {
 							if(length(my $spouse_name = $spouse->as_string({ middle_names => 1, title => 1 }))) {
 								$phrase->append(i18n({ format => 'with %s', args => $spouse_name }));
@@ -4058,6 +4058,7 @@ sub print_person
 								} else {
 									$phrase->append('whose first name is unknown');
 								}
+								$phrase->append(',');
 							}
 						} elsif($numberofchildrenwiththisspouse > 1) {
 							# my $childnames = join(', ', map { $_->given_names() } @children);
