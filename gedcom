@@ -3241,7 +3241,7 @@ sub print_person
 						if($language eq 'French') {
 							$phrase->append("'enfant");
 						} else {
-							$phrase->append(i18n('child'));
+							$phrase->append(i18n(($sex eq 'M') ? 'son' : 'daughter'));
 						}
 					}
 				} else {
@@ -3249,7 +3249,7 @@ sub print_person
 					if($language eq 'French') {
 						$phrase->append("'enfant");
 					} else {
-						$phrase->append(i18n('child'));
+						$phrase->append(i18n(($sex eq 'M') ? 'son' : 'daughter'));
 					}
 				}
 			} else {
