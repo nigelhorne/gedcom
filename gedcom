@@ -2353,79 +2353,82 @@ sub print_person
 		1 while($placeofdeath =~ s/^,\s*//g);
 	}
 
+	my $death_country;
+
 	if($placeofdeath && ($placeofdeath =~ /(.+[a-z]) USA$/)) {
 		complain({ person => $person, warning => "Comma missing before USA in death location '$placeofdeath'" });
 		$placeofdeath = "$1, USA";
+		$death_country = 'United States';
 	} elsif($placeofdeath && ($placeofdeath =~ /.+,\s?(.+)$/)) {
 		my $c = $1;
 		if($c eq 'England') {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif($c eq 'USA') {
-			# $death_country = 'United States';
-		# } elsif($c eq 'Texas') {
-			# $death_country = 'United States';
+			$death_country = 'United States';
+		} elsif($c eq 'Texas') {
+			$death_country = 'United States';
 		} elsif(($c =~ /[A-Z]{2}/) && ($us->{code2state}{$c})) {
 			complain({ person => $person, warning => "$c: assuming country of death is USA" });
-			# $death_country = 'United States';
+			$death_country = 'United States';
 		} elsif($us->{state2code}{uc($c)}) {
 			complain({ person => $person, warning => "$c: assuming country of death is USA" });
-			# $death_country = 'United States';
+			$death_country = 'United States';
 		} elsif($c eq 'United States of America') {
-			# $death_country = 'United States';
+			$death_country = 'United States';
 		} elsif($c eq 'U.S.A.') {
-			# $death_country = 'United States';
+			$death_country = 'United States';
 		} elsif($c eq 'Scotland') {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif($c eq 'Scot') {
 			complain({ person => $person, warning => "$c: death country should be Scotland'" });
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif(($c eq 'Norfolk') || ($c eq 'Kent') || ($c eq 'Sussex') || ($c eq 'Northumberland')) {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 			complain({ person => $person, warning => 'Assuming country of death is UK' });
 		} elsif(($c eq 'Nova Scotia') || (uc($c) eq 'NFLD') || ($c eq 'Newfoundland') || ($c eq 'NS')) {
 			complain({ person => $person, warning => "Country 'Canada' missing from death record" });
-			# $death_country = 'Canada';
+			$death_country = 'Canada';
 			if($opts{'w'} && defined($yod) && ($yod < 1500)) {
 				complain ({ person => $person, warning => "Canada did not exist in $yod, check place of death ($placeofdeath)" });
 				$placeofdeath = undef;
-				# $death_country = '';
+				$death_country = '';
 			}
 		} elsif(($c =~ /[A-Z]{2,3}/) && ($au->{code2state}{$c})) {
 			complain({ person => $person, warning => "$c: assuming country of death is Australia" });
-			# $death_country = 'Australia';
+			$death_country = 'Australia';
 		} elsif($au->{state2code}{uc($c)}) {
 			complain({ person => $person, warning => "$c: assuming country of death is Australia" });
-			# $death_country = 'Australia';
+			$death_country = 'Australia';
 		} elsif(($c eq 'Holland') || ($c eq 'The Netherlands')) {
-			# $death_country = 'Netherlands';
+			$death_country = 'Netherlands';
 		} elsif($c eq 'Isle of Man') {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif($c eq 'Northern Ireland') {
-			# $death_country = 'United Kingdom';
+			$death_country = 'United Kingdom';
 		} elsif(($c eq 'Preußen') || ($c eq 'Deutschland')) {	# Prussia
-			# $death_country = 'Germany';
+			$death_country = 'Germany';
 		} elsif($c =~ /Can\./) {
 			complain({ person => $person, warning => 'Assuming country of death is Canada' });
-			# $death_country = 'Canada';
+			$death_country = 'Canada';
 			if($opts{'w'} && defined($yod) && ($yod < 1500)) {
 				complain ({ person => $person, warning => "Canada did not exist in $yod, check place of death ($placeofdeath)" });
 				$placeofdeath = undef;
-				# $death_country = '';
+				$death_country = '';
 			}
 		} elsif(($c =~ /[A-Z]{2} USA/) && ($us->{code2state}{substr($c, 0, 2)})) {
 			complain({ person => $person, warning => "$c: assuming country of death is USA" });
-			# $death_country = 'United States';
+			$death_country = 'United States';
 		} elsif(my $b = Locale::Object::Country->new(name => $c)) {
 			# Country is found, nothing to be done
-			# $death_country = $b->name();
+			$death_country = $b->name();
 		} elsif(my $user = $ENV{'GEONAMES_USER'}) {
 			$geonames //= Geo::GeoNames->new(username => $user);
 			$geonames->ua($cached_browser);
 			my $result = $geonames->search(q => $placeofdeath, style => 'FULL');
 			$result = @{$result}[0];
-			if(my $death_country = $result->{'countryName'}) {
+			if($death_country = $result->{'countryName'}) {
 				complain({ person => $person, warning => "$c: Assuming country of death is $death_country" });
 			} else {
 				complain({ person => $person, warning => "Unknown death country: '$c' in '$placeofdeath'" });
@@ -4803,6 +4806,7 @@ sub print_person
 				print "Sort the residences\n" if($opts{'v'});
 				@residencelist = Sort::Key::DateTime::dtkeysort { $dfn->parse_datetime(@{$date_parser->parse(date => $_->date())}[0]->{'canonical'}) } @residencelist;
 			}
+
 			my $count = 0;
 			my $prev_residence;
 			my $spdeath_dt;
@@ -5839,6 +5843,75 @@ sub print_person
 				}
 			}
 
+			# See if this person was born, lived and died all in the same county
+			if((scalar(@residencelist) > 3) && $birth_country && $death_country && ($birth_country eq $death_country)) {
+				# TODO: finish this code
+				my $all_in_one_county = 1;
+				my $birth_county;
+				if($placeofbirth =~ /.+,\s*(.+),\s*.+$/) {
+					$birth_county = $1;
+				} elsif($placeofbirth =~ /^(.+),\s*.+$/) {
+					$birth_county = $1;
+				}
+				foreach my $residence(@residencelist) {
+					my $place = $residence->place();
+					if(($place !~ /,\s*\Q$birth_country\E$/i)) {
+						if($birth_country eq 'United Kingdom') {
+							if(($place !~ /(.+),\s*(UK|England|Wales|Scotland)$/i)) {
+								$all_in_one_county = 0;
+								last;
+							}
+						} else {
+							$all_in_one_county = 0;
+							last;
+						}
+					}
+					if($place =~ /.+,\s*(.+),\s*.+$/) {
+						if($1 ne $birth_county) {
+							$all_in_one_county = 0;
+							last;
+						}
+					} elsif($place =~ /^(.+),\s*.+$/) {
+						if($1 ne $birth_county) {
+							$all_in_one_county = 0;
+							last;
+						}
+					}
+				}
+				foreach my $event(@events) {
+					if(my $type = $event->type()) {
+						if(($type eq 'Military service') || ($type eq 'Military')) {
+							$all_in_one_county = 0;	# Possibly served abroad
+							last;
+						}
+					}
+					my $place = $event->place();
+					if(($place !~ /,\s*\Q$birth_country\E$/i)) {
+						if($birth_country eq 'United Kingdom') {
+							if(($place !~ /(.+),\s*(UK|England|Wales|Scotland)$/i)) {
+								$all_in_one_county = 0;
+								last;
+							}
+						} else {
+							$all_in_one_county = 0;
+							last;
+						}
+					}
+					if($place =~ /.+,\s*(.+),\s*.+$/) {
+						if($1 ne $birth_county) {
+							$all_in_one_county = 0;
+							last;
+						}
+					} elsif($place =~ /^(.+),\s*.+$/) {
+						if($1 ne $birth_county) {
+							$all_in_one_county = 0;
+							last;
+						}
+					}
+				}
+				die if($opts{'w'} && $all_in_one_county);
+			}
+
 			# Print out the residence strings with semi-colons between each residence
 			if(scalar(@residencestringarray)) {
 				push @phrases, $phrase if($phrase->rtrim()->length());
@@ -6629,25 +6702,27 @@ sub print_person
 						}
 					} elsif($type eq 'Employment') {
 						if(my $notes = notes(record => $event)) {
-							if($phrase->length()) {
+							if($notes !~ /^household duties/i) {
+								if($phrase->length()) {
+									push @phrases, $phrase;
+									$phrase = Data::Text->new();
+								}
+								$notes =~ s/\.$//;
+								if(my $date = year(record => $event)) {
+									if(scalar(@phrases) == 0) {
+										$date = ucfirst($date);
+									}
+									$phrase->append("$date " . lcfirst($pronoun) . ' was working');
+								} else {
+									$phrase->set("$pronoun worked");
+								}
+								$phrase->append(" at $notes");
+								if(my $place = place(person => $person, record => $event)) {
+									$phrase->append($place);
+								}
 								push @phrases, $phrase;
 								$phrase = Data::Text->new();
 							}
-							$notes =~ s/\.$//;
-							if(my $date = year(record => $event)) {
-								if(scalar(@phrases) == 0) {
-									$date = ucfirst($date);
-								}
-								$phrase->append("$date " . lcfirst($pronoun) . ' was working');
-							} else {
-								$phrase->set("$pronoun worked");
-							}
-							$phrase->append(" at $notes");
-							if(my $place = place(person => $person, record => $event)) {
-								$phrase->append($place);
-							}
-							push @phrases, $phrase;
-							$phrase = Data::Text->new();
 						}
 					} elsif($type eq 'Newspaper') {
 						next;	# Handled earlier
@@ -7602,11 +7677,11 @@ sub print_person
 						ua => $browser,
 					);
 					if($placeofburial) {
-						if($placeofburial =~ /.+,\s+(\w+)/) {
+						if($placeofburial =~ /.+,\s+(\w+)$/) {
 							$opts{'country'} = $1;
 						}
 					} elsif($placeofdeath) {
-						if($placeofdeath =~ /.+,\s+(\w+)/) {
+						if($placeofdeath =~ /.+,\s+(\w+)$/) {
 							$opts{'country'} = $1;
 						}
 					}
@@ -11370,6 +11445,9 @@ sub get_all_occupations
 		shift @occupations;
 	}
 	while($occupations[0] && ($occupations[0] =~ /home duties/i)) {
+		shift @occupations;
+	}
+	while($occupations[0] && ($occupations[0] =~ /household duties/i)) {
 		shift @occupations;
 	}
 	while($occupations[0] && ($occupations[0] eq 'Retired')) {
