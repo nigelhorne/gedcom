@@ -5915,6 +5915,7 @@ sub print_person
 								}
 							}
 							foreach my $event(@events) {
+								next unless ref($event);
 								if(my $type = $event->type()) {
 									if(($type eq 'Military service') || ($type eq 'Military')) {
 										$all_in_one_county = 0;	# Possibly served abroad
@@ -5958,8 +5959,8 @@ sub print_person
 								}
 								$bio->append("$firstname spent all of " . 
 									(($person->pronoun() eq 'She') ? 'her' : 'his') .
-									" life in $all_in_county " .
-									(($ENV{'LANG'} && ($ENV{'LANG'} =~ /^en_US/)) ? ',' : 'in') .
+									" life in $all_in_county" .
+									(($ENV{'LANG'} && ($ENV{'LANG'} =~ /^en_US/)) ? ',' : ' in') .
 									" $all_in_country.  ");
 							} else {
 								undef $all_in_country;
@@ -5989,13 +5990,17 @@ sub print_person
 						$residencestringarray[$i+1] = undef;
 					}
 				}
-				while(!defined($residencestringarray[scalar(@residencestringarray) - 1])) {
-					pop @residencestringarray;
-				}
+				# while(!defined($residencestringarray[scalar(@residencestringarray) - 1])) {
+					# pop @residencestringarray;
+				# }
+				# while(!defined($residencestringarray[0])) {
+					# shift @residencestringarray;
+				# }
+				@residencestringarray = grep { defined } @residencestringarray;
 				# $phrase->append(', ' . lcfirst($pronoun) . i18n(' was living ') .
 					# Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => i18n('and')});
 				my $s = ', ';
-				if(scalar(@residencelist) < 3) {
+				if(scalar(@residencestringarray) < 3) {
 					$s .= lcfirst($pronoun);
 					if(is_alive($person) && !$first->date()) {
 						$s .= i18n(' has lived');
@@ -6003,11 +6008,23 @@ sub print_person
 						$s .= ' lived';
 					}
 				} else {
-					$s .= "$firstname ";
+					if($all_in_county) {
+						$s .= lcfirst($pronoun) . ' ';
+					} else {
+						$s .= "$firstname ";
+					}
 					if(is_alive($person) && !$first->date()) {
 						$s .= 'has ';
 					}
-					$s .= 'lived in several places:';
+					$s .= 'lived in several places';
+					if($all_in_county) {
+						$s .= ' around the county';
+						@residencestringarray = map { if($_ =~ /(.+),\s*$all_in_county ([io]n .+)/) { "$1 $2" } else { $_ } } @residencestringarray;
+					} elsif($all_in_country) {
+						$s .= " around $all_in_country";
+						@residencestringarray = map { if($_ =~ /(.+),\s*$all_in_country ([io]n .+)/) { "$1 $2" } else { $_ } } @residencestringarray;
+					}
+					$s .= ':';
 				}
 
 				print Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
