@@ -3977,7 +3977,7 @@ sub print_person
 						}
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
-						$phrase->append(' ');
+						$phrase->append(' ') if($placeofmarriage || $dateofmarriage);
 						if($placeofmarriage || $dateofmarriage) {
 							if($language eq 'French') {
 								$phrase->append("avec qu'");
@@ -6002,8 +6002,12 @@ sub print_person
 				my $s = ', ';
 				if(scalar(@residencestringarray) < 3) {
 					$s .= lcfirst($pronoun);
-					if(is_alive($person) && !$first->date()) {
-						$s .= i18n(' has lived');
+					if(is_alive($person)) {
+						if($first->date()) {
+							$s .= i18n(' was living');
+						} else {
+							$s .= i18n(' has lived');
+						}
 					} else {
 						$s .= ' lived';
 					}
