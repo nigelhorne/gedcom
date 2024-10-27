@@ -11335,6 +11335,7 @@ sub get_all_residences
 		# Add valid Gedcom::Record residences to the results array
 		push @rc, $residence if $residence->isa('Gedcom::Record');
 	}
+
 	my @events = $person->event();
 	$index = 0;
 	foreach my $event(@events) {
@@ -11353,6 +11354,7 @@ sub get_all_residences
 			push @rc, $event;
 		}
 	}
+
 	my @censuses = $person->census();
 	$index = 0;
 	foreach my $census(@censuses) {
@@ -13406,11 +13408,21 @@ sub wide_to_html
 	$string =~ s/&/&amp;/g;
 
 	unless($params->{'keep_hrefs'}) {
-		$string =~ s/</&lt;/g;
-		$string =~ s/>/&gt;/g;
-		$string =~ s/"/&quot;/g;
-		$string =~ s/“/&quot;/g;	# U+201C
-		$string =~ s/”/&quot;/g;	# U+201D
+		# $string =~ s/</&lt;/g;
+		# $string =~ s/>/&gt;/g;
+		# $string =~ s/"/&quot;/g;
+		# $string =~ s/“/&quot;/g;	# U+201C
+		# $string =~ s/”/&quot;/g;	# U+201D
+
+		my %replacements = (
+			'<' => '&lt;',
+			'>' => '&gt;',
+			'"' => '&quot;',
+			'“' => '&quot;',	# U+201C
+			'”' => '&quot;',	# U+201D
+		);
+
+		$string =~ s/([<>“”"])/$replacements{$1}/g;
 	}
 
 	# $string =~ s/&db=/&amp;db=/g;
