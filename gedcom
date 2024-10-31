@@ -13429,11 +13429,12 @@ sub wide_to_html
 	# $string =~ s/&id=/&amp;id=/g;
 
 	unless($params->{'keep_apos'}) {
-		$string =~ s/'/&apos;/g;
-		$string =~ s/‘/&apos;/g;
-		$string =~ s/’/&apos;/g;
-		$string =~ s/‘/&apos;/g;
-		$string =~ s/\x98/&apos;/g;
+		# $string =~ s/'/&apos;/g;
+		# $string =~ s/‘/&apos;/g;
+		# $string =~ s/’/&apos;/g;
+		# $string =~ s/‘/&apos;/g;
+		# $string =~ s/\x98/&apos;/g;
+		$string =~ s/['‘’‘\x98]/&apos;/g;
 	}
 
 	if($string !~ /[^[:ascii:]]/) {
