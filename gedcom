@@ -1476,7 +1476,7 @@ sub generate
 			complain({ person => $person, warning => 'has no xref' });
 			next;
 		}
-			
+
 		if($me && ($xref eq $me->xref()) && !$opts{'a'}) {
 			$index++;
 			next;
@@ -5374,7 +5374,7 @@ sub print_person
 										print STDERR __LINE__, ': ', Data::Dumper->new([\%living_with])->Dump();
 										die "BUG: living_with set, but can't determine with whom";
 									}
-									
+
 									$residencestring .= $first ? ')' : ' ';
 									$first = 0;
 								}
@@ -5967,7 +5967,7 @@ sub print_person
 									@phrases = ();
 									$phrase = Data::Text->new();
 								}
-								$bio->append("$firstname spent all of " . 
+								$bio->append("$firstname spent all of " .
 									(($person->pronoun() eq 'She') ? 'her' : 'his') .
 									" life in $all_in_county" .
 									(($ENV{'LANG'} && ($ENV{'LANG'} =~ /^en_US/)) ? ',' : ' in') .
@@ -10328,26 +10328,12 @@ sub place
 	return $rc;
 }
 
-sub getaddress {
+sub getaddress
+{
 	my $address = shift;
 
-	my $rc;
-
-	if(my $city = $address->city()) {
-		$rc = $city;
-	}
-	if(my $state = $address->state()) {
-		if($rc) {
-			$rc .= ', ';
-		}
-		$rc .= $state;
-	}
-	if(my $country = $address->country()) {
-		if($rc) {
-			$rc .= ', ';
-		}
-		$rc .= $country;
-	}
+	# Concatenate non-empty values with ', ' as the separator
+	my $rc = join(', ', grep { $_ } $address->city(), $address->state(), $address->country());
 
 	return $rc;
 }
@@ -13073,7 +13059,7 @@ sub i18n
 		}
 
 		if($translation) {
-			if($translation =~ /%/) {	# FIXME: %%
+			if($translation =~ /%/) {	# TODO: %%
 				if(ref($params{'args'}) eq 'ARRAY') {
 					$translation = sprintf($translation, @{$params{'args'}});
 				} elsif(ref($params{'args'})) {
@@ -13107,7 +13093,7 @@ sub i18n
 		}
 		die $format;
 	}
-	if($format =~ /%/) {	# FIXME: %%
+	if($format =~ /%/) {	# TODO: %%
 		if(ref($params{'args'}) eq 'ARRAY') {
 			$format = sprintf($format, @{$params{'args'}});
 		} else {
