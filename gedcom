@@ -251,6 +251,7 @@ print "Language = $language\n" if($opts{'v'});
 
 @needfull = ();
 my @modules = ();
+my $grave_modules;
 if($opts{'B'}) {
 	# yum install gd-devel ImageMagick-devel
 	my $magick;
@@ -345,6 +346,34 @@ if($opts{'v'}) {
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'Mozilla::CA';
 }
+if($opts{'w'} && $opts{'c'}) {
+	# If you have a locally written module to look up entries,
+	# list them in gedcom.config,
+	# otherwise use Genealogy::FindaGrave
+	my $config;
+
+	eval { $config = Config::Auto::parse() };
+
+	if($config && $config->{'grave_modules'}) {
+		$grave_modules = $config->{'grave_modules'};
+
+		if(ref($grave_modules)) {
+			foreach my $module(@{$grave_modules}) {
+				autoload $module;
+			}
+		} else {
+			autoload $grave_modules;
+		}
+	} else {
+		push @modules, 'Genealogy::FindaGrave';
+
+		$grave_modules = 'Genealogy::FindaGrave';
+	}
+
+	# if(!$ged->validate() && $opts{'f'}) {
+		# die "$ARGV[0] is not a valid gedcom file";
+	# }
+}
 
 # my $libdir1 = File::Spec->catfile($FindBin::Bin, File::Spec->updir(), 'lib');
 # if(-d $libdir1) {
@@ -425,7 +454,6 @@ my $ca_en = Locale::CA->new(lang => 'en');
 my $ca_fr = Locale::CA->new(lang => 'fr');
 my $us = Locale::US->new();
 my $birth_country;
-my $grave_modules;
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	my $cache_dir = $ENV{'CACHE_DIR'};
 	if($cache_dir) {
@@ -475,32 +503,6 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		MaxAge => 30 * 24
 	}) || die "$0: $cache_dir: $!";
 
-	if($opts{'w'}) {
-		# If you have a locally written module to look up entries,
-		# list them in gedcom.config,
-		# otherwise use WWW::Scrape::FindaGrave
-		my $config;
-
-		eval { $config = Config::Auto::parse() };
-
-		if($config && $config->{'grave_modules'}) {
-			$grave_modules = $config->{'grave_modules'};
-
-			if(ref($grave_modules)) {
-				foreach my $module(@{$grave_modules}) {
-					autoload $module;
-				}
-			} else {
-				autoload $grave_modules;
-			}
-		# } else {
-			# require WWW::Scrape::FindaGrave;
-			# WWW::Scrape::FindaGrave->import();
-		}
-		# if(!$ged->validate() && $opts{'f'}) {
-			# die "$ARGV[0] is not a valid gedcom file";
-		# }
-	}
 }
 
 my $script_name = basename($0);
@@ -7727,7 +7729,7 @@ sub print_person
 						$surname = $husband->surname();
 					}
 				}
-				if($yod && $firstname && $surname && !$burialrecord) {
+				if($yod && $firstname && $surname) {
 					my %opts = (
 						date_of_death => $yod,
 						firstname => $firstname,
@@ -7746,7 +7748,7 @@ sub print_person
 					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
 						$opts{'country'} = 'United States of America';
 					}
-					# foreach my $b(WWW::Scrape::FindaGrave->new(\%opts)) {
+					# foreach my $b(Genealogy::FindaGrave->new(\%opts)) {
 					if(defined($grave_modules)) {
 						if(ref($grave_modules)) {
 							foreach my $m(@{$grave_modules}) {
