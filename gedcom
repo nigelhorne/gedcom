@@ -8830,8 +8830,8 @@ sub Gedcom::Individual::relationship
 
 		# Full siblings
 		if(($self_mother->xref() eq $other_mother->xref()) && ($self_father->xref() eq $other_father->xref())) {
-			# return ($sex eq 'M') ? 'barādar' : 'khāhar';
 			return $language eq 'Farsi'
+				# ? ($sex eq 'M') ? 'barādar' : 'khāhar';
 				? ($sex eq 'M' ? "\N{U+0631}\N{U+062F}\N{U+0637}\N{U+0631}\N{U+0638}" : "\N{U+062E}\N{U+0627}\N{U+0647}\N{U+0631}")
 				: i18n($sex eq 'M' ? 'brother' : 'sister');
 		}
@@ -12946,44 +12946,32 @@ sub get_year_from_date($)
 # https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
 sub get_language
 {
+	my %langs = (
+		'br' => 'Breton',
+		'de' => 'German',
+		'en' => 'English',
+		'fr' => 'French',
+		'fa' => 'Farsi',
+		'la' => 'Latin',
+	);
+
+	# Check the LANGUAGE environment variable
 	if($ENV{'LANGUAGE'}) {
-		my %langs = (
-			'br' => 'Breton',
-			'de' => 'German',
-			'en' => 'English',
-			'fr' => 'French',
-			'fa' => 'Farsi',
-			'la' => 'Latin'
-		);
-		foreach my $language(split/:/, $ENV{'LANGUAGE'}) {
-			if(my $rc = $langs{$language}) {
-				return $rc;
+		for my $language (split /:/, $ENV{'LANGUAGE'}) {
+			return $langs{$language} if exists $langs{$language};
+		}
+	}
+
+	# Check other environment variables
+	for my $variable('LC_ALL', 'LC_MESSAGES', 'LANG') {
+		if(my $val = $ENV{$variable}) {
+			if(my ($prefix) = $val =~ /^(\w{2})/) {
+				return $langs{$prefix} if exists $langs{$prefix};
 			}
 		}
 	}
-	foreach my $variable('LC_ALL', 'LC_MESSAGES', 'LANG') {
-		my $val = $ENV{$variable};
-		next unless(defined($val));
 
-		if($val =~ /^en/) {
-			return 'English';
-		}
-		if($val =~ /^fr/) {
-			return 'French';
-		}
-		if($val =~ /^de/) {
-			return 'German';
-		}
-		if($val =~ /^fa/) {
-			return 'Farsi';
-		}
-		if($val =~ /^la/) {
-			return 'Latin';
-		}
-		if($val =~ /^br/) {
-			return 'Breton';
-		}
-	}
+	# Fallback
 	complain("Can't determine the language, falling back to English");
 	return 'English';
 }
@@ -13357,7 +13345,7 @@ sub twins
 		$d = $dfn->parse_datetime($d->{'canonical'});
 
 		# Check if the sibling is a twin
-		if ($d == $birth_dt || $d == ($birth_dt - $oneday) || $d == ($birth_dt + $oneday)) {
+		if($d == $birth_dt || $d == ($birth_dt - $oneday) || $d == ($birth_dt + $oneday)) {
 			push @twins, { sibling => $sibling, dob => $d };
 		}
 	}
@@ -14374,6 +14362,7 @@ today::heute
 was::war
 was born::wurde geboren
 was married to %s::war mit %s verheiratet
+when::wenn
 wife::Frau
 with::mit
 youngest::jüngsten
