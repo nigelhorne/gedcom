@@ -103,6 +103,7 @@ For compatibility with other code, these environment variables are honoured:
     LANG: some handling of en_GB and en_US translating between then, fr_FR is a work in progress
     OPENADDR_HOME: directory of data from http://results.openaddresses.io/
     REDIS_SERVER: ip:port pair of where to cache geo-coding data
+    OPENAI_KEY: experimental: uses key from openai.com to enhance text
 
 ## Reference
 

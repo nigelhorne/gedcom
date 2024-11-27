@@ -350,6 +350,11 @@ if($opts{'v'}) {
 if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'Mozilla::CA';
 }
+
+if($ENV{'OPENAI_KEY'}) {
+	push @modules, 'OpenAIGPT4';
+}
+
 if($opts{'w'} && $opts{'c'}) {
 	# If you have a locally written module to look up entries,
 	# list them in gedcom.config,
@@ -903,6 +908,11 @@ if($opts{'w'}) {
 	die if(!defined($obituaries));
 	$wills = Genealogy::Wills->new($opts);
 	die if(!defined($wills));
+}
+
+my $gpt;
+if(my $key = $ENV{'OPENAI_KEY'}) {
+	$gpt = OpenAIGPT4->new($key);
 }
 
 my $meteo;
@@ -7854,7 +7864,11 @@ sub print_person
 					$bio->append(conjunction(map { $_->as_string() } @phrases));
 				}
 			}
-			print $bio->rtrim()->as_string();
+			if($gpt) {
+				die 'TODO: ', $gpt->generate_text('Make this more readable ' . $bio->as_string(), 'gpt-3.5-turbo-1106');
+			} else {
+				print $bio->rtrim()->as_string();
+			}
 			if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod, birth_country => $birth_country }))) {
 				# FIXME: add citation
 				if($opts{'B'}) {
