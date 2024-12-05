@@ -912,7 +912,7 @@ if($opts{'w'}) {
 
 my $gpt;
 if(my $key = $ENV{'OPENAI_KEY'}) {
-	$gpt = OpenAIGPT4->new($key);
+	# $gpt = OpenAIGPT4->new($key);
 }
 
 my $meteo;
@@ -3354,6 +3354,7 @@ sub print_person
 				}
 			}
 			if($phrase->length()) {
+				$phrase =~ s/.$// if($phrase =~ /\s[A-Z]\.$/);	# middle initial
 				push @phrases, $phrase;
 			}
 			if(scalar(@phrases)) {
@@ -5934,15 +5935,17 @@ sub print_person
 										last;
 									}
 								}
-								if($place =~ /.+,\s*(.+),\s*.+$/) {
-									if($1 ne $all_in_county) {
-										$all_in_one_county = 0;
-										last;
-									}
-								} elsif($place =~ /^(.+),\s*.+$/) {
-									if($1 ne $all_in_county) {
-										$all_in_one_county = 0;
-										last;
+								if(defined($all_in_county)) {
+									if($place =~ /.+,\s*(.+),\s*.+$/) {
+										if($1 ne $all_in_county) {
+											$all_in_one_county = 0;
+											last;
+										}
+									} elsif($place =~ /^(.+),\s*.+$/) {
+										if($1 ne $all_in_county) {
+											$all_in_one_county = 0;
+											last;
+										}
 									}
 								}
 							}
@@ -6425,7 +6428,7 @@ sub print_person
 					($type ne 'Register UK 1939')) {
 
 					complain({ person => $person, warning => "Unhandled event type: $type" });
-					die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1 }), " event type $type";
+					# die 'TODO: ', $person->as_string({ nee => 1, include_years => 1, middle_names => 1 }), " event type $type";
 					append_notes({ phrase => $phrase, record => $event });
 				# } elsif($end_of_sentence) {
 					# $phrase->append(' ');
@@ -9208,6 +9211,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-uncle',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-uncle',
 					15 << 24 | 1 => 'thirteen times great-uncle',
 					16 << 24 | 1 => 'fourteen times great-uncle',
@@ -9284,6 +9288,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-uncle',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-uncle',
 					15 << 24 | 1 => 'thirteen times great-uncle',
 					16 << 24 | 1 => 'fourteen times great-uncle',
@@ -9361,6 +9366,7 @@ sub Gedcom::Individual::relationship_up
 					12 << 24 | 4 => 'third cousin eight-times-removed',
 					12 << 24 | 5 => 'fourth cousin seven-times-removed',
 					13 << 24 | 1 => 'eleven times great-aunt',
+					13 << 24 | 2 => 'first cousin eleven-times-removed',
 					14 << 24 | 1 => 'twelve times great-aunt',
 					15 << 24 | 1 => 'thirteen times great-aunt',
 					16 << 24 | 1 => 'fourteen times great-aunt',
