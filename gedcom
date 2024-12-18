@@ -7528,7 +7528,7 @@ sub print_person
 			# Output the citations field
 			print "Create $citationcount citations\n" if($opts{'v'});
 
-			# TODO: add cititions from dbpedia
+			# TODO: add citations from dbpedia
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases));
 				if($phrase->as_string() !~ /\."$/) {
@@ -11686,6 +11686,8 @@ sub get_all_occupations
 			} elsif($language eq 'German') {
 				if($occupation eq 'Teacher') {
 					$occupation = (($person->sex() eq 'M') ? 'Lehrer' : 'Lehrerin');
+				} elsif($occupation =~ /(.+)\sFarmer/) {
+					$occupation = (($person->sex() eq 'M') ? 'Landwirt' : 'Landwirtin');
 				}
 				$occupation =~ s/retired/im ruhestand/i;
 				$occupation =~ s/self-employed/slbststa\N{U+00E4}ndig/;
