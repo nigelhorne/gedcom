@@ -14028,15 +14028,20 @@ use warnings;
 
 # Add text to a page on a PDF document
 
-our $pixelsperline = 16;	# point size 12
-our $page_number = 1;
+our $pixelsperline;
+our $page_number;
+
+BEGIN {
+	$pixelsperline = 16;	# point size 12
+	$page_number = 0;
+}
 
 sub new
 {
-	my $class = shift;
-	my $pdf = shift;	# PDF::API2 object
+	my ($class, $pdf) = @_;
 
-	$pixelsperline = 16;
+	# Validate input
+	die 'Invalid PDF::API2 object' unless($pdf->can('page'));
 
 	# Return the blessed object
 	return bless { y => 750, page => $pdf->page(), page_number => $page_number++ }, $class;
@@ -14049,6 +14054,7 @@ sub newline
 	$self->{'y'} -= $pixelsperline;
 
 	if($self->{'y'} <= 10) {
+		# Log call stack for debugging
 		my $i = 0;
 		while((my @call_details = (caller($i++)))) {
 			print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
@@ -14080,6 +14086,7 @@ sub y
 
 	if($y) {
 		if($y <= 10) {
+			# Log call stack for debugging
 			my $i = 0;
 			while((my @call_details = (caller($i++)))) {
 				print STDERR "\t", $call_details[1], ':', $call_details[2], ' calling function ', $call_details[3], "\n";
