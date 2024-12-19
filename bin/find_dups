@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+
+# Find duplicate people in a gedcom:
+# Usage: find_dups 'Home Person' 'gedcom-file'
+
+use strict;
+use warnings;
+use autodie qw(:all);
+
+# Open the CSV file
+# my $file = 'data.csv';
+# open my $fh, '<', $file or die "Cannot open $file: $!";
+
+open(my $fh, '-|', "../gedcom -AXlh \"$ARGV[0]\" \"$ARGV[1]\"") or die;
+
+# Read the header line
+my $header = <$fh>;
+
+# Store entries in a hash to detect duplicates
+my %seen;
+my @duplicates;
+
+while (my $line = <$fh>) {
+	chomp $line;
+	# Split the line into fields (adjust delimiter if needed)
+	my ($xref, $given_names, $surname, $dob, $dod, $relationship) = split /,/, $line;
+
+	if($dob || $dod) {
+		# Create a unique key based on identifying columns
+		my $key = join('|', $given_names, $surname, $dob || $dod);
+
+		# Check if the key already exists
+		if(exists $seen{$key}) {
+			push @duplicates, $line;
+		} else {
+			$seen{$key} = 1;
+		}
+	}
+}
+
+close $fh;
+
+# Output duplicate entries
+if(scalar @duplicates) {
+	print "Duplicate Entries Found:\n",
+		join("\n", @duplicates), "\n";
+} else {
+	print "No duplicate entries found.\n";
+}
