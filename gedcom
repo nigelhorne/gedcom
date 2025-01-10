@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2024, Nigel Horne
+# Copyright (C) 2015-2025, Nigel Horne
 
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -351,7 +351,7 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'Mozilla::CA';
 }
 
-if($ENV{'OPENAI_KEY'}) {
+if($ENV{'OPENAI_API_KEY'}) {
 	push @modules, 'OpenAIGPT4';
 }
 
@@ -911,7 +911,7 @@ if($opts{'w'}) {
 }
 
 my $gpt;
-if(my $key = $ENV{'OPENAI_KEY'}) {
+if(my $key = $ENV{'OPENAI_API_KEY'}) {
 	# $gpt = OpenAIGPT4->new($key);
 }
 
@@ -11525,7 +11525,7 @@ sub get_all_occupations
 	while($occupations[0] && ($occupations[0] =~ /home duties/i)) {
 		shift @occupations;
 	}
-	while($occupations[0] && ($occupations[0] =~ /household duties/i)) {
+	while($occupations[0] && ($occupations[0] =~ /house\s?hold duties/i)) {
 		shift @occupations;
 	}
 	while($occupations[0] && ($occupations[0] eq 'Retired')) {
@@ -11652,6 +11652,8 @@ sub get_all_occupations
 		} elsif(($occupation !~ /gas works/i) && ($occupation =~ /(.+)([a-z])s\s+([a-z]+)$/i)) {
 			# Don't change Bus Driver to Bu's Driver
 			$occupation = "$1$2's $3" unless(("$1$2" eq 'Bu') || ("$1$2" eq 'Harnes'));
+		} elsif($occupation eq 'Laundry Man') {
+			$occupation = 'Laundryman';
 		} elsif(($occupation =~ /Manager (.*)/i) &&
 			($occupation !~ /^Manager of /i) &&
 			($occupation !~ /Manager & /i)) {
@@ -13406,7 +13408,7 @@ sub person_in_residence_record
 #	https://www.compart.com/en/unicode/U+00EB
 #
 # keep_hrefs => 1 means ensure hyperlinks still work
-# keep_apos => 1 means keep apostraphes, useful within <script>
+# keep_apos => 1 means keep apostrophes, useful within <script>
 # TODO: don't transform anything within <script>...</script>
 # TODO: a lot of this should be table driven
 sub wide_to_html
