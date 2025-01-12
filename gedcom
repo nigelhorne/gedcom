@@ -3926,8 +3926,8 @@ sub print_person
 
 					# Note if this person married a relative
 					if(my $srelationship = $person->relationship($spouses[0])) {
-						$phrase->append($person->possessive())
-							->append("$srelationship ");
+						$phrase->append(lcfirst($person->possessive()))
+							->append(" $srelationship ");
 					}
 
 					if($haveprintedspousename) {
