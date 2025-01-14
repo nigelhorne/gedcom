@@ -6532,14 +6532,7 @@ sub print_person
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
-							my $service = 'military';
-							if(my $notes = notes(record => $event)) {
-								if($notes =~ /Navy/i) {
-									$service = 'navy';
-								} elsif(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i) || ($notes =~ /\sregiment/i) || ($notes =~ /soldier/i)) {
-									$service = 'army';
-								}
-							}
+							my $service = service($event);
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
 									if($firstname) {
@@ -7793,8 +7786,7 @@ sub print_person
 									});
 								}
 							}
-						} else {
-							my $b = $grave_modules->new(\%opts);
+						} elsif(my $b = $grave_modules->new(\%opts)) {
 							while(my $url = $b->get_next_entry()) {
 								complain({
 									person => $person,
@@ -11987,6 +11979,17 @@ sub datecmp($$)
 			$left = $1;
 		}
 
+		if(($left =~ /^\d{3,4}/) && ($right =~ /^\d{3,4}/)) {
+			# e.g. 1929/06/26 <=> 1939
+			$left =~ /^(\d{3,4})/;
+			my $start = $1;
+			$right =~ /^(\d{3,4})/;
+			my $end = $1;
+			if($start != $end) {
+				return $start <=> $end;
+			}
+		}
+
 		# e.g. "1802 or 1803"
 		if($left =~ /^(\d{3,4})\sor\s(\d{3,4})$/) {
 			my($start, $end) = ($1, $2);
@@ -14000,6 +14003,22 @@ sub given_names
 		$given =~ s/\.$//;
 		return $given;
 	}
+}
+
+# Which service did this person serve in?
+sub service
+{
+	my $params = get_params('event', @_);
+
+	if(my $notes = notes(record => $params->{'event'})) {
+		if($notes =~ /Navy/i) {
+			return 'navy';
+		}
+		if(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i) || ($notes =~ /\sregiment/i) || ($notes =~ /soldier/i)) {
+			return 'army';
+		}
+	}
+	return 'military';
 }
 
 # Helper routine to parse the arguments given to a function,
