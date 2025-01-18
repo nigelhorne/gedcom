@@ -165,8 +165,8 @@ foreach my $module (@needfull) {
 	$name ||= $module;
 
 	# Extract module name, replacing hyphens with `::` and removing extensions
-	$name =~ s{.+/}{};     # Remove path if present
-	$name =~ s{-}{::}g;    # Convert hyphens to `::`
+	$name =~ s{.+/}{};	# Remove path if present
+	$name =~ s{-}{::}g;	# Convert hyphens to `::`
 	$name =~ s{\.tar\.gz$}{}; # Remove file extension
 	$name =~ s{::(\d+)$}{ $1}; # Adjust version formatting if embedded in module name
 
@@ -8011,7 +8011,7 @@ sub print_person
 						Readonly my $max_height => 250;
 						Readonly my $max_width => 550;
 
-						if($height > $max_height || $width > $max_width) {
+						if(($height > $max_height) || ($width > $max_width)) {
 							# Calculate aspect ratios
 							my $height_ratio = $max_height / $height;
 							my $width_ratio = $max_width / $width;
@@ -8078,26 +8078,44 @@ sub print_person
 							complain({ person => $person, warning => "Downloaded file '$file' was empty" });
 							$title = undef;
 						} else {
+							# FIXME: Consolidate with dup code above
 							print "Resize $filename\n" if($opts{'v'});
 
 							my $resize = Image::Resize->new($filename);
+
+							# Get original dimensions
 							my $width = $resize->width();
 							my $height = $resize->height();
-							if($height > 250) {
-								my $newwidth = $width * (250 / $height);
-								my $newheight;
-								if($newwidth > 550) {
-									$newheight = $height * (550 / $width);
-									$gd = $resize->resize(550, $newheight);
+
+							# Constants for max dimensions
+							Readonly my $max_height => 250;
+							Readonly my $max_width => 550;
+
+							if(($height > $max_height) || ($width > $max_width)) {
+								# Calculate aspect ratios
+								my $height_ratio = $max_height / $height;
+								my $width_ratio = $max_width / $width;
+								my ($new_width, $new_height);
+
+								if($height_ratio < $width_ratio) {
+									# Scale based on height constraint
+									$new_width = $width * $height_ratio;
+									$new_height = $max_height;
+
+									# Check if new width exceeds max width
+									if($new_width > $max_width) {
+										$new_width = $max_width;
+										$new_height = $height * $width_ratio;
+									}
+
+									$gd = $resize->resize($new_width, $new_height);
 								} else {
-									$gd = $resize->resize($newwidth, 250);
-									$newheight = 250;
+									# Scale based on width constraint
+									$new_height = $height * $width_ratio;
+									$new_width = $max_width;
 								}
-							} elsif($width > 550) {
-								my $newheight = $height * (550 / $width);
-								$gd = $resize->resize(550, $newheight);
-							}
-							if($gd) {
+								my $gd = $resize->resize($new_width, $new_height);
+
 								# $orig_image = $pdf->image_jpeg($orig_filename);
 								# $tmp = File::Temp->new(UNLINK => 0);
 								# $filename = $tmp->filename();
@@ -8105,8 +8123,10 @@ sub print_person
 								# print $fh $gd->jpeg();
 								# close $fh;
 								$image = $pdf->image_gd($gd, -lossless => 1);
+							} else {
+								# No resizing needed if dimensions are within constraints
+								$image = $pdf->image_jpeg($filename);
 							}
-							$image = $pdf->image_jpeg($filename);
 							$title = $file if(!defined($title));
 							# $image->height(32);
 							# $image->width(32);
