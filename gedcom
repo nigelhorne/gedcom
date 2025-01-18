@@ -71,7 +71,7 @@ BEGIN {
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
 		'Locale::AU', 'Locale::CA', 'Locale::US',
 		'Data::Text', 'DateTime::Format::Genealogy', 'Parse::RecDescent',
-		'Sort::Key::DateTime', 'Text::Names::GB',
+		'Readonly', 'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
 		'File::Spec',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
@@ -8002,25 +8002,44 @@ sub print_person
 						print "Resize $filename\n" if($opts{'v'});
 
 						my $resize = Image::Resize->new($filename);
+
+						# Get original dimensions
 						my $width = $resize->width();
 						my $height = $resize->height();
-						if($height > 250) {
-							my $newwidth = $width * (250 / $height);
-							my $newheight;
-							if($newwidth > 550) {
-								$newheight = $height * (550 / $width);
-								$gd = $resize->resize(550, $newheight);
+
+						# Constants for max dimensions
+						Readonly my $max_height => 250;
+						Readonly my $max_width => 550;
+
+						if($height > $max_height || $width > $max_width) {
+							# Calculate aspect ratios
+							my $height_ratio = $max_height / $height;
+							my $width_ratio = $max_width / $width;
+							my $new_width;
+							my $new_height;
+
+							if($height_ratio < $width_ratio) {
+								# Scale based on height constraint
+								$new_width = $width * $height_ratio;
+								$new_height = $max_height;
+
+								# Check if new width exceeds max width
+								if($new_width > $max_width) {
+									$new_width = $max_width;
+									$new_height = $height * $width_ratio;
+								}
 							} else {
-								$gd = $resize->resize($newwidth, 250);
-								$newheight = 205;
+								# Scale based on width constraint
+								$new_height = $height * $width_ratio;
+								$new_width = $max_width;
 							}
-						} elsif($width > 550) {
-							my $newheight = $height * (550 / $width);
-							$gd = $resize->resize(550, $newheight);
-						}
-						if($gd) {
+
+							# Resize the image to the new dimentions
+							my $gd = $resize->resize($new_width, $new_height);
+
 							$image = $pdf->image_gd($gd, -lossless => 1);
 						} else {
+							# No resizing needed if dimensions are within constraints
 							$image = $pdf->image_jpeg($filename);
 						}
 						$orig_image = $pdf->image_jpeg($orig_filename);
