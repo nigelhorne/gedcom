@@ -9343,7 +9343,6 @@ sub Gedcom::Individual::relationship_up
 					2 << 24 | 1 => 'aunt',
 					2 << 24 | 2 => 'cousin',
 					2 << 24 | 3 => 'first cousin once-removed',
-					2 << 24 | 3 => 'cousin germain \N{U+00E9}loign\N{U+00E9} au 1er degr\N{U+00E9}',
 					2 << 24 | 4 => 'first cousin twice-removed',
 					2 << 24 | 5 => 'first cousin three-times-removed',
 					2 << 24 | 6 => 'first cousin four-times-removed',
