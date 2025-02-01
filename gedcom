@@ -56,6 +56,8 @@ no lib '.';
 
 use	constant	ASSUME_NOT_LIVING => 120;
 
+sub datecmp($$);
+
 my @needfull;	# Tracks required modules to be installed
 
 # Install Pre-requisites
