@@ -10037,7 +10037,7 @@ sub place
 		} elsif($address =~ /(.+)\sAve\.?$/) {
 			$address = "$1 Avenue";
 			$on_road = 1;
-		} elsif($address =~ /(.+)\sRd\.?$/) {
+		} elsif($address =~ /(.+)\s(Rd|Road)\.?$/) {
 			$address = "$1 Road";
 			$on_road = 1;
 		} elsif($address =~ /(.+)\sLn\.?$/) {
@@ -14505,6 +14505,7 @@ between::zwischen
 birthplace::Geburtsort
 both with %s::beide mit %s
 brother::Bruder
+brother-in-law::Schwager
 brothers::Brüder
 check out %s::Schau mal bei %s
 c.::circa
@@ -14540,6 +14541,7 @@ on your father's side::Auf der Seite deines Vaters
 parents::Eltern
 she::sie
 sister::Schwester
+sister-in-law::Schwägerin
 sisters::Schwestern
 son::Sohn
 the head of household::der Haushaltsvorstand
