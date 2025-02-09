@@ -246,12 +246,8 @@ if($opts{'h'}) {
 	}
 }
 
-if($opts{'f'}) {
-	$opts{'w'} = 1;
-}
-if($opts{'P'}) {
-	$opts{'r'} = 1;
-}
+$opts{'w'} = 1 if($opts{'f'});
+$opts{'r'} = 1 if($opts{'P'});
 
 die '-w option needs -d or -M option' if($opts{'w'} && (!$opts{'M'}) && !$opts{'d'});
 
@@ -3818,7 +3814,11 @@ sub print_person
 			}
 			if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
 				if(scalar(@phrases) == 0) {
-					$phrase->append("$pronoun ");
+					if(length($phrase) > 0) {
+						$phrase->rtrim()->append(', ' . lcfirst($pronoun) . ' ');
+					} else {
+						$phrase->set("$pronoun ");
+					}
 				}
 				$phrase->append('was orphaned ');
 				if($myod == $fyod) {
@@ -3832,12 +3832,12 @@ sub print_person
 				} elsif($myod > $fyod) {
 					$phrase->append('at the age of ' . ($myod - $yob) .
 						i18n(' following the death of ') .
-						$person->possessive() .
+						lcfirst($person->possessive()) .
 						" father in $fyod and mother in $myod");
 				} else {
 					$phrase->append('at the age of ' . ($fyod - $yob) .
 						i18n(' following the death of ') .
-						$person->possessive() .
+						lcfirst($person->possessive()) .
 						" mother in $myod and father in $fyod");
 				}
 				push @phrases, $phrase;
@@ -6081,7 +6081,7 @@ sub print_person
 				print Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
 				Lingua::Conjunction->separator_phrase(';');
 				Lingua::Conjunction->penultimate(1);
-				$phrase->append("$s " . conjunction(@residencestringarray));
+				$phrase->append([ "$s ", conjunction(@residencestringarray)]);
 				Lingua::Conjunction->separator_phrase(',');
 				Lingua::Conjunction->penultimate(0);
 
