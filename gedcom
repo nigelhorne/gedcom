@@ -6550,13 +6550,34 @@ sub print_person
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
-							my $service = service($event);
+							my $service = ucfirst(service($event));
 							if(defined(my $date = year(record => $event))) {
 								if($date =~ /^from /) {
 									if($firstname) {
 										$phrase->set("\n\t$firstname served in the $service $date");
 									} else {
 										$phrase->set("\n\t$pronoun served in the $service $date");
+									}
+									if(defined($dateofmarriage) && ($dateofmarriage =~ /(\d{3,4})$/)) {
+										my $yom = $1;
+
+										my @dates = $dfg->parse_datetime($date);
+										if($dates[1]) {
+											if($marriage_dt &&
+											   ($dates[1]->year() == $marriage_dt->year())) {
+												if(datecmp($dates[1], $marriage_dt) > 0) {
+													$phrase->append(', just before ');
+												} else {
+													$phrase->append(', just after ');
+												}
+												$phrase->append(lcfirst($pronoun))->append(' married ')->append($spouses[0]->as_string());
+
+											}
+										} elsif($date =~ /^from (\d{3,4}) to (\d{3,4})$/) {
+											if($2 == $yom) {
+												$phrase->append(', the year ')->append(lcfirst($pronoun))->append(' married ')->append($spouses[0]->as_string());
+											}
+										}
 									}
 								} else {
 									if($date =~ /^on /) {
