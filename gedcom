@@ -4006,8 +4006,10 @@ sub print_person
 						}
 					}
 					if(scalar(@childrenunknownparent) < $numberofchildren) {
-						$phrase->append(' ') if($placeofmarriage || $dateofmarriage);
+						my $parentheses;
 						if($placeofmarriage || $dateofmarriage) {
+							$phrase->append(' (');
+							$parentheses = 1;
 							if($language eq 'French') {
 								$phrase->append("avec qu'");
 							} elsif($language eq 'German') {
@@ -4117,6 +4119,7 @@ sub print_person
 								}
 							}
 						}
+						$phrase->append(')') if($parentheses);
 					}
 				} else {	# no children
 					my @spouse_occupations = get_all_occupations($spouses[0]);
