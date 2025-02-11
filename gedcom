@@ -4011,7 +4011,7 @@ sub print_person
 							$phrase->append(' (');
 							$parentheses = 1;
 							if($language eq 'French') {
-								$phrase->append("avec qu'");
+								$phrase->append('avec qui ');
 							} elsif($language eq 'German') {
 								$phrase->append('mit wem ');
 							} else {
@@ -6089,7 +6089,11 @@ sub print_person
 				}
 
 				print Data::Dumper->new([\@residencestringarray])->Dump() if($opts{'v'});
-				Lingua::Conjunction->separator_phrase(';');
+				if($language eq 'French') {
+					Lingua::Conjunction->separator_phrase(' ;');
+				} else {
+					Lingua::Conjunction->separator_phrase(';');
+				}
 				Lingua::Conjunction->penultimate(1);
 				$phrase->append([ "$s ", conjunction(@residencestringarray)]);
 				Lingua::Conjunction->separator_phrase(',');
@@ -9228,7 +9232,7 @@ sub Gedcom::Individual::relationship_up
 					2 << 24 | 5 => 'first cousin three-times-removed',
 					2 << 24 | 6 => 'first cousin four-times-removed',
 					3 << 24 | 1 => 'great-uncle',
-					3 << 24 | 2 => "cousin germaine\N{U+00E9}loign\N{U+00E9} au 1er degr\N{U+00E9}",
+					3 << 24 | 2 => "cousin germain \N{U+00E9}loign\N{U+00E9} au 1er degr\N{U+00E9}",
 					3 << 24 | 3 => 'cousin issu de germain',
 					3 << 24 | 4 => 'second cousin once-removed',
 					3 << 24 | 5 => "cousin issu de germains \N{U+00E9}loign\N{U+00E9} au 2e degr\N{U+00E9}",
