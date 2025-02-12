@@ -7834,7 +7834,8 @@ sub print_person
 			}
 		} else {
 			if(scalar(@phrases)) {
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
+				$bio->append(conjunction(map { $_->as_string() } @phrases));
+				$bio->append('.') unless($bio->as_string() =~ /\."$/);
 
 				@phrases = ();
 
@@ -11683,6 +11684,7 @@ sub get_all_occupations
 			($occupation eq 'work on farm') ||
 			($occupation eq 'Agricultural Lab') ||
 			($occupation eq 'Agril Labourer') ||
+			($occupation eq 'Labourer Ag') ||
 			($occupation eq 'Labourer (Ag)')) {
 			$occupation = 'Agricultural Labourer';
 		} elsif($occupation eq 'Poultry Farming') {
@@ -14396,6 +14398,7 @@ sisters::sisters
 son::son
 sons::sons
 the same day as::the same day as
+the husband::the husband
 the wife::the wife
 they::they
 times::times
@@ -14493,6 +14496,7 @@ son::fils
 today::aujourd'hui
 tomorrow::demain
 the same day as::le même jour comme
+the husband::le marie
 the wife::la femme
 they:M:ils
 they:F:elles
@@ -14578,6 +14582,7 @@ son::Sohn
 the head of household::der Haushaltsvorstand
 the same day as::die gleichen Tag als
 times::fache
+the husband::der Mann
 the wife::die Frau
 they::Sie
 to::nach
