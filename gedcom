@@ -3034,18 +3034,10 @@ sub print_person
 					$phrase->append(i18n('was '));
 				}
 			}
-			if($language eq 'French') {
-				if($sex eq 'F') {
-					$phrase->append('la femme');
-				} else {
-					$phrase->append('le mari');
-				}
+			if($sex eq 'F') {
+				$phrase->append(i18n('the wife'));
 			} else {
-				if($sex eq 'F') {
-					$phrase->append('the wife');
-				} else {
-					$phrase->append('the husband');
-				}
+				$phrase->append(i18n('the husband'));
 			}
 			$phrase->append(i18n(' of '));
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
@@ -14404,6 +14396,7 @@ sisters::sisters
 son::son
 sons::sons
 the same day as::the same day as
+the wife::the wife
 they::they
 times::times
 to::to
@@ -14500,6 +14493,7 @@ son::fils
 today::aujourd'hui
 tomorrow::demain
 the same day as::le même jour comme
+the wife::la femme
 they:M:ils
 they:F:elles
 times::temps
@@ -14584,6 +14578,7 @@ son::Sohn
 the head of household::der Haushaltsvorstand
 the same day as::die gleichen Tag als
 times::fache
+the wife::die Frau
 they::Sie
 to::nach
 today::heute
@@ -14593,6 +14588,7 @@ was married to %s::war mit %s verheiratet
 when::wenn
 wife::Frau
 with::mit
+with %s::mit %s
 youngest::jüngsten
 your::Ihr
 @@ Danish
