@@ -3067,7 +3067,7 @@ sub print_person
 				$phrase->append("il y a $aob " . (($aob == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} elsif($language eq 'German') {
-				$phrase->append("vor $aob " . (($aob == 1) ? 'Jahr' : 'Jahre') .
+				$phrase->append("vor $aob " . (($aob == 1) ? 'Jahr' : 'Jahren') .
 					($opts{'t'} ? ' morgen' : ' heute'));
 			} else {
 				$phrase->append("$aob " . (($aob == 1) ? 'year' : 'years') . ' ago ' .
@@ -3094,7 +3094,7 @@ sub print_person
 				$phrase->append(" il y a $aod " . (($aod == 1) ? 'an' : 'ans') .
 					($opts{'t'} ? ' demain' : " aujourd'hui"));
 			} elsif($language eq 'German') {
-				$phrase->append("vor $aod " . (($aod == 1) ? 'Jahr' : 'Jahre') .
+				$phrase->append("vor $aod " . (($aod == 1) ? 'Jahr' : 'Jahren') .
 					($opts{'t'} ? ' morgen' : ' heute'));
 			} else {
 				$phrase->append("died $aod " . (($aod == 1) ? 'year' : 'years') . ' ago ' .
@@ -4487,6 +4487,9 @@ sub print_person
 							if(my $decoded = conjunction(map { given_names($_) } @children)) {
 								# utf8::decode($decoded);
 								$decoded =~ s/ë/\N{U+00EB}/;
+								if($language eq 'French') {
+									$phrase->append(' ');
+								}
 								$phrase->append(": $decoded");
 							}
 						} else {
@@ -9296,7 +9299,7 @@ sub Gedcom::Individual::relationship_up
 					1 << 24 | 2 => 'Neffe',
 					1 << 24 | 3 => 'great-nephew',
 					1 << 24 | 4 => 'great-great-nephew',
-					2 << 24 | 1 => 'Onkle',
+					2 << 24 | 1 => 'Onkel',
 					2 << 24 | 2 => 'Cousin',
 					2 << 24 | 3 => 'first cousin once-removed',
 					2 << 24 | 4 => 'first cousin twice-removed',
@@ -14587,6 +14590,7 @@ the wife::die Frau
 they::Sie
 to::nach
 today::heute
+twice::zweimal
 was::war
 was born::wurde geboren
 was married to %s::war mit %s verheiratet
