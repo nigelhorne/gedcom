@@ -189,7 +189,6 @@ foreach my $module (@needfull) {
 
 # use IPC::System::Simple;
 use autodie qw(:all);
-use Array::Iterator::BiDirectional;
 # use diagnostics;
 # use warnings::unused;
 
@@ -4853,7 +4852,7 @@ sub print_person
 			my $printed_father_same_place;
 			my $printed_mother_same_place;
 
-			my $iterator = Array::Iterator::BiDirectional->new({ __array__ => \@residencelist });
+			my $iterator = Array::Iterator->new({ __array__ => \@residencelist });
 			while(my $residence = $iterator->get_next()) {
 				my $rdate = $residence->date();
 				my $residencestring;
