@@ -4083,7 +4083,7 @@ sub print_person
 								} else {
 									$phrase->append('whose first name is unknown');
 								}
-								$phrase->append(',');
+								$phrase->append(',') if(!$parentheses);
 							}
 						} elsif($numberofchildrenwiththisspouse > 1) {
 							# my $childnames = join(', ', map { $_->given_names() } @children);
