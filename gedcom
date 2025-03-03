@@ -79,6 +79,7 @@ BEGIN {
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		'Roman', 'Unicode::Diacritic::Strip',
+		'Params::Get',
 		'utf8::all',
 		# 'Devel::FIXME',
 	);
@@ -1474,7 +1475,7 @@ if($ical) {
 
 sub generate
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $surname_initial;
 	if($opts{'B'}) {
@@ -8564,7 +8565,7 @@ sub all_records_have_date
 sub Gedcom::Individual::as_string
 {
 	my $self = shift;
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my ($name, $suffix);
 
@@ -9772,7 +9773,7 @@ sub stepsabove
 # and locales
 sub year
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $string = $params->{'string'} || $params->{'date'};
 
@@ -9953,10 +9954,7 @@ sub year
 				complain("Date '$string' should start with 'Bef'");
 			}
 		}
-		if($language eq 'French') {
-			return "avant $1";
-		}
-		return "before $1";
+		return i18n({ format => 'before %s', args => $1 });
 	}
 	if($string =~ /^by.? (\d{3,4})/i) {
 		return "by $1";
@@ -9967,10 +9965,7 @@ sub year
 		} else {
 			complain("says 'By' instead of 'Bef'");
 		}
-		if($language eq 'French') {
-			return "avant $1";
-		}
-		return "before $1";
+		return i18n({ format => 'before %s', args => $1 });
 	}
 	if($string =~ /^aft.? (\d{3,4})/i) {
 		return i18n({ format => 'after %s', args => $1 });
@@ -9983,7 +9978,6 @@ sub year
 		return i18n({ format => 'before %s', args => $1 });
 	}
 	if($string =~ /^aft\s(.+)/i) {
-		my $rc = i18n({ format => 'after %s', args => $1 });
 		if(my $d = date_parser_cached(date => $1)) {
 			$d = $dfn->parse_datetime($d->{'canonical'});
 			if($ENV{'LC_TIME'}) {
@@ -9995,7 +9989,7 @@ sub year
 			}
 			return i18n({ format => 'after %s', args => $d->strftime('%x') });
 		}
-		return $rc;
+		return i18n({ format => 'after %s', args => $1 });
 	}
 	if($language eq 'French') {
 		return (($string =~ /^[A-Z]/) || ($string =~ /\d$/)) ? "en $string" : "le $string";
@@ -10008,7 +10002,7 @@ sub year
 
 sub place
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	return if($opts{'O'});
 
@@ -10451,7 +10445,7 @@ sub getaddress
 # paragraph => 0: ignore spacing and put it all into one paragraph
 sub notes
 {
-	my $params = get_params('record', @_);
+	my $params = Params::Get::get_params('record', @_);
 
 	my $record = $params->{'record'};
 	if(!$record) {
@@ -10712,7 +10706,7 @@ sub validate_place
 # Are two places the same? exact => 1 means must be equal, otherwise use fuzzy logic
 sub places_are_the_same
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $record1 = $params->{'first'};
 	my $record2 = $params->{'second'};
@@ -10950,7 +10944,7 @@ sub red_warning
 # Cache gedcom values
 sub get_value
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	# if($fetcher) {
 		# my $args = {
@@ -11033,7 +11027,7 @@ sub must_predate
 # and clues derived from their children’s and parent's records.
 sub is_alive
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 	my $person = $params->{'person'};
 
 	# Validate input parameters
@@ -11203,7 +11197,7 @@ sub date_parser_cached
 # Try hard to convert a Gedcom date to a DateTime object.
 sub date_to_datetime
 {
-	my $params = get_params('date', @_);
+	my $params = Params::Get::get_params('date', @_);
 
 	if(my $date = $params->{'date'}) {
 		# if($date !~ /^(bef|abt|aft).?\s/i) {
@@ -11457,7 +11451,7 @@ sub print_graphviz_generation
 
 sub get_all_residences
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 	my $person = $params->{'person'};
 
 	die 'Usage: get_all_residences($person)' unless($person);
@@ -11614,7 +11608,7 @@ sub get_all_residences
 # TODO: railway/railroad = le chemin de fer
 sub get_all_occupations
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 	my $person = $params->{'person'};
 
 	die 'Usage: get_all_occupations($person)' unless($person);
@@ -12526,7 +12520,7 @@ sub dateofbirth
 # Try hard to get the marriage record
 sub get_marriage
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 	my $person = $params->{'person'};
 
 	my $marriage = $person->get_record('marriage') || $person->get_record('fams marriage');
@@ -12569,7 +12563,7 @@ sub get_marriage
 
 sub dateofmarriage
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 
 	my $person = $params->{'person'};
 
@@ -12699,7 +12693,7 @@ sub dateofdeath
 # Dig the date out of a field and return in a valid gedcom format
 sub parse_date
 {
-	my $params = get_params('date', @_);
+	my $params = Params::Get::get_params('date', @_);
 
 	if(my $date = $params->{'date'}) {
 		if(ref($date)) {
@@ -13502,7 +13496,7 @@ sub append_notes
 # Allow for a twin being born a day before or after this person
 sub twins
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 	my $birth_dt = $params->{'birth_dt'};
 	my $siblings = $params->{'siblings'};
 	my @twins;
@@ -13534,7 +13528,7 @@ sub twins
 
 sub person_in_residence_record
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $person = $params->{'person'};
 	my $date = $params->{'date'};
@@ -13565,7 +13559,7 @@ sub person_in_residence_record
 # TODO: a lot of this should be table driven
 sub wide_to_html
 {
-	my $params = get_params('string', @_);
+	my $params = Params::Get::get_params('string', @_);
 
 	my $string = $params->{'string'};
 
@@ -13843,7 +13837,7 @@ sub wide_to_html
 # Experimental code with false positives at the moment
 sub dbpedia
 {
-	my $params = get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $person = $params->{'person'};
 	my $birth_dt = $params->{'birth_dt'};
@@ -14097,7 +14091,7 @@ sub dbpedia
 # Parse a Newspaper event from FindMyPast records
 sub newspaper
 {
-	my $params = get_params('event', @_);
+	my $params = Params::Get::get_params('event', @_);
 	my $event = $params->{'event'};
 
 	# Initialize the return object
@@ -14147,7 +14141,7 @@ sub newspaper
 # Avoid end of sentences such as "with his twin sister Jane E.."
 sub given_names
 {
-	my $params = get_params('person', @_);
+	my $params = Params::Get::get_params('person', @_);
 
 	if(my $given = $params->{'person'}->given_names()) {
 		$given =~ s/\.$//;
@@ -14158,7 +14152,7 @@ sub given_names
 # Which service did this person serve in?
 sub service
 {
-	my $params = get_params('event', @_);
+	my $params = Params::Get::get_params('event', @_);
 
 	if(my $notes = notes(record => $params->{'event'})) {
 		if($notes =~ /Navy/i) {
@@ -14169,39 +14163,6 @@ sub service
 		}
 	}
 	return 'military';
-}
-
-# Helper routine to parse the arguments given to a function,
-#	allowing the caller to call the function in anyway that they want
-#	e.g. foo('bar'), foo(arg => 'bar'), foo({ arg => 'bar' }) all mean the same
-#	when called _get_params('arg', @_);
-sub get_params
-{
-	my $default = shift;
-
-	# Directly return hash reference if the first parameter is a hash reference
-	return $_[0] if ref $_[0] eq 'HASH';
-
-	my %rc;
-	my $num_args = scalar @_;
-
-	# Populate %rc based on the number and type of arguments
-	if(($num_args == 1) && (defined $default)) {
-		# %rc = ($default => shift);
-		return { $default => shift };
-	} elsif($num_args == 1) {
-		Carp::croak('Usage: ', __PACKAGE__, '->', (caller(1))[3], '()');
-	} elsif(($num_args == 0) && (defined($default))) {
-		Carp::croak('Usage: ', __PACKAGE__, '->', (caller(1))[3], '($default => \$val)');
-	} elsif(($num_args % 2) == 0) {
-		%rc = @_;
-	} elsif($num_args == 0) {
-		return;
-	} else {
-		Carp::croak('Usage: ', __PACKAGE__, '->', (caller(1))[3], '()');
-	}
-
-	return \%rc;
 }
 
 1;
@@ -14536,6 +14497,7 @@ an %s:M:ein %s
 an %s:F:eine %s
 an %s:N:ein %s
 a day before::einen Tag vorher
+after %s::nach %s
 all with %s::alles mit %s
 also::auch
 also%s::auch%s
