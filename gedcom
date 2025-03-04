@@ -14155,12 +14155,8 @@ sub service
 	my $params = Params::Get::get_params('event', @_);
 
 	if(my $notes = notes(record => $params->{'event'})) {
-		if($notes =~ /Navy/i) {
-			return 'navy';
-		}
-		if(($notes =~ /^army\.?$/i) || ($notes =~ /\sarmy\s/i) || ($notes =~ /\sregiment/i) || ($notes =~ /soldier/i)) {
-			return 'army';
-		}
+		return 'navy' if($notes =~ /Navy/i);
+		return i18n('army') if($notes =~ /\b(?:army\.?|regiment|soldier)\b/i);
 	}
 	return 'military';
 }
@@ -14302,6 +14298,7 @@ also::also
 also%s::also%s
 an %s::an %s
 and::and
+army::army
 around::around
 arrived::arrived
 at::at
@@ -14501,6 +14498,7 @@ after %s::nach %s
 all with %s::alles mit %s
 also::auch
 also%s::auch%s
+army::Armee
 and::und
 around::circa
 arrived::kam
