@@ -26,7 +26,7 @@ or
 
     22 5 * * * gedcom -dth 'Your Full Name' gedcom-file.ged
 
-### Gedcom validation
+### Gedcom Validation
 
 Identify and correct issues like:
 
@@ -45,106 +45,106 @@ To categorised errors:
     gedcom -dAwWl gedcom-file.ged > /dev/null 2> /tmp/errs
     sort -t: -k2 /tmp/errs
 
-## Genealogy Calendar
+### Genealogy Calendar
 
-You can create a month-to-a-page genealogical calendar of your ancestors:
+Create month-to-page calendars for your family:
 
-    for i in 1 2 3 4 5 6 7 8 9 10 11 12
-    do
+    for i in {1..12}; do
         gedcom -dwHm $i -y $(date +%Y) gedcom-file.ged > $i.html
     done
 
-To print a month-to-a-page calendar of all the Smiths in your tree as a present,
-choose any Smith in your tree as a home person so that the -s option works:
+To filter calendars by surname:
 
     for i in 1 2 3 4 5 6 7 8 9 10 11 12
     do
         gedcom -dwHlm $i -y $(date +%Y) -h 'John Smith' -s gedcom-file.ged > $i.html
     done
 
-Alternatively,
-you can create an ICS file to import to Google Calendar:
+Create an ICS file to import to Google Calendar:
 
     gedcom -i /tmp/ics.ics gedcom-file.ged
 
-## Produce a Google Map
+### Google Maps Integration
 
-You can produce a map of the locations of all Smiths in your tree with
+Generate CSV files for mapping ancestor locations:
 
     gedcom -xsh Smith gedcom-file-ged > smith.csv
 
-* Upload the csv file to Google Drive
-* Visit google.com/maps, on the 3 horizontal lines choose "your places" ("Vos adresses"), then "maps" ("Cartes")
+* Upload the CSV file to Google Drive
+* Visit [Google Maps](https://google.com/maps),
+on the 3 horizontal lines choose "your places" ("Vos adresses"), then "maps" ("Cartes")
 * Click "create map", choose "import" and upload your file,
 choose "Location" as the position column and "People" as the title column
-* You may see that several rows can't be seen in the map,
+
+You may see that several rows can't be seen in the map,
 this is an opportunity to find locations in your map that are incorrect
 
-## Family History Book
+### Family History Book
 
-You can create a genealogy book as a PDF of your family history and research to give to
-your dad on Father's Day:
+Create a PDF genealogy book for special occasions:
 
     # Note that this will only print people related to your father, even if you give -a
     # yum install gd-devel ImageMagick-devel
     gedcom -B family-history.pdf -dh "Your Father's Full Name" gedcom-file.ged
 
-You can create a book of your family name based on the descendants of John Smith:
+For a surname-specific book:
 
     gedcom -GB smith.pdf -dsh 'John Smith' gedcom-file.ged
 
-If you enable the -w flag with the -B option, warnings will appear in red in the book.
-
 ## Environment Variables
 
-For compatibility with other code, these environment variables are honoured:
+`Gedcom` honours the following environment variables for improved compatibility:
 
-    BMAP_KEY: Bing (virtualearth.net) API Key
-    GEONAMES_USE: geonames.org registered username
-    GMAP_KEY: Google Places (maps.googleapis.com) API Key
-    LANG: some handling of en_GB and en_US translating between then, fr_FR is a work in progress
-    OPENADDR_HOME: directory of data from http://results.openaddresses.io/
-    REDIS_SERVER: ip:port pair of where to cache geo-coding data
-    OPENAI_KEY: experimental: use the key from openai.com to enhance the text
+* BMAP_KEY - Bing (virtualearth.net) API Key
+* GEONAMES_USER - geonames.org registered username
+* GMAP_KEY - Google Places (maps.googleapis.com) API Key
+* LANG - some handling of en_GB and en_US translating between then, fr_FR is a work in progress
+* OPENADDR_HOME - directory of data from http -//results.openaddresses.io/
+* REDIS_SERVER - ip:port pair of where to cache geo-coding data
+* OPENAI_KEY - experimental: use the key from openai.com to enhance the text
 
-## Reference
+## Runtime Options
 
-The options are:
+`Gedcom` comes with various options that let you customize how your family tree website is generated.
+Here’s what each option does:
 
-    -a: all days otherwise just today
-    -A: print everyone, in alphabetical order
-    -b: only print birthdays
-    -B: create a genealogy book
-    -c: give citations on detailed listing
-    -C: print birth dates of children
-    -d: show the detailed lifetime information about the person
-    -D: only print anniversaries of deaths
-    -e: external website to use for the -L option
-    -f: treat warnings as fatals, implies -w
-    -F: create a forefathers book
-    -G: print everyone, in generation order
-    -g: prints a GML of the locations
-    -H: Print an HTML calendar of this month
-    -h: set the home person - useful for calculating relationships with -d
-    -i: creates an ICS file
-    -l: include living people
-    -L: include ged2site hyperlinks with -H
-    -m: month for -H calendar
-    -M: produce a map of a place (currently only Kent is supported) as
-	an animated gif of births and migration pattern into $surname.gif or all.gif
-    -O: print a list of occupations, useful for finding typos and inconsistencies
-    -p: print the biography of the given person
-    -P: print a list of places, useful for finding typos of inconsistencies
-    -r: print a list of residences, useful for finding typos and inconsistencies
-    -t: print tomorrow's information, don't use with -a
-    -s: only print entries matching the home person's surname
-    -S: create an SQLite database from a Gedcom
-    -v: verbose - for debugging
-    -w: print warning about inconsistent data - a sort of lint for Gedcom files
-    -W: don't colorize warning output
-    -x: prints a list of towns in a format suitable to import into a google map
-    -X: prints a CSV of information
-    -y: year for -H calendar, or -T to give a list of places for a specific year
+### Command-Line Flags
+
+| Flag | Description |
+| ---- | ----------- |
+| -a | all days otherwise just today |
+| -A | print everyone, in alphabetical order |
+| -b | only print birthdays |
+| -B | create a genealogy book |
+| -c | give citations on detailed listing |
+| -C | print birth dates of children |
+| -d | show the detailed lifetime information about the person |
+| -D | only print anniversaries of deaths |
+| -e | external website to use for the -L option |
+| -f | treat warnings as fatals, implies -w |
+| -F | create a forefathers book |
+| -G | print everyone, in generation order |
+| -g | prints a GML of the locations |
+| -H | Print an HTML calendar of this month |
+| -h | set the home person - useful for calculating relationships with -d |
+| -i | creates an ICS file |
+| -l | include living people |
+| -L | include ged2site hyperlinks with -H |
+| -m | month for -H calendar |
+| -M | produce a map of a place (currently only Kent is supported) as an animated gif of births and migration pattern into $surname.gif or all.gif |
+| -O | print a list of occupations, useful for finding typos and inconsistencies |
+| -p | print the biography of the given person |
+| -P | print a list of places, useful for finding typos of inconsistencies |
+| -r | print a list of residences, useful for finding typos and inconsistencies |
+| -t | print tomorrow's information, don't use with -a |
+| -s | only print entries matching the home person's surname |
+| -S | create an SQLite database from a Gedcom |
+| -v | verbose - for debugging |
+| -w | print warning about inconsistent data - a sort of lint for Gedcom files |
+| -W | don't colorize warning output |
+| -x | prints a list of towns in a format suitable to import into a google map |
+| -X | prints a CSV of information |
+| -y | year for -H calendar, or -T to give a list of places for a specific year |
 
 ## Running on Windows
 
