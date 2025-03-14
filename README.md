@@ -2,7 +2,7 @@
 
 # Gedcom Utility
 
-C<Gedcom> is a powerful utility for managing and analyzing Gedcom genealogy files.
+`Gedcom` is a powerful utility for managing and analyzing Gedcom genealogy files.
 It offers a variety of tools for exploring family data,
 identifying errors and presenting information in useful formats.
 
