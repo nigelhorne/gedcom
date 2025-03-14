@@ -1,23 +1,24 @@
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://x.com/intent/tweet?text=A+general+purpose+utility+for+gedcom+files+#genealogy&url=https://github.com/nigelhorne/gedcom&via=nigelhorne)
 
-# gedcom
+# Gedcom Utility
 
-A general purpose utility for gedcom files.
-This program does a lot of different things with a gedcom file.
+C<Gedcom> is a powerful utility for managing and analyzing Gedcom genealogy files.
+It offers a variety of tools for exploring family data,
+identifying errors and presenting information in useful formats.
 
-## Print today's family anniversaries
+## Key Features
 
-Given your family tree as a gedcom, gedcom will tell you whose birthday it is
-and who died on this day.
-Although primarily a tool for genealogy,
-the -l flag tells gedcom to include matches for family members that are still
-alive.
+### Family Anniversaries
 
-The -d flag will give you a short biography of each person.
+* Identify today's birthdays and death anniversaries from your family tree.
 
-Try adding this to your crontab,
-it will give you a daily e-mail of your relative's birthdays and the
-anniversaries of their death along with information about their life.
+* Use the -l flag to include living relatives.
+
+* The -d flag provides detailed biographies.
+
+#### Autmate with Cron
+
+Receive a daily e-mail:
 
     3 5 * * * gedcom -dl gedcom-file.ged
 
@@ -25,21 +26,21 @@ or
 
     22 5 * * * gedcom -dth 'Your Full Name' gedcom-file.ged
 
-## Gedcom validation
+### Gedcom validation
 
-Gedcom also includes sanity checking and validation of your Gedcom file, including missing,
-impossible and inconsistent information allowing for greater error correction.
-Date formats are standardized and duplicate people are detected.
-You can enable this mode with -w, which will print warnings of anything it finds.
-It's a sort of lint for Gedcom files.
+Identify and correct issues like:
+
+* Missing or inconsistent data
+
+* Duplicate entries
+
+* Incorrect date formats
 
 For example:
 
     gedcom -dAwWl gedcom-file.ged > /dev/null
 
-Adding the -c option will add the checking of missing citations.
-
-To sort by error type:
+To categorised errors:
 
     gedcom -dAwWl gedcom-file.ged > /dev/null 2> /tmp/errs
     sort -t: -k2 /tmp/errs
@@ -61,13 +62,14 @@ choose any Smith in your tree as a home person so that the -s option works:
         gedcom -dwHlm $i -y $(date +%Y) -h 'John Smith' -s gedcom-file.ged > $i.html
     done
 
-Alternatively you can create an ICS file to import to Google Calendar:
+Alternatively,
+you can create an ICS file to import to Google Calendar:
 
     gedcom -i /tmp/ics.ics gedcom-file.ged
 
 ## Produce a Google Map
 
-You can produce a map of locations of all Smiths in your tree with
+You can produce a map of the locations of all Smiths in your tree with
 
     gedcom -xsh Smith gedcom-file-ged > smith.csv
 
@@ -75,13 +77,13 @@ You can produce a map of locations of all Smiths in your tree with
 * Visit google.com/maps, on the 3 horizontal lines choose "your places" ("Vos adresses"), then "maps" ("Cartes")
 * Click "create map", choose "import" and upload your file,
 choose "Location" as the position column and "People" as the title column
-* You may see that a number of rows can't be seen in the map,
+* You may see that several rows can't be seen in the map,
 this is an opportunity to find locations in your map that are incorrect
 
 ## Family History Book
 
 You can create a genealogy book as a PDF of your family history and research to give to
-your dad on father's day:
+your dad on Father's Day:
 
     # Note that this will only print people related to your father, even if you give -a
     # yum install gd-devel ImageMagick-devel
@@ -103,7 +105,7 @@ For compatibility with other code, these environment variables are honoured:
     LANG: some handling of en_GB and en_US translating between then, fr_FR is a work in progress
     OPENADDR_HOME: directory of data from http://results.openaddresses.io/
     REDIS_SERVER: ip:port pair of where to cache geo-coding data
-    OPENAI_KEY: experimental: uses key from openai.com to enhance text
+    OPENAI_KEY: experimental: use the key from openai.com to enhance the text
 
 ## Reference
 
