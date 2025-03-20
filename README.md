@@ -77,7 +77,7 @@ on the 3 horizontal lines choose "your places" ("Vos adresses"), then "maps" ("C
 choose "Location" as the position column and "People" as the title column
 
 You may see that several rows can't be seen in the map,
-this is an opportunity to find locations in your map that are incorrect
+this is an opportunity to find locations in your map that are incorrect.
 
 ### Family History Book
 
