@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -ex
+
+unset GMAP_KEY
+unset REDIS_SERVER
+unset HTTP_PROXY
+unset http_proxy
+
+for i in $(find ~/gedcoms/* -name \*ged -o -name \*GED); do
+# for i in tests/gedcoms/*.ged; do
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -wdlA "$i"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -wdl "$i"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom "$i"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -cd "$i"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -wd "$i"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -cwdl "$i"
+	./gedcom -GB /tmp/njh.pdf -d "$i"
+	./gedcom -dwHlm 2 -y $(date +%Y) -s -Le 'example.com' "$i" > /tmp/njh.html
+	./gedcom -x "$i" > /tmp/njh.csv
+	./gedcom -M Kent "$i"
+	./gedcom -wM Kent "$i"
+done
