@@ -6588,7 +6588,7 @@ sub print_person
 									} else {
 										$phrase->set(ucfirst($date));
 									}
-									$phrase->append(' ' . lcfirst($pronoun) . " was serving in the $service");
+									$phrase->append([' ', lcfirst($pronoun), " was serving in the $service"]);
 								}
 							} else {
 								$phrase->set("$pronoun served in the $service");
@@ -14407,6 +14407,7 @@ and::et
 around::environ
 arrived:M:est arrivé
 arrived:F:est arrivée
+army::armée
 at::à
 before %s::avant le %s
 between::entre
