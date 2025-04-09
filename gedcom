@@ -3798,7 +3798,7 @@ sub print_person
 			}
 			if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
 				if(scalar(@phrases) == 0) {
-					if(length($phrase) > 0) {
+					if($phrase->length() > 0) {
 						$phrase->rtrim()->append(', ' . lcfirst($pronoun) . ' ');
 					} else {
 						$phrase->set("$pronoun ");
