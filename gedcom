@@ -13419,8 +13419,8 @@ sub extract_family_info
 
 	# Extract siblings (sisters and brothers) correctly, skipping "her" or "his"
 	if ($text =~ /predeceased by (his|her) sisters?\s*([^;]+);?/i) {
-		my $siblings_text = $2;
-		$family{siblings} = extract_people_section($siblings_text);
+		my $sisters_text = $2;
+		$family{sisters} = extract_people_section($sisters_text);
 	}
 
 	if ($text =~ /predeceased by (his|her) brothers?\s*([^;]+);?/i) {
