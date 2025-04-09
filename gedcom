@@ -13403,7 +13403,7 @@ sub extract_family_info
 				spouse   => $spouse,
 				location => $location,
 			);
-			
+
 			# Remove blank fields
 			%person = map { $_ => $person{$_} } grep { defined $person{$_} && $person{$_} ne '' } keys %person;
 

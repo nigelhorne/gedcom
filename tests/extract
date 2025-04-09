@@ -1,0 +1,12 @@
+#!/usr/bin/env dash
+
+set -xe
+
+../bin/extract 'Helen Mae (McBeath) Girvan, age 89 years passed away at the Kenneth E. Spencer Memorial Home on Friday December 12th, 2008.  Born in Peters Mills, Kent Co.  on April 9th, 1919 she was the daughter of the late Richmond and Lilly (Peters) McBeath, and the wife of the late Ian Stuart Girvan (1987).  An adherent of Gunningsville Baptist church, Helen was an organist in both the United and Presbyterian churches in Rexton where she also taught school on a local license.  Following her marriage she became a Sunday school teacher and was a Life Time member of the Hillsborough UCW and the Womens Institute.  Later in life she was involved as a volunteer at the Lakeview Salvation Army Nursing Home and was the membership chairman of the Salvation Army Home League.  She is survived by her children Gwen Steeves (Leslie) of Riverview, NB, Ian (Terry) Girvan of Surrey, BC, and Carol Girvan of Dartmouth, NS; grandchildren Stacey and Tara Steeves; as well as several nieces and nephews.  Besides her husband she is predeceased by her sisters Dorothy Knowles, and Audrey Little; and brothers Stanley and Harold McBeath.  By personal request there will be no visitation at the funeral home'
+
+../bin/extract 'William HirstADAMS                                                                                                             Formerly of Hale, Cheshire.                                                                                                                                                                                                                                                                                               Devoted husband to the late Margaret. Loving father of Alexandra and father-in-law to Colin.
+                                                                                                                                                             The funeral service will be held at Torquay Crematorium, Torquay, Devon on Saturday 12th April at 11.30am.
+                                                                                                                                                             Family flowers only by request. Donations if desired for Rowcroft Hospice or the British Stroke Foundation.
+Torbay and District Funeral Service
+11 Babbacombe Road, Torquay, TQ1 3SB
+01803 315005'

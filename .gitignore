@@ -22,3 +22,4 @@ local/
 pdf/
 cals/
 csv/
+.DS_Store
