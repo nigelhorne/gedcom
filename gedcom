@@ -13348,6 +13348,8 @@ sub add_death_notes
 # Parse obituary text and extract structured family relationship data, including details about children, parents, spouse, siblings, grandchildren, and other relatives.
 # The routine processes the obituary content to identify and organize relevant family information into a clear, structured hash.
 
+# FIXME:  add more general code, e.g. where it looks for father, also look for mother
+
 # It returns a hash reference containing structured family information,
 # with each family member's data organized into distinct categories such as children, spouse, parents, siblings, etc.
 
@@ -13411,6 +13413,10 @@ sub extract_family_info
 	# Correct extraction of children (skipping "his/her")
 	if ($text =~ /survived by (his|her) children\s*([^\.;]+)/i) {
 		my $children_text = $2;
+		$family{children} = extract_people_section($children_text);
+	} elsif ($text =~ /Loving father of\s*([^\.;]+)/i) {  # Look for the phrase "Loving father of"
+		# Correct extraction of children (skipping "his/her")
+		my $children_text = $1;
 		$family{children} = extract_people_section($children_text);
 	}
 
