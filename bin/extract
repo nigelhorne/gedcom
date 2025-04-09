@@ -7,9 +7,10 @@ use warnings;
 
 use Data::Dumper;
 
-my $info = extract_family_info($ARGV[0]);
-
-print Data::Dumper->new([$info])->Dump();
+unless(caller()) {
+	my $info = extract_family_info($ARGV[0]);
+	print Data::Dumper->new([$info])->Dump();
+}
 
 sub extract_family_info
 {
@@ -177,3 +178,5 @@ sub extract_family_info
 
 	return \%family;
 }
+
+1;
