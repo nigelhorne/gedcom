@@ -70,8 +70,9 @@ cmp_deeply($foo,
 	{
 		'children' => [
 			{ 'name' => 'Alexandra' },
+			# { 'name' => 'Colin' }	# FIXME
 			{ 'name' => 'father-in-law to Colin' }
-		], 'father_in_law' => [
+		], 'children_in_law' => [
 			{ 'name' => 'Colin' }
 		], 'spouse' => [
 			{ 'name' => 'Margaret' }
