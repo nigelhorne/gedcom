@@ -79,4 +79,23 @@ cmp_deeply($foo,
 	}
 );
 
+$str = <<'STR';
+Hilary AnnGALLAND
+Hilary Ann Galland passed away peacefully at the Royal Derby, Ward 408 on Sunday 9th March 2025, age 79, after a short illness.
+
+Beloved wife of Keith, loving mum to Jeremy, Lorna and Anya and devoted Grandma to Aimee, Nathan, Tommy, Harry, Emily and Luke and loved Mother-in-law to Linda, Michael and Mark. Hilary will be dearly missed by all who knew and loved her.
+
+A funeral service will take place on Friday 28th March 2025 at 1.30pm at Bretby Crematorium and family and friends are warmly invited to join us in celebrating Hilary's life.
+
+The family kindly requests family flowers only, donations made in Hilary's memory can be sent to the British Heart Foundation. Fellows Funeral Directors Limited
+156 Station Road, Mickleover
+Derby, Derbyshire, DE3 9FL
+01332 511119
+STR
+
+$foo = extract_family_info($str);
+
+# diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
+diag(Data::Dumper->new([$foo])->Dump());
+
 done_testing();

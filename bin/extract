@@ -10,6 +10,8 @@ use Data::Dumper;
 unless(caller()) {
 	my $info = extract_family_info($ARGV[0]);
 	print Data::Dumper->new([$info])->Dump();
+	$info = parse_obituary($ARGV[0]);
+	print Data::Dumper->new([$info])->Dump();
 }
 
 sub extract_family_info
@@ -128,13 +130,16 @@ sub extract_family_info
 			name => $name,
 			death_year => $death_year
 		}
+	} elsif($text =~ /wife of\s+([\w\s]+)/) {
+		my $name = $1;
+		$family{'spouse'} ||= [];
+
+		push @{$family{'spouse'}}, { name => $name }
 	} elsif($text =~ /husband to the late\s([\w\s]+)[\s\.]/i) {
 		my $name = $1;
 		$family{'spouse'} ||= [];
 
-		push @{$family{'spouse'}}, {
-			name => $name,
-		}
+		push @{$family{'spouse'}}, { name => $name }
 	}
 
 	# Ensure spouse location is properly handled
@@ -177,6 +182,51 @@ sub extract_family_info
 	}
 
 	return \%family;
+}
+
+sub parse_obituary {
+    my ($text) = @_;
+    my %results = ( people => [], places => [], relationships => {} );
+
+    # Extract people with titles (Dr., Mr., etc.)
+    while ($text =~ /\b(Mr|Mrs|Ms|Dr)\.?\s+([A-Z][a-z-]+(?:\s+[A-Z][a-z-]+)+)\b/gi) {
+        push @{$results{people}}, $2;
+    }
+
+    # Extract relationships and their associated names (e.g., children: Alice, Bob)
+    my @relationship_phrases = (
+        "children", "siblings", "brothers", "sisters", 
+        "survived by", "husband of", "wife of", "father of", "mother of"
+    );
+
+    for my $rel (@relationship_phrases) {
+        while ($text =~ /$rel\s*[:,]?\s*([A-Za-z\s,.()]+?)(?=\.|\b(?:and|$))/gi) {
+            my $names_str = $1;
+            # Split names by commas/and, clean, and add to relationships
+            my @names = split(/,\s*|\s+and\s+/, $names_str);
+            for my $name (@names) {
+                $name =~ s/^\s+|\s+$//g;  # Trim whitespace
+                $name =~ s/[.,()]+$//g;    # Remove trailing punctuation
+                push @{$results{relationships}{$rel}}, $name if $name =~ /\S/;
+                push @{$results{people}}, $name if $name =~ /\S/;
+            }
+        }
+    }
+
+    # Extract places (unchanged from earlier)
+    while ($text =~ /(died|born|passed away|resided|buried|funeral)\s+(?:in|at)\s+([A-Z][a-z-.,]+(?:\s+[A-Z][a-z-.,]+)*)/gi) {
+        my $place = $2;
+        $place =~ s/[.,]$//;
+        push @{$results{places}}, $place;
+    }
+
+    # Deduplicate entries
+    my %seen;
+    @{$results{people}} = grep { !$seen{$_}++ } @{$results{people}};
+    %seen = ();
+    @{$results{places}} = grep { !$seen{$_}++ } @{$results{places}};
+
+    return \%results;
 }
 
 1;
