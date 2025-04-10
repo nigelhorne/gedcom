@@ -94,7 +94,29 @@ STR
 
 $foo = extract_family_info($str);
 
-# diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
-diag(Data::Dumper->new([$foo])->Dump());
+cmp_deeply($foo,
+	{
+		'children' => [
+                           { 'name' => 'Jeremy' },
+                           { 'name' => 'Lorna' },
+                           { 'name' => 'Anya' }
+		 ], 'grandchildren' => [
+			'Aimee',
+			'Nathan',
+			'Tommy',
+			'Harry',
+			'Emily',
+			'Luke'
+		], 'children_in_law' => [
+			'Linda',
+			'Michael',
+			'Mark'
+		], 'spouse' => [
+			{ 'name' => 'Keith' }
+		]
+	}
+);
+
+diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
 
 done_testing();
