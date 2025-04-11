@@ -4721,7 +4721,7 @@ sub print_person
 				if($residence->can('place') || $residence->isa('Class::Simple::Readonly::Cached')) {
 					my $place = $residence->place();
 					if(my $address = $residence->address()) {
-						if(ref($address) eq 'Gedcom::Record') {
+						if($address->isa('Gedcom::Record')) {
 							$place = getaddress($address);
 						} elsif($place) {
 							$place = "$address, $place";
