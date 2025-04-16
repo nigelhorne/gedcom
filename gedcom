@@ -13382,7 +13382,7 @@ sub extract_family_info
 			# Create a hash and filter out blank fields
 			my %person = (
 				name	 => $name,
-				spouse   => $spouse,
+				spouse => $spouse,
 				location => $location,
 			);
 
@@ -13474,16 +13474,24 @@ sub extract_family_info
 			name => $name,
 			death_year => $death_year
 		}
-	} elsif($text =~ /wife of\s+([\w\s]+)/) {
-		my $name = $1;
+	} elsif($text =~ /\bmarried ([^,]+),.*?\b(?:on\s+)?([A-Z][a-z]+ \d{1,2}, \d{4})(?:.*?\b(?:at|in)\s+([^.,]+))?/i) {
 		$family{'spouse'} ||= [];
 
-		push @{$family{'spouse'}}, { name => $name }
+		push @{$family{'spouse'}}, {
+			name => $1,
+			married => {
+				date => $2,
+				place => $3 // '',
+			}
+		};
+	} elsif($text =~ /\b(?:wife|husband) of ([^.,;]+)/i) {
+		$family{'spouse'} ||= [];
+
+		push @{$family{'spouse'}}, { name => $1 }
 	} elsif($text =~ /husband to the late\s([\w\s]+)[\s\.]/i) {
-		my $name = $1;
 		$family{'spouse'} ||= [];
 
-		push @{$family{'spouse'}}, { name => $name }
+		push @{$family{'spouse'}}, { name => $1, status => 'deceased' }
 	}
 
 	# Ensure spouse location is properly handled

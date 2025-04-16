@@ -73,7 +73,7 @@ cmp_deeply($foo,
 		], 'children_in_law' => [
 			{ 'name' => 'Colin' }
 		], 'spouse' => [
-			{ 'name' => 'Margaret' }
+			{ 'name' => 'Margaret', status => 'deceased' }
 		]
 	}
 );
@@ -118,5 +118,20 @@ cmp_deeply($foo,
 );
 
 diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
+
+$str = <<'STR';
+PETERS, Eric Jarvis - 81, Head of St. Margaret's Bay, passed away Monday, April 16, 2007, at home.  Born in Fredericton, N.B., he was a son of the late Rev. Ovid and Pearl (Boyd) Peters.  Eric retired from the Federal Department of Transportation as an Air Traffic Controller in 1982, moving to St. Margaret's Bay in 1985 and enjoyed the waters of the Bay, spending his time fishing, boating and swimming.  He was an avid barbershopper and most recently belonged to the Millstream Chorus in Bedford and also was a founding member of the Rail City Chorus in Moncton.  Surviving are his wife, Ruth; daughter, Anne (Malcolm) Maxwell and their son James, Prince George, BC; son, Boyd R. (Deborah) and their children Brian, Meredith and Patricia, Fredericton, NB, and brother, Ralph N. (Lorna), Saint John, NB. He was predeceased by his sister, Phyllis Huestis.  Funeral service will be held 11 a.m.  Thursday, April 19, in St. Luke's United Church, Tantallon, Rev. KevinLittle officiating.  A family committal service will be held a later date.  In lieu of flowers, donations can be made to St. Luke's United Church, Tantallon or Alzheimer Society of Nova Scotia; PETERS, ERIC J. - At his residence, after a long illness on Monday April 16th, 2007, Eric J. Peters, loving husband of Ruth Anne Shirley Peters, passed away.  A funeral service at St. Luke's United Church, Tantallon NS, on Thursday, April 19th, 2007, at 11am.  Leaving to mourn, two children, Anne and Boyd, grandchildren, and one brother Ralph of Saint John, NB).  He was the youngest of 3 children of Ovid Peters, a minister of the methodist church, and Pearl Boyd.  Eric worked as an air traffic controller.  He was born in Fredericton, York, New Brunswick on Jul 19, 1925 and married Ruth Howland, a registered nurse, (with whom he had 3 surviving children: Boyd R, Anne and James) on Aug 6, 1955 at Baptish Church, Main Street, Saint John, New Brunswick.
+STR
+
+$foo = extract_family_info($str);
+
+# TODO
+if(0) {
+	diag(Data::Dumper->new([$foo])->Dump());
+	$foo = parse_obituary($str);
+	diag(Data::Dumper->new([$foo])->Dump());
+	$foo = parse_obituary2($str);
+	diag(Data::Dumper->new([$foo])->Dump());
+}
 
 done_testing();

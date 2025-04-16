@@ -12,6 +12,8 @@ unless(caller()) {
 	print Data::Dumper->new([$info])->Dump();
 	$info = parse_obituary($ARGV[0]);
 	print Data::Dumper->new([$info])->Dump();
+	$info = parse_obituary2($ARGV[0]);
+	print Data::Dumper->new([$info])->Dump();
 }
 
 sub extract_family_info
@@ -151,16 +153,24 @@ sub extract_family_info
 			name => $name,
 			death_year => $death_year
 		}
-	} elsif($text =~ /wife of\s+([\w\s]+)/) {
-		my $name = $1;
+	} elsif($text =~ /\bmarried ([^,]+),.*?\b(?:on\s+)?([A-Z][a-z]+ \d{1,2}, \d{4})(?:.*?\b(?:at|in)\s+([^.,]+))?/i) {
 		$family{'spouse'} ||= [];
 
-		push @{$family{'spouse'}}, { name => $name }
+		push @{$family{'spouse'}}, {
+			name => $1,
+			married => {
+				date  => $2,
+				place => $3 // '',
+			}
+		};
+	} elsif($text =~ /\b(?:wife|husband) of ([^.,;]+)/i) {
+		$family{'spouse'} ||= [];
+
+		push @{$family{'spouse'}}, { name => $1 }
 	} elsif($text =~ /husband to the late\s([\w\s]+)[\s\.]/i) {
-		my $name = $1;
 		$family{'spouse'} ||= [];
 
-		push @{$family{'spouse'}}, { name => $name }
+		push @{$family{'spouse'}}, { name => $1, status => 'deceased' }
 	}
 
 	# Ensure spouse location is properly handled
@@ -245,6 +255,89 @@ sub parse_obituary {
     @{$results{places}} = grep { !$seen{$_}++ } @{$results{places}};
 
     return \%results;
+}
+
+sub parse_obituary2 {
+    my ($text) = @_;
+    my %obit;
+
+    # Normalize text
+    $text =~ s/\s+/ /g;
+
+    # Full Name
+    if ($text =~ /\bPETERS,\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/i) {
+        $obit{name} = $1;
+    }
+
+    # Date of death
+    if ($text =~ /\bpassed away\b.*?\b(?:on\s+)?([A-Z][a-z]+ \d{1,2}, \d{4})/i) {
+        $obit{death}{date} = $1;
+    }
+
+    # Place of death
+    if ($text =~ /\bpassed away\b.*?,\s*([^.,]+),?\s*(?:on|at)?/i) {
+        $obit{death}{place} = $1;
+    }
+
+    # Birth info
+    if ($text =~ /\bBorn in ([^,]+),.*?\b(?:on\s+)?([A-Z][a-z]+ \d{1,2}, \d{4})/i) {
+        $obit{birth} = {
+            place => $1,
+            date  => $2,
+        };
+    }
+
+    # Parents
+    if ($text =~ /\b(?:son|daughter) of the late ([^()]+)\(([^)]+)\)/i) {
+        $obit{parents} = {
+            father => {
+                name => $1 =~ /([^,]+)/ ? $1 : undef,
+            },
+            mother => {
+                name => $2,
+            },
+        };
+    } elsif ($text =~ /\b(?:son|daughter) of ([^.,]+)/i) {
+        $obit{parents}{father}{name} = $1;
+    }
+
+    # Spouse
+    if ($text =~ /\b(?:wife|husband) of ([^.,;]+)/i) {
+        $obit{spouse}{name} = $1;
+    }
+
+    if ($text =~ /\bmarried ([^,]+),.*?\b(?:on\s+)?([A-Z][a-z]+ \d{1,2}, \d{4})(?:.*?\b(?:at|in)\s+([^.,]+))?/i) {
+        $obit{spouse}{name}     ||= $1;
+        $obit{spouse}{married} = {
+            date  => $2,
+            place => $3 // '',
+        };
+    }
+
+    # Children
+    my @children;
+    while ($text =~ /\b(?:son|daughter),\s*([A-Z][a-z]+(?:\s+\([A-Z][a-z]+\))?)\s*(?:and their children ([^.;]+))?/g) {
+        my $child = $1;
+        my $grandkids = $2;
+        my @grandchildren = $grandkids ? split /\s*,\s*|\s+and\s+/, $grandkids : ();
+        push @children, {
+            name        => $child,
+            grandchildren => \@grandchildren,
+        };
+    }
+    $obit{children} = \@children if @children;
+
+    # Siblings
+    my @siblings;
+    while ($text =~ /\b(?:brother|sister),\s*([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)*)(?:,\s*([A-Z][a-z]+))?/g) {
+        push @siblings, {
+            name   => $1,
+            status => ($text =~ /\bpredeceased by.*?$1/i) ? 'deceased' : 'living',
+        };
+    }
+    $obit{siblings} = \@siblings if @siblings;
+
+    return \%obit;
 }
 
 1;
