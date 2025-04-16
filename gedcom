@@ -3102,22 +3102,8 @@ sub print_person
 				$phrase->append(" ($cause)");
 			}
 
-			if($death && (my $notes = notes({ person => $person, record => $death, paragraph => 0 }))) {
-				$notes =~ s/\.$//;
-				$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
-				$phrase->append(" ($notes)");
-				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases));
-				undef @phrases;
-				$phrase = Data::Text->new();
-				if($notes !~ /\."$/) {
-					$bio->append('.');
-				}
-				if(length($notes) > 160) {
-					$bio->append("\n\t");
-				} else {
-					$bio->append('  ');
-				}
+			if($death) {
+				add_death_notes({ person => $person, record => $death, phrase => $phrase });
 			}
 		}
 
@@ -13304,17 +13290,11 @@ sub cache_array
 # Print notes about the death, if any
 sub add_death_notes
 {
-	my %params;
+	my $params = Params::Get::get_params(undef, @_);
 
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	}
-
-	my $person = $params{'person'};
-	my $death = $params{'record'};	# death record
-	my $phrase = $params{'phrase'};
+	my $person = $params->{'person'};
+	my $death = $params->{'record'};	# death record
+	my $phrase = $params->{'phrase'};
 
 	return unless($death);
 
