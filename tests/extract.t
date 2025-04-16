@@ -50,7 +50,10 @@ cmp_deeply($foo,
 				'name' => 'Ian Stuart Girvan',
 				'death_year' => '1987'
 			}
-		]
+		], 'birth' => {
+			'place' => 'Peters Mills, Kent Co.',
+			'date' => '1919/04/09'
+		}
 	}
 );
 
