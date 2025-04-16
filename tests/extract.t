@@ -100,9 +100,9 @@ $foo = extract_family_info($str);
 cmp_deeply($foo,
 	{
 		'children' => [
-                           { 'name' => 'Jeremy' },
-                           { 'name' => 'Lorna' },
-                           { 'name' => 'Anya' }
+			{ 'name' => 'Jeremy' },
+			{ 'name' => 'Lorna' },
+			{ 'name' => 'Anya' }
 		 ], 'grandchildren' => [
 			'Aimee',
 			'Nathan',
@@ -130,6 +130,45 @@ PETERS, Eric Jarvis - 81, Head of St. Margaret's Bay, passed away Monday, April 
 STR
 
 $foo = extract_family_info($str);
+
+diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
+
+cmp_deeply($foo,
+	{
+		'parents' => [
+			{ 'name' => 'Rev. Ovid' },
+			{ 'name' => 'Pearl (Boyd) Peters' }
+		], 'sisters' => [
+                          { 'name' => 'Phyllis Huestis' }
+		], 'children' => [
+                           { 'name' => 'Anne (Malcolm)' },
+                           { 'name' => 'Boyd' }
+		 ], 'brothers' => [
+                           {
+                             'status' => 'living',
+                             'name' => 'Ralph N.'
+                           }
+		 ], 'death' => {
+                        'place' => 'home',
+                        'date' => 'April 16, 2007'
+	      }, 'birth' => {
+                        'place' => 'Fredericton',
+                        'date' => 'Jul 19, 1925'
+	      }, 'spouse' => [
+                         {
+                           'name' => 'Ruth Howland',
+                           'married' => {
+				  'place' => 'Baptish Church',
+				  'date' => 'Aug 6, 1955'
+				}
+                         }
+	       ], 'funeral' => {
+                          'date' => 'Aug 6, 1955',
+                          'time' => 'Baptish Church, Main Street, Saint John, New Brunswick.',
+                          'location' => 'his residence, after a long illness on Monday April 16th, 2007, Eric J. Peters, loving husband of Ruth Anne Shirley Peters, passed away.  A funeral service at St. Luke\'s United Church, Tantallon NS, on Thursday, April 19th, 2007, at 11am.  Leaving to mourn, two children, Anne and Boyd, grandchildren, and one brother Ralph of Saint John, NB).  He was the youngest of 3 children of Ovid Peters, a minister of the methodist church, and Pearl Boyd.  Eric worked as an air traffic controller.  He was born in Fredericton, York, New Brunswick on Jul 19, 1925 and married Ruth Howland, a registered nurse, (with whom he had 3 surviving children: Boyd R, Anne and James)'
+		}
+	}
+);
 
 # TODO
 if(0) {
