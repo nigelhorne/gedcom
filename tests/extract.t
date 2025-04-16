@@ -113,7 +113,10 @@ cmp_deeply($foo,
 			'Mark'
 		], 'spouse' => [
 			{ 'name' => 'Keith' }
-		]
+		], 'death' => {
+			'place' => 'the Royal Derby, Ward 408',
+			'date' => '2025/03/09'
+		}
 	}
 );
 
