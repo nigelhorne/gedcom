@@ -354,8 +354,15 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 	push @modules, 'Mozilla::CA';
 }
 
+my $gpt;
 if($ENV{'OPENAI_API_KEY'}) {
-	push @modules, 'OpenAIGPT4';
+	# if(my $key = $ENV{'OPENAI_API_KEY'}) {
+		# push @modules, 'OpenAIGPT4';
+		# $gpt = OpenAIGPT4->new($key);
+	# }
+}
+if(!defined($gpt)) {
+	push @modules, 'Grammar::Improver';
 }
 
 if($opts{'w'} && $opts{'c'}) {
@@ -740,6 +747,15 @@ if($ARGV[1]) {
 my $abbr;
 $abbr = Geo::Coder::Abbreviations->new() if($opts{'d'});
 
+my $gi;
+if(!defined($gpt)) {
+	if(my $key = $ENV{'LANGUAGETOOL_KEY'}) {
+		$gi = Grammar::Improver->new(api_key => $key);
+	} else {
+		$gi = Grammar::Improver->new();
+	}
+}
+		
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
 unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
@@ -900,11 +916,6 @@ if($opts{'w'}) {
 	die if(!defined($obituaries));
 	$wills = Genealogy::Wills->new($opts);
 	die if(!defined($wills));
-}
-
-my $gpt;
-if(my $key = $ENV{'OPENAI_API_KEY'}) {
-	# $gpt = OpenAIGPT4->new($key);
 }
 
 my $meteo;
@@ -7898,7 +7909,17 @@ sub print_person
 			if($gpt) {
 				die 'TODO: ', $gpt->generate_text('Make this more readable ' . $bio->as_string(), 'gpt-3.5-turbo-1106');
 			} else {
-				print $bio->rtrim()->as_string();
+				my $string = $bio->rtrim()->as_string();
+				if($gi) {
+					my $new_bio = $gi->improve_grammar($string);
+					if($new_bio ne $string) {
+						die "TODO:\n\t'$string'\nwould be better as\n\t'$new_bio'";
+					} else {
+						print $string;
+					}
+				} else {
+					print $string;
+				}
 			}
 			print "\n", '-' x 80, "\n";
 		}
