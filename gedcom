@@ -4816,7 +4816,7 @@ sub print_person
 					last;
 				}
 				if(scalar(@{$date}) == 0) {
-					# e.g. "Apr/May/Jun 2016"
+
 					$all_residences_have_date = 0;
 					last;
 				}
@@ -5883,10 +5883,16 @@ sub print_person
 			if(scalar(@residencestringarray)) {
 				push @phrases, $phrase if($phrase->rtrim()->length());
 				if(scalar(@phrases)) {
+					if(scalar(@phrases) == 2) {
+						# Not a list, but a sentance like this where a comma is useful:
+						# She was born in Ramsgate, Kent, England on May 8, 1897, and was baptized at St Paul's Church, King St on May 26, 1897
+						Lingua::Conjunction->penultimate(1);
+					}
 					my $text = conjunction(map { $_->as_string() } @phrases);
 					if(!defined($text)) {
 						die $person->as_string({ include_years => 1 }), ': BUG: residencestring array is unexpectedly empty';
 					}
+					Lingua::Conjunction->penultimate(0);
 					$text =~ s/[\,;]\s*$//;
 					$text =~ s/\s\-;/;/g;
 					$bio->append("$text.  ");
@@ -7913,7 +7919,7 @@ sub print_person
 				if($gi) {
 					my $new_bio = $gi->improve_grammar($string);
 					if($new_bio ne $string) {
-						die "TODO:\n\t'$string'\nwould be better as\n\t'$new_bio'";
+						warn "TODO:\n\t'$string'\nwould be better as\n\t'$new_bio'";
 					} else {
 						print $string;
 					}
