@@ -365,7 +365,7 @@ if(!defined($gpt)) {
 	push @modules, 'Grammar::Improver';
 }
 
-if($opts{'w'} && $opts{'c'}) {
+if($opts{'w'}) {
 	# If you have a locally written module to look up entries,
 	# list them in gedcom.config,
 	# otherwise use Genealogy::FindaGrave
@@ -521,7 +521,6 @@ if($opts{'w'} || $opts{'B'} || $opts{'M'}) {
 		NoUpdate => 60 * 60 * 24,
 		MaxAge => 30 * 24
 	}) || die "$0: $cache_dir: $!";
-
 }
 
 my $script_name = basename($0);
@@ -7790,53 +7789,6 @@ sub print_person
 						});
 					}
 				}
-				my $surname = $lastname;
-				if(defined($sex) && ($sex eq 'F')) {
-					if(my $husband = $person->husband()) {
-						$surname = $husband->surname();
-					}
-				}
-				if($yod && $firstname && $surname) {
-					my %opts = (
-						date_of_death => $yod,
-						firstname => $firstname,
-						lastname => $surname,
-						ua => $browser,
-					);
-					if($placeofburial) {
-						if($placeofburial =~ /.+,\s+(\w+)$/) {
-							$opts{'country'} = $1;
-						}
-					} elsif($placeofdeath) {
-						if($placeofdeath =~ /.+,\s+(\w+)$/) {
-							$opts{'country'} = $1;
-						}
-					}
-					if($opts{'country'} && ($opts{'country'} eq 'USA')) {
-						$opts{'country'} = 'United States of America';
-					}
-					# foreach my $b(Genealogy::FindaGrave->new(\%opts)) {
-					if(defined($grave_modules)) {
-						if(ref($grave_modules)) {
-							foreach my $m(@{$grave_modules}) {
-								my $b = $m->new(\%opts);
-								while(my $url = $b->get_next_entry()) {
-									complain({
-										person => $person,
-										warning => "possible burial link $url"
-									});
-								}
-							}
-						} elsif(my $b = $grave_modules->new(\%opts)) {
-							while(my $url = $b->get_next_entry()) {
-								complain({
-									person => $person,
-									warning => "possible burial link $url"
-								});
-							}
-						}
-					}
-				}
 			}
 		} else {
 			if(scalar(@phrases)) {
@@ -7849,6 +7801,52 @@ sub print_person
 			}
 			if($citationcount) {
 				die "Bug: citationcount = $citationcount when -c not given";
+			}
+		}
+		my $surname = $lastname;
+		if(defined($sex) && ($sex eq 'F') && (my $husband = $person->husband())) {
+			$surname = $husband->surname();
+		}
+
+		if($yod && $firstname && $surname) {
+			my %opts = (
+				date_of_death => $yod,
+				firstname => $firstname,
+				lastname => $surname,
+				ua => $browser,
+			);
+			if($placeofburial) {
+				if($placeofburial =~ /.+,\s+(\w+)$/) {
+					$opts{'country'} = $1;
+				}
+			} elsif($placeofdeath) {
+				if($placeofdeath =~ /.+,\s+(\w+)$/) {
+					$opts{'country'} = $1;
+				}
+			}
+			if($opts{'country'} && ($opts{'country'} eq 'USA')) {
+				$opts{'country'} = 'United States of America';
+			}
+			# foreach my $b(Genealogy::FindaGrave->new(\%opts)) {
+			if(defined($grave_modules)) {
+				if(ref($grave_modules)) {
+					foreach my $m(@{$grave_modules}) {
+						my $b = $m->new(\%opts);
+						while(my $url = $b->get_next_entry()) {
+							complain({
+								person => $person,
+								warning => "possible burial link $url"
+							});
+						}
+					}
+				} elsif(my $b = $grave_modules->new(\%opts)) {
+					while(my $url = $b->get_next_entry()) {
+						complain({
+							person => $person,
+							warning => "possible burial link $url"
+						});
+					}
+				}
 			}
 		}
 
