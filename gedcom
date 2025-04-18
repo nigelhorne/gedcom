@@ -747,13 +747,13 @@ my $abbr;
 $abbr = Geo::Coder::Abbreviations->new() if($opts{'d'});
 
 my $gi;
-if($opts{'w'} && !defined($gpt)) {
-	if(my $key = $ENV{'LANGUAGETOOL_KEY'}) {
-		$gi = Grammar::Improver->new(api_key => $key);
-	} else {
-		$gi = Grammar::Improver->new();
-	}
-}
+# if($opts{'w'} && !defined($gpt)) {
+	# if(my $key = $ENV{'LANGUAGETOOL_KEY'}) {
+		# $gi = Grammar::Improver->new(api_key => $key);
+	# } else {
+		# $gi = Grammar::Improver->new();
+	# }
+# }
 		
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
