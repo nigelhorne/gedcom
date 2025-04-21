@@ -179,4 +179,11 @@ if(0) {
 	diag(Data::Dumper->new([$foo])->Dump());
 }
 
+$str = <<'STR';
+From the Indianapolis Star, 25/4/2013:  "75, Indianapolis, died Apr.  21, 2013.  Services: 1 p.m.  Apr.  26 in Forest Lawn Funeral Home, Greenwood, with visitation from 11 a.m."; Obituary from Forest Lawn Funeral Home:  "Sharlene C. Cloud, 75, of Indianapolis, passed away April 21, 2013.  She was born May 21, 1937 in Noblesville, IN to Virgil and Josephine (Beaver) Day.  She is survived by her mother; two sons, Christopher and Thomas Cloud;; daughter, Marsha Cloud; three sisters, Mary Kirby, Sharon Lowery, and Doris Lyng; two grandchildren, Allison and Jamie Cloud.  Funeral Services will be Friday at 1:00 pm at Forest Lawn Funeral Home, Greenwood, IN, with visitation from 11:00 am till time of service Friday at the funeral home."
+STR
+
+$foo = extract_family_info($str);
+# diag(Data::Dumper->new([$foo])->Dump());
+
 done_testing();
