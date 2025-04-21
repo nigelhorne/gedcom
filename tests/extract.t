@@ -184,6 +184,6 @@ From the Indianapolis Star, 25/4/2013:  "75, Indianapolis, died Apr.  21, 2013. 
 STR
 
 $foo = extract_family_info($str);
-diag(Data::Dumper->new([$foo])->Dump());
+# diag(Data::Dumper->new([$foo])->Dump());
 
 done_testing();
