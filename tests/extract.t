@@ -31,7 +31,7 @@ cmp_deeply($foo,
 			'several nieces and nephews'
 		], 'parents' => {
 			'father' => { 'name' => 'Richmond' },
-			'mother' => { 'name' => 'Lilly (Peters) McBeath' }
+			'mother' => { 'name' => 'Lilly Peters' }
 		}, 'children' => [
 			{
 				'location' => 'Riverview, NB',
@@ -137,7 +137,7 @@ cmp_deeply($foo,
 	{
 		'parents' => {
 			'father' => { 'name' => 'Rev. Ovid' },
-			'mother' => { 'name' => 'Pearl (Boyd) Peters' }
+			'mother' => { 'name' => 'Pearl Boyd' }
 		}, 'sisters' => [
 			  { 'name' => 'Phyllis Huestis' }
 		], 'children' => [
