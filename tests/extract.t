@@ -214,4 +214,12 @@ cmp_deeply($foo,
 	}
 );
 
+$str = <<'STR';
+From bmdsonline.co.uk:  MAXEY (Dudley).  Peacefully at home on 1st March, Hilary Anne, dear mother of Noel and Sarah, grandmother to Dale, Caitlin and Aidan, dear sister of Gillian and Adrian, a much loved niece of Winnie and cousin Keith.  Funeral Service and interment to be held at Preston Cemetery on Wednesday 9th March at 1.15pm.  Friends please meet at the cemetery.  Family flowers only please, donations in lieu if desired would be appreciated for Motor Neurone Disease Association, a collection boxwill be available at the cemetery chapel.
+STR
+
+$foo = extract_family_info($str);
+diag(Data::Dumper->new([$foo])->Dump());
+
+
 done_testing();
