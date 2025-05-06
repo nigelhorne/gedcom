@@ -78,11 +78,15 @@ sub extract_family_info
 	if ($text =~ /survived by (his|her) children\s*([^\.;]+)/i) {
 		my $children_text = $2;
 		$family{children} = extract_people_section($children_text);
-	} elsif ($text =~ /Loving mum to\s*([^\.;]+)/i) {  # Look for the phrase "Loving father of"
+	} elsif ($text =~ /Loving mum to\s*([^\.;]+)/i) {  # Look for the phrase "Loving mum to"
 		my $children_text = $1;
 		$family{children} = extract_people_section($children_text);
 	} elsif ($text =~ /Loving father of\s*([^\.;]+)/i) {  # Look for the phrase "Loving father of"
 		my $children_text = $1;
+		$family{children} = extract_people_section($children_text);
+	} elsif($text =~ /mother of\s*([^\.;]+)?,/i) {  # Look for the phrase "mother of"
+		my $children_text = $1;
+		$children_text =~ s/, grandmother.+//;
 		$family{children} = extract_people_section($children_text);
 	} else {
 		my @children;
@@ -330,7 +334,7 @@ sub parse_obituary {
     # Extract relationships and their associated names (e.g., children: Alice, Bob)
     my @relationship_phrases = (
         "children", "siblings", "brothers", "sisters", 
-        "survived by", "husband of", "wife of", "father of", "mother of"
+        "survived by", "husband of", "wife of", "father of", 'mother of'
     );
 
     for my $rel (@relationship_phrases) {
@@ -394,8 +398,8 @@ sub parse_obituary2 {
     }
 
     # Parents
-    if ($text =~ /\b(?:son|daughter) of the late ([^()]+)\(([^)]+)\)/i) {
-        $obit{parents} = {
+if ($text =~ /\b(?:son|daughter) of the late ([^()]+)\(([^)]+)\)/i) {
+$obit{parents} = {
             father => {
                 name => $1 =~ /([^,]+)/ ? $1 : undef,
             },
