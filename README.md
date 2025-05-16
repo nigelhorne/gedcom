@@ -95,6 +95,7 @@ For a surname-specific book:
 
 `Gedcom` honours the following environment variables for improved compatibility:
 
+* BOOTSTRAP - Attempt to install the modules you need
 * BMAP_KEY - Bing (virtualearth.net) API Key
 * GEONAMES_USER - geonames.org registered username
 * GMAP_KEY - Google Places (maps.googleapis.com) API Key
@@ -173,7 +174,7 @@ With the -T option, countries and counties can be optimized out.
 That will be fixed.
 
 Different people use different ways to format and enter information,
-ged2site goes out of its way to support all of these,
+gedcom goes out of its way to support all of these,
 such as different location and date formats.
 If your data shows issues with this aim, let me know.
 
@@ -181,26 +182,44 @@ The story telling format is hard coded, it would be useful if it were configurab
 
 ## Pre-Requisites
 
-Gedcom uses many CPAN modules which it will try to install if they are not
-on your system.
-If it doesn't have the necessary privilege to install the modules it will
-fail on starting up with "permission denied" errors.
-This is most likely because you're not running as root
-(which is of course how it should be)
-and you're not using [local::lib](https://metacpan.org/pod/local::lib),
-or [Perlbrew](https://perlbrew.pl/).
+Gedcom relies on multiple **CPAN modules**.
+If they are missing, the program will attempt to **install them automatically** when you run it for the first time **without any arguments**
+and set the evironment variable BOOTSTRAP.
 
-Running the program for the first time with no
-arguments should install them,
-of course that will fail if you don't have the privilege,
-in which case you'll need to add them by hand.
-To install by hand you'll either have to use local::lib or perlbrew.
-Of course you could also run gedcom as root,
-but I strongly advise you don't do that.
 
-You can also try
-```cpan -i lazy && perl -Mlazy gedcom```
-though I've not tested that.
+```
+BOOTSTRAP=1 gedcom
+```
+
+However, this **may fail** with a "permission denied" error if:
+- You are **not running as root** (which is the correct and safer way).
+- You are **not using** tools like [local::lib](https://metacpan.org/pod/local::lib) or [Perlbrew](https://perlbrew.pl/).
+
+### **Manual Installation (If Automatic Installation Fails)**
+If the modules do not install automatically, you have three options:
+
+1. **Use `local::lib`** (Recommended)
+   - Set up `local::lib` by following [these instructions](https://metacpan.org/pod/local::lib).
+   - Install missing modules manually with CPAN:
+     ```
+     cpan install Module::Name
+     ```
+
+2. **Use Perlbrew**
+   - Install [Perlbrew](https://perlbrew.pl/) to manage your Perl environment.
+   - Install modules within your Perlbrew-managed environment.
+
+3. **Run Gedcom as Root** (Not Recommended)
+   - You **can** run it as root, but this **is not advised** due to security risks.
+
+### **Alternative Installation Method (Experimental)**
+You can also try installing dependencies with:
+
+```
+cpan -i lazy && perl -Mlazy gedcom
+```
+
+**Note:** This method is **untested** and may not work.
 
 To use the -B option on FreeBSD you'll need to
 "sudo pkg install pkgconf gdlib ImageMagick7;
