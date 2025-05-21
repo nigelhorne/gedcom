@@ -141,8 +141,8 @@ cmp_deeply($foo,
 		}, 'sisters' => [
 			  { 'name' => 'Phyllis Huestis' }
 		], 'children' => [
-			   { 'name' => 'Anne (Malcolm)' },
-			   { 'name' => 'Boyd' }
+			   { 'name' => 'Boyd R', 'sex' => 'M' },
+			   { 'name' => 'Anne (Malcolm) Maxwell', 'sex' => 'F' }
 		 ], 'brothers' => [
 			   {
 			     'status' => 'living',
@@ -189,8 +189,9 @@ diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
 cmp_deeply($foo,
 	{
 	   'children' => [
-			   { 'name' => 'Christopher' },
-			   { 'name' => 'Marsha' }
+			   { 'name' => 'Christopher Cloud', 'sex' => 'M' },
+			   { 'name' => 'Thomas Cloud', 'sex' => 'M' },
+			   { 'name' => 'Marsha Cloud', 'sex' => 'F' }
 			 ],
 	   'birth' => {
 			'date' => '1937/05/21',
