@@ -66,7 +66,7 @@ BEGIN {
 		'Array::Iterator', 'Data::Section::Simple', 'Date::Manip',
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
-		'CHI', 'File::HomeDir', 'String::Compare',
+		'CHI', 'Config::Abstraction', 'File::HomeDir', 'String::Compare',
 		'HTML::Entities',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
@@ -369,13 +369,13 @@ if(!defined($gpt)) {
 	push @modules, 'Grammar::Improver';
 }
 
+my $config = Config::Abstraction->new();
+# die Data::Dumper->new([$config])->Dump();
+
 if($opts{'w'}) {
 	# If you have a locally written module to look up entries,
 	# list them in gedcom.config,
 	# otherwise use Genealogy::FindaGrave
-	my $config;
-
-	eval { $config = Config::Auto::parse() };
 
 	if($config && $config->{'grave_modules'}) {
 		$grave_modules = $config->{'grave_modules'};
@@ -3016,13 +3016,16 @@ sub print_person
 			if(my $aka = $person->as_string({ use_aka => 1 })) {
 				$str .= " (also known as $aka)";
 			}
+			$parse_tree->{'name'} = $str;
 			if($aob || $aod) {
 				$str .= ',';
 			}
 
 			$phrase->append("$str ");
-			$parse_tree->{'name'} = $str;
 		}
+
+		$parse_tree->{'aob'} = $aob;
+		$parse_tree->{'aod'} = $aod;
 
 		if($relationship) {
 			if($aob || $aod) {
@@ -3038,6 +3041,7 @@ sub print_person
 				}
 				$phrase->append(i18n('your'))->append(" $relationship");
 			}
+			$parse_tree->{'relationship'} = $relationship;
 		} elsif($spouserelationship) {
 			if((!$aob) && (!$aod)) {
 				if(is_alive(person => $person)) {
@@ -3059,6 +3063,7 @@ sub print_person
 			}
 			$phrase->append(i18n('your ') . $spouserelationship)->append(') ');
 			$haveprintedspousename = 1;
+			$parse_tree->{'spouserelationship'} = $spouserelationship;
 		}
 
 		my @occupations = get_all_occupations(person => $person);
@@ -3121,12 +3126,18 @@ sub print_person
 			if(my $cause = $person->cause()) {
 				$cause = lc($cause);
 				$phrase->append(" ($cause)");
+				$parse_tree->{'cause'} = $cause;
 			}
 
 			if($death) {
 				add_death_notes({ person => $person, record => $death, phrase => $phrase });
 			}
 		}
+
+		$parse_tree->{'placeofbirth'} = $placeofbirth;
+		$parse_tree->{'placeofdeath'} = $placeofdeath;
+
+		# die Data::Dumper->new([$parse_tree])->Dump();
 
 		if($phrase->length()) {
 			push @phrases, $phrase->trim();
