@@ -4,12 +4,11 @@
 		<en>
 			[% name %]
 			[% IF aka %]
-				([% aka %])
+				(also known as [% aka %])
 			[% END %]
 			[% IF relationship %]
-				,
 				[% IF aob || aod %]
-					your [% relationship %],
+					, your [% relationship %],
 				[% ELSE %]
 					[% IF is_alive %]
 						is
@@ -19,7 +18,13 @@
 					your [% relationship %]
 				[% END %]
 			[% ELSIF spouserelationship %]
-				, the
+				[% IF aob || aod %]
+					, the
+				[% ELSIF is_alive %]
+					is
+				[% ELSE %]
+					was
+				[% END %]
 				[% IF sex == 'M' %]
 					husband
 				[% ELSE %]
@@ -57,28 +62,31 @@
 					was
 				[% END %]
 				the
+				[% IF siblingcount %]
+					[% familymember %] of [% siblingcount + 1 %] children of
+				[% END %]
 				[% IF sex == 'M' %]
 					son
 				[% ELSE %]
 					daughter
 				[% END %]
 				of
-			[% END %]
-			[% IF father %]
-				[% father %]
-				[% IF father_occupation %]
-					, a [% father_occupation %],
-				[% END %]
-				[% IF mother %]
-					and [% mother %]
-					[% IF mother_occupation %]
-						, a [% mother_occupation %]
+				[% IF father %]
+					[% father %]
+					[% IF father_occupation %]
+						, a [% father_occupation %],
 					[% END %]
-				[% END %]
-			[% ELSIF mother %]
-				[% mother %]
-				[% IF mother_occupation %]
-					, a [% mother_occupation %],
+					[% IF mother %]
+						and [% mother %]
+						[% IF mother_occupation %]
+							, a [% mother_occupation %]
+						[% END %]
+					[% END %]
+				[% ELSE %]
+					[% mother %]
+					[% IF mother_occupation %]
+						, a [% mother_occupation %],
+					[% END %]
 				[% END %]
 			[% END %]
 		</en>
@@ -111,4 +119,36 @@
 			[% END %]
 		</en>
 	</sentence3>
+	<sentence4>
+		<en>
+			[% pronoun %]
+			was born
+			[% IF birth_town.en %]
+				[% birth_town.en %]
+			[% END %]
+			[% IF dateofbirth %]
+				[% dateofbirth %]
+			[% END %]
+		</en>
+	</sentence4>
+	<sentence5>
+		<en>SENTENCE5</en>
+	</sentence5>
+	<sentence6>
+		<en>
+			[% IF orphaned %]
+				[% pronoun %] was orphaned
+				[% IF orphaned.deathofmother == orphaned.deathoffather %]
+					when both of [% person.possessive.lower %] parents died in [% orphaned.deathofmother %] when [% pronoun.lower %] was [% orphaned.age %] years old
+				[% ELSE %]
+					at the age of [% orphaned.age %] following the death of [% person.possessive.lower %]
+					[% IF orphaned.deathofmother > orphaned.deathoffather %]
+						mother in [% orphaned.deathofmother %]
+					[% ELSE %]
+						father in [% orphaned.deathoffather %]
+					[% END %]
+				[% END %]
+			[% END %]
+		</en>
+	</sentence6>
 </gedcom>

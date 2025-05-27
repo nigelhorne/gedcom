@@ -3011,7 +3011,8 @@ sub print_person
 			'name' => $noun,
 			'sex' => $sex,
 			'pronoun' => $pronoun,
-			'is_alive' => is_alive($person)
+			'is_alive' => is_alive($person),
+			'person' => $person,
 		};
 
 		if($aob || $aod || $relationship || $spouserelationship) {
@@ -3167,7 +3168,7 @@ sub print_person
 				$rc =~ s/\s\s+/ /g;
 				$rc =~ s/\s,/,/g;
 				$rc =~ s/\s+$//g;
-				$parse_tree->{'sentence1'} = $rc;
+				$parse_tree->{'sentence1'} = 1;
 				# $bio->append("$rc./////  ");
 				$bio->appendconjunction(@phrases)->append('.  ');
 			} else {
@@ -3289,6 +3290,7 @@ sub print_person
 							$phrase->append(Lingua::FR::Numbers::Ordinate::ordinate($age_index));
 						} else {
 							$phrase->append(ordinate($age_index));
+							$parse_tree->{'familymember'} = ordinate($age_index);
 						}
 						$phrase->append(i18n(' of %d children', scalar(@siblings) + 1));
 						$parse_tree->{'siblingcount'} = scalar(@siblings);
@@ -3409,7 +3411,7 @@ sub print_person
 					$rc =~ s/\s\s+/ /g;
 					$rc =~ s/\s,/,/g;
 					$rc =~ s/\s+$//g;
-					$parse_tree->{'sentence2'} = $rc;
+					$parse_tree->{'sentence2'} = 1;
 					# $bio->append("$rc./////  ");
 					$bio->appendconjunction(@phrases)->append('.  ');
 				} else {
@@ -3523,7 +3525,7 @@ sub print_person
 				$rc =~ s/\s\s+/ /g;
 				$rc =~ s/\s,/,/g;
 				$rc =~ s/\s+$//g;
-				$parse_tree->{'sentence3'} = $rc;
+				$parse_tree->{'sentence3'} = 1;
 				# $bio->append("$rc./////  ");
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			} else {
@@ -3558,6 +3560,7 @@ sub print_person
 				}
 				$phrase->append(i18n({ person => $person, format => 'was born' }));
 				$phrase->append($birth_place) if($birth_place);
+				$parse_tree->{'birth_town'} = $birth_place if($birth_place);
 
 				if($dateofbirth) {
 					if($dateofbirth =~ /\s$/) {
@@ -3570,6 +3573,7 @@ sub print_person
 						must_predate => $death_dt
 					}));
 					$phrase->append(" $y") if($y);
+					$parse_tree->{'dateofbirth'} = $y;
 				}
 				$phrase->append("[$_]") foreach(@birthcitations);
 				if($opts{'w'}) {
@@ -3696,14 +3700,32 @@ sub print_person
 				}
 			}
 			if($dateofbaptism || $placeofbaptism) {
-				if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
-					$phrase->set("$pronoun ");
-				} elsif(scalar(@phrases) >= 3) {
-					push @phrases, $phrase;
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				if($parse_tree->{'birth_town'} || $parse_tree->{'dateofbirth'}) {
+					if(my $en = $config->get('sentence4.' . get_language_code())) {
+						my $template = Template->new({
+							INTERPOLATE => 1,
+							POST_CHOMP => 1,
+							ABSOLUTE => 1,
+						});
+						my $rc;
+
+						$template->process(\$en, $parse_tree, \$rc);
+						if(my $err = $template->error()) {
+							die $err;
+						}
+						$rc =~ s/\s\s+/ /g;
+						$rc =~ s/\s,/,/g;
+						$rc =~ s/\s+$//g;
+						$parse_tree->{'sentence4'} = 1;
+						# $bio->append("$rc./////  ");
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					} else {
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					}
 					$phrase = Data::Text->new("$pronoun ");
 					@phrases = ();
 				}
+
 				# unless($dateofbirth || $placeofbirth) {
 					# if($language eq 'French') {
 						# if(($aod || $opts{'a'} || $opts{'p'}) && $placeofbaptism && $placeofbirth && ($placeofbaptism eq $placeofbirth)) {
@@ -3738,6 +3760,7 @@ sub print_person
 							$p = place({ person => $person, place => $placeofbaptism });
 						}
 						$phrase->append($p);
+						$parse_tree->{'placeofbaptism'} = $p;
 						$places_printed{$p} = 1;
 					}
 				}
@@ -3762,6 +3785,18 @@ sub print_person
 						date => $dateofbaptism,
 						birthdate => $dateofbirth,
 					}));
+					$parse_tree->{'dateofbaptism'} = year({
+						person => $person,
+						date => $dateofbaptism,
+						must_postdate => $birth_dt,
+						must_predate => $death_dt
+					});
+					$parse_tree->{'siblingbaptism'} = sibling_baptism_string({
+						person => $person,
+						siblings => \@siblings,
+						date => $dateofbaptism,
+						birthdate => $dateofbirth,
+					});
 					if(!$death_dt) {
 						must_predate({
 							person => $person,
@@ -3830,6 +3865,7 @@ sub print_person
 						$phrase->append(' in ' .
 							lcfirst($person->possessive()) .
 							' home town');
+						$parse_tree->{'placeofbaptism'} = '<home_town>';
 					} elsif($language eq 'French') {
 						if(my $address = $baptism->address()) {
 							$phrase->append(" \N{U+00E0} $address");
@@ -3838,6 +3874,7 @@ sub print_person
 						# $phrase->append(' there');
 						if(my $address = $baptism->address()) {
 							$phrase->append(" at $address");
+							$parse_tree->{'placeofbaptism'} = "at $address";
 						}
 					}
 				} else {
@@ -3852,6 +3889,7 @@ sub print_person
 					my $p = place($opts);
 					$phrase->append($p);
 					$places_printed{$p} = 1;
+					$parse_tree->{'placeofbaptism'} = $p;
 				}
 			}
 			if($dateofbaptism) {
@@ -3866,11 +3904,42 @@ sub print_person
 					date => $dateofbaptism,
 					birthdate => $dateofbirth,
 				}));
+				$parse_tree->{'dateofbaptism'} = year({
+					person => $person,
+					date => $dateofbaptism,
+					must_postdate => $birth_dt,
+					must_predate => $death_dt
+				});
+				$parse_tree->{'siblingbaptism'} = sibling_baptism_string({
+					person => $person,
+					siblings => \@siblings,
+					date => $dateofbaptism,
+					birthdate => $dateofbirth,
+				});
 			}
 			push @phrases, $phrase;
 			if(scalar(@spouses) == 0) {
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				@phrases = ();
+				if(my $en = $config->get('sentence5.' . get_language_code())) {
+					my $template = Template->new({
+						INTERPOLATE => 1,
+						POST_CHOMP => 1,
+						ABSOLUTE => 1,
+					});
+					my $rc;
+
+					$template->process(\$en, $parse_tree, \$rc);
+					if(my $err = $template->error()) {
+						die $err;
+					}
+					$rc =~ s/\s\s+/ /g;
+					$rc =~ s/\s,/,/g;
+					$rc =~ s/\s+$//g;
+					$parse_tree->{'sentence5'} = 1;
+					# $bio->append("$rc./////  ");
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				} else {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				}
 			}
 			$phrase = Data::Text->new();
 		}
@@ -3907,19 +3976,47 @@ sub print_person
 						->append(' was ')
 						->append($myod - $yob)
 						->append(' years old');
+					$parse_tree->{'orphaned'}->{'age'} = $myod - $yob;
 				} elsif($myod > $fyod) {
 					$phrase->append('at the age of ' . ($myod - $yob) .
 						i18n(' following the death of ') .
 						lcfirst($person->possessive()) .
 						" father in $fyod and mother in $myod");
+					$parse_tree->{'orphaned'}->{'preamble'} = 'at the age of';
+					$parse_tree->{'orphaned'}->{'age'} = $myod - $yob;
 				} else {
 					$phrase->append('at the age of ' . ($fyod - $yob) .
 						i18n(' following the death of ') .
 						lcfirst($person->possessive()) .
 						" mother in $myod and father in $fyod");
+					$parse_tree->{'orphaned'}->{'preamble'} = 'at the age of';
+					$parse_tree->{'orphaned'}->{'age'} = $fyod - $yob;
 				}
+				$parse_tree->{'orphaned'}->{'deathofmother'} = $myod;
+				$parse_tree->{'orphaned'}->{'deathoffather'} = $fyod;
+
 				push @phrases, $phrase;
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
+				if(my $en = $config->get('sentence6.' . get_language_code())) {
+					my $template = Template->new({
+						INTERPOLATE => 1,
+						POST_CHOMP => 1,
+						ABSOLUTE => 1,
+					});
+					my $rc;
+
+					$template->process(\$en, $parse_tree, \$rc);
+					if(my $err = $template->error()) {
+						die $err;
+					}
+					$rc =~ s/\s\s+/ /g;
+					$rc =~ s/\s,/,/g;
+					$rc =~ s/\s+$//g;
+					$parse_tree->{'sentence6'} = 1;
+					# $bio->append("$rc./////  ");
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
+				} else {
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
+				}
 				$phrase = Data::Text->new();
 				@phrases = ();
 
@@ -3971,9 +4068,31 @@ sub print_person
 			$phrase->append(place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }));
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
-			if($numberofchildren) {
+			$parse_tree->{'education'} = $education[0];
+			# if($numberofchildren) {
+				# $bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				# @phrases = ();
+			# }
+			if(my $en = $config->get('sentence7.' . get_language_code())) {
+				my $template = Template->new({
+					INTERPOLATE => 1,
+					POST_CHOMP => 1,
+					ABSOLUTE => 1,
+				});
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s,/,/g;
+				$rc =~ s/\s+$//g;
+				$parse_tree->{'sentence7'} = 1;
+				# $bio->append("$rc./////  ");
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				@phrases = ();
+			} else {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			}
 		}
 
