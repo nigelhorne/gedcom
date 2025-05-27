@@ -17,13 +17,58 @@
 			[% END %]
 			[% IF aob %]
 				was born [% aob %] years today
-			[% END %]
-			[% IF aod %]
+				[% IF addressofbirth %]
+					in [% addressofbirth %]
+				[% END %]
+				[% IF aod %]
+					TODO: born and died on the same day
+				[% END %]
+			[% ELSIF aod %]
 				died [% aod %] years today
-			[% END %]
-			[% IF placeofbirth %]
-				in [% placeofbirth %]
+				[% IF addressofdeath %]
+					in [% addressofdeath %]
+				[% END %]
 			[% END %]
 		</en>
 	</sentence1>
+	<sentence2>
+		<en>
+			[% IF sentence1 %]
+				[% pronoun %]
+			[% ELSE %]
+				[% name %]
+			[% END %]
+			[% IF father || mother %]
+				[% IF is_alive %]
+					is
+				[% ELSE %]
+					was
+				[% END %]
+				the
+				[% IF sex == 'M' %]
+					son
+				[% ELSE %]
+					daughter
+				[% END %]
+				of
+			[% END %]
+			[% IF father %]
+				[% father %]
+				[% IF father_occupation %]
+					, a [% father_occupation %],
+				[% END %]
+				[% IF mother %]
+					and [% mother %]
+					[% IF mother_occupation %]
+						, a [% mother_occupation %]
+					[% END %]
+				[% END %]
+			[% ELSIF mother %]
+				[% mother %]
+				[% IF mother_occupation %]
+					, a [% mother_occupation %],
+				[% END %]
+			[% END %]
+		</en>
+	</sentence2>
 </gedcom>
