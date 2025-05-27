@@ -4098,6 +4098,34 @@ sub print_person
 
 		my @childrenunknownparent;
 		# TODO: children != 0 && spouses == 0
+		$parse_tree->{'spouses'} = [];
+		foreach my $spouse(@spouses) {
+			my $s = { 'is_alive' => is_alive($spouse) };
+			if(my $srelationship = $person->relationship($spouse)) {
+				$s->{'relationship'} = $relationship;
+			}
+
+			$nameparser->parse($spouse->name());
+
+			my %name_components = $nameparser->components();
+			if(my $n = $name_components{'given_name_1'}) {
+				$s->{'name'} = $n;
+			} else {
+				complain({ person => $spouse, warning => 'seems to have no first name' });
+			}
+			my @spouse_occupations = get_all_occupations($spouse);
+			$parse_tree->{'spouse'}->{'occupation'} = $spouse_occupations[0];
+
+			push(@{$parse_tree->{'spouses'}}, $s);
+		}
+
+		if(scalar(@spouses)) {
+			# $Data::Dumper::Maxdepth = 2;
+			# warn Data::Dumper->new([$parse_tree->{'spouses'}])->Dump();
+		} else {
+			delete $parse_tree->{'spouses'};
+		}
+
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
