@@ -3008,6 +3008,7 @@ sub print_person
 		my $noun = $firstname // $pronoun;
 
 		my $parse_tree = {
+			'name' => $noun,
 			'sex' => $sex,
 			'pronoun' => $pronoun,
 			'is_alive' => is_alive($person)
@@ -3504,7 +3505,8 @@ sub print_person
 			}
 		}
 
-		if(($aob || $aod) && scalar(@phrases)) {
+		# if(($aob || $aod) && scalar(@phrases)) {
+		if($parse_tree->{'twin'} || $parse_tree->{'occupations'}) {
 			push @phrases, $phrase;
 			if(my $en = $config->get('sentence3.' . get_language_code())) {
 				my $template = Template->new({
