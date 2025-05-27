@@ -3007,7 +3007,7 @@ sub print_person
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
 
-		my $parse_tree;
+		my $parse_tree = { 'sex' => $sex };
 
 		if($aob || $aod || $relationship || $spouserelationship) {
 			my $str = $noun;
@@ -3058,6 +3058,7 @@ sub print_person
 			$phrase->append(i18n(' of '));
 			if(my $s = $spouse->as_string({ middle_names => 1, title => 1 })) {
 				$phrase->append("$s (");
+				$parse_tree->{'spousefullname'} = $s;
 			} else {
 				complain({ person => $spouse, warning => 'Seems to have no name' });
 			}
@@ -3143,7 +3144,7 @@ sub print_person
 		}
 		if(scalar(@phrases)) {
 			# die Data::Dumper->new([$parse_tree])->Dump();
-			if(my $en = $config->get('sentence1.en')) {
+			if(my $en = $config->get('sentence1.' . get_language_code())) {
 				my $template = Template->new({
 					INTERPOLATE => 1,
 					POST_CHOMP => 1,
@@ -3153,12 +3154,15 @@ sub print_person
 
 				$template->process(\$en, $parse_tree, \$rc);
 				if(my $err = $template->error()) {
-					# die $err;
+					die $err;
 				}
-				# die $rc;
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s+$//g;
+				# $bio->append("$rc./////  ");
+				$bio->appendconjunction(@phrases)->append('.  ');
+			} else {
+				$bio->appendconjunction(@phrases)->append('.  ');
 			}
-
-			$bio->appendconjunction(@phrases)->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}

@@ -2,6 +2,28 @@
 <gedcom>
 	<test>hello</test>
 	<sentence1>
-		<en>Hello [% name %]</en>
+		<en>
+			[% name %],
+			[% IF relationship %]
+				your [% relationship %],
+			[% ELSIF spouserelationship %]
+				the
+				[% IF sex == 'M' %]
+					husband
+				[% ELSE %]
+					wife
+				[% END %]
+				of [% spousefullname %] (your [% spouserelationship %]),
+			[% END %]
+			[% IF aob %]
+				was born [% aob %] years today
+			[% END %]
+			[% IF aod %]
+				died [% aod %] years today
+			[% END %]
+			[% IF placeofbirth %]
+				in [% placeofbirth %]
+			[% END %]
+		</en>
 	</sentence1>
 </gedcom>
