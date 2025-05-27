@@ -1,13 +1,25 @@
 <?xml version="1.0"?>
 <gedcom>
-	<test>hello</test>
 	<sentence1>
 		<en>
-			[% name %],
+			[% name %]
+			[% IF aka %]
+				([% aka %])
+			[% END %]
 			[% IF relationship %]
-				your [% relationship %],
+				,
+				[% IF aob || aod %]
+					your [% relationship %],
+				[% ELSE %]
+					[% IF is_alive %]
+						is
+					[% ELSE %]
+						was
+					[% END %]
+					your [% relationship %]
+				[% END %]
 			[% ELSIF spouserelationship %]
-				the
+				, the
 				[% IF sex == 'M' %]
 					husband
 				[% ELSE %]
@@ -71,4 +83,29 @@
 			[% END %]
 		</en>
 	</sentence2>
+	<sentence3>
+		<en>
+			[% IF twin %]
+				The twin of [% twin %],
+			[% END %]
+			[% IF occupations %]
+				[% IF sentence1 &amp;&amp; !sentence2 %]
+					[% pronoun %]
+				[% ELSE %]
+					[% name %]
+				[% END %]
+				[% IF is_alive %]
+					is a
+				[% ELSE %]
+					worked as a
+				[% END %]
+				[% occupations %]
+				[% IF father_occupation &amp;&amp; father_occupation == occupations %]
+					, the same as [% pronoun %] father
+				[% ELSIF mother_occupation &amp;&amp; mother_occupation == occupations %]
+					, the same as [% pronoun %] mother
+				[% END %]
+			[% END %]
+		</en>
+	</sentence3>
 </gedcom>

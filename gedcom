@@ -3017,10 +3017,11 @@ sub print_person
 			my $str = $noun;
 
 			$noun = $pronoun;
+			$parse_tree->{'name'} = $str;
 			if(my $aka = $person->as_string({ use_aka => 1 })) {
 				$str .= " (also known as $aka)";
+				$parse_tree->{'aka'} = $aka;
 			}
-			$parse_tree->{'name'} = $str;
 			if($aob || $aod) {
 				$str .= ',';
 			}
@@ -3426,6 +3427,7 @@ sub print_person
 			if(scalar(@foccupations) && ($occupations[0] eq $foccupations[0])) {
 				$same_occupation_as_father = $occupations[0];
 				@occupations = ();
+				$parse_tree->{'occupation'} = $occupations[0];
 			} else {
 				if($phrase->length()) {
 					push @phrases, $phrase;
@@ -3467,6 +3469,7 @@ sub print_person
 					format => "$article %s",
 					args => lc(conjunction(@occupations))
 				}));
+				$parse_tree->{'occupations'} = lc(conjunction(@occupations));
 
 				push @phrases, $phrase;
 				$phrase = Data::Text->new();
@@ -3495,6 +3498,7 @@ sub print_person
 							i18n(' of'));
 					}
 				}
+				$parse_tree->{'twin'} = given_names($twins[0]->{'sibling'});
 				$phrase->append(' ' . given_names($twins[0]->{'sibling'}));
 				$phrase->append(' ') if($aob);
 			}
@@ -3502,7 +3506,27 @@ sub print_person
 
 		if(($aob || $aod) && scalar(@phrases)) {
 			push @phrases, $phrase;
-			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			if(my $en = $config->get('sentence3.' . get_language_code())) {
+				my $template = Template->new({
+					INTERPOLATE => 1,
+					POST_CHOMP => 1,
+					ABSOLUTE => 1,
+				});
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s,/,/g;
+				$rc =~ s/\s+$//g;
+				$parse_tree->{'sentence3'} = $rc;
+				# $bio->append("$rc./////  ");
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			} else {
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+			}
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
