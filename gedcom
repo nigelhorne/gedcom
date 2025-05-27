@@ -3007,6 +3007,8 @@ sub print_person
 		my $haveprintedspousename;
 		my $noun = $firstname // $pronoun;
 
+		my $parse_tree;
+
 		if($aob || $aod || $relationship || $spouserelationship) {
 			my $str = $noun;
 
@@ -3019,6 +3021,7 @@ sub print_person
 			}
 
 			$phrase->append("$str ");
+			$parse_tree->{'name'} = $str;
 		}
 
 		if($relationship) {
@@ -7900,10 +7903,11 @@ sub print_person
 					$text = $pdfpage->text();
 					$text->font($params{'font'}, 12);
 					die 'Print failure' if(!pdfprint(string => $bio, text => $text, pdfpage => $pdfpage));
-					$bio = Data::Text->new();
+					# $bio = Data::Text->new();
 				}
 				$phrase = undef;
 			}
+			undef $bio;
 		} elsif((!defined($bio)) || ($bio->length() == 0) || ($bio->as_string() eq "\t.")) {
 			if(scalar(@phrases)) {
 				print conjunction(map { $_->as_string() } @phrases), ".\n", '-' x 80, "\n";
