@@ -80,7 +80,7 @@ BEGIN {
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		'Roman', 'Unicode::Diacritic::Strip',
 		'Params::Get',
-		'Scalar::Util',
+		'Scalar::Util', 'Template',
 		'utf8::all',
 		# 'Devel::FIXME',
 	);
@@ -3137,13 +3137,27 @@ sub print_person
 		$parse_tree->{'placeofbirth'} = $placeofbirth;
 		$parse_tree->{'placeofdeath'} = $placeofdeath;
 
-		# die Data::Dumper->new([$parse_tree])->Dump();
-
 		if($phrase->length()) {
 			push @phrases, $phrase->trim();
 			$phrase = Data::Text->new();
 		}
 		if(scalar(@phrases)) {
+			# die Data::Dumper->new([$parse_tree])->Dump();
+			if(my $en = $config->get('sentence1.en')) {
+				my $template = Template->new({
+					INTERPOLATE => 1,
+					POST_CHOMP => 1,
+					ABSOLUTE => 1,
+				});
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					# die $err;
+				}
+				# die $rc;
+			}
+
 			$bio->appendconjunction(@phrases)->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();

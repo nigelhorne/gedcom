@@ -1,2 +1,7 @@
-gedcom:
-  test: hello
+<?xml version="1.0"?>
+<gedcom>
+	<test>hello</test>
+	<sentence1>
+		<en>Hello [% name %]</en>
+	</sentence1>
+</gedcom>
