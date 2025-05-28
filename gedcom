@@ -6292,34 +6292,6 @@ sub print_person
 			# }
 		# }
 
-		# $Data::Dumper::Maxdepth = 3;
-		# warn Data::Dumper->new([$parse_tree])->Dump();
-
-		my $template = Template->new({
-			INTERPOLATE => 1,
-			POST_CHOMP => 1,
-			ABSOLUTE => 1,
-		});
-		# $bio->append('////////////');
-		foreach my $i (1..7) {
-			if(my $en = $config->get("sentence$i." . get_language_code())) {
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s([,\)])/$1/g;
-				$rc =~ s/\(\s+/(/g;
-				$rc =~ s/\s+$//g;
-				if(length($rc)) {
-					$parse_tree->{"sentence$i"} = 1;
-					# $bio->append("sentence$i: $rc./  ");
-				}
-			}
-		}
-
 		my $funeral;
 
 		if((scalar(@events) == 2) &&
@@ -6699,7 +6671,9 @@ sub print_person
 					if($type eq 'Military service') {
 						if(!$mentioned_military) {
 							my $service = ucfirst(service($event));
+							$parse_tree->{'military'} = { 'service' => $service };
 							if(defined(my $date = year(record => $event))) {
+								$parse_tree->{'military'}->{'date'} = $date;
 								if($date =~ /^from /) {
 									if($firstname) {
 										$phrase->set("\n\t$firstname served in the $service $date");
@@ -6745,12 +6719,13 @@ sub print_person
 
 							if(my $place = place({ person => $person, record => $event, allow_empty => 1 })) {
 								$phrase->append($place);
+								$parse_tree->{'military'}->{'place'} = $place;
 							}
 							$mentioned_military = 1;
 						}
 
 						if((!$mentioned_military) || ($event->get_value() && (notes(record => $event) ne 'Royal Navy.'))) {
-							append_notes({ phrase => $phrase, record => $event });
+							$parse_tree->{'military'}->{'notes'} = append_notes({ phrase => $phrase, record => $event });
 						}
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
@@ -7054,6 +7029,34 @@ sub print_person
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 				$phrase = Data::Text->new();
 				@phrases = ();
+			}
+		}
+
+		# $Data::Dumper::Maxdepth = 3;
+		# warn Data::Dumper->new([$parse_tree])->Dump();
+
+		my $template = Template->new({
+			INTERPOLATE => 1,
+			POST_CHOMP => 1,
+			ABSOLUTE => 1,
+		});
+		# $bio->append("////////////\n");
+		foreach my $i (1..8) {
+			if(my $en = $config->get("sentence$i." . get_language_code())) {
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s([,\)])/$1/g;
+				$rc =~ s/\(\s+/(/g;
+				$rc =~ s/\s+$//g;
+				if(length($rc)) {
+					$parse_tree->{"sentence$i"} = 1;
+					# $bio->append("sentence$i: $rc.\n");
+				}
 			}
 		}
 
@@ -14006,6 +14009,8 @@ sub append_notes
 		$notes =~ s/[\s\.]+$//;
 		$notes =~ tr/\r//;
 		$notes =~ s/hms /HMS /ig;
+		my $rc;
+
 		# Parse service information
 		if($notes =~ /^regiment:\s+(.+)/i) {
 			my $regiment = $1;
@@ -14029,7 +14034,7 @@ sub append_notes
 				if($rank eq 'A/cpl') {
 					$rank = 'Acting Corporal';
 				}
-				$phrase->append("in the $regiment with the rank of $rank");
+				$rc = "in the $regiment with the rank of $rank";
 			} else {
 				$regiment =~ s/[\s\.;]+$//;
 				if($service_number && ($regiment =~ /(.+)\((.+)\)(.*)/)) {
@@ -14039,18 +14044,19 @@ sub append_notes
 						$regiment = "$1($2 - service number $service_number)";
 					}
 				}
-				$phrase->append("in the $regiment");
+				$rc = "in the $regiment";
 			}
 		} elsif($notes =~ /pFC US Army/) {
 			if($notes =~ /Korea/) {
-				$phrase->append('in Korea with the rank of private first class');
+				$rc = 'in Korea with the rank of private first class';
 			} else {
-				$phrase->append('with the rank of private first class');
+				$rc = 'with the rank of private first class';
 			}
 		} else {
-			$phrase->append("($notes)");
+			$rc = "($notes)";
 		}
-		return 1;
+		$phrase->append($rc);
+		return $rc;
 	}
 	return 0;
 }

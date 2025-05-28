@@ -223,4 +223,11 @@
 			[% END %]
 		</en>
 	</sentence7>
+	<sentence8>
+		<en>
+			[% IF military %]
+				[% pronoun %] served in the [% military.service %] [% military.date %] [% military.notes %]
+			[% END %]
+		</en>
+	</sentence8>
 </gedcom>
