@@ -163,7 +163,28 @@
 				married
 				[% FOREACH spouse IN spouses %]
 					[% spouse.name %]
-					TODO: children with this spouse !!!!!!! sentence5
+					[% IF spouse.children %]
+						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
+						[% IF spouse.children.size == 1 %]
+							child: [% spouse.children.0 %]
+						[% ELSE %]
+							[% spouse.children.size %] children: (
+							[%
+								children = spouse.children;
+								size = children.size;
+								IF size == 2;
+									children.join(' and ');
+								ELSE;
+									children.slice(0, size - 3).join(', ') _ ', ' _ children.-2 _ ' and ' _ children.-1;
+								END;
+							%]
+							)
+						[% END %]
+					[% END %]
+					[% spouse.dateofmarriage %]
+					[% IF spouse.placeofmarriage %]
+						in [% spouse.placeofmarriage %]
+					[% END %]
 				[% END %]
 			[% END %]
 		</en>

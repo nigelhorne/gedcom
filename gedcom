@@ -3012,8 +3012,13 @@ sub print_person
 			'sex' => $sex,
 			'pronoun' => $pronoun,
 			'is_alive' => is_alive($person),
+			'placeofmarriage' => $placeofmarriage,
 			'person' => $person,
 		};
+
+		if($dateofmarriage) {
+			$parse_tree->{'dateofmarriage'} = year(date => $dateofmarriage);
+		}
 
 		if($aob || $aod || $relationship || $spouserelationship) {
 			my $str = $noun;
@@ -3980,6 +3985,14 @@ sub print_person
 					}
 				}
 			}
+			$s->{'dateofmarriage'} = dateofmarriage($spouse);
+			my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
+			if(!defined($placeofmarriage)) {
+				if(my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage')) {
+					$placeofmarriage = $marriage->place();
+				}
+			}
+			$s->{'placeofmarriage'} = $placeofmarriage if($placeofmarriage);
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
 
@@ -4001,7 +4014,8 @@ sub print_person
 					die $err;
 				}
 				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s,/,/g;
+				$rc =~ s/\s([,\)])/$1/g;
+				$rc =~ s/\(\s+/(/g;
 				$rc =~ s/\s+$//g;
 				if(length($rc)) {
 					$parse_tree->{"sentence$i"} = 1;
@@ -4254,6 +4268,7 @@ sub print_person
 						}
 					} else {
 						$phrase->append(place({ person => $person, record => $marriage }))->append(' ');
+						$parse_tree->{'placeofmarriage'} = place({ person => $person, record => $marriage });
 					}
 					$phrase->append(year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt));
 				} else {
@@ -4269,6 +4284,7 @@ sub print_person
 						}
 						my $p = place($args);
 						$phrase->append($p);
+						$parse_tree->{'placeofmarriage'} = $p;
 						$places_printed{$p} = 1;
 					} elsif(!$haveprintedspousename) {
 						if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
