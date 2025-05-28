@@ -762,7 +762,7 @@ my $gi;
 		# $gi = Grammar::Improver->new();
 	# }
 # }
-		
+
 my @everyone;
 # Don't get everyone if we're after a specific person, or we're producing a book of a person
 unless($opts{'p'} || (($opts{'A'} || $opts{'G'}) && $opts{'B'} && $opts{'h'})) {
@@ -3991,6 +3991,7 @@ sub print_person
 			POST_CHOMP => 1,
 			ABSOLUTE => 1,
 		});
+		# $bio->append('////////////');
 		foreach my $i (1..8) {
 			if(my $en = $config->get("sentence$i." . get_language_code())) {
 				my $rc;
@@ -4004,7 +4005,7 @@ sub print_person
 				$rc =~ s/\s+$//g;
 				if(length($rc)) {
 					$parse_tree->{"sentence$i"} = 1;
-					# $bio->append("/////sentence$i: $rc./////  ");
+					# $bio->append("sentence$i: $rc./  ");
 				}
 			}
 		}
@@ -10478,10 +10479,23 @@ sub place
 			if($places_printed->{" in$2,$3"}) {
 				# We did place, county, country before, so just
 				# return place, county
-				if(($language eq 'French') && ("$2,$3" eq ' London, England')) {
-					$rc->fr("$1, Londres");
+				my($city, $state, $country) = ($1, $2, $3);
+				$city =~ s/^ in//;
+
+				if("$state,$country" eq ' London, England') {
+					if($params->{'nopreposition'}) {
+						$rc->fr("$city, Londres");
+						$rc->en("$city, London");
+					} else {
+						$rc->fr(" \N{U+00E0}$city, Londres");
+						$rc->en(" in$city, London");
+					}
+				} elsif($params->{'nopreposition'}) {
+					$rc->fr("$city,$state");
+					$rc->en("$city,$state");
 				} else {
-					$rc->fr("$1,$2");
+					$rc->fr(" \N{U+00E0}$city,$state");
+					$rc->en(" in $city,$state");
 				}
 				if($params->{'encode'}) {
 					$rc->encode();
@@ -13830,7 +13844,7 @@ sub extract_family_info
 	if($text =~ /\bpassed away\b.*?\b(?:on\s+)?([A-Z]+ \d{1,2}, \d{4})/i) {
 		$family{death}->{date} = $1;
 	}
-	
+
 	# Age at death
 	if($text =~ /,\s(\d{1,3}), of\s/) {
 		if($1 < 110) {

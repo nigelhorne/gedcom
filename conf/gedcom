@@ -35,7 +35,7 @@
 			[% IF aob %]
 				was born [% aob %] years today
 				[% IF addressofbirth %]
-					in [% addressofbirth %]
+					[% addressofbirth.en %]
 				[% END %]
 				[% IF aod %]
 					TODO: born and died on the same day
@@ -43,7 +43,7 @@
 			[% ELSIF aod %]
 				died [% aod %] years today
 				[% IF addressofdeath %]
-					in [% addressofdeath %]
+					[% addressofdeath.en %]
 				[% END %]
 			[% END %]
 		</en>
@@ -141,14 +141,30 @@
 			[% IF dateofbaptism || placeofbaptism %]
 				was baptized [% dateofbaptism %] [% placeofbaptism %]
 				[% IF siblingbaptism %]
-					TODO>>>>> [% siblingbaptism %] in sentence5
+					TODO!!!!!!!!!! [% siblingbaptism %] in sentence5
 				[% END %]
 				[% IF education %]
+					[% IF spouses %]
+						,
+					[% ELSE %]
+						and
+					[% END %]
+				[% ELSE %]
 					and
 				[% END %]
 			[% END %]
 			[% IF education %]
 				went to [% education %]
+				[% IF spouses %]
+					and
+				[% END %]
+			[% END %]
+			[% IF spouses %]
+				married
+				[% FOREACH spouse IN spouses %]
+					[% spouse.name %]
+					TODO: children with this spouse !!!!!!! sentence5
+				[% END %]
 			[% END %]
 		</en>
 	</sentence5>
