@@ -4091,39 +4091,64 @@ sub print_person
 				$parse_tree->{'sentence7'} = 1;
 				# $bio->append("$rc./////  ");
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				@phrases = ();
 			} else {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				@phrases = ();
 			}
 		}
 
 		my @childrenunknownparent;
 		# TODO: children != 0 && spouses == 0
-		$parse_tree->{'spouses'} = [];
 		foreach my $spouse(@spouses) {
 			my $s = { 'is_alive' => is_alive($spouse) };
 			if(my $srelationship = $person->relationship($spouse)) {
 				$s->{'relationship'} = $relationship;
 			}
 
-			$nameparser->parse($spouse->name());
-
-			my %name_components = $nameparser->components();
-			if(my $n = $name_components{'given_name_1'}) {
-				$s->{'name'} = $n;
-			} else {
-				complain({ person => $spouse, warning => 'seems to have no first name' });
-			}
+			$s->{'name'} = $spouse->as_string();
 			my @spouse_occupations = get_all_occupations($spouse);
-			$parse_tree->{'spouse'}->{'occupation'} = $spouse_occupations[0];
+			$s->{'occupation'} = $spouse_occupations[0];
 
+			foreach my $child(@children) {
+				my @candidates;
+				if($sex eq 'F') {
+					@candidates = $child->father();
+				} else {
+					@candidates = $child->mother();
+				}
+				foreach (@candidates) {
+					if($_->xref() eq $spouse->xref()) {
+						push @{$s->{'children'}}, $child->given_names();
+						last;
+					}
+				}
+			}
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
 
 		if(scalar(@spouses)) {
-			# $Data::Dumper::Maxdepth = 2;
+			# $Data::Dumper::Maxdepth = 3;
 			# warn Data::Dumper->new([$parse_tree->{'spouses'}])->Dump();
-		} else {
-			delete $parse_tree->{'spouses'};
+		}
+
+		if(my $en = $config->get('sentence8.' . get_language_code())) {
+			my $template = Template->new({
+				INTERPOLATE => 1,
+				POST_CHOMP => 1,
+				ABSOLUTE => 1,
+			});
+			my $rc;
+
+			$template->process(\$en, $parse_tree, \$rc);
+			if(my $err = $template->error()) {
+				die $err;
+			}
+			$rc =~ s/\s\s+/ /g;
+			$rc =~ s/\s,/,/g;
+			$rc =~ s/\s+$//g;
+			$parse_tree->{'sentence8'} = 1;
+			# $bio->append("$rc./////  ");
 		}
 
 		if(scalar(@spouses) &&

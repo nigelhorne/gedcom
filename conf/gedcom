@@ -151,4 +151,10 @@
 			[% END %]
 		</en>
 	</sentence6>
+	<sentence7>
+		<en>SENTENCE7</en>
+	</sentence7>
+	<sentence8>
+		<en>SENTENCE8</en>
+	</sentence8>
 </gedcom>
