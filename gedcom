@@ -3985,7 +3985,7 @@ sub print_person
 					}
 				}
 			}
-			$s->{'dateofmarriage'} = dateofmarriage($spouse);
+			$s->{'dateofmarriage'} = year(string => dateofmarriage($spouse), circa => 'around') if($dateofmarriage);
 			my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
 			if(!defined($placeofmarriage)) {
 				if(my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage')) {
@@ -7032,34 +7032,6 @@ sub print_person
 			}
 		}
 
-		# $Data::Dumper::Maxdepth = 3;
-		# warn Data::Dumper->new([$parse_tree])->Dump();
-
-		my $template = Template->new({
-			INTERPOLATE => 1,
-			POST_CHOMP => 1,
-			ABSOLUTE => 1,
-		});
-		# $bio->append("////////////\n");
-		foreach my $i (1..8) {
-			if(my $en = $config->get("sentence$i." . get_language_code())) {
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s([,\)])/$1/g;
-				$rc =~ s/\(\s+/(/g;
-				$rc =~ s/\s+$//g;
-				if(length($rc)) {
-					$parse_tree->{"sentence$i"} = 1;
-					# $bio->append("sentence$i: $rc.\n");
-				}
-			}
-		}
-
 		if(my $profile_object = $person->tag_record('_MILT')) {
 			# Ancestry does this, FMP stores military records as events
 			# $person->resolve_xref($profile_object->value());
@@ -7130,11 +7102,13 @@ sub print_person
 								' home town of ');
 							if($city =~ /^(.+?),/) {
 								$phrase->append($1);
+								$parse_tree->{$type}->{'place'} = $1;
 							} else {
 								$phrase->append(place({
 									person => $person,
 									place => $city
 								}));
+								$parse_tree->{$type}->{'place'} = place(place => $city);
 							}
 						} else {
 							my $opts = {
@@ -7155,6 +7129,7 @@ sub print_person
 								$opts->{'address'} = $address;
 							}
 							$phrase->append(place($opts));
+							$parse_tree->{$type}->{'place'} = place($opts);
 						}
 					}
 					if($type eq 'burial') {
@@ -7163,6 +7138,7 @@ sub print_person
 					} else {
 						$phrase->append(' ' . year({ person => $person, date => $dateofcremation }));
 						$record = $cremation;
+						$parse_tree->{$type}->{'date'} = year({ date => $dateofcremation });
 					}
 					if(defined($record)) {
 						# Prefer burial date, but use funeral if that is available instead
@@ -7171,6 +7147,7 @@ sub print_person
 						   (my $place = place({ person => $person, record => $funeral }))) {
 							if(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 								$phrase->append(" ($weather)");
+								$parse_tree->{$type}->{'weather'} = $weather;
 							}
 							if($record->place() && ($funeral->place() eq $record->place())) {
 								# Burial and funeral in the same town
@@ -7182,10 +7159,12 @@ sub print_person
 								$place);
 						} elsif(my $weather = weather({ person => $person, record => $record, meteo => $meteo })) {
 							$phrase->append(" ($weather)");
+							$parse_tree->{$type}->{'weather'} = $weather;
 						}
 					} elsif(my $weather = weather({ person => $person, record => $funeral, meteo => $meteo })) {
 						# Funeral record, but no burial or cremation
 						$phrase->append(" ($weather)");
+						$parse_tree->{$type}->{'weather'} = $weather;
 					}
 					if($record && (my $n = notes({ record => $record, paragraph => 0 }))) {
 						$n =~ s/\.$//;
@@ -7480,12 +7459,15 @@ sub print_person
 						} else {
 							$phrase->append("$b ");
 						}
+						$parse_tree->{'cremation'}->{'place'} = $b;
 						if($dateofcremation) {
 							$phrase->append(year({ person => $person, date => $dateofcremation }));
+							$parse_tree->{'cremation'}->{'date'} = year({ person => $person, date => $dateofcremation });
 						}
 						$weather = weather({ person => $person, record => $cremation, meteo => $meteo });
 					}
 					if(defined($weather)) {
+						$parse_tree->{'creamation'}->{'weather'} = $weather;
 						$phrase->append(" ($weather)");
 					}
 				}
@@ -8079,6 +8061,37 @@ sub print_person
 			}
 			print "\n", '-' x 80, "\n";
 		}
+
+		# $Data::Dumper::Maxdepth = 3;
+		# warn Data::Dumper->new([$parse_tree])->Dump();
+
+		my $template = Template->new({
+			INTERPOLATE => 1,
+			POST_CHOMP => 1,
+			ABSOLUTE => 1,
+		});
+		# $bio->append("////////////\n");
+		my $lang = get_language_code();
+		foreach my $i (1..9) {
+			if(my $en = $config->get("sentence$i.$lang")) {
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s([,\)])/$1/g;
+				$rc =~ s/\(\s+/(/g;
+				$rc =~ s/\s+$//g;
+				if(length($rc)) {
+					$parse_tree->{"sentence$i"} = 1;
+					# $bio->append("sentence$i: $rc.\n");
+					# print "sentence$i: $rc.\n";
+				}
+			}
+		}
+
 	} else {
 		my ($dob, $dod);
 		eval {

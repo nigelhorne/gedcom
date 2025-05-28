@@ -149,8 +149,8 @@
 					[% ELSE %]
 						and
 					[% END %]
-				[% ELSE %]
-					and
+				[% ELSIF spouses %]
+					, and
 				[% END %]
 			[% END %]
 			[% IF education %]
@@ -164,6 +164,9 @@
 				[% FOREACH spouse IN spouses %]
 					[% spouse.name %]
 					[% IF spouse.children %]
+						[% IF spouse.dateofmarriage || spouse.placeofmarriage %]
+							,
+						[% END %]
 						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
 						[% IF spouse.children.size == 1 %]
 							child: [% spouse.children.0 %]
@@ -179,6 +182,9 @@
 								END;
 							%]
 							)
+						[% END %]
+						[% IF spouse.dateofmarriage || spouse.placeofmarriage %]
+							,
 						[% END %]
 					[% END %]
 					[% spouse.dateofmarriage %]
@@ -226,8 +232,18 @@
 	<sentence8>
 		<en>
 			[% IF military %]
-				[% pronoun %] served in the [% military.service %] [% military.date %] [% military.notes %]
+				[% name %] served in the [% military.service %] [% military.date %] [% military.notes %]
 			[% END %]
 		</en>
 	</sentence8>
+	<sentence9>
+		<en>
+			[% IF cremation %]
+				[% name %] was cremated [% cremation.place.en %] [% cremation.date %]
+				[% IF cremation.weather %]
+					([% cremation.weather %])
+				[% END %]
+			[% END %]
+		</en>
+	</sentence9>
 </gedcom>
