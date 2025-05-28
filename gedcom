@@ -3996,34 +3996,6 @@ sub print_person
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
 
-		# $Data::Dumper::Maxdepth = 3;
-		# warn Data::Dumper->new([$parse_tree])->Dump();
-
-		my $template = Template->new({
-			INTERPOLATE => 1,
-			POST_CHOMP => 1,
-			ABSOLUTE => 1,
-		});
-		# $bio->append('////////////');
-		foreach my $i (1..8) {
-			if(my $en = $config->get("sentence$i." . get_language_code())) {
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s([,\)])/$1/g;
-				$rc =~ s/\(\s+/(/g;
-				$rc =~ s/\s+$//g;
-				if(length($rc)) {
-					$parse_tree->{"sentence$i"} = 1;
-					# $bio->append("sentence$i: $rc./  ");
-				}
-			}
-		}
-
 		if(scalar(@spouses) &&
 		   ((!$spouserelationship) || $placeofmarriage || $dateofmarriage)) {
 			if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
@@ -6191,6 +6163,8 @@ sub print_person
 				@residencestringarray = grep { defined } @residencestringarray;
 				# $phrase->append(', ' . lcfirst($pronoun) . i18n(' was living ') .
 					# Lingua::EN::Inflect::WORDLIST(@residencestringarray, {sep => '; ', conj => i18n('and')});
+
+				$parse_tree->{'residences'} = \@residencestringarray;
 				my $s = ', ';
 				if(scalar(@residencestringarray) < 3) {
 					if($language eq 'German') {
@@ -6317,6 +6291,34 @@ sub print_person
 				# last;
 			# }
 		# }
+
+		# $Data::Dumper::Maxdepth = 3;
+		# warn Data::Dumper->new([$parse_tree])->Dump();
+
+		my $template = Template->new({
+			INTERPOLATE => 1,
+			POST_CHOMP => 1,
+			ABSOLUTE => 1,
+		});
+		# $bio->append('////////////');
+		foreach my $i (1..7) {
+			if(my $en = $config->get("sentence$i." . get_language_code())) {
+				my $rc;
+
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s([,\)])/$1/g;
+				$rc =~ s/\(\s+/(/g;
+				$rc =~ s/\s+$//g;
+				if(length($rc)) {
+					$parse_tree->{"sentence$i"} = 1;
+					# $bio->append("sentence$i: $rc./  ");
+				}
+			}
+		}
 
 		my $funeral;
 

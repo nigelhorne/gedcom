@@ -207,9 +207,20 @@
 		</en>
 	</sentence6>
 	<sentence7>
-		<en>SENTENCE7</en>
+		<en>
+			[% IF residences %]
+				Throughout [% person.possessive.lower %] life,
+				[% name %] [% IF is_alive %] has [% END %]
+				lived in several places:
+				[%
+					size = residences.size;
+					IF size == 2;
+						residences.join(' and ');
+					ELSE;
+						residences.slice(0, size - 3).join('; ') _ '; ' _ residences.-2 _ ' and ' _ residences.-1;
+					END;
+				%]
+			[% END %]
+		</en>
 	</sentence7>
-	<sentence8>
-		<en>SENTENCE8</en>
-	</sentence8>
 </gedcom>
