@@ -13992,16 +13992,10 @@ sub weather
 
 sub append_notes
 {
-	my %params;
+	my $params = Params::Get::get_params(undef, @_);
 
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	}
-
-	if(my $notes = notes(\%params)) {
-		my $phrase = $params{'phrase'};
+	if(my $notes = notes($params)) {
+		my $phrase = $params->{'phrase'};
 
 		$phrase->append(' ') if($phrase->length());
 
