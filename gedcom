@@ -3152,28 +3152,7 @@ sub print_person
 			$phrase = Data::Text->new();
 		}
 		if(scalar(@phrases)) {
-			# die Data::Dumper->new([$parse_tree])->Dump();
-			if(my $en = $config->get('sentence1.' . get_language_code())) {
-				my $template = Template->new({
-					INTERPOLATE => 1,
-					POST_CHOMP => 1,
-					ABSOLUTE => 1,
-				});
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s,/,/g;
-				$rc =~ s/\s+$//g;
-				$parse_tree->{'sentence1'} = 1;
-				# $bio->append("$rc./////  ");
-				$bio->appendconjunction(@phrases)->append('.  ');
-			} else {
-				$bio->appendconjunction(@phrases)->append('.  ');
-			}
+			$bio->appendconjunction(@phrases)->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
@@ -3396,27 +3375,7 @@ sub print_person
 				push @phrases, $phrase;
 			}
 			if(scalar(@phrases)) {
-				if(my $en = $config->get('sentence2.' . get_language_code())) {
-					my $template = Template->new({
-						INTERPOLATE => 1,
-						POST_CHOMP => 1,
-						ABSOLUTE => 1,
-					});
-					my $rc;
-
-					$template->process(\$en, $parse_tree, \$rc);
-					if(my $err = $template->error()) {
-						die $err;
-					}
-					$rc =~ s/\s\s+/ /g;
-					$rc =~ s/\s,/,/g;
-					$rc =~ s/\s+$//g;
-					$parse_tree->{'sentence2'} = 1;
-					# $bio->append("$rc./////  ");
-					$bio->appendconjunction(@phrases)->append('.  ');
-				} else {
-					$bio->appendconjunction(@phrases)->append('.  ');
-				}
+				$bio->appendconjunction(@phrases)->append('.  ');
 				@phrases = ();
 				$phrase = Data::Text->new();
 			}
@@ -3510,27 +3469,7 @@ sub print_person
 		# if(($aob || $aod) && scalar(@phrases)) {
 		if($parse_tree->{'twin'} || $parse_tree->{'occupations'}) {
 			push @phrases, $phrase;
-			if(my $en = $config->get('sentence3.' . get_language_code())) {
-				my $template = Template->new({
-					INTERPOLATE => 1,
-					POST_CHOMP => 1,
-					ABSOLUTE => 1,
-				});
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s,/,/g;
-				$rc =~ s/\s+$//g;
-				$parse_tree->{'sentence3'} = 1;
-				# $bio->append("$rc./////  ");
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			} else {
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-			}
+			$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 			$phrase = Data::Text->new();
 			@phrases = ();
 		}
@@ -3701,27 +3640,7 @@ sub print_person
 			}
 			if($dateofbaptism || $placeofbaptism) {
 				if($parse_tree->{'birth_town'} || $parse_tree->{'dateofbirth'}) {
-					if(my $en = $config->get('sentence4.' . get_language_code())) {
-						my $template = Template->new({
-							INTERPOLATE => 1,
-							POST_CHOMP => 1,
-							ABSOLUTE => 1,
-						});
-						my $rc;
-
-						$template->process(\$en, $parse_tree, \$rc);
-						if(my $err = $template->error()) {
-							die $err;
-						}
-						$rc =~ s/\s\s+/ /g;
-						$rc =~ s/\s,/,/g;
-						$rc =~ s/\s+$//g;
-						$parse_tree->{'sentence4'} = 1;
-						# $bio->append("$rc./////  ");
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					} else {
-						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-					}
+					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 					$phrase = Data::Text->new("$pronoun ");
 					@phrases = ();
 				}
@@ -3919,29 +3838,9 @@ sub print_person
 			}
 			push @phrases, $phrase;
 			if(scalar(@spouses) == 0) {
-				if(my $en = $config->get('sentence5.' . get_language_code())) {
-					my $template = Template->new({
-						INTERPOLATE => 1,
-						POST_CHOMP => 1,
-						ABSOLUTE => 1,
-					});
-					my $rc;
-
-					$template->process(\$en, $parse_tree, \$rc);
-					if(my $err = $template->error()) {
-						die $err;
-					}
-					$rc =~ s/\s\s+/ /g;
-					$rc =~ s/\s,/,/g;
-					$rc =~ s/\s+$//g;
-					$parse_tree->{'sentence5'} = 1;
-					# $bio->append("$rc./////  ");
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				} else {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				}
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+				$phrase = Data::Text->new();
 			}
-			$phrase = Data::Text->new();
 		}
 
 		# Is/was this person an orphan?
@@ -3996,27 +3895,7 @@ sub print_person
 				$parse_tree->{'orphaned'}->{'deathoffather'} = $fyod;
 
 				push @phrases, $phrase;
-				if(my $en = $config->get('sentence6.' . get_language_code())) {
-					my $template = Template->new({
-						INTERPOLATE => 1,
-						POST_CHOMP => 1,
-						ABSOLUTE => 1,
-					});
-					my $rc;
-
-					$template->process(\$en, $parse_tree, \$rc);
-					if(my $err = $template->error()) {
-						die $err;
-					}
-					$rc =~ s/\s\s+/ /g;
-					$rc =~ s/\s,/,/g;
-					$rc =~ s/\s+$//g;
-					$parse_tree->{'sentence6'} = 1;
-					# $bio->append("$rc./////  ");
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
-				} else {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
-				}
+				$bio->append(conjunction(map { $_->as_string() } @phrases))->append(".\n\t");
 				$phrase = Data::Text->new();
 				@phrases = ();
 
@@ -4068,31 +3947,8 @@ sub print_person
 			$phrase->append(place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 }));
 			push @phrases, $phrase;
 			$phrase = Data::Text->new();
-			$parse_tree->{'education'} = $education[0];
-			# if($numberofchildren) {
-				# $bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				# @phrases = ();
-			# }
-			if(my $en = $config->get('sentence7.' . get_language_code())) {
-				my $template = Template->new({
-					INTERPOLATE => 1,
-					POST_CHOMP => 1,
-					ABSOLUTE => 1,
-				});
-				my $rc;
-
-				$template->process(\$en, $parse_tree, \$rc);
-				if(my $err = $template->error()) {
-					die $err;
-				}
-				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s,/,/g;
-				$rc =~ s/\s+$//g;
-				$parse_tree->{'sentence7'} = 1;
-				# $bio->append("$rc./////  ");
-				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				@phrases = ();
-			} else {
+			$parse_tree->{'education'} = place({ person => $person, record => $education[0], places_printed => \%places_printed, nopreposition => 1 });
+			if($numberofchildren) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
 				@phrases = ();
 			}
@@ -4127,28 +3983,30 @@ sub print_person
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
 
-		if(scalar(@spouses)) {
-			# $Data::Dumper::Maxdepth = 3;
-			# warn Data::Dumper->new([$parse_tree->{'spouses'}])->Dump();
-		}
+		# $Data::Dumper::Maxdepth = 3;
+		# warn Data::Dumper->new([$parse_tree])->Dump();
 
-		if(my $en = $config->get('sentence8.' . get_language_code())) {
-			my $template = Template->new({
-				INTERPOLATE => 1,
-				POST_CHOMP => 1,
-				ABSOLUTE => 1,
-			});
-			my $rc;
+		my $template = Template->new({
+			INTERPOLATE => 1,
+			POST_CHOMP => 1,
+			ABSOLUTE => 1,
+		});
+		foreach my $i (1..8) {
+			if(my $en = $config->get("sentence$i." . get_language_code())) {
+				my $rc;
 
-			$template->process(\$en, $parse_tree, \$rc);
-			if(my $err = $template->error()) {
-				die $err;
+				$template->process(\$en, $parse_tree, \$rc);
+				if(my $err = $template->error()) {
+					die $err;
+				}
+				$rc =~ s/\s\s+/ /g;
+				$rc =~ s/\s,/,/g;
+				$rc =~ s/\s+$//g;
+				if(length($rc)) {
+					$parse_tree->{"sentence$i"} = 1;
+					# $bio->append("/////sentence$i: $rc./////  ");
+				}
 			}
-			$rc =~ s/\s\s+/ /g;
-			$rc =~ s/\s,/,/g;
-			$rc =~ s/\s+$//g;
-			$parse_tree->{'sentence8'} = 1;
-			# $bio->append("$rc./////  ");
 		}
 
 		if(scalar(@spouses) &&

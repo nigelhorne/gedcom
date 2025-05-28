@@ -50,12 +50,12 @@
 	</sentence1>
 	<sentence2>
 		<en>
-			[% IF sentence1 %]
-				[% pronoun %]
-			[% ELSE %]
-				[% name %]
-			[% END %]
 			[% IF father || mother %]
+				[% IF sentence1 %]
+					[% pronoun %]
+				[% ELSE %]
+					[% name %]
+				[% END %]
 				[% IF is_alive %]
 					is
 				[% ELSE %]
@@ -121,18 +121,36 @@
 	</sentence3>
 	<sentence4>
 		<en>
-			[% pronoun %]
-			was born
-			[% IF birth_town.en %]
-				[% birth_town.en %]
-			[% END %]
-			[% IF dateofbirth %]
-				[% dateofbirth %]
+			[% IF birth_town || dateofbirth %]
+				[% pronoun %]
+				was born
+				[% IF birth_town.en %]
+					[% birth_town.en %]
+				[% END %]
+				[% IF dateofbirth %]
+					[% dateofbirth %]
+				[% END %]
 			[% END %]
 		</en>
 	</sentence4>
 	<sentence5>
-		<en>SENTENCE5</en>
+		<en>
+			[% IF dateofbaptism || placeofbaptism || education %]
+				[% pronoun %]
+			[% END %]
+			[% IF dateofbaptism || placeofbaptism %]
+				was baptized [% dateofbaptism %] [% placeofbaptism %]
+				[% IF siblingbaptism %]
+					TODO>>>>> [% siblingbaptism %] in sentence5
+				[% END %]
+				[% IF education %]
+					and
+				[% END %]
+			[% END %]
+			[% IF education %]
+				went to [% education %]
+			[% END %]
+		</en>
 	</sentence5>
 	<sentence6>
 		<en>
