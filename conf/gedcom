@@ -137,6 +137,8 @@
 		<en>
 			[% IF dateofbaptism || placeofbaptism || education %]
 				[% pronoun %]
+			[% ELSE %]
+				[% name %]
 			[% END %]
 			[% IF dateofbaptism || placeofbaptism %]
 				was baptized [% dateofbaptism %] [% placeofbaptism %]
@@ -189,7 +191,12 @@
 					[% END %]
 					[% spouse.dateofmarriage %]
 					[% IF spouse.placeofmarriage %]
-						in [% spouse.placeofmarriage %]
+						[% IF spouse.addressofmarriage %]
+							at [% spouse.addressofmarriage %]
+						[% ELSE %]
+							in
+						[% END %]
+						[% spouse.placeofmarriage %]
 					[% END %]
 				[% END %]
 			[% END %]
@@ -214,6 +221,9 @@
 	</sentence6>
 	<sentence7>
 		<en>
+			[% IF alllifein %]
+				[% name %] spent all of [% person.possessive.lower %] life in [% alllifein %].
+			[% END %]
 			[% IF residences %]
 				Throughout [% person.possessive.lower %] life,
 				[% name %] [% IF is_alive %] has [% END %]
