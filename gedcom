@@ -3988,7 +3988,9 @@ sub print_person
 					}
 				}
 			}
-			$s->{'dateofmarriage'} = year(string => dateofmarriage($spouse), circa => 'around') if($dateofmarriage);
+			if(my $dom = dateofmarriage($spouse)) {
+				$s->{'dateofmarriage'} = year(string => $dom, circa => 'around')
+			}
 			my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
 			my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
 			if(!defined($placeofmarriage)) {
