@@ -74,18 +74,18 @@
 				[% IF father %]
 					[% father %]
 					[% IF father_occupation %]
-						, [% father_occupation %],
+						, a [% father_occupation %],
 					[% END %]
 					[% IF mother %]
 						and [% mother %]
 						[% IF mother_occupation %]
-							, [% mother_occupation %]
+							, a [% mother_occupation %]
 						[% END %]
 					[% END %]
 				[% ELSE %]
 					[% mother %]
 					[% IF mother_occupation %]
-						, [% mother_occupation %],
+						, a [% mother_occupation %],
 					[% END %]
 				[% END %]
 			[% END %]
@@ -237,7 +237,11 @@
 				[% END %]
 				[% person.possessive.lower %] life, [% name %] [% IF is_alive %] has [% END %]
 				[% IF residences.size > 2 %]
-					lived in several places:
+					lived in several places
+					[% IF alllifein %]
+						around the county
+					[% END %]
+					:
 				[% ELSIF is_alive %]
 					lived
 				[% ELSE %]

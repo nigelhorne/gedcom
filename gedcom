@@ -3356,9 +3356,9 @@ sub print_person
 				my @occupations = get_all_occupations($mother);
 				# TODO: print all occupations
 				if($occupations[0]) {
+					$parse_tree->{'mother_occupation'} = lcfirst($occupations[0]);
 					$occupations[0] = Lingua::EN::Inflect::A(lc($occupations[0]));
 					$phrase->append(', ' . $occupations[0]);
-					$parse_tree->{'mother_occupation'} = $occupations[0];
 				}
 				if($opts{'w'} && $birth_dt && (my $mdod = dateofdeath($mother))) {
 					if(my $dt = date_to_datetime(date => $mdod)) {
@@ -3846,8 +3846,9 @@ sub print_person
 			push @phrases, $phrase;
 			if(scalar(@spouses) == 0) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
-				$phrase = Data::Text->new();
+				@phrases = ();
 			}
+			$phrase = Data::Text->new();
 		}
 
 		# Is/was this person an orphan?
