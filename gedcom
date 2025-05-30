@@ -3014,6 +3014,8 @@ sub print_person
 			'is_alive' => is_alive($person),
 			'placeofmarriage' => $placeofmarriage,
 			'person' => $person,
+			'dateofbirth' => $dateofbirth,
+			'dateofdeath' => $dateofdeath,
 		};
 
 		if($dateofmarriage) {
@@ -6676,11 +6678,12 @@ sub print_person
 					}
 					print "Event type: $type\n" if($opts{'v'});
 					if($type eq 'Military service') {
+						my $parse_tree_military;
 						if(!$mentioned_military) {
 							my $service = ucfirst(service($event));
-							$parse_tree->{'military'} = { 'service' => $service };
+							my $parse_tree_military = { 'service' => $service };
 							if(defined(my $date = year(record => $event))) {
-								$parse_tree->{'military'}->{'date'} = $date;
+								$parse_tree_military->{'date'} = $date;
 								if($date =~ /^from /) {
 									if($firstname) {
 										$phrase->set("\n\t$firstname served in the $service $date");
@@ -6713,6 +6716,7 @@ sub print_person
 										$phrase->set(ucfirst($date));
 									} elsif($date =~ /^in (\d{4})/) {
 										$phrase->set("During $1,");
+										$parse_tree->{'military'}->{'date'} = "During $1";
 									} elsif($date =~ /(.+)\-(.+)/) {
 										$phrase->set("Between $1 and $2");
 									} else {
@@ -6726,14 +6730,20 @@ sub print_person
 
 							if(my $place = place({ person => $person, record => $event, allow_empty => 1 })) {
 								$phrase->append($place);
-								$parse_tree->{'military'}->{'place'} = $place;
+								$parse_tree_military->{'place'} = $place;
 							}
 							$mentioned_military = 1;
 						}
 
 						if((!$mentioned_military) || ($event->get_value() && (notes(record => $event) ne 'Royal Navy.'))) {
-							$parse_tree->{'military'}->{'notes'} = append_notes({ phrase => $phrase, record => $event });
+							my $notes = append_notes({ phrase => $phrase, record => $event });
+							if(!defined($parse_tree_military)) {
+								$notes =~ s/^\(//;
+								$notes =~ s/\)$//;
+							}
+							$parse_tree_military->{'notes'} = $notes;
 						}
+						push @{$parse_tree->{'military'}->{'records'}}, $parse_tree_military if(defined($parse_tree_military));
 						push @phrases, $phrase;
 						$phrase = Data::Text->new();
 					} elsif($type eq 'Arrival') {
@@ -8088,7 +8098,7 @@ sub print_person
 					die $err;
 				}
 				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s([,\)])/$1/g;
+				$rc =~ s/\s([,:\)])/$1/g;
 				$rc =~ s/\(\s+/(/g;
 				$rc =~ s/\s+$//g;
 				if(length($rc)) {

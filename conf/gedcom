@@ -74,18 +74,18 @@
 				[% IF father %]
 					[% father %]
 					[% IF father_occupation %]
-						, a [% father_occupation %],
+						, [% father_occupation %],
 					[% END %]
 					[% IF mother %]
 						and [% mother %]
 						[% IF mother_occupation %]
-							, a [% mother_occupation %]
+							, [% mother_occupation %]
 						[% END %]
 					[% END %]
 				[% ELSE %]
 					[% mother %]
 					[% IF mother_occupation %]
-						, a [% mother_occupation %],
+						, [% mother_occupation %],
 					[% END %]
 				[% END %]
 			[% END %]
@@ -121,7 +121,7 @@
 	</sentence3>
 	<sentence4>
 		<en>
-			[% IF birth_town || dateofbirth %]
+			[% IF (birth_town || dateofbirth) &amp;&amp; !aob %]
 				[% pronoun %]
 				was born
 				[% IF birth_town.en %]
@@ -171,7 +171,12 @@
 						[% END %]
 						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
 						[% IF spouse.children.size == 1 %]
-							child: [% spouse.children.0 %]
+							one
+							[% IF spouse.children.0 %]
+								child: [% spouse.children.0 %]
+							[% ELSE %]
+								child whose first name is unknown
+							[% END %]
 						[% ELSE %]
 							[% spouse.children.size %] children: (
 							[%
@@ -225,9 +230,19 @@
 				[% name %] spent all of [% person.possessive.lower %] life in [% alllifein %].
 			[% END %]
 			[% IF residences %]
-				Throughout [% person.possessive.lower %] life,
-				[% name %] [% IF is_alive %] has [% END %]
-				lived in several places:
+				[% IF residences.size > 2 %]
+					Throughout
+				[% ELSE %]
+					During
+				[% END %]
+				[% person.possessive.lower %] life, [% name %] [% IF is_alive %] has [% END %]
+				[% IF residences.size > 2 %]
+					lived in several places:
+				[% ELSIF is_alive %]
+					lived
+				[% ELSE %]
+					was living
+				[% END %]
 				[%
 					size = residences.size;
 					IF size == 2;
@@ -242,14 +257,41 @@
 	<sentence8>
 		<en>
 			[% IF military %]
-				[% name %] served in the [% military.service %] [% military.date %] [% military.notes %]
+				[% IF military.date %]
+					[% military.date %], [% name %] was serving
+				[% ELSE %]
+					[% name %] served
+				[% END %]
+				in the
+				[% records = military.records %]
+				[% size = records.size %]
+				[% IF !records.0.service %]
+					military
+				[% END %]
+				[% IF size == 1 %]
+					[% records.0.service %] [% records.0.date %] [% records.0.notes %]
+				[% ELSIF size == 2 %]
+					, [% records.0.service %] [% records.0.date %] [% records.0.notes %]
+					and
+					[% records.1.service %] [% records.1.date %] [% records.1.notes %]
+				[% ELSE %]
+					TODO: sentence8 - more than 2 militaries
+				[% END %]
 			[% END %]
 		</en>
 	</sentence8>
 	<sentence9>
 		<en>
+			[% IF dateofdeath &amp;&amp;!aod %]
+				[% name %] died [% dateofdeath %]
+				[% IF cremation %]
+					and
+				[% END %]
+			[% ELSIF cremation %]
+				[% name %]
+			[% END %]
 			[% IF cremation %]
-				[% name %] was cremated [% cremation.place.en %] [% cremation.date %]
+				was cremated [% cremation.place.en %] [% cremation.date %]
 				[% IF cremation.weather %]
 					([% cremation.weather %])
 				[% END %]
