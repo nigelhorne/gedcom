@@ -262,7 +262,7 @@
 					[%
 						size = residences.size;
 						IF size == 2;
-							residences.join(' and ');
+							residences.join('; and ');
 						ELSE;
 							residences.slice(0, size - 3).join('; ') _ '; ' _ residences.-2 _ ' and ' _ residences.-1;
 						END;
