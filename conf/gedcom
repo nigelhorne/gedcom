@@ -164,7 +164,11 @@
 			[% IF spouses %]
 				married
 				[% FOREACH spouse IN spouses %]
-					[% spouse.name %]
+					[% IF spouserelationship &amp;&amp; spouses.size == 1 &amp;&amp; spouse.first_name %]
+						[% spouse.first_name %]
+					[% ELSE %]
+						[% spouse.name %]
+					[% END %]
 					[% IF spouse.children %]
 						[% IF spouse.dateofmarriage || spouse.placeofmarriage %]
 							,
@@ -172,6 +176,9 @@
 						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
 						[% IF spouse.children.size == 1 %]
 							one
+							[% IF all_children_are_alive %]
+								surviving
+							[% END %]
 							[% IF spouse.children.0 %]
 								child: [% spouse.children.0 %]
 							[% ELSE %]

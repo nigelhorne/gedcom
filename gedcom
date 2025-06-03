@@ -3935,6 +3935,8 @@ sub print_person
 
 		print "all_children_are_alive = $all_children_are_alive\n" if($opts{'v'});
 
+		$parse_tree->{'all_children_are_alive'} = $all_children_are_alive;
+
 		my @education = $person->education();
 
 		if(scalar(@education)) {
@@ -3971,6 +3973,9 @@ sub print_person
 			}
 
 			$s->{'name'} = $spouse->as_string();
+			if($s->{'name'} =~ /^(.+)?\s/) {
+				$s->{'first_name'} = $1;
+			}
 			my @spouse_occupations = get_all_occupations($spouse);
 			$s->{'occupation'} = $spouse_occupations[0];
 
