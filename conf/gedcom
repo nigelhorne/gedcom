@@ -2,48 +2,50 @@
 <gedcom>
 	<sentence1>
 		<en>
-			[% name %]
-			[% IF aka %]
-				(also known as [% aka %])
-			[% END %]
-			[% IF relationship %]
-				[% IF aob || aod %]
-					, your [% relationship %],
-				[% ELSE %]
-					[% IF is_alive %]
+			[% IF aob || aod %]
+				[% name %]
+				[% IF aka %]
+					(also known as [% aka %])
+				[% END %]
+				[% IF relationship %]
+					[% IF aob || aod %]
+						, your [% relationship %],
+					[% ELSE %]
+						[% IF is_alive %]
+							is
+						[% ELSE %]
+							was
+						[% END %]
+						your [% relationship %]
+					[% END %]
+				[% ELSIF spouserelationship %]
+					[% IF aob || aod %]
+						, the
+					[% ELSIF is_alive %]
 						is
 					[% ELSE %]
 						was
 					[% END %]
-					your [% relationship %]
+					[% IF sex == 'M' %]
+						husband
+					[% ELSE %]
+						wife
+					[% END %]
+					of [% spousefullname %] (your [% spouserelationship %]),
 				[% END %]
-			[% ELSIF spouserelationship %]
-				[% IF aob || aod %]
-					, the
-				[% ELSIF is_alive %]
-					is
-				[% ELSE %]
-					was
-				[% END %]
-				[% IF sex == 'M' %]
-					husband
-				[% ELSE %]
-					wife
-				[% END %]
-				of [% spousefullname %] (your [% spouserelationship %]),
-			[% END %]
-			[% IF aob %]
-				was born [% aob %] years today
-				[% IF addressofbirth %]
-					[% addressofbirth.en %]
-				[% END %]
-				[% IF aod %]
-					TODO: born and died on the same day
-				[% END %]
-			[% ELSIF aod %]
-				died [% aod %] years today
-				[% IF addressofdeath %]
-					[% addressofdeath.en %]
+				[% IF aob %]
+					was born [% aob %] years today
+					[% IF addressofbirth %]
+						[% addressofbirth.en %]
+					[% END %]
+					[% IF aod %]
+						TODO: born and died on the same day
+					[% END %]
+				[% ELSIF aod %]
+					died [% aod %] years today
+					[% IF addressofdeath %]
+						[% addressofdeath.en %]
+					[% END %]
 				[% END %]
 			[% END %]
 		</en>
@@ -299,7 +301,7 @@
 		<en>
 			[% IF dateofdeath &amp;&amp;!aod %]
 				[% name %] died [% dateofdeath %]
-				[% IF cremation %]
+				[% IF cremation || burial %]
 					and
 				[% END %]
 			[% ELSIF cremation %]
@@ -309,6 +311,11 @@
 				was cremated [% cremation.place.en %] [% cremation.date %]
 				[% IF cremation.weather %]
 					([% cremation.weather %])
+				[% END %]
+			[% ELSIF burial %]
+				was buried [% IF burial.there %] there at [% END %] [% burial.address %] [% burial.place.en %] [% burial.date %]
+				[% IF burial.weather %]
+					([% burial.weather %])
 				[% END %]
 			[% END %]
 		</en>

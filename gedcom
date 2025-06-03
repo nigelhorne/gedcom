@@ -7398,9 +7398,12 @@ sub print_person
 								} else {
 									$phrase->append(" at $address");
 								}
+								$parse_tree->{'burial'}->{'address'} = $address;
 							}
+							$parse_tree->{'burial'}->{'there'} = 1;
 						} else {
 							$phrase->append(place($opts));
+							$parse_tree->{'burial'}->{'place'} = place($opts);
 						}
 					}
 					my $must_postdate;
@@ -7427,9 +7430,11 @@ sub print_person
 						complain({ person => $person, warning => "Removing trailing fullstop from date of burial '$dateofburial'" });
 						$dateofburial =~ s/\.+$//;
 					}
+					$parse_tree->{'burial'}->{'date'} = year(record => $dateofburial);
 					$phrase->append(' ' . year({ person => $person, date => $dateofburial, must_postdate => $must_postdate }));
 					if($burial && $placeofburial && (my $weather = weather({ person => $person, record => $burial, meteo => $meteo }))) {
 						$phrase->append(" ($weather)");
+						$parse_tree->{'burial'}->{'weather'} = $weather;
 					}
 					if($funeral && (datecmp($dateofburial, $funeral->date()) == 0) && (my $place = place({ person => $person, record => $funeral }))) {
 						$phrase->append(' following ' .
@@ -7450,6 +7455,8 @@ sub print_person
 					} else {
 						$phrase->set('is buried there at ' . $burial->address());
 					}
+					$parse_tree->{'burial'}->{'there'} = 1;
+					$parse_tree->{'burial'}->{'place'} = $burial->address();
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$phrase->append("$pronoun ");
@@ -7469,11 +7476,14 @@ sub print_person
 								$phrase->append(i18n(' at '))->append($b);
 							}
 							$phrase->append(' ');
+							$parse_tree->{'burial'}->{'there'} = 1;
 						} else {
 							$phrase->append("$b ");
 						}
+						$parse_tree->{'burial'}->{'place'} = $b;
 						if($dateofburial) {
 							$phrase->append(year({ person => $person, date => $dateofburial }));
+							$parse_tree->{'burial'}->{'date'} = year({ person => $person, date => $dateofburial });
 						}
 						$weather = weather({ person => $person, record => $burial, meteo => $meteo });
 					} else {
@@ -7483,6 +7493,7 @@ sub print_person
 								$phrase->append(i18n(' at '))->append($b);
 							}
 							$phrase->append(' ');
+							$parse_tree->{'cremation'}->{'there'} = 1;
 						} else {
 							$phrase->append("$b ");
 						}
@@ -7494,7 +7505,7 @@ sub print_person
 						$weather = weather({ person => $person, record => $cremation, meteo => $meteo });
 					}
 					if(defined($weather)) {
-						$parse_tree->{'creamation'}->{'weather'} = $weather;
+						$parse_tree->{$type}->{'weather'} = $weather;
 						$phrase->append(" ($weather)");
 					}
 				}
@@ -8111,10 +8122,15 @@ sub print_person
 				$rc =~ s/\s([,:\)])/$1/g;
 				$rc =~ s/\(\s+/(/g;
 				$rc =~ s/\s+$//g;
+				$rc =~ s/^\s+//g;
 				if(length($rc)) {
 					$parse_tree->{"sentence$i"} = 1;
 					# $bio->append("sentence$i: $rc.\n");
-					# print "sentence$i: $rc.\n";
+					# if($opts{'B'}) {
+						# pdfprint(string => "sentence$i: $rc", text => $text, pdfpage => $pdfpage);
+					# } else {
+						# print "sentence$i: $rc.\n";
+					# }
 				}
 			}
 		}
