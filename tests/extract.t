@@ -25,8 +25,8 @@ cmp_deeply($foo,
 			{ 'name' => 'Dorothy Knowles' },
 			{ 'name' => 'Audrey Little' }
 		], 'grandchildren' => [
-			'Stacey',
-			'Tara Steeves'
+			{ 'name' => 'Stacey' },
+			{ 'name' => 'Tara Steeves' }
 		], 'nieces_nephews' => [
 			'several nieces and nephews'
 		], 'parents' => {
