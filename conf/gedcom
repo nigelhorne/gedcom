@@ -65,9 +65,8 @@
 				[% END %]
 				the
 				[% IF siblingcount %]
-					[% familymember %] of [% siblingcount + 1 %] children of
-				[% END %]
-				[% IF sex == 'M' %]
+					[% familymember %] of [% siblingcount + 1 %] children
+				[% ELSIF sex == 'M' %]
 					son
 				[% ELSE %]
 					daughter
@@ -171,8 +170,11 @@
 					[% ELSE %]
 						[% spouse.name %]
 					[% END %]
+					[% IF spouse.occupation %]
+						, a [% spouse.occupation.lower %]
+					[% END %]
 					[% IF spouse.children %]
-						[% IF spouse.dateofmarriage || spouse.placeofmarriage %]
+						[% IF (spouse.dateofmarriage || spouse.placeofmarriage) &amp;&amp; !spouse.occupation %]
 							,
 						[% END %]
 						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had

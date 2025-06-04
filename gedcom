@@ -6140,7 +6140,7 @@ sub print_person
 									" life in $all_in_county" .
 									(($ENV{'LANG'} && ($ENV{'LANG'} =~ /^en_US/)) ? ',' : ' in') .
 									" $all_in_country.  ");
-								$parse_tree->{'alllifein'} = "$all_in_county $all_in_country";
+								$parse_tree->{'alllifein'} = "$all_in_county, $all_in_country";
 							} else {
 								undef $all_in_country;
 								undef $all_in_county;
