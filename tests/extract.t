@@ -141,20 +141,20 @@ cmp_deeply($foo,
 		}, 'sisters' => [
 			  { 'name' => 'Phyllis Huestis' }
 		], 'children' => [
-			   { 'name' => 'Boyd R', 'sex' => 'M' },
-			   { 'name' => 'Anne (Malcolm) Maxwell', 'sex' => 'F' }
-		 ], 'brothers' => [
+			   { 'name' => 'Anne', 'sex' => 'F', spouse => { 'name' => 'Malcolm', 'sex' => 'M' } },	# spouse should be 'Malcolm Maxwell'
+			   { 'name' => 'Boyd', 'sex' => 'M' },	# should be Boyd R
+		], 'brothers' => [
 			   {
-			     'status' => 'living',
-			     'name' => 'Ralph N.'
+				'status' => 'living',
+				'name' => 'Ralph N.'
 			   }
-		 ], 'death' => {
+		], 'death' => {
 			'place' => 'home',
 			'date' => 'April 16, 2007'
-	      }, 'birth' => {
+		}, 'birth' => {
 			'place' => 'Fredericton',
 			'date' => 'Jul 19, 1925'
-	      }, 'spouse' => [
+		}, 'spouse' => [
 			 {
 			   'name' => 'Ruth Howland',
 			   'married' => {
@@ -189,9 +189,9 @@ diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
 cmp_deeply($foo,
 	{
 	   'children' => [
-			   { 'name' => 'Christopher Cloud', 'sex' => 'M' },
-			   { 'name' => 'Thomas Cloud', 'sex' => 'M' },
-			   { 'name' => 'Marsha Cloud', 'sex' => 'F' }
+			   { 'name' => 'Christopher', 'sex' => 'M' },
+			   { 'name' => 'Thomas', 'sex' => 'M' },
+			   { 'name' => 'Marsha', 'sex' => 'F' }
 			 ],
 	   'birth' => {
 			'date' => '1937/05/21',
