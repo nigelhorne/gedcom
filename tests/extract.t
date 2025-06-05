@@ -220,7 +220,30 @@ From bmdsonline.co.uk:  MAXEY (Dudley).  Peacefully at home on 1st March, Hilary
 STR
 
 $foo = extract_family_info($str);
-diag(Data::Dumper->new([$foo])->Dump());
+diag(Data::Dumper->new([$foo])->Dump()) if($ENV{'TEST_VERBOSE'});
+
+cmp_deeply($foo,
+	{
+		'grandchildren' => [
+			'Dale',
+			'Caitlin',
+			'Aidan'
+		], 'aunt' => [
+			{ 'name' => 'Winnie' }
+		], 'children' => [
+			{ 'name' => 'Noel' },
+			{ 'name' => 'Sarah' }
+		], 'funeral' => {
+			'date' => 'Wednesday 9th March',
+			'location' => 'Preston Cemetery',
+			'time' => '1.15pm'
+		}, 'siblings' => [
+			{ 'name' => 'Gillian' },
+			{ 'name' => 'Adrian' }
+		]
+	}
+);
+
 
 $str = <<'STR';
 Fort Wayne Journal Gazette, 20 February 1977:  Word has been received of the death of Charles F. Harris, 72, of 2717 Lynn Ave.  He died at the Fort Myers (Fla.) Community Hospital after a two week illness.  Mr. Harris was a native of Fort Wayne, and had lived here most of his life.  He retired from International Harvester Co.  in 1965 after 31 years' service.  He is survived by his wife, Ruth; two sons, Jack R., Grabill and Ralph E., Yoder; one daughter, Mrs. Arlene J. Gevara, Fort Wayne and one sister, Mrs. Alice Duncan, Englewood, Fla.  Services will be at 10 a.m.  Wednesday at D. O. McComb & sons Lakeside Park Funeral Home, with calling from 7 to 9 p.m.  Tuesday.  Burial will be in Prairie Grove Cemetery
