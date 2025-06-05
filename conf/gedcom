@@ -138,7 +138,7 @@
 		<en>
 			[% IF dateofbaptism || placeofbaptism || education %]
 				[% pronoun %]
-			[% ELSE %]
+			[% ELSIF educaction || spouses %]
 				[% name %]
 			[% END %]
 			[% IF dateofbaptism || placeofbaptism %]
@@ -301,8 +301,8 @@
 	</sentence8>
 	<sentence9>
 		<en>
-			[% IF dateofdeath &amp;&amp;!aod %]
-				[% name %] died [% dateofdeath %]
+			[% IF dateofdeath &amp;&amp; !aod %]
+				[% name %] died [% dateofdeath %] in [% placeofdeath %]
 				[% IF cremation || burial %]
 					and
 				[% END %]
