@@ -7162,10 +7162,11 @@ sub print_person
 					if($type eq 'burial') {
 						$phrase->append(' ' . year({ person => $person, date => $dateofburial }));
 						$record = $burial;
+						$parse_tree->{'burial'}->{'date'} = year({ date => $dateofburial });
 					} else {
 						$phrase->append(' ' . year({ person => $person, date => $dateofcremation }));
 						$record = $cremation;
-						$parse_tree->{$type}->{'date'} = year({ date => $dateofcremation });
+						$parse_tree->{'cremation'}->{'date'} = year({ date => $dateofcremation });
 					}
 					if(defined($record)) {
 						# Prefer burial date, but use funeral if that is available instead
