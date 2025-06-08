@@ -6695,8 +6695,8 @@ sub print_person
 					if($type eq 'Military service') {
 						my $parse_tree_military;
 						if(!$mentioned_military) {
-							my $service = ucfirst(service($event));
-							my $parse_tree_military = { 'service' => $service };
+							my $service = service($event);
+							$parse_tree_military = { 'service' => $service };
 							if(defined(my $date = year(record => $event))) {
 								$parse_tree_military->{'date'} = $date;
 								if($date =~ /^from /) {
