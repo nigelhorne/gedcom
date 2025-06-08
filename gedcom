@@ -4007,7 +4007,11 @@ sub print_person
 				if($marriage && (my $address = $marriage->address())) {
 					$s->{'addressofmarriage'} = $address
 				}
-				$s->{'placeofmarriage'} = $placeofmarriage;
+				$s->{'placeofmarriage'} = place({
+					place => $placeofmarriage,
+					places_printed => \%places_printed,
+					nopreposition => 1
+				});
 			}
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
@@ -4256,7 +4260,7 @@ sub print_person
 						}
 					} else {
 						$phrase->append(place({ person => $person, record => $marriage }))->append(' ');
-						$parse_tree->{'placeofmarriage'} = place({ person => $person, record => $marriage });
+						$parse_tree->{'placeofmarriage'} = place({ person => $person, record => $marriage, nopreposition => 1 });
 					}
 					$phrase->append(year(person => $person, string => $dateofmarriage, must_postdate => $birth_dt, must_predate => $death_dt));
 				} else {
@@ -4272,8 +4276,9 @@ sub print_person
 						}
 						my $p = place($args);
 						$phrase->append($p);
-						$parse_tree->{'placeofmarriage'} = $p;
 						$places_printed{$p} = 1;
+						$args->{'nopreposition'} = 1;
+						$parse_tree->{'placeofmarriage'} = place($args);
 					} elsif(!$haveprintedspousename) {
 						if((scalar(@phrases) == 0) && ($phrase->length() == 0)) {
 							$phrase->set("$pronoun ");
