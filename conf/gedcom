@@ -189,7 +189,7 @@
 								child whose first name is unknown
 							[% END %]
 						[% ELSE %]
-							[% spouse.children.size %] children: (
+							[% spouse.children.size %] children (
 							[%
 								children = spouse.children;
 								size = children.size;
@@ -302,7 +302,16 @@
 	<sentence9>
 		<en>
 			[% IF dateofdeath &amp;&amp; !aod %]
-				[% name %] died [% dateofdeath %] in [% placeofdeath %]
+				[% name %] died
+				[% IF dateofdeath %]
+					[% IF dateofdeath.match('^\d{1,2}\s') %]
+						on
+					[% ELSIF !dateofdeath.match('^abt') %]
+						during
+					[% END %]
+					[% dateofdeath %]
+				[% END %]
+				in [% placeofdeath %]
 				[% IF cremation || burial %]
 					and
 				[% END %]

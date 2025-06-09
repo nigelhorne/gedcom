@@ -7615,6 +7615,8 @@ sub print_person
 						}
 						if(defined($place)) {
 							$phrase->append($place);
+							$place =~ s/^\s*(?:in|at)\s*//;
+							$parse_tree->{'placeofdeath'} = $place;
 						} else {
 							complain({
 								person => $person,
