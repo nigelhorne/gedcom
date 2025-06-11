@@ -3021,6 +3021,9 @@ sub print_person
 		if($dateofmarriage) {
 			$parse_tree->{'dateofmarriage'} = year(date => $dateofmarriage);
 		}
+		if($dateofdeath) {
+			$parse_tree->{'dateofdeath'} =~ s/^abt\s/c. /;
+		}
 
 		if($aob || $aod || $relationship || $spouserelationship) {
 			my $str = $noun;

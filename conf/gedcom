@@ -306,7 +306,7 @@
 				[% IF dateofdeath %]
 					[% IF dateofdeath.match('^\d{1,2}\s') %]
 						on
-					[% ELSIF !dateofdeath.match('^abt') %]
+					[% ELSIF !dateofdeath.match('^c. ') %]
 						during
 					[% END %]
 					[% dateofdeath %]
