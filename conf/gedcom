@@ -205,7 +205,11 @@
 							,
 						[% END %]
 					[% END %]
-					[% spouse.dateofmarriage %]
+					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^c\. ') %]
+						around [% spouse.dateofmarriage.match('^c\. (.*)').0 %]
+					[% ELSE %]
+						[% spouse.dateofmarriage %]
+					[% END %]
 					[% IF spouse.placeofmarriage %]
 						[% IF spouse.addressofmarriage %]
 							at [% spouse.addressofmarriage %]
@@ -305,11 +309,12 @@
 				[% name %] died
 				[% IF dateofdeath %]
 					[% IF dateofdeath.match('^\d{1,2}\s') %]
-						on
-					[% ELSIF !dateofdeath.match('^c. ') %]
-						during
+						on [% dateofdeath %]
+					[% ELSIF dateofdeath.match('^c. ') %]
+						around [% dateofdeath.match('^c\. (.*)').0 %]
+					[% ELSE %]
+						during [% dateofdeath %]
 					[% END %]
-					[% dateofdeath %]
 				[% END %]
 				in [% placeofdeath %]
 				[% IF cremation || burial %]
