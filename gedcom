@@ -8130,7 +8130,7 @@ sub print_person
 					die $err;
 				}
 				$rc =~ s/\s\s+/ /g;
-				$rc =~ s/\s([,:\)])/$1/g;
+				$rc =~ s/\s([,;:\)])/$1/g;
 				$rc =~ s/\(\s+/(/g;
 				$rc =~ s/\s+$//g;
 				$rc =~ s/^\s+//g;

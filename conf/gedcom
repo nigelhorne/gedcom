@@ -153,7 +153,12 @@
 						and
 					[% END %]
 				[% ELSIF spouses %]
-					, and
+					[% IF spouses.size > 1 %]
+						;
+					[% ELSE %]
+						,
+					[% END %]
+					and
 				[% END %]
 			[% END %]
 			[% IF education %]
@@ -168,6 +173,9 @@
 					[% IF spouserelationship &amp;&amp; spouses.size == 1 &amp;&amp; spouse.first_name %]
 						[% spouse.first_name %]
 					[% ELSE %]
+						[% IF loop.count == loop.size %]
+							, and
+						[% END %]
 						[% spouse.name %]
 					[% END %]
 					[% IF spouse.occupation %]
