@@ -337,7 +337,7 @@
 					([% cremation.weather %])
 				[% END %]
 			[% ELSIF burial %]
-				was buried [% IF burial.there %] there at [% END %] [% burial.address %] [% burial.place.en || burial.place %] [% burial.date %]
+				was buried [% IF burial.there %] there [% ELSE %] at [% END %] [% burial.address %] [% burial.place.en || burial.place %] [% burial.date %]
 				[% IF burial.weather %]
 					([% burial.weather %])
 				[% END %]
