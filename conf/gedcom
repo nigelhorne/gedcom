@@ -320,6 +320,8 @@
 						on [% dateofdeath %]
 					[% ELSIF dateofdeath.match('^c. ') %]
 						around [% dateofdeath.match('^c\. (.*)').0 %]
+					[% ELSIF dateofdeath.match('^\d+$') %]
+						in [% dateofdeath %]
 					[% ELSE %]
 						during [% dateofdeath %]
 					[% END %]
