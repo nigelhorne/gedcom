@@ -173,7 +173,7 @@
 					[% IF spouserelationship &amp;&amp; spouses.size == 1 &amp;&amp; spouse.first_name %]
 						[% spouse.first_name %]
 					[% ELSE %]
-						[% IF loop.count == loop.size %]
+						[% IF spouses.size > 1 &amp;&amp; loop.count == loop.size %]
 							, and
 						[% END %]
 						[% spouse.name %]
@@ -313,6 +313,38 @@
 	</sentence8>
 	<sentence9>
 		<en>
+			[% FOREACH journey IN journies %]
+				[% IF journey.departure &amp;&amp; journey.arrival %]
+					[% IF journey.departure.year == journey.arrival.year %]
+						During [% journey.departure.year %]
+					[% ELSE %]
+						TODO: sentence 9 - different years
+					[% END %]
+					[% pronoun.lower %] travelled from [% journey.departure.place %]
+					[% IF journey.departure.notes %]
+						([% journey.departure.notes %])
+					[% END %]
+					[% IF journey.arrival.place %]
+						to [% journey.arrival.place %]
+					[% END %]
+					[% IF journey.arrival.notes %]
+						([% journey.arrival.notes %])
+					[% END %]
+					departing on
+					[% IF journey.departure.date.match('^\d{1,2}\s\w+') %]
+						[% journey.departure.date.match('^(\d{1,2}\s\w+)').0 %]
+					[% ELSE %]
+						TODO: sentence 9 - full departure date not known
+					[% END %]
+					and arriving later that same year
+				[% ELSE %]
+					TODO: sentence 9 - only one direction known
+				[% END %]
+			[% END %]
+		</en>
+	</sentence9>
+	<sentence10>
+		<en>
 			[% IF dateofdeath &amp;&amp; !aod %]
 				[% name %] died
 				[% IF dateofdeath %]
@@ -345,5 +377,5 @@
 				[% END %]
 			[% END %]
 		</en>
-	</sentence9>
+	</sentence10>
 </gedcom>
