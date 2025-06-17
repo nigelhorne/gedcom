@@ -4016,6 +4016,8 @@ sub print_person
 					nopreposition => 1
 				});
 			}
+			$s->{'pronoun'} = ucfirst($spouse->pronoun());
+			$s->{'object'} = $spouse->sex() eq 'M' ? 'him' : 'her';
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}
 
