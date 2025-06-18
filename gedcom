@@ -3011,6 +3011,8 @@ sub print_person
 			'name' => $noun,
 			'sex' => $sex,
 			'pronoun' => $pronoun,
+			'possessive' => $sex eq 'M' ? 'his' : 'her',
+			'object' => $sex eq 'M' ? 'him' : 'her',
 			'is_alive' => is_alive($person),
 			'placeofmarriage' => $placeofmarriage,
 			'person' => $person,
@@ -4017,6 +4019,7 @@ sub print_person
 				});
 			}
 			$s->{'pronoun'} = ucfirst($spouse->pronoun());
+			$s->{'possessive'} = $spouse->sex() eq 'M' ? 'his' : 'her';
 			$s->{'object'} = $spouse->sex() eq 'M' ? 'him' : 'her';
 			push(@{$parse_tree->{'spouses'}}, $s);
 		}

@@ -258,7 +258,11 @@
 			[% END %]
 			[% IF residences %]
 				[% IF residences.size == 1 %]
-					[% residence_dates %], [% pronoun.lower %] was living [% residences.0 %]
+					[% IF residence_dates %]
+						[% residence_dates %], [% pronoun.lower %] was living [% residences.0 %]
+					[% ELSE %]
+						During [% possessive.lower %] life, [% pronoun.lower %] lived [% residences.0 %]
+					[% END %]
 				[% ELSE %]
 					[% IF residences.size > 2 %]
 						Throughout
