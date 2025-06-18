@@ -310,7 +310,11 @@
 					military
 				[% END %]
 				[% IF size == 1 %]
-					[% records.0.service %] [% records.0.date %] [% records.0.notes %]
+					[% records.0.service %]
+					[% IF !military.date %]
+						[% records.0.date %]
+					[% END %]
+					[% records.0.notes %]
 				[% ELSIF size == 2 %]
 					, [% records.0.service %] [% records.0.date %] [% records.0.notes %]
 					and
