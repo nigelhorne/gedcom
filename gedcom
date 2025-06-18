@@ -3998,25 +3998,47 @@ sub print_person
 					}
 				}
 			}
-			if(my $dom = dateofmarriage($spouse)) {
-				$s->{'dateofmarriage'} = year(string => $dom);
-			}
-			my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
-			my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
-			if(!defined($placeofmarriage)) {
-				if($marriage) {
-					$placeofmarriage = $marriage->place();
+			if(scalar(@spouses) == 1) {
+				if($dateofmarriage) {
+					$s->{'dateofmarriage'} = $dateofmarriage;
 				}
-			}
-			if($placeofmarriage) {
-				if($marriage && (my $address = $marriage->address())) {
-					$s->{'addressofmarriage'} = $address
+				if(!defined($placeofmarriage)) {
+					if($marriage) {
+						$placeofmarriage = $marriage->place();
+					}
 				}
-				$s->{'placeofmarriage'} = place({
-					place => $placeofmarriage,
-					places_printed => \%places_printed,
-					nopreposition => 1
-				});
+				if($placeofmarriage) {
+					if($marriage && (my $address = $marriage->address())) {
+						$s->{'addressofmarriage'} = $address
+					}
+					$s->{'placeofmarriage'} = place({
+						place => $placeofmarriage,
+						places_printed => \%places_printed,
+						nopreposition => 1
+					});
+				}
+			} else {
+				# FIXME: Finding the right marriage for this couple is not easy, and this algorithm needs improvement
+				if(my $dom = dateofmarriage($spouse)) {
+					$s->{'dateofmarriage'} = year(string => $dom);
+				}
+				my $placeofmarriage = get_value({ person => $spouse, value => 'marriage place' });
+				my $marriage = $spouse->get_record('marriage') || $spouse->get_record('fams marriage');
+				if(!defined($placeofmarriage)) {
+					if($marriage) {
+						$placeofmarriage = $marriage->place();
+					}
+				}
+				if($placeofmarriage) {
+					if($marriage && (my $address = $marriage->address())) {
+						$s->{'addressofmarriage'} = $address
+					}
+					$s->{'placeofmarriage'} = place({
+						place => $placeofmarriage,
+						places_printed => \%places_printed,
+						nopreposition => 1
+					});
+				}
 			}
 			$s->{'pronoun'} = ucfirst($spouse->pronoun());
 			$s->{'possessive'} = $spouse->sex() eq 'M' ? 'his' : 'her';

@@ -127,6 +127,8 @@
 				was born
 				[% IF birth_town.en %]
 					[% birth_town.en %]
+				[% ELSIF birth_town %]
+					[% birth_town %]
 				[% END %]
 				[% IF dateofbirth %]
 					[% dateofbirth %]
