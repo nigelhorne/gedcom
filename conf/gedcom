@@ -96,7 +96,7 @@
 		<en>
 			[% IF occupations %]
 				[% IF twin %]
-					The twin of [% twin %],
+					The twin of [% twin.name %],
 				[% END %]
 				[% # exlusive or %]
 				[% IF (sentence1 || sentence2) &amp;&amp; !(sentence1 &amp;&amp; sentence2) %]
@@ -116,7 +116,7 @@
 					, the same as [% pronoun %] mother
 				[% END %]
 			[% ELSIF twin %]
-				[% pronoun %] was the twin of [% twin %]
+				[% pronoun %] was the twin of [% twin.name %]
 			[% END %]
 		</en>
 	</sentence3>
@@ -183,6 +183,9 @@
 					[% IF spouse.occupation %]
 						, a [% spouse.occupation.lower %]
 					[% END %]
+					[% IF !spouse.dateofmarriage &amp;&amp; !spouse.placeofmarriage &amp;&amp; !spouse.addressofmarriage %]
+						(possibly not married to [% spouse.object %])
+					[% END %]
 					[% IF spouse.children %]
 						[% IF (spouse.dateofmarriage || spouse.placeofmarriage) &amp;&amp; !spouse.occupation %]
 							,
@@ -215,22 +218,18 @@
 							,
 						[% END %]
 					[% END %]
-					[% IF !spouse.dateofmarriage &amp;&amp; !spouse.placeofmarriage &amp;&amp; !spouse.addressofmarriage %]
-						(possibly not married to [% spouse.object %])
+					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^c\. ') %]
+						around [% spouse.dateofmarriage.match('^c\. (.*)').0 %]
 					[% ELSE %]
-						[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^c\. ') %]
-							around [% spouse.dateofmarriage.match('^c\. (.*)').0 %]
+						[% spouse.dateofmarriage %]
+					[% END %]
+					[% IF spouse.placeofmarriage %]
+						[% IF spouse.addressofmarriage %]
+							at [% spouse.addressofmarriage %]
 						[% ELSE %]
-							[% spouse.dateofmarriage %]
+							in
 						[% END %]
-						[% IF spouse.placeofmarriage %]
-							[% IF spouse.addressofmarriage %]
-								at [% spouse.addressofmarriage %]
-							[% ELSE %]
-								in
-							[% END %]
-							[% spouse.placeofmarriage %]
-						[% END %]
+						[% spouse.placeofmarriage %]
 					[% END %]
 				[% END %]
 			[% END %]

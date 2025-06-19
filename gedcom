@@ -3472,7 +3472,10 @@ sub print_person
 							i18n(' of'));
 					}
 				}
-				$parse_tree->{'twin'} = given_names($twins[0]->{'sibling'});
+				$parse_tree->{'twin'} = {
+					'name' => given_names($twins[0]->{'sibling'}),
+					'sex' => $twins[0]->{'sibling'}->sex()
+				};
 				$phrase->append(' ' . given_names($twins[0]->{'sibling'}));
 				$phrase->append(' ') if($aob);
 			}
@@ -3977,7 +3980,7 @@ sub print_person
 				$s->{'relationship'} = $relationship;
 			}
 
-			$s->{'name'} = $spouse->as_string();
+			$s->{'name'} = $spouse->as_string({ middle_names => 1, title => 1 });
 			if($s->{'name'} =~ /^(.+)?\s/) {
 				$s->{'first_name'} = $1;
 			}
@@ -8138,7 +8141,7 @@ sub print_person
 			print "\n", '-' x 80, "\n";
 		}
 
-		# $Data::Dumper::Maxdepth = 3;
+		# $Data::Dumper::Maxdepth = 2;
 		# warn Data::Dumper->new([$parse_tree])->Dump();
 		# warn Data::Dumper->new([$parse_tree->{'journies'}])->Dump();
 
