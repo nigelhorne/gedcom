@@ -3980,7 +3980,7 @@ sub print_person
 				$s->{'relationship'} = $relationship;
 			}
 
-			$s->{'name'} = $spouse->as_string({ middle_names => 1, title => 1 });
+			$s->{'name'} = $spouse->as_string($spouserelationship ? { title => 1 } : { middle_names => 1, title => 1 });
 			if($s->{'name'} =~ /^(.+)?\s/) {
 				$s->{'first_name'} = $1;
 			}
@@ -8141,7 +8141,7 @@ sub print_person
 			print "\n", '-' x 80, "\n";
 		}
 
-		# $Data::Dumper::Maxdepth = 2;
+		# $Data::Dumper::Maxdepth = 3;
 		# warn Data::Dumper->new([$parse_tree])->Dump();
 		# warn Data::Dumper->new([$parse_tree->{'journies'}])->Dump();
 

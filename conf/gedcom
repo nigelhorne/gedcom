@@ -221,6 +221,9 @@
 					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^c\. ') %]
 						around [% spouse.dateofmarriage.match('^c\. (.*)').0 %]
 					[% ELSE %]
+						[% IF spouse.dateofmarriage.match('^\d{1,2}\s') %]
+							on
+						[% END %]
 						[% spouse.dateofmarriage %]
 					[% END %]
 					[% IF spouse.placeofmarriage %]
@@ -384,10 +387,11 @@
 					([% cremation.weather %])
 				[% END %]
 			[% ELSIF burial %]
-				was buried [% IF burial.there %] there [% ELSE %] at [% END %] [% burial.address %] [% burial.place.en || burial.place %] [% burial.date %]
-				[% IF burial.weather %]
-					([% burial.weather %])
-				[% END %]
+				was buried
+				[% IF burial.there %] there [% END %]
+				[% IF burial.address %] at [% burial.address %] [% END %]
+				[% burial.place.en || burial.place %] [% burial.date %]
+				[% IF burial.weather %] ([% burial.weather %]) [% END %]
 			[% END %]
 		</en>
 	</sentence10>
