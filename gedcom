@@ -7716,6 +7716,7 @@ sub print_person
 			}
 			$notes =~ s/\.$//;
 			$phrase = Data::Text->new($notes);
+			$parse_tree->{'notes'}->{'text'} = $notes;
 			if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod, birth_country => $birth_country }))) {
 				if("$notes." !~ /\Q$dbpedia\E/) {	# FIXME: improve this test
 					# FIXME: add citation
@@ -7724,6 +7725,7 @@ sub print_person
 					} else {
 						$dbpedia =~ s/\.$//;
 						$phrase->append(" $dbpedia");
+						$parse_tree->{'notes'}->{'dbpedia'} = $dbpedia;
 					}
 				}
 			}
@@ -8155,7 +8157,7 @@ sub print_person
 		});
 		# $bio->append("////////////\n");
 		my $lang = get_language_code();
-		foreach my $i (1..10) {
+		foreach my $i (1..11) {
 			if(my $en = $config->get("sentence$i.$lang")) {
 				my $rc;
 

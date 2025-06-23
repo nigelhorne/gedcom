@@ -395,4 +395,12 @@
 			[% END %]
 		</en>
 	</sentence10>
+	<sentence11>
+		<en>
+			[% notes.text %]
+			[% IF notes.dbpedia %]
+				( [% notes.dbpedia %] )
+			[% END %]
+		</en>
+	</sentence11>
 </gedcom>
