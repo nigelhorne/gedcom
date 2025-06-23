@@ -163,9 +163,9 @@ cmp_deeply($foo,
 				}
 			 }
 	       ], 'funeral' => {
-			  'date' => 'Aug 6, 1955',
-			  'time' => 'Baptish Church, Main Street, Saint John, New Brunswick.',
-			  'location' => 'his residence, after a long illness on Monday April 16th, 2007, Eric J. Peters, loving husband of Ruth Anne Shirley Peters, passed away.  A funeral service at St. Luke\'s United Church, Tantallon NS, on Thursday, April 19th, 2007, at 11am.  Leaving to mourn, two children, Anne and Boyd, grandchildren, and one brother Ralph of Saint John, NB).  He was the youngest of 3 children of Ovid Peters, a minister of the methodist church, and Pearl Boyd.  Eric worked as an air traffic controller.  He was born in Fredericton, York, New Brunswick on Jul 19, 1925 and married Ruth Howland, a registered nurse, (with whom he had 3 surviving children: Boyd R, Anne and James)'
+			  'date' => 'April 19',
+			  'time' => '11am',
+			  'location' => 'St. Luke\'s United Church, Tantallon NS',
 		}
 	}
 );
