@@ -7318,6 +7318,7 @@ sub print_person
 					if($placeofdeath && (my $p = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
 						$phrase->append($p);
 						$places_printed{$p} = 1;
+						$parse_tree->{'placeofdeath'} = place({ person => $person, record => $death, nopreposition => 1, places_printed => \%places_printed });
 						if($dateofdeath && ($p =~ /\s\d+\s/)) {
 							foreach my $child(@children) {
 								my @cr = get_all_residences(person => $child);
@@ -7614,6 +7615,7 @@ sub print_person
 					if((scalar(@events) > 0) && (my $place = place({ person => $person, record => $death, places_printed => \%places_printed }))) {
 						# Place hasn't already been printed with "that is also where she died"
 						$phrase->append($place);
+						$parse_tree->{'placeofdeath'} = $place;
 					}
 				} elsif($placeofbirth && $placeofdeath && ($placeofdeath eq $placeofbirth) && (scalar(@spouses) <= 1) && ($placeofdeath =~ /^(.+?),.*/) && !$printed_residence) {
 					my $p = $1;
@@ -7623,6 +7625,7 @@ sub print_person
 					}
 					$phrase->append(" in $p " .
 						year({ person => $person, date => $dateofdeath, must_postdate => $birth_dt }));
+					$parse_tree->{'placeofdeath'} = $p;
 				} else {
 					if($dateofdeath =~ /\s$/) {
 						complain({ person => $person, warning => "Removing trailing spaces from date of death '$death'" });
