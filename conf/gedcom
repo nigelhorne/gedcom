@@ -374,7 +374,9 @@
 						during [% dateofdeath %]
 					[% END %]
 				[% END %]
-				in [% placeofdeath %]
+				[% IF placeofdeath %]
+					in [% placeofdeath %]
+				[% END %]
 				[% IF cremation || burial %]
 					and
 				[% END %]
