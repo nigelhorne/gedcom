@@ -171,12 +171,20 @@
 			[% END %]
 			[% IF spouses %]
 				married
+				[% IF spouses.size == 2 %]
+					twice,
+				[% ELSIF spouses.size >= 3 %]
+					[% spouses.size %] times:
+				[% END %]
 				[% FOREACH spouse IN spouses %]
 					[% IF spouserelationship &amp;&amp; spouses.size == 1 &amp;&amp; spouse.first_name %]
 						[% spouse.first_name %]
 					[% ELSE %]
-						[% IF spouses.size > 1 &amp;&amp; loop.count == loop.size %]
-							, and
+						[% IF spouses.size > 1 &amp;&amp; loop.count > 1 %]
+							;
+							[% IF loop.count == loop.size %]
+								and
+							[% END %]
 						[% END %]
 						[% spouse.name %]
 					[% END %]
