@@ -198,7 +198,7 @@
 						[% IF (spouse.dateofmarriage || spouse.placeofmarriage) &amp;&amp; !spouse.occupation %]
 							,
 						[% END %]
-						with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
+						(with whom [% pronoun.lower %] [% IF is_alive %] has [% END %] had
 						[% IF spouse.children.size == 1 %]
 							one
 							[% IF all_children_are_alive %]
@@ -210,7 +210,7 @@
 								child whose first name is unknown
 							[% END %]
 						[% ELSE %]
-							[% spouse.children.size %] children (
+							[% spouse.children.size %] children
 							[%
 								children = spouse.children;
 								size = children.size;
@@ -220,14 +220,14 @@
 									children.slice(0, size - 3).join(', ') _ ', ' _ children.-2 _ ' and ' _ children.-1;
 								END;
 							%]
-							)
 						[% END %]
+						)
 						[% IF spouse.dateofmarriage || spouse.placeofmarriage %]
 							,
 						[% END %]
 					[% END %]
-					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^c\. ') %]
-						around [% spouse.dateofmarriage.match('^c\. (.*)').0 %]
+					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^(c\.|abt) ') %]
+						around [% spouse.dateofmarriage.match('^(c\.|abt) (.*)').1 %]
 					[% ELSE %]
 						[% IF spouse.dateofmarriage.match('^\d{1,2}\s') %]
 							on
