@@ -3685,16 +3685,18 @@ sub print_person
 								$address = $1;
 							}
 							$phrase->append(i18n(' at') . " $address");
+							$parse_tree->{'placeofbaptism'} = $address;
 						}
 					} else {
 						my $p;
 						if(defined($baptism)) {
 							$p = place({ person => $person, record => $baptism });
+							$parse_tree->{'placeofbaptism'} = place({ person => $person, record => $baptism, nopreposition => 1 });
 						} else {
 							$p = place({ person => $person, place => $placeofbaptism });
+							$parse_tree->{'placeofbaptism'} = place({ person => $person, place => $placeofbaptism, nopreposition => 1 });
 						}
 						$phrase->append($p);
-						$parse_tree->{'placeofbaptism'} = $p;
 						$places_printed{$p} = 1;
 					}
 				}
@@ -7012,20 +7014,25 @@ sub print_person
 									$phrase = Data::Text->new();
 								}
 								$notes =~ s/\.$//;
+								my $employment;
 								if(my $date = year(record => $event)) {
 									if(scalar(@phrases) == 0) {
 										$date = ucfirst($date);
 									}
 									$phrase->append("$date " . lcfirst($pronoun) . ' was working');
+									$employment->{'date'} = year(record => $event, nopreposition => 1);
 								} else {
 									$phrase->set("$pronoun worked");
 								}
 								$phrase->append(" at $notes");
+								$employment->{'notes'} = $notes;
 								if(my $place = place(person => $person, record => $event)) {
 									$phrase->append($place);
+									$employment->{'place'} = place({ person => $person, record => $event, nopreposition => 1, places_printed => \% places_printed });
 								}
 								push @phrases, $phrase;
 								$phrase = Data::Text->new();
+								push @{$parse_tree->{'employments'}}, $employment;
 							}
 						}
 					} elsif($type eq 'Newspaper') {

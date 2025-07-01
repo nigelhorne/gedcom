@@ -115,6 +115,24 @@
 				[% ELSIF mother_occupation &amp;&amp; mother_occupation == occupations %]
 					, the same as [% pronoun %] mother
 				[% END %]
+				[% IF employments %]
+					[% FOREACH employment IN employments %]
+						, and
+						[% IF employment.date %]
+							,
+							[% IF employment.date.match('^\d{4}$') %]
+								during [% employment.date %]
+							[% ELSE %]
+								on [% employment.date %]
+							[% END %]
+							,
+						[% END %]
+						as a [% employment.notes %]
+						[% IF employment.place %]
+							at [% employment.place %]
+						[% END %]
+					[% END %]
+				[% END %]
 			[% ELSIF twin %]
 				[% pronoun %] was the twin of [% twin.name %]
 			[% END %]
@@ -144,7 +162,10 @@
 				[% name %]
 			[% END %]
 			[% IF dateofbaptism || placeofbaptism %]
-				was baptized [% dateofbaptism %] [% placeofbaptism %]
+				was baptized [% dateofbaptism %]
+				[% IF placeofbaptism %]
+					at [% placeofbaptism %]
+				[% END %]
 				[% IF siblingbaptism %]
 					TODO!!!!!!!!!! [% siblingbaptism %] in sentence5
 				[% END %]
