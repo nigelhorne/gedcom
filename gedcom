@@ -66,7 +66,7 @@ BEGIN {
 		'Array::Iterator', 'Data::Section::Simple', 'Date::Manip',
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date',
 		'Date::Parse', 'IPC::System::Simple',
-		'CHI', 'Config::Abstraction', 'File::HomeDir', 'String::Compare',
+		'CHI', 'Config::Abstraction', 'Date::Cmp', 'File::HomeDir', 'String::Compare',
 		'HTML::Entities',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
@@ -12340,6 +12340,8 @@ sub count_descendants_at_level
 sub datecmp($$)
 {
 	my ($left, $right) = @_;
+
+	return Date::Cmp::datecmp($left, $right, \&complain);
 
 	if((!defined($left)) || !defined($right)) {
 		# Shouldn't happen with the prototype
