@@ -193,9 +193,9 @@
 			[% IF spouses %]
 				married
 				[% IF spouses.size == 2 %]
-					twice,
+					twice, to
 				[% ELSIF spouses.size >= 3 %]
-					[% spouses.size %] times:
+					[% spouses.size %] times: to
 				[% END %]
 				[% FOREACH spouse IN spouses %]
 					[% IF spouserelationship &amp;&amp; spouses.size == 1 &amp;&amp; spouse.first_name %]
@@ -428,7 +428,9 @@
 	</sentence10>
 	<sentence11>
 		<en>
-			[% notes.text %]
+			[% FOREACH note IN notes.text %]
+				[% note %]
+			[% END %]
 			[% IF notes.dbpedia %]
 				( [% notes.dbpedia %] )
 			[% END %]

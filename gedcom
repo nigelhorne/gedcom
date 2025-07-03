@@ -7411,7 +7411,9 @@ sub print_person
 					}
 					$phrase->append("[$_]") foreach(List::Util::uniq(sort @deathcitations));
 
-					add_death_notes({ person => $person, record => $death, phrase => $phrase });
+					if(my $notes = add_death_notes({ person => $person, record => $death, phrase => $phrase })) {
+						push @{$parse_tree->{'notes'}->{'text'}}, $notes;
+					}
 				}
 				my $opts = {
 					person => $person,
@@ -7680,7 +7682,9 @@ sub print_person
 			}
 			$phrase->append("[$_]") foreach(List::Util::uniq(sort @deathcitations));
 
-			add_death_notes({ person => $person, record => $death, phrase => $phrase });
+			if(my $notes = add_death_notes({ person => $person, record => $death, phrase => $phrase })) {
+				push @{$parse_tree->{'notes'}->{'text'}}, $notes;
+			}
 		}
 
 # die $phrase->as_string() if((!$end_of_sentence) && ($phrase->as_string() =~ /[\.\,]\s*$/));
@@ -7725,7 +7729,7 @@ sub print_person
 			}
 			$notes =~ s/\.$//;
 			$phrase = Data::Text->new($notes);
-			$parse_tree->{'notes'}->{'text'} = $notes;
+			push @{$parse_tree->{'notes'}->{'text'}}, $notes;
 			if($opts{'w'} && (my $dbpedia = dbpedia({ person => $person, birth_dt => $birth_dt, yob => $yob, yod => $yod, birth_country => $birth_country }))) {
 				if("$notes." !~ /\Q$dbpedia\E/) {	# FIXME: improve this test
 					# FIXME: add citation
@@ -13726,6 +13730,7 @@ sub add_death_notes
 			$notes = lcfirst($notes) unless($notes =~ /^[A-Z]{2}/);
 			$phrase->append(" ($notes)");
 		}
+		return $notes;
 	}
 }
 
