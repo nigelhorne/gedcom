@@ -6515,6 +6515,7 @@ sub print_person
 					}
 					if(my $place = place({ person => $person, record => $event })) {
 						$phrase->append($place);
+						$parse_tree->{'military'}->{'place'} = $place;
 					}
 					if($date && ($date =~ /^from /i)) {
 						$phrase->append(" $date");
@@ -6768,7 +6769,7 @@ sub print_person
 										$phrase->set(ucfirst($date));
 									} elsif($date =~ /^in (\d{4})/) {
 										$phrase->set("During $1,");
-										$parse_tree->{'military'}->{'date'} = "During $1";
+										$parse_tree_military->{'date'} = "During $1";
 									} elsif($date =~ /(.+)\-(.+)/) {
 										$phrase->set("Between $1 and $2");
 									} else {
@@ -15012,6 +15013,7 @@ sub service
 
 	if(my $notes = notes(record => $params->{'event'})) {
 		return 'navy' if($notes =~ /Navy/i);
+		return 'RAF' if($notes =~ /\sRAF/);
 		return i18n('army') if($notes =~ /\b(?:army\.?|regiment|soldier)\b/i);
 	}
 	return 'military';

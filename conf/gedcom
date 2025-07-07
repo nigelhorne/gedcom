@@ -331,6 +331,8 @@
 			[% IF military %]
 				[% IF military.date %]
 					[% military.date %], [% name %] was serving
+				[% ELSIF military.records.0.date %]
+					[% name %] was serving
 				[% ELSE %]
 					[% name %] served
 				[% END %]
@@ -343,13 +345,14 @@
 				[% IF size == 1 %]
 					[% records.0.service %]
 					[% IF !military.date %]
-						[% records.0.date %]
+						[% records.0.date.lower %]
 					[% END %]
+					[% records.0.place %]
 					[% records.0.notes %]
 				[% ELSIF size == 2 %]
-					, [% records.0.service %] [% records.0.date %] [% records.0.notes %]
+					, [% records.0.service %] [% records.0.date %] [% records.0.place %] [% records.0.notes %]
 					and
-					[% records.1.service %] [% records.1.date %] [% records.1.notes %]
+					[% records.1.service %] [% records.1.date %] [% records.1.place %] [% records.1.notes %]
 				[% ELSE %]
 					TODO: sentence8 - more than 2 militaries
 				[% END %]
