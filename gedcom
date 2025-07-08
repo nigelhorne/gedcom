@@ -8822,7 +8822,7 @@ sub all_records_have_date
 		# Check if the date is valid and matches required format
 		if((!defined $date) || ($date !~ /^\d/) || ($date =~ /[a-z]$/i) ||
 		    ($date =~ /[\/\-]/) || ($date =~ / to /) || !date_parser_cached(date => $date)) {
-			if((defined($date)) && ($date !~ / to /) && ($date !~ /[\/\-]/) && ($date !~ /^abt/i)) {
+			if((defined($date)) && ($date !~ / to /) && ($date !~ /[\/\-]/) && ($date !~ /^abt/i) && ($date !~ /^bet/)) {
 				# Log a warning if date is invalid
 				complain({
 					person => $person,
