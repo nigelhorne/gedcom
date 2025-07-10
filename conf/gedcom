@@ -420,8 +420,20 @@
 			[% ELSIF burial %]
 				was buried
 				[% IF burial.there %] there [% END %]
-				[% IF burial.address %] at [% burial.address %] [% END %]
-				[% burial.place.en || burial.place %] [% burial.date %]
+				[% IF burial.address %] at [% burial.address %], [% END %]
+				[% IF burial.hometown %]
+					in
+					[% IF sex == 'M' %]
+						his
+					[% ELSE %]
+						her
+					[% END %]
+					home town of
+				[% END %]
+				[% burial.place.en || burial.place %]
+				[% IF burial.date %]
+					, [% burial.date %]
+				[% END %]
 				[% IF burial.weather %] ([% burial.weather %]) [% END %]
 			[% END %]
 		</en>

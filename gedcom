@@ -7168,13 +7168,16 @@ sub print_person
 							if($burial) {
 								if(my $address = $burial->address()) {
 									$phrase->append(" at $address");
+									$parse_tree->{'burial'}->{'address'} = $address;
 								}
 							} elsif(my $address = $cremation->address()) {
 								$phrase->append(" at $address");
+								$parse_tree->{'cremation'}->{'address'} = $address;
 							}
 							$phrase->append(' in ' .
 								lcfirst($person->possessive()) .
 								' home town of ');
+							$parse_tree->{$type}->{'hometown'} = 1;
 							if($city =~ /^(.+?),/) {
 								$phrase->append($1);
 								$parse_tree->{$type}->{'place'} = $1;
