@@ -2,37 +2,40 @@
 <gedcom>
 	<sentence1>
 		<en>
-			[% IF aob || aod %]
-				[% name %]
-				[% IF aka %]
-					(also known as [% aka %])
-				[% END %]
-				[% IF relationship %]
-					[% IF aob || aod %]
-						, your [% relationship %],
-					[% ELSE %]
-						[% IF is_alive %]
-							is
-						[% ELSE %]
-							was
-						[% END %]
-						your [% relationship %]
-					[% END %]
-				[% ELSIF spouserelationship %]
-					[% IF aob || aod %]
-						, the
-					[% ELSIF is_alive %]
+			[% name %]
+			[% IF aka %]
+				(also known as [% aka %])
+			[% END %]
+			[% IF relationship %]
+				[% IF aob || aod %]
+					, your [% relationship %],
+				[% ELSE %]
+					[% IF is_alive %]
 						is
 					[% ELSE %]
 						was
 					[% END %]
-					[% IF sex == 'M' %]
-						husband
-					[% ELSE %]
-						wife
-					[% END %]
-					of [% spousefullname %] (your [% spouserelationship %]),
+					your [% relationship %]
 				[% END %]
+			[% ELSIF spouserelationship %]
+				[% IF aob || aod %]
+					, the
+				[% ELSIF is_alive %]
+					is
+				[% ELSE %]
+					was
+				[% END %]
+				[% IF sex == 'M' %]
+					husband
+				[% ELSE %]
+					wife
+				[% END %]
+				of [% spousefullname %] (your [% spouserelationship %])
+				[% IF aob || aod %]
+					,
+				[% END %]
+			[% END %]
+			[% IF aob || aod %]
 				[% IF aob %]
 					was born [% aob %] years today
 					[% IF addressofbirth %]
