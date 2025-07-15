@@ -257,7 +257,7 @@
 					[% END %]
 					[% IF spouse.placeofmarriage %]
 						[% IF spouse.addressofmarriage %]
-							at [% spouse.addressofmarriage %]
+							at [% spouse.addressofmarriage %],
 						[% ELSE %]
 							in
 						[% END %]
@@ -345,7 +345,7 @@
 				[% IF size == 1 %]
 					[% records.0.service %]
 					[% IF !military.date %]
-						[% records.0.date.lower %]
+						[% records.0.date %]
 					[% END %]
 					[% records.0.place %]
 					[% records.0.notes %]
