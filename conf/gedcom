@@ -2,9 +2,11 @@
 <gedcom>
 	<sentence1>
 		<en>
-			[% name %]
-			[% IF aka %]
-				(also known as [% aka %])
+			[% IF relationship || spouserelationship || aob || aod %]
+				[% name %]
+				[% IF aka %]
+					(also known as [% aka %])
+				[% END %]
 			[% END %]
 			[% IF relationship %]
 				[% IF aob || aod %]
@@ -423,7 +425,12 @@
 			[% ELSIF burial %]
 				was buried
 				[% IF burial.there %] there [% END %]
-				[% IF burial.address %] at [% burial.address %], [% END %]
+				[% IF burial.address %]
+					at [% burial.address %]
+					[% IF burial.hometown || burial.place.en || burial.place %]
+						,
+					[% END %]
+				[% END %]
 				[% IF burial.hometown %]
 					in
 					[% IF sex == 'M' %]
