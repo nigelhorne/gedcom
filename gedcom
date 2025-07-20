@@ -75,7 +75,7 @@ BEGIN {
 		'Data::Text', 'DateTime::Format::Genealogy', 'Parse::RecDescent',
 		'Readonly', 'Sort::Key::DateTime', 'Text::Names::GB',
 		'Class::Simple::Cached', 'Class::Simple::Readonly::Cached',
-		'File::Spec',
+		'Encode::Wide', 'File::Spec',
 		# 'Geo-Coder-PlaceFinder-0.1.tar.gz'
 		'Getopt::Std', 'File::Basename', 'Locale::Object::Country', 'Term::ANSIColor',
 		'Roman', 'Unicode::Diacritic::Strip',
@@ -14114,6 +14114,8 @@ sub person_in_residence_record
 sub wide_to_html
 {
 	my $params = Params::Get::get_params('string', @_);
+
+	return Encode::Wide::wide_to_html({ string => $params->{'string'}, complain => \&complain });
 
 	my $string = $params->{'string'};
 
