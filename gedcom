@@ -327,7 +327,8 @@ if((!$opts{'O'}) && (!$opts{'r'}) && (!$opts{'S'})) {
 	if($ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		push @modules, 'Geo::Coder::OpenCage';
 	}
-	if($ENV{'GMAP_KEY'}) {
+	if($ENV{'GMAP_GEOCODING_KEY'} || $ENV{'GMAP_KEY'}) {
+		# FIXME: If you lock the key down by IP address all will fail, whatever settings you choose
 		push @modules, 'Geo::Coder::GooglePlaces';
 	}
 	if($ENV{BMAP_KEY}) {
@@ -689,7 +690,7 @@ if(((!$opts{'r'}) && (!$opts{'O'} && (!$opts{'S'}))) || $opts{'v'}) {
 	if(my $key = $ENV{'GEO_CODER_OPENCAGE_API_KEY'}) {
 		$geocoder->push({ limit => 200, geocoder => Geo::Coder::OpenCage->new(api_key => $key) });
 	}
-	if(my $key = $ENV{'GMAP_KEY'}) {
+	if(my $key = ($ENV{'GMAP_GEOCODING_KEY'} || $ENV{'GMAP_KEY'})) {	# Compatibility with various CPAN modules
 		my %gp_args = (apiver => 3);
 		my $l = $ENV{'LANG'};
 		if(defined($l) && ($l =~ /^([a-z]{2})/i)) {
@@ -3618,20 +3619,23 @@ sub print_person
 				} elsif($birth_dt) {
 					if(!$aob) {
 						my @twins = twins({ birth_dt => $birth_dt, siblings => \@siblings });
-						if(scalar(@twins) == 1) {	# TODO triplets and higher order
+						if(scalar(@twins) == 1) {	# TODO: triplets and higher order
 							my $t = $twins[0];
 							my $sibling = $t->{'sibling'};
 							my $dob = $t->{'dob'};
 							if($dob == $birth_dt) {
 								$phrase->append(' along with ');
+								$parse_tree->{'twin'}->{'sibling'}->{'dateofbirth'} = 'same';
 							} else {
 								push @phrases, $phrase;
 								$phrase = Data::Text->new();
 
 								if($dob == ($birth_dt + $oneday)) {
 									$phrase->set(i18n('a day before '));
+									$parse_tree->{'twin'}->{'sibling'}->{'dateofbirth'} = 'before';
 								} else {
 									$phrase->set('a day after ');
+									$parse_tree->{'twin'}->{'sibling'}->{'dateofbirth'} = 'after';
 								}
 							}
 							my $ssex = $sibling->sex();
@@ -3644,6 +3648,7 @@ sub print_person
 							if(my $given = given_names($sibling)) {
 								$phrase->append($given);
 							}
+							$parse_tree->{'twin'}->{'sibling'}->{'sex'} = $ssex;
 						}
 					}
 

@@ -46,6 +46,9 @@
 					[% IF aod %]
 						TODO: born and died on the same day
 					[% END %]
+					[% IF twin %]
+						TODO: twin after/before setting
+					[% END %]
 				[% ELSIF aod %]
 					died [% aod %] years today
 					[% IF addressofdeath %]
