@@ -7756,6 +7756,7 @@ sub print_person
 					$phrase->append(given_names($child) .
 						i18n(' was born ') .
 						year({ person => $child, date => $dob }));
+					$parse_tree->{'children'}->{given_names($child)}->{'dateofbirth'} = $dob;
 					if($opts{'w'} && ($birth_dt || $death_dt) &&
 					   ($dob !~ /^\d{3,4}$/) && ($dob =~ /^\d/) &&
 					   ($dob !~ /[a-z]$/i)) {
@@ -7789,7 +7790,7 @@ sub print_person
 				}
 			}
 
-			if(scalar(@children)) {
+			if(scalar(@children) && scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.');
 				@phrases = ();
 
@@ -8025,7 +8026,7 @@ sub print_person
 		} else {
 			if(scalar(@phrases)) {
 				$bio->append(conjunction(map { $_->as_string() } @phrases));
-				$bio->append('.') unless($bio->as_string() =~ /\."$/);
+				$bio->append('.') unless($bio->as_string() =~ /\."?$/);
 
 				@phrases = ();
 

@@ -459,6 +459,9 @@
 			[% IF notes.dbpedia %]
 				( [% notes.dbpedia %] )
 			[% END %]
+			[% IF children %]
+				TODO: show requested information about the children
+			[% END %]
 		</en>
 	</sentence11>
 </gedcom>
