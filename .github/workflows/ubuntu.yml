@@ -1,0 +1,53 @@
+---
+name: Ubuntu
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  perl:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - ubuntu-20.04
+        perl-version:
+          # - '5.8'	# Gedcom doesn't work on old perls
+          # - '5.10'
+          # - '5.12'
+          # - '5.14'
+          # - '5.16'
+          # - '5.18'
+          # - '5.20'    # Earlier perls fail with GLIBC errors on this set up
+          # - '5.22'
+          # - '5.24'
+          - '5.26'
+          - '5.28'
+          - '5.30'
+          - '5.32'
+          - 'latest'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Platform check
+        run: uname -a
+      - name: perl -V
+        run: perl -V
+      - name: Install Dependencies
+        env:
+          AUTOMATED_TESTING: 1
+        run: |
+          cpan -i App::cpanminus
+          cpanm --skip-satisfied -iqn Database::Abstraction Gedcom Genealogy::Gedcom::Date Date::Parse Getopt::Std Geo::Coder::OSM Geo::Coder::XYZ Term::ANSIColor Lingua::EN::NameParse Lingua::EN::NameCase Lingua::EN::Numbers::Ordinate Tie::Static DateTime::Format::Natural B::Lint LWP::UserAgent::Throttled LWP::Simple::WithCache URI::Find::Schemeless Sort::Key::DateTime Text::Names::GB autodie IPC::System::Simple Memoize Lingua::EN::ABC warnings::unused Lingua::EN::Inflect Geo::Coder::List Geo::Coder::CA Geo::StreetAddress::US Locale::US Geo::Coder::Postcodes List::Util File::Fetch~0.56 Geo::Coder::Ovi Geo::Coder::RandMcnally Geo::Coder::US::Census Geo::Coder::Bing Geo::Coder::GooglePlaces Geo::GeoNames HTML::Table Net::OAuth HTTP::Cache::Transparent DateTime::Format::Genealogy Locale::Object::Country Config::Auto Module::Load Geo::Coder::DataScienceToolkit LWP::UserAgent::Cached F/FR/FRIFFIN/Geo-Coder-PlaceFinder-0.1.tar.gz String::Compare Class::Simple::Cached Class::Simple::Readonly::Cached Geo::Coder::OpenCage Date::ICal Data::ICal Data::ICal::Entry::Event Data::ICal::DateTime Data::ICal::TimeZone Unicode::Diacritic::Strip Date::Manip Roman Data::Section::Simple CHI Locale::AU Locale::CA utf8::all Lingua::Conjunction Lingua::String Geo::Coder::Abbreviations Array::Iterator Data::Text XML::Hash Template Date::Cmp Encode::Wide
+      - name: Run Tests
+        run: |
+          perl -MO=Lint ./gedcom
+          perl -c -Mwarnings::unused ./gedcom
