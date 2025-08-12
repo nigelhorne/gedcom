@@ -2274,7 +2274,7 @@ sub print_person
 
 			if($c eq 'England') {
 				$birth_country = 'United Kingdom';
-			} elsif($c eq 'USA') {
+			} elsif(uc($c) eq 'USA') {
 				$birth_country = 'United States';
 			} elsif($c eq 'United States Of America') {
 				$birth_country = 'United States';
@@ -2295,7 +2295,7 @@ sub print_person
 			} elsif($c eq 'NL') {
 				$birth_country = 'Netherlands';
 				complain({ person => $person, warning => 'Assuming country of birth is Netherlands' });
-			} elsif(($c =~ /[A-Z]{2}/) && ($us->{code2state}{$c})) {
+			} elsif(($c =~ /[A-Z]{2}/i) && ($us->{code2state}{uc($c)})) {
 				complain({ person => $person, warning => "$c: assuming country of birth is USA" });
 				$birth_country = 'United States';
 				$placeofbirth .= ', USA';
@@ -2399,7 +2399,7 @@ sub print_person
 			$death_country = 'United States';
 		} elsif($c eq 'Texas') {
 			$death_country = 'United States';
-		} elsif(($c =~ /[A-Z]{2}/) && ($us->{code2state}{$c})) {
+		} elsif(($c =~ /[A-Z]{2}/i) && ($us->{code2state}{uc($c)})) {
 			complain({ person => $person, warning => "$c: assuming country of death is USA" });
 			$death_country = 'United States';
 		} elsif($us->{state2code}{uc($c)}) {
@@ -12749,17 +12749,8 @@ sub dateofmarriage
 
 sub dateofdeath
 {
-	my %params;
-
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	} else {
-		$params{'person'} = shift;
-	}
-
-	my $person = $params{'person'};
+	my $params = Params::Get::get_params('person', @_);
+	my $person = $params->{'person'};
 
 	my $dateofdeath = get_value({ person => $person, value => 'death date' });
 	if((!defined($dateofdeath)) && (my $death = $person->get_record('death'))) {
@@ -12768,7 +12759,7 @@ sub dateofdeath
 	if(defined($dateofdeath)) {
 		if($dateofdeath =~ /died at birth/i) {
 			complain({ person => $person, warning => 'Getting date of death from date of birth' });
-			return dateofbirth(%params);
+			return dateofbirth($params);
 		}
 		if($dateofdeath =~ /\s$/) {
 			complain({ person => $person, warning => "Removing trailing spaces from date of death '$dateofdeath'" });
@@ -12781,7 +12772,9 @@ sub dateofdeath
 				complain({ person => $person, warning => "Capitalizing month in date of death '$dateofdeath'" });
 				$dateofdeath = ucfirst($dateofdeath);
 			}
-			return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
+			if(uc($dateofdeath) ne 'DATE UNKNOWN') {
+				return parse_date({ date => $dateofdeath, type => 'Death', person => $person });
+			}
 		}
 	}
 	return;	# undef
