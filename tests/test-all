@@ -3,27 +3,32 @@
 set -ex
 
 unset GMAP_KEY
+unset GMAP_GEOCODING_KEY
 unset REDIS_SERVER
 unset HTTP_PROXY
 unset http_proxy
 
-for i in $(find ~/gedcoms/* -name \*ged -o -name \*GED); do
+# for i in $(find ~/gedcoms/* -name \*ged -o -name \*GED); do
 # for i in tests/gedcoms/*.ged; do
+
+# Allow spaces in the filenames
+find ~/Genealogy/gedcoms -type f -name \*ged -o -name \*GED -print0 | while IFS= read -r -d '' gedcom; do
+	echo "Processing: $gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -wdlA "$i"
+		./gedcom -wdlA "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -wdl "$i"
+		./gedcom -wdl "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom "$i"
+		./gedcom "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -cd "$i"
+		./gedcom -cd "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -wd "$i"
+		./gedcom -wd "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -cwdl "$i"
-	./gedcom -GB /tmp/njh.pdf -d "$i"
-	./gedcom -dwHlm 2 -y $(date +%Y) -s -Le 'example.com' "$i" > /tmp/njh.html
-	./gedcom -x "$i" > /tmp/njh.csv
-	./gedcom -M Kent "$i"
-	./gedcom -wM Kent "$i"
+		./gedcom -cwdl "$gedcom"
+	./gedcom -GB /tmp/njh.pdf -d "$gedcom"
+	./gedcom -dwHlm 2 -y $(date +%Y) -s -Le 'example.com' "$gedcom" > /tmp/njh.html
+	./gedcom -x "$gedcom" > /tmp/njh.csv
+	./gedcom -M Kent "$gedcom"
+	./gedcom -wM Kent "$gedcom"
 done
