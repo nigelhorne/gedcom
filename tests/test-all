@@ -15,9 +15,9 @@ unset http_proxy
 find ~/Genealogy/gedcoms -type f -name \*ged -o -name \*GED -print0 | while IFS= read -r -d '' gedcom; do
 	echo "Processing: $gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
-		./gedcom -wdlA "$gedcom"
-	perl -MDevel::Hide=Geo::libpostal \
 		./gedcom -wdl "$gedcom"
+	perl -MDevel::Hide=Geo::libpostal \
+		./gedcom -wdlA "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \
 		./gedcom "$gedcom"
 	perl -MDevel::Hide=Geo::libpostal \

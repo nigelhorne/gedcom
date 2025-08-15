@@ -11386,8 +11386,8 @@ sub is_alive
 		return 0;
 	}
 
-	# Handle approximate birth dates like "abt 1900" or variations
-	if ($dob =~ /^abt\s*(\d{4})$/i) {
+	# Just get the year
+	if($dob =~ /\s*(\d{3,4})$/i) {
 		$dob = $1;
 	}
 
@@ -12805,6 +12805,9 @@ sub parse_date
 			return;
 		}
 
+		# In a Gedcom, DJULIAN refers to a date in the Julian calendar format, using the @#DJULIAN@ escape to indicate it.
+		$date =~ s/^@#DJULIAN@\s//;
+
 		my $type = $params->{'type'};
 		my $person = $params->{'person'};
 		my $after;
@@ -12887,7 +12890,7 @@ sub parse_date
 			while((my @call_details = caller($i++))) {
 				print STDERR "\t", colored($call_details[2] . ' of ' . $call_details[1], 'red'), "\n";
 			}
-			die 'BUG: parse_date(): handle "', $params->{'date'}, '" on ', $person->as_string();
+			die $ARGV[0], ': BUG: parse_date(): handle "', $params->{'date'}, '" on ', $person->as_string(), " parsed so far as '$date'";
 		}
 		if($about) {
 			$date = "abt $date";
@@ -13200,10 +13203,10 @@ sub get_year_from_date($)
 		$year =~ s/^0+//;	# Strip leading zeros
 		return $year;
 	}
-	complain("Can't parse string '$string'");
 	if($string =~ /(\d{4})/) {
 		return $1;
 	}
+	complain("get_year_from_date(): can't parse string '$string'");
 }
 
 # https://www.gnu.org/software/gettext/manual/html_node/Locale-Environment-Variables.html
