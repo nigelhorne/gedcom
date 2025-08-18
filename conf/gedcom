@@ -243,14 +243,18 @@
 							[%
 								children = spouse.children;
 								size = children.size;
-								IF size == 2;
+								IF size == 1;
+									children;
+								ELSIF size == 2;
 									children.join(' and ');
 								ELSE;
 									children.slice(0, size - 3).join(', ') _ ', ' _ children.-2 _ ' and ' _ children.-1;
 								END;
 							%]
 						[% END %]
-						,
+						[% IF spouse.placeofmarriage || spouse.dateofmarriage %]
+							,
+						[% END %]
 					[% END %]
 					[% IF spouse.dateofmarriage &amp;&amp; spouse.dateofmarriage.match('^(c\.|abt) ') %]
 						around [% spouse.dateofmarriage.match('^(c\.|abt) (.*)').1 %]
