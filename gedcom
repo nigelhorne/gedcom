@@ -318,7 +318,7 @@ if(defined($language) && ($language ne 'English')) {
 	}
 }
 if($opts{'w'}) {
-	push @modules, 'Genealogy::ChroniclingAmerica', 'Genealogy::ObituaryDailyTimes', 'Genealogy::Wills', 'Locale::Country';
+	push @modules, 'Genealogy::ChroniclingAmerica', 'Genealogy::Obituary::Lookup', 'Genealogy::Wills', 'Locale::Country';
 }
 if($opts{'c'}) {
 	push @modules, 'URI::Find::Schemeless';
@@ -920,7 +920,7 @@ if($opts{'w'}) {
 	if($logger) {
 		$opts->{'logger'} = $logger;
 	}
-	$obituaries = Genealogy::ObituaryDailyTimes->new($opts);
+	$obituaries = Genealogy::Obituary::Lookup->new($opts);
 	die if(!defined($obituaries));
 	$wills = Genealogy::Wills->new($opts);
 	die if(!defined($wills));
