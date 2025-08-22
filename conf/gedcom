@@ -333,6 +333,22 @@
 					%]
 				[% END %]
 			[% END %]
+			[% IF newspapers %]
+				[% IF residences %].[% END %]
+				[% name %] appeared in
+				[% IF newspapers.size > 1 %]
+					TODO: more than one newspaper
+				[% ELSE %]
+					[% name %] appeared in [% newspapers.0.title %]
+					[% IF newspapers.0.page %]
+						on [% newspapers.0.page %]
+					[% END %]
+					on [% newspapers.0.date %]
+					[% IF newspapers.0.url %]
+						([% newspapers.0.url %])
+					[% END %]
+				[% END %]
+			[% END %]
 		</en>
 	</sentence7>
 	<sentence8>

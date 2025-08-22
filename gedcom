@@ -6657,23 +6657,26 @@ sub print_person
 					$phrase->set($firstname // $pronoun)->append(' ');
 				}
 				$phrase->append('appeared ');
-				my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $newspapers[0] });
-				if(my $title = $newspaper->title()) {
-					$phrase->append("in $title");
-				} else {
-					$phrase->append('in a newspaper');
+				if(my $newspaper = newspaper({ gedcom => $ged, person => $person, event => $newspapers[0] })) {
+					if(my $title = $newspaper->title()) {
+						$phrase->append("in $title");
+					} else {
+						$phrase->append('in a newspaper');
+					}
+					if(my $date = $newspaper->date()) {
+						$phrase->append(" on $date");
+					}
+					if(my $page = $newspaper->page()) {
+						$phrase->append(" on page $page");
+					}
+					if(my $url = $newspaper->url()) {
+						# FIXME: This really should be a citation
+						$phrase->append(" ($url)");
+					}
+					push @phrases, $phrase;
+					$phrase = Data::Text->new();
+					push @{$parse_tree->{'newspapers'}}, $newspaper;
 				}
-				if(my $date = $newspaper->date()) {
-					$phrase->append(" on $date");
-				}
-				if(my $page = $newspaper->page()) {
-					$phrase->append(" on page $page");
-				}
-				if(my $url = $newspaper->url()) {
-					$phrase->append(" ($url)");
-				}
-				push @phrases, $phrase;
-				$phrase = Data::Text->new();
 			} elsif(scalar(@newspapers) > 1) {
 				if($phrase->length()) {
 					push @phrases, $phrase;
