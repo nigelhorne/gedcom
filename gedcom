@@ -13159,7 +13159,7 @@ sub dump_geocoder_log
 
 # Capitalise the first character of each word (including hyphenated words)
 sub sortoutcase {
-	my $field = lc(shift);          # downcase everything first
+	my $field = lc(shift);	# downcase everything first
 	return Text::Capitalize::capitalize_title($field);
 }
 
@@ -14029,7 +14029,7 @@ sub new
 	my ($class, $pdf) = @_;
 
 	# Validate input
-	die 'Invalid PDF::API2 object' unless($pdf->can('page'));
+	die 'Invalid object' unless($pdf->can('page'));
 
 	# Return the blessed object
 	return bless { y => 750, page => $pdf->page(), page_number => $page_number++ }, $class;
@@ -14196,6 +14196,7 @@ living::living
 living person::living person
 married::married
 mother::mother
+navy::navy
 nephew::nephew
 nephews::nephews
 of::of
