@@ -4215,17 +4215,16 @@ sub print_person
 								$phrase->append('1 child, ');
 							}
 						} else {
+							$phrase->append($numberofchildrenwiththisspouse);
 							if($all_children_are_alive) {
-								$phrase->append("$numberofchildrenwiththisspouse surviving children");
-							} elsif($language eq 'French') {
-								$phrase->append("$numberofchildrenwiththisspouse enfants");
+								$phrase->append(' surviving children');
 							} else {
-								$phrase->append("$numberofchildrenwiththisspouse children");
+								$phrase->append(i18n(' children'));
+								if($placeofmarriage || $dateofmarriage) {
+									$phrase->append(($language eq 'French') ? ' :' : ':');
+								}
+								$phrase->append(' ');
 							}
-							if($placeofmarriage || $dateofmarriage) {
-								$phrase->append(($language eq 'French') ? ' :' : ':');
-							}
-							$phrase->append(' ');
 						}
 						if((!$placeofmarriage) && !$dateofmarriage) {
 							if(length(my $spouse_name = $spouse->as_string({ middle_names => 1, title => 1 }))) {
@@ -14206,6 +14205,7 @@ on the same day::on the same day
 on your father's side::on your father's side
 on your mother's side::on your mother's side
 parents::parents
+raf::raf
 she::she
 sister::sister
 sister-in-law::sister-in-law
