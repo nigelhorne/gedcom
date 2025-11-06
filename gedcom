@@ -412,7 +412,7 @@ if($opts{'w'}) {
 foreach my $module(@modules) {
 	my $version;
 	my $module_name;
-	if($module =~ /(.+)\s(.+)$/) {
+	if($module =~ /(\S+)\s+(.+)$/) {
 		$module_name = $1;
 		$version = $2;
 		eval "require $1";
@@ -452,7 +452,7 @@ if(scalar(@needfull)) {
 
 foreach my $module(@modules) {
 	my $version;
-	if($module =~ /(.+)\s(.+)$/) {
+	if($module =~ /(\S+)\s+(.+)$/) {
 		$module = $1;
 		$version = $2;
 	}
@@ -4223,8 +4223,8 @@ sub print_person
 								if($placeofmarriage || $dateofmarriage) {
 									$phrase->append(($language eq 'French') ? ' :' : ':');
 								}
-								$phrase->append(' ');
 							}
+							$phrase->append(' ');
 						}
 						if((!$placeofmarriage) && !$dateofmarriage) {
 							if(length(my $spouse_name = $spouse->as_string({ middle_names => 1, title => 1 }))) {
@@ -13424,6 +13424,7 @@ sub add_death_notes
 		if($opts{'w'} && (my $family = extract_family_info($notes))) {
 			# TODO: handle obituary data verification
 			$Data::Dumper::Maxdepth = 0;
+			delete $family->{'death'}{'datetime'};
 			# die $notes, Data::Dumper->new([$family])->Dump();
 			warn "TODO: $notes", Data::Dumper->new([$family])->Dump() if(scalar keys(%{$family}));
 		}
