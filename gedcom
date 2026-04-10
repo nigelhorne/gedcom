@@ -2332,7 +2332,7 @@ sub print_person
 			} elsif($c =~ 'England,?\sUK') {
 				$birth_country = 'United Kingdom';
 			} elsif($c eq 'Scot') {
-				complain({ person => $person, warning => "$c: birth country should be Scotland'" });
+				complain({ person => $person, warning => "$c: birth country should be Scotland" });
 				$birth_country = 'United Kingdom';
 			} elsif($c eq 'Slovenija') {
 				$birth_country = 'Slovenia';
@@ -2415,7 +2415,7 @@ sub print_person
 		} elsif($c eq 'Scotland') {
 			$death_country = 'United Kingdom';
 		} elsif($c eq 'Scot') {
-			complain({ person => $person, warning => "$c: death country should be Scotland'" });
+			complain({ person => $person, warning => "$c: death country should be Scotland" });
 			$death_country = 'United Kingdom';
 		} elsif($c eq 'Wales') {
 			$death_country = 'United Kingdom';
