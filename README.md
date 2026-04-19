@@ -245,10 +245,7 @@ mention goes to the [Gedcom](http://search.cpan.org/~pjcj/Gedcom/) module.
 
 Copyright 2015-2025 Nigel Horne.
 
-This program is released under the following licence: GPL for personal use on a single computer.
-All other users (including Commercial, Charity, Educational, Government)
-must apply in writing for a licence for use from Nigel Horne at
-`<njh at nigelhorne.com>`.
+This program is released under the GPL2 licence.
 
 ## Support
 
