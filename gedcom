@@ -294,7 +294,7 @@ if($opts{'B'}) {
 }
 unless(($opts{'r'} || $opts{'O'} || $opts{'S'}) && !$opts{'v'}) {
 	push @modules, 'Geo::Coder::List', 'Geo::Coder::Free', 'Geo::Coder::Free::Local',
-		'Geo::Address::Parser::Country 0.02',
+		'Geo::Address::Parser::Country 0.03',
 		'Geo::Coder::CA', 'Geo::Coder::Postcodes',
 		# 'Geo::Coder::DataScienceToolkit',
 		'Geo::Coder::Ovi', 'Geo::Coder::RandMcnally', 'Geo::Coder::US::Census',
@@ -11998,7 +11998,7 @@ sub get_all_occupations
 				} elsif($occupation eq 'Teacher') {
 					$occupation = 'Professeur';
 				}
-				$occupation =~ s/retired/\N{U+00E0} la retrainte/i;
+				$occupation =~ s/retired/\N{U+00E0} la retraite/i;
 			} elsif($language eq 'German') {
 				if($occupation eq 'Teacher') {
 					$occupation = (($person->sex() eq 'M') ? 'Lehrer' : 'Lehrerin');
