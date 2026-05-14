@@ -65,7 +65,7 @@ BEGIN {
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date', 'Genealogy::Obituary::Parser',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'Config::Abstraction', 'Date::Cmp', 'File::HomeDir', 'String::Compare',
-		'Genealogy::Occupation 0.01', 'HTML::Entities',
+		'Genealogy::Occupation', 'HTML::Entities',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
@@ -80,7 +80,7 @@ BEGIN {
 		'I18N::LangTags::Detect',
 		'Roman', 'Unicode::Diacritic::Strip',
 		'Params::Get',
-		'Scalar::Util', 'Template',
+		'Scalar::Util', 'Template', 'Text::Soundex',
 		'utf8::all',
 		# 'Devel::FIXME',
 	);
@@ -275,8 +275,7 @@ if($opts{'B'}) {
 	push @modules, 'File::Temp', 'Image::Resize', $magick,
 		'Image::Magick::Thumbnail',
 		'List::Uniq', 'LWP::Simple::WithCache',
-		'PDF::API2', 'PDF::API2::XS',
-		'Text::Soundex', 'Text::Wrap';
+		'PDF::API2', 'PDF::API2::XS', 'Text::Wrap';
 } elsif($opts{'r'} || $opts{'i'} || $opts{'O'}) {
 	if($opts{'i'}) {
 		push @modules, 'Data::ICal', 'Date::ICal',
@@ -284,9 +283,8 @@ if($opts{'B'}) {
 			'Data::ICal::TimeZone', 'Data::ICal::DateTime';
 	}
 } elsif($opts{'H'}) {
-	push @modules, 'HTML::Table', 'Text::Soundex';
+	push @modules, 'HTML::Table';
 } elsif($opts{'x'} || $opts{'g'} || $opts{'M'}) {
-	push @modules, 'Text::Soundex';
 } elsif($opts{'S'}) {
 	push @modules, 'DBI';
 } else {
@@ -1492,7 +1490,36 @@ sub generate
 {
 	my $params = Params::Get::get_params(undef, @_);
 
+	# Build name lookup hashes once per generate() call to avoid
+	# the O(n**2) duplicate detection scan in print_person().
+	# Keyed on normalised surname|givennames for exact matches,
+	# and soundex(surname)|givennames for fuzzy matches.
+	my %people_by_name;
+	my %people_by_soundex;
+	foreach my $person(@{$params->{'everyone'}}) {
+		# Skip people with unknown surnames
+		my $surname = lc($person->surname() // '');
+		next if(!length($surname) || ($surname eq '?'));
+
+		# Skip people with unknown given names
+		my $given = lc(given_names($person) // '');
+		next unless length($given);
+
+		# Exact name lookup - catches direct duplicates
+		push @{$people_by_name{"$surname|$given"}}, $person;
+
+		# Soundex lookup - catches spelling variants
+		if(my $sdx = soundex_nara($person->surname())) {
+			push @{$people_by_soundex{"$sdx|$given"}}, $person;
+		}
+	}
+
+	# Pass the lookup hashes into print_person() via params
+	$params->{'people_by_name'}    = \%people_by_name;
+	$params->{'people_by_soundex'} = \%people_by_soundex;
+
 	my $surname_initial;
+
 	if($opts{'B'}) {
 		# $params->{'font'} = $pdf->corefont('Times-Roman', -encode => 'utf-8');
 		# FIXME: corefonts don't include UTF-8
@@ -1892,52 +1919,74 @@ sub print_person
 	}
 
 	if($opts{'w'}) {
-		# Look to see if this person also appears elsewhere in the tree
+		# Look to see if this person also appears elsewhere in the tree.
+		# Use pre-built lookup hashes from generate() for O(1) lookup
+		# rather than O(n) scan per person.
 		my $string_args = {
 			include_years => 1,
-			middle_names => 1,
-			nee => 1
+			middle_names  => 1,
+			nee           => 1
 		};
-		foreach my $possible(@{$params{'everyone'}}) {
-			next if($possible->xref() eq $person->xref());
-			next if(lc($possible->surname()) ne lc($lastname));
-			next if($lastname eq '?');
-			my $given = lc(given_names($person));
-			next if($given ne lc(given_names($possible)));
 
-			if($yob) {
-				if(my $pdob = dateofbirth($possible)) {
-					my $year = get_year_from_date($pdob);
-					next if(abs($yob - $year) > 2);
-					if((my $f1 = $person->father()) && (my $f2 = $possible->father())) {
-						if((my $fdob = dateofbirth($f1)) && (my $pfdob = dateofbirth($f2))) {
-							# Fathers born more than 10 years apart - not a dup
-							next if(abs(get_year_from_date($fdob) - get_year_from_date($pfdob)) > 10);
+		# Skip duplicate detection for unknown surnames
+		if($lastname && ($lastname ne '?')) {
+			my $given = lc(given_names($person) // '');
+
+			# Step 1: exact name lookup
+			my $exact_key = lc($lastname) . '|' . $given;
+			my @candidates = @{$params{'people_by_name'}{$exact_key} // []};
+
+			# Step 2: soundex fallback for spelling variants not caught
+			# by exact match
+			if(my $sdx = soundex_nara($lastname)) {
+				my $soundex_key = "$sdx|$given";
+				my %seen = map { $_->xref() => 1 } @candidates;
+				foreach my $possible(@{$params{'people_by_soundex'}{$soundex_key} // []}) {
+					# Only add if not already in exact candidates
+					push @candidates, $possible
+						unless $seen{$possible->xref()}++;
+				}
+			}
+
+			foreach my $possible(@candidates) {
+				next if($possible->xref() eq $person->xref());
+				next if(lc($possible->surname()) ne lc($lastname));
+				my $given = lc(given_names($person));
+				next if($given ne lc(given_names($possible)));
+
+				if($yob) {
+					if(my $pdob = dateofbirth($possible)) {
+						my $year = get_year_from_date($pdob);
+						next if(abs($yob - $year) > 2);
+						if((my $f1 = $person->father()) && (my $f2 = $possible->father())) {
+							if((my $fdob = dateofbirth($f1)) && (my $pfdob = dateofbirth($f2))) {
+								next if(abs(get_year_from_date($fdob) - get_year_from_date($pfdob)) > 10);
+							}
 						}
+						complain({ person => $person, warning => 'potential duplicate person found' });
+						# DEBUG: warn while looking for false positives
+						warn 'Potential match: ', $person->as_string($string_args), "/$yob/$year/", $possible->as_string($string_args);
+					} elsif(my $pdod = dateofdeath($possible)) {
+						my $year = get_year_from_date($pdod);
+						next if(abs($yob - $year) > 2);	# Born more than two years after the possible match died
+						die 'TODO: Potential match: ', $person->as_string($string_args), '/', $possible->as_string($string_args);
 					}
-					complain({ person => $person, warning => 'potential duplicate person found' });
-					# DEBUG: warn while looking for false positives
-					warn 'Potential match: ', $person->as_string($string_args), "/$yob/$year/", $possible->as_string($string_args);
-				} elsif(my $pdod = dateofdeath($possible)) {
-					my $year = get_year_from_date($pdod);
-					next if(abs($yob - $year) > 2);	# Born more than two years after the possible match died
+				} elsif($yod) {
+					if(my $pdob = dateofbirth($possible)) {
+						my $year = get_year_from_date($pdob);
+						next if(abs($yod - $year) > 2);	# Died more than two years before the possible match was born
+						die 'TODO: Potential match: ', $person->as_string($string_args), '/', $possible->as_string($string_args);
+					}
+				} elsif(my $relationship = $person->relationship($possible)) {
+					next if($relationship eq 'father');
+					next if($relationship eq 'mother');
+					next if($relationship eq 'son');
+					next if($relationship eq 'daughter');
 					die 'TODO: Potential match: ', $person->as_string($string_args), '/', $possible->as_string($string_args);
+				} elsif($given ne '?') {
+					complain({ person => $person, warning => 'Potential match: ' . $person->as_string($string_args) . '/' . $possible->as_string($string_args) });
+					return;
 				}
-			} elsif($yod) {
-				if(my $pdob = dateofbirth($possible)) {
-					my $year = get_year_from_date($pdob);
-					next if(abs($yod - $year) > 2);	# Died more than two years before the possible match was born
-					die 'TODO: Potential match: ', $person->as_string($string_args), '/', $possible->as_string($string_args);
-				}
-			} elsif(my $relationship = $person->relationship($possible)) {
-				next if($relationship eq 'father');
-				next if($relationship eq 'mother');
-				next if($relationship eq 'son');
-				next if($relationship eq 'daughter');
-				die 'TODO: Potential match: ', $person->as_string($string_args), '/', $possible->as_string($string_args);
-			} elsif($given ne '?') {
-				complain({ person => $person, warning => 'Potential match: ' . $person->as_string($string_args) . '/' . $possible->as_string($string_args) });
-				return;
 			}
 		}
 	}
