@@ -65,7 +65,7 @@ BEGIN {
 		'FindBin', 'Gedcom', 'Genealogy::Gedcom::Date', 'Genealogy::Obituary::Parser',
 		'Date::Parse', 'IPC::System::Simple',
 		'CHI', 'Config::Abstraction', 'Date::Cmp', 'File::HomeDir', 'String::Compare',
-		'Genealogy::Occupation', 'HTML::Entities',
+		'Genealogy::Military::Branch', 'Genealogy::Occupation', 'HTML::Entities',
 		'Lingua::EN::NameCase', 'Lingua::EN::NameParse',
 		'Lingua::EN::ABC', 'Lingua::String',
 		'Lingua::EN::Inflect', 'DateTime::Format::Natural',
@@ -483,6 +483,7 @@ my $us = Locale::US->new();
 my $geonames;
 
 my $country_resolver;	# Constructed lazily in print_person() once $geonames is available
+my $branch_detector;		# Constructed lazily on first use in service()
 my $occupation_normaliser;	# Constructed lazily on first use in get_all_occupations()
 my $relationship_namer;	# Constructed lazily on first use in relationship_up()
 
@@ -13259,20 +13260,13 @@ sub service
 
 	return 'military' unless $params->{'event'};
 
-	if(my $notes = notes(record => $params->{'event'})) {
-		# Configurable branch detection
-		my @branch_detectors = (
-			{ pattern => qr/\bnavy\b/i, value => 'navy' },
-			{ pattern => qr/\b(?:RAF|Royal Air Force)\b/i, value => 'RAF' },
-			{ pattern => qr/\b(?:army\.?|regiment|soldier)\b/i, value => 'army' },
-		);
+	# Construct the branch detector lazily on first use
+	$branch_detector //= Genealogy::Military::Branch->new();
 
-		for my $detector (@branch_detectors) {
-			return i18n($detector->{value}) if $notes =~ $detector->{pattern};
-		}
-	}
+	my $notes = notes(record => $params->{'event'});
+	return 'military' unless $notes;
 
-	return 'military';
+	return $branch_detector->detect(text => $notes);
 }
 
 1;
