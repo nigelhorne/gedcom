@@ -3831,7 +3831,7 @@ sub print_person
 				$myod = $1;
 			}
 			if((!defined($fyod)) || (!defined($myod))) {
-				die "BUG: !fyod || !myod";
+				die "BUG: !fyod || !myod, ", $person->as_string(), ', ', dateofdeath($mother), ', ', dateofdeath($father);
 			}
 			if((($fyod - $yob) < 16) && (($myod - $yob) < 16)) {
 				if(scalar(@phrases) == 0) {
@@ -11406,7 +11406,10 @@ sub get_all_occupations
 	# Construct the normaliser lazily on first use to reduce startup cost
 	$occupation_normaliser //= Genealogy::Occupation->new();
 
-	# Normalise, filter, deduplicate and translate in one call
+	print 'Find occupations for', $person->as_string(middle_names => 1), "\n" if($opts{v});
+
+	# Delegate all filtering, deduplication, normalisation, and
+	# locale/language translation to Genealogy::Occupation
 	return @{$occupation_normaliser->normalise(
 		occupation => \@occupations,
 		sex        => $sex,
@@ -11639,7 +11642,15 @@ sub datecmp($$)
 {
 	my ($left, $right) = @_;
 
-	return Date::Cmp::datecmp($left, $right, \&complain);
+	my $rc;
+	eval {
+		$rc = Date::Cmp::datecmp($left, $right, \&complain);
+	};
+	if($@) {
+		complain($@);
+		return 0;
+	}
+	return $rc;
 }
 
 sub chronicling_america
@@ -12184,7 +12195,8 @@ sub parse_date
 		} elsif($before) {
 			return "bef $date";
 		}
-		return $date;
+		return $date if($date =~ /^\d/);
+		complain({ person => $person, warning => "Can't parse date $date" });
 	}
 }
 
