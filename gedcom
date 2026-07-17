@@ -3,7 +3,7 @@
 # gedcom - produce data from a gedcom file
 
 # Author Nigel Horne: njh@bandsman.co.uk
-# Copyright (C) 2015-2025, Nigel Horne
+# Copyright (C) 2015-2026, Nigel Horne
 
 # This software is provided as-is without any warranty.
 # Usage is subject to licence terms of GPL2.
@@ -10659,6 +10659,9 @@ sub complain
 	if(ref($params{'warning'}) eq 'ARRAY') {
 		$params{'warning'} = join('', @{$params{'warning'}});
 	}
+
+	$params{warning} =~ s/\n//g;
+
 	if($opts{'f'}) {
 		my @call_details = caller(0);
 		if($params{'person'}) {
