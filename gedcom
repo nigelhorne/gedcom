@@ -11813,17 +11813,8 @@ sub add_to_ical {
 
 sub dateofbirth
 {
-	my %params;
-
-	if(ref($_[0]) eq 'HASH') {
-		%params = %{$_[0]};
-	} elsif(scalar(@_) % 2 == 0) {
-		%params = @_;
-	} else {
-		$params{'person'} = shift;
-	}
-
-	my $person = $params{'person'};
+	my $params = Params::Get::get_params('person', @_);
+	my $person = $params->{'person'};
 
 	my @d = get_value({ person => $person, value => 'birth date' });
 	my $dateofbirth;
@@ -11907,6 +11898,10 @@ sub dateofbirth
 		if($dateofbirth =~ /^0\d{3}/) {
 			complain({ person => $person, warning => "Removing leading zeroes from date of birth '$dateofbirth'" });
 			$dateofbirth =~ s/^0+//;
+		}
+		if($params->{exact} && ($dateofbirth =~ /^abt/i)) {
+			# Must be an exact date of birth
+			return;
 		}
 		return parse_date({ date => $dateofbirth, type => 'Birth', person => $person });
 	}
@@ -12082,7 +12077,7 @@ sub dateofdeath
 # Dig the date out of a field and return in a valid gedcom format
 sub parse_date
 {
-	my $params = Params::Get::get_params('date', @_);
+	my $params = Params::Get::get_params('date', \@_);
 
 	if(my $date = $params->{'date'}) {
 		if(ref($date)) {
@@ -12191,14 +12186,14 @@ sub parse_date
 			die $ARGV[0], ': BUG: parse_date(): handle "', $params->{'date'}, '" on ', $person->as_string(), " parsed so far as '$date'";
 		}
 		if($about) {
-			$date = "abt $date";
-		}
-		if($after) {
+			return "abt $date";
+		} elsif($after) {
 			return "aft $date";
 		} elsif($before) {
 			return "bef $date";
 		}
 		return $date if($date =~ /^\d/);
+		return $date if($date =~ /^[A-S][a-z][a-z]\s/i);	# Starts with a month's name
 		complain({ person => $person, warning => "Can't parse date $date" });
 	}
 }
@@ -12898,7 +12893,7 @@ sub twins
 	my @twins;
 
 	foreach my $sibling (@$siblings) {
-		my $dob = dateofbirth($sibling) or next;
+		my $dob = dateofbirth({ person => $sibling, exact => 1 }) or next;
 
 		# Skip if DOB format is incorrect
 		next unless $dob =~ /^\d/ && $dob !~ /[a-z]$/i;
