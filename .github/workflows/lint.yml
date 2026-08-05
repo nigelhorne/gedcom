@@ -6,6 +6,9 @@
 #################################
 name: Lint Code Base
 
+permissions:
+  contents: read
+
 #
 # Documentation:
 # https://help.github.com/en/articles/workflow-syntax-for-github-actions
