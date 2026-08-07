@@ -24,14 +24,15 @@ sub colored  { $_[0] }	# return the text, ignore the colour argument
 	open my $fh, '<', '../gedcom'
 		or die "Cannot open ../gedcom: $!\n";
 
-	my ($in_sub, $depth, $src) = (0, 0, '');
+	my ($in_sub, $depth, $started, $src) = (0, 0, 0, '');
 	while(my $line = <$fh>) {
 		$in_sub = 1 if !$in_sub && $line =~ /^sub parse_date\b/;
 		if($in_sub) {
 			$src   .= $line;
 			$depth += () = $line =~ /\{/g;
 			$depth -= () = $line =~ /\}/g;
-			last if $depth == 0;
+			$started = 1 if $depth > 0;
+			last if $started && $depth == 0;
 		}
 	}
 	die "Could not extract parse_date from ../gedcom\n" unless $src;
@@ -39,101 +40,105 @@ sub colored  { $_[0] }	# return the text, ignore the colour argument
 	die $@ if $@;
 }
 
+my $T = { type => 'Test' };	# keeps each call terse; avoids undef-$type warnings
+
 # ---- new feature: slash-separated month ranges ----------------------------
 
-is(parse_date({ date => 'Apr/May/Jun 1959' }),
+is(parse_date({ %$T, date => 'Apr/May/Jun 1959' }),
 	'bet 1 Apr 1959 and 30 Jun 1959',
 	'quarter span Apr/May/Jun');
 
-is(parse_date({ date => 'Jan/Feb 1900' }),
+is(parse_date({ %$T, date => 'Jan/Feb 1900' }),
 	'bet 1 Jan 1900 and 28 Feb 1900',
 	'span ending in Feb — 1900 is not a leap year');
 
-is(parse_date({ date => 'Jan/Feb 2000' }),
+is(parse_date({ %$T, date => 'Jan/Feb 2000' }),
 	'bet 1 Jan 2000 and 29 Feb 2000',
 	'span ending in Feb — 2000 IS a leap year');
 
-is(parse_date({ date => 'Jan/Feb 1900' }),
+is(parse_date({ %$T, date => 'Jan/Feb 1900' }),
 	'bet 1 Jan 1900 and 28 Feb 1900',
 	'span ending in Feb — 1900 divisible by 100 but not 400, so not leap');
 
-is(parse_date({ date => 'Oct/Nov/Dec 1843' }),
+is(parse_date({ %$T, date => 'Oct/Nov/Dec 1843' }),
 	'bet 1 Oct 1843 and 31 Dec 1843',
 	'quarter span Oct/Nov/Dec');
 
-is(parse_date({ date => 'Nov/Dec 1799' }),
+is(parse_date({ %$T, date => 'Nov/Dec 1799' }),
 	'bet 1 Nov 1799 and 31 Dec 1799',
 	'two-month span ending in 31-day month');
 
-is(parse_date({ date => 'APR/MAY/JUN 1959' }),
+is(parse_date({ %$T, date => 'APR/MAY/JUN 1959' }),
 	'bet 1 Apr 1959 and 30 Jun 1959',
 	'slash span normalises all-caps month names');
 
 # ---- aft / bef / abt prefix handling -------------------------------------
 
-is(parse_date({ date => 'aft 1 Jan 1900' }),
+is(parse_date({ %$T, date => 'aft 1 Jan 1900' }),
 	'aft 1 Jan 1900',
 	'aft prefix preserved');
 
-is(parse_date({ date => 'bef Dec 1925' }),
+is(parse_date({ %$T, date => 'bef Dec 1925' }),
 	'bef Dec 1925',
 	'bef prefix preserved');
 
-is(parse_date({ date => 'abt 1959' }),
+is(parse_date({ %$T, date => 'abt 1959' }),
 	'abt 1959',
 	'abt prefix preserved');
 
-is(parse_date({ date => 'about 1959' }),
+is(parse_date({ %$T, date => 'about 1959' }),
 	'abt 1959',
 	'"about" prefix normalised to "abt"');
 
-is(parse_date({ date => 'about Feb 1877' }),
+is(parse_date({ %$T, date => 'about Feb 1877' }),
 	'abt Feb 1877',
 	'"about Month Year" normalised');
 
-is(parse_date({ date => 'About:1907-00-00' }),
+is(parse_date({ %$T, date => 'About:1907-00-00' }),
 	'abt 1907',
 	'About:YYYY-00-00 format');
 
-is(parse_date({ date => 'After 1959' }),
+is(parse_date({ %$T, date => 'After 1959' }),
 	'aft 1959',
 	'"After" normalised to "aft" (complaint suppressed in test)');
 
-is(parse_date({ date => 'Before 1959' }),
+is(parse_date({ %$T, date => 'Before 1959' }),
 	'bef 1959',
 	'"Before" normalised to "bef" (complaint suppressed in test)');
 
 # ---- passthrough ---------------------------------------------------------
 
-is(parse_date({ date => '4 Jul 1776' }),
+is(parse_date({ %$T, date => '4 Jul 1776' }),
 	'4 Jul 1776',
 	'day-month-year passes through unchanged');
 
-is(parse_date({ date => 'Apr 1959' }),
+is(parse_date({ %$T, date => 'Apr 1959' }),
 	'Apr 1959',
 	'month-year passes through unchanged');
 
-is(parse_date({ date => '1959' }),
+is(parse_date({ %$T, date => '1959' }),
 	'1959',
 	'year-only passes through unchanged');
 
 # ---- normalisation -------------------------------------------------------
 
-is(parse_date({ date => '@#DJULIAN@ 4 Jul 1776' }),
+is(parse_date({ %$T, date => '@#DJULIAN@ 4 Jul 1776' }),
 	'4 Jul 1776',
 	'Julian calendar escape stripped');
 
-is(parse_date({ date => '4 October 1776' }),
+is(parse_date({ %$T, date => '4 October 1776' }),
 	'4 Oct 1776',
 	'long month name truncated to 3 letters');
 
-is(parse_date({ date => 'from 1 Jan 1900 to 31 Dec 1900' }),
+is(parse_date({ %$T, date => 'from 1 Jan 1900 to 31 Dec 1900' }),
 	'bet 1 Jan 1900 and 31 Dec 1900',
 	'"from … to …" converted to GEDCOM bet range');
 
 # ---- undefined / empty ---------------------------------------------------
 
-is(parse_date({ date => 'unknown' }), undef, '"unknown" returns undef');
-is(parse_date({ date => '' }),        undef, 'empty string returns undef');
+is(parse_date({ %$T, date => 'unknown' }), undef, '"unknown" returns undef');
+# Empty string is falsy so the if-condition in parse_date short-circuits,
+# returning the false value of the condition itself ('') rather than undef.
+ok(!parse_date({ %$T, date => '' }), 'empty string returns a false value');
 
 done_testing();
