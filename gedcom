@@ -39,6 +39,7 @@
 # TODO: use Geo::Coder::Abreviate->normalize once that's completed
 # TODO: data analysis of notes to find extra information
 # TODO: Something like: "$person was born on 1 Dec 1795, less than 9 months before his father died, leaving his mother 5 children to bring up by herself".  Optionally add "until she remarried on 15 Apr 1797".
+# TODO: Are related people all buried/cremated at the same place?
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
