@@ -9414,8 +9414,7 @@ sub Gedcom::Individual::relationship_up
 								" mother's side";
 						}
 					}
-				}
-				if(!defined($rc)) {
+				} elsif(!defined($rc)) {
 					die $other->as_string({ nee => 1, middle_names => 1, include_years => 1 }), ": $steps1, $steps2";
 					complain({ person => $other, warning => "TODO: $steps1, $steps2" });
 				}
