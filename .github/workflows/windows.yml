@@ -4,19 +4,18 @@ name: Windows
 on:
   push:
     branches:
-      - '*'
+      - "*"
     tags-ignore:
-      - '*'
+      - "*"
   pull_request:
 
 jobs:
   perl:
-
     runs-on: windows-latest
     strategy:
       matrix:
         os:
-          - windows-2019
+          - windows-2022
           - windows-2016
 
     steps:

@@ -7666,7 +7666,12 @@ sub print_person
 			# if(LWP::Simple::WithCache::is_success($rc = LWP::Simple::WithCache::getstore($file, $filename))) {
 			if($opts{'B'}) {
 				if(scalar(@phrases)) {
-					$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					if(scalar(@phrases) == 1) {
+						$phrases[0] =~ s/,\s*$//;
+						$bio->append($phrases[0] . '.  ');
+					} else {
+						$bio->append(conjunction(map { $_->as_string() } @phrases))->append('.  ');
+					}
 					@phrases = ();
 				}
 				$phrase = Data::Text->new();

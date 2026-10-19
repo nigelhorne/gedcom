@@ -1,0 +1,13 @@
+{
+  "threshold": 11,
+  "reporters": ["consoleFull"],
+  "ignore": [
+    "**/__snapshots__/**",
+    "**/node_modules/**",
+    "**/blib/**",
+    "**/cover_db/**",
+    "**/.git/**",
+    "**/MYMETA.*"
+  ],
+  "absolute": true
+}
