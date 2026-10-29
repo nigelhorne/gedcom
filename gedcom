@@ -39,7 +39,6 @@
 # TODO: use Geo::Coder::Abreviate->normalize once that's completed
 # TODO: data analysis of notes to find extra information
 # TODO: Something like: "$person was born on 1 Dec 1795, less than 9 months before his father died, leaving his mother 5 children to bring up by herself".  Optionally add "until she remarried on 15 Apr 1797".
-# TODO: Are related people all buried/cremated at the same place?
 # TODO: i18n to Mandarin will need work because maternal and paternal
 #	grandparents differ, as do older and younger siblings
 
@@ -218,6 +217,7 @@ my %places;
 my %all_locations;
 my %all_places;
 my %all_residences;
+my %cemeteries;	# Maps places to people buried/cremated there
 my %all_occupations;
 # my $pi = atan2(1,1) * 4;
 
@@ -2769,6 +2769,11 @@ sub print_person
 			if(!$placeofcremation) {
 				$placeofcremation = $cremation->place();
 			}
+		}
+
+		# Record where this person is buried/cremated, keyed on the cemetery's name and address
+		if(my $cemetery = cemetery_of($person)) {
+			push @{$cemeteries{$cemetery->{'name'}}}, $person->xref();
 		}
 
 		my $marriagecitation;
@@ -7190,6 +7195,10 @@ sub print_person
 						$record = $cremation;
 						$parse_tree->{'cremation'}->{'date'} = year({ date => $dateofcremation });
 					}
+					# Before the funeral, so that "the same place" can't be read as the funeral's place
+					if(same_cemetery_string({ person => $person, static => 1 })) {
+						$phrase->append(same_cemetery_string({ person => $person }));
+					}
 					if(defined($record)) {
 						# Prefer burial date, but use funeral if that is available instead
 						if($funeral &&
@@ -7215,6 +7224,9 @@ sub print_person
 						# Funeral record, but no burial or cremation
 						$phrase->append(" ($weather)");
 						$parse_tree->{$type}->{'weather'} = $weather;
+					}
+					if(same_cemetery_string({ person => $person, static => 1 })) {
+						$phrase->append(same_cemetery_string({ person => $person }));
 					}
 					if($record && (my $n = notes({ record => $record, paragraph => 0 }))) {
 						$n =~ s/\.$//;
@@ -7255,6 +7267,9 @@ sub print_person
 						i18n({ person => $person, format => 'is buried' }) .
 						place({ person => $person, record => $burial, places_printed => \%places_printed, there => $placeofmarriage })
 					);
+				}
+				if((!$dateofburial) && same_cemetery_string({ person => $person, static => 1 })) {
+					$phrase->append(same_cemetery_string({ person => $person }));
 				}
 			} elsif($dateofdeath || $placeofdeath) {
 				if(!$diedathome) {
@@ -7483,6 +7498,9 @@ sub print_person
 					}
 					$parse_tree->{'burial'}->{'there'} = 1;
 					$parse_tree->{'burial'}->{'place'} = $burial->address();
+					if(same_cemetery_string({ person => $person, static => 1 })) {
+						$phrase->append(same_cemetery_string({ person => $person }));
+					}
 				} elsif(my $b = place($opts)) {
 					if($diedathome) {
 						$phrase->append("$pronoun ");
@@ -7533,6 +7551,9 @@ sub print_person
 					if(defined($weather)) {
 						$parse_tree->{$type}->{'weather'} = $weather;
 						$phrase->append(" ($weather)");
+					}
+					if(same_cemetery_string({ person => $person, static => 1 })) {
+						$phrase->append(same_cemetery_string({ person => $person }));
 					}
 				}
 				append_notes({ phrase => $phrase, record => ($burial // $cremation // $funeral), paragraph => 0 });
@@ -10740,6 +10761,151 @@ sub spouse_death_string
 		push @spouses, "$possessive " . i18n($relationship) . " $name";
 	}
 	return ', ' . i18n('the same day as ') . conjunction(@spouses);
+}
+
+# Return a hashref of { name => ..., type => 'burial'|'cremation' } describing
+#	where the person was buried or cremated, or undef if not known
+# The name combines the burial/cremation address and place, so that it identifies
+#	a cemetery rather than just a town.  Only places that look like a cemetery,
+#	or that have an address, are returned, otherwise everyone buried in the same
+#	town would be treated as being in the same cemetery
+sub cemetery_of
+{
+	my $person = shift;
+
+	my $type;
+	my $record;
+	if($record = $person->get_record('burial')) {
+		$type = 'burial';
+	} elsif($record = $person->get_record('cremation')) {
+		$type = 'cremation';
+	} else {
+		return;
+	}
+
+	my $place = get_value({ person => $person, value => "$type place" }) || $record->place();
+	my $address = $record->address();
+	my $name;
+	if($address && $place) {
+		# Avoid repeating the address when the place already includes it
+		$name = ($place =~ /^\Q$address\E\b/i) ? $place : "$address, $place";
+	} elsif($address) {
+		$name = $address;
+	} elsif($place && ($place =~ /^[^,]*(cemetery|churchyard|crematorium|graveyard|burial ground|necropolis|cimeti|friedhof|kirkyard|memorial park)/i)) {
+		$name = $place;
+	} else {
+		return;
+	}
+	$name =~ s/\s+/ /g;
+	$name =~ s/^\s+|\s+$//g;
+
+	return { name => $name, type => $type };
+}
+
+# Return the person's close relatives as a list of [ person, relationship ],
+#	nearest first: spouses, parents, children, siblings, grandparents,
+#	aunts and uncles, then first cousins
+# Relatives whose sex isn't known are skipped, since the relationship can't be named
+sub close_relatives
+{
+	my $person = shift;
+
+	my %seen = ($person->xref() => 1);
+	my @rc;
+
+	my $add = sub {
+		my ($relative, $male, $female) = @_;
+
+		return if(!defined($relative) || $seen{$relative->xref()}++);
+		my $sex = get_value({ person => $relative, value => 'sex' });
+		return if(!defined($sex));
+		if($sex eq 'M') {
+			push @rc, [ $relative, $male ];
+		} elsif($sex eq 'F') {
+			push @rc, [ $relative, $female ];
+		}
+	};
+
+	$add->($_, 'husband', 'wife') foreach($person->spouse());
+
+	my @parents = grep { defined } ($person->father(), $person->mother());
+	$add->($_, 'father', 'mother') foreach(@parents);
+	$add->($_, 'son', 'daughter') foreach($person->children());
+	$add->($_, 'brother', 'sister') foreach($person->siblings());
+
+	foreach my $parent(@parents) {
+		$add->($_, 'grandfather', 'grandmother') foreach(grep { defined } ($parent->father(), $parent->mother()));
+	}
+
+	my @auntsanduncles = map { $_->siblings() } @parents;
+	$add->($_, 'uncle', 'aunt') foreach(@auntsanduncles);
+	foreach my $auntoruncle(@auntsanduncles) {
+		$add->($_, 'cousin', 'cousin') foreach($auntoruncle->children());
+	}
+
+	return @rc;
+}
+
+# Return a phrase such as ", the same place as his wife, Mary Smith, who was also buried there"
+#	when one or more of the person's close relatives were buried or cremated in the
+#	same cemetery as the person, otherwise return ''
+# Set 'static' to link to the static site's pages rather than the dynamic site's
+sub same_cemetery_string
+{
+	my $params = Params::Get::get_params(undef, \@_);
+
+	my $person = $params->{'person'};
+
+	my $cemetery = cemetery_of($person) or return '';
+
+	my @relatives;
+	my %types;
+	my $last;	# The gender of a sole relative determines the agreement in some languages
+	foreach my $r(close_relatives($person)) {
+		my ($relative, $relationship) = @{$r};
+		my $theirs = cemetery_of($relative) or next;
+		next if(lc($theirs->{'name'}) ne lc($cemetery->{'name'}));
+
+		my $href = $params->{'static'} ?
+			make_filename_from_person(person => $relative) :
+			('?page=people&entry=' . $relative->xref());
+		my $name = '<a href="' . $href . '">' . $relative->as_string() . '</a>';
+
+		my $possessive;
+		if($language eq 'French') {
+			$possessive = (get_value({ person => $relative, value => 'sex' }) eq 'F') ? 'sa' : 'son';
+		} else {
+			$possessive = lcfirst($person->possessive());
+		}
+		push @relatives, "$possessive " . i18n({ person => $relative, format => $relationship }) . ", $name";
+		$types{$theirs->{'type'}} = 1;
+		$last = $relative;
+	}
+	return '' if(scalar(@relatives) == 0);
+
+	my $format;
+	if(scalar(@relatives) == 1) {
+		$format = ($types{'burial'}) ? 'who was also buried there' : 'who was also cremated there';
+	} elsif(scalar(keys %types) > 1) {
+		$format = 'who were also laid to rest there';
+	} else {
+		$format = ($types{'burial'}) ? 'who were also buried there' : 'who were also cremated there';
+	}
+
+	# Each item already contains a comma ("his wife, Mary Smith"), so separate them
+	#	with semicolons when there are more than two, to keep the list readable
+	my $list;
+	if(scalar(@relatives) == 1) {
+		$list = $relatives[0];
+	} elsif(scalar(@relatives) == 2) {
+		$list = join(', ' . i18n('and') . ' ', @relatives);
+	} else {
+		my $final = pop @relatives;
+		$list = join('; ', @relatives) . '; ' . i18n('and') . " $final";
+	}
+
+	return ', ' . i18n('the same place as ') . "$list, " .
+		i18n({ person => $last, format => $format });
 }
 
 sub complain
