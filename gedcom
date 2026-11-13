@@ -39,8 +39,8 @@
 # TODO: use Geo::Coder::Abreviate->normalize once that's completed
 # TODO: data analysis of notes to find extra information
 # TODO: Something like: "$person was born on 1 Dec 1795, less than 9 months before his father died, leaving his mother 5 children to bring up by herself".  Optionally add "until she remarried on 15 Apr 1797".
-# TODO: i18n to Mandarin will need work because maternal and paternal
-#	grandparents differ, as do older and younger siblings
+# TODO: i18n to Mandarin, Syuba etc. will need work because maternal and
+#	paternal grandparents differ, as do older and younger siblings
 
 # dnf install langpacks-fr glibc-all-langpacks -y
 
@@ -204,8 +204,8 @@ use autodie qw(:all);
 sub get_location($);
 
 my %opts;
-getopts('aAbB:cCdDe:fFGgh:Hi:m:M:lLOp:PrsStwWxXvy:', \%opts);
-die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -P ] [ -r ] [ -s ] [ -S ] [ -t ] [ -w [ -W ] [ -g | -x ]] [ -X ] filename [ filename2 ]" unless($ARGV[0]);
+getopts('aAbB:cCdDe:fFGgh:Hi:j:k:m:M:lLN:Op:PrsStT:wWxXvy:', \%opts);
+die "Usage: $0 [ -a ] [ -A ] [ -b ] [ -B book.pdf ] [ -c ] [ -C ] [ -d ] [ -D ] [ -f ] [ -F ] [ -G ] [ -h home-person-name ] [ -H [ -L [ -e ] ] [ -i ics_file [ -N calendar-name ] [ -k calendar-description ] [ -j event,event... ] [ -T timezone ] ] [ -M place ] [ -m month ] [ -y year ] ] [ -l ] [ -p person-to-print ] [ -P ] [ -r ] [ -s ] [ -S ] [ -t ] [ -w [ -W ] [ -g | -x ]] [ -X ] filename [ filename2 ]" unless($ARGV[0]);
 
 print "Starting\n" if($opts{'v'});
 
@@ -888,16 +888,37 @@ if($opts{'r'} || $opts{'O'}) {
 	$opts{'A'} = $opts{'a'} = $opts{'d'} = 1;
 }
 my $ical;
+my %ical_events;
 if($opts{'i'}) {
 	if($opts{'r'}) {
 		die '-i and -r are exclusive';
 	}
 	$ical = Data::ICal->new();
+	# Calendar name, description and timezone can be overridden with -N, -k and -T
+	# -j selects which event types go in the calendar; the default is all of them
+	my @valid_events = qw(birth baptism marriage death burial);
+	foreach my $e (split(/\s*,\s*/, lc($opts{'j'} // join(',', @valid_events)))) {
+		die "-j: unknown event type '$e' (valid: " . join(', ', @valid_events) . ')' unless(grep { $_ eq $e } @valid_events);
+		$ical_events{$e} = 1;
+	}
+	my $ical_tz = $opts{'T'};
+	if(defined($ical_tz)) {
+		# Validate the timezone name early, with a clear error message
+		eval { DateTime::TimeZone->new(name => $ical_tz) };
+		die "-T: unknown timezone '$ical_tz'" if($@);
+	} else {
+		# Default to the timezone of the local machine
+		$ical_tz = $ENV{'TZ'} || DateTime::TimeZone->new(name => 'local')->name();
+	}
 	$ical->add_properties(
 		calscale => 'GREGORIAN',
 		method => 'PUBLISH',
-		'X-WR-CALNAME' => "$0 Family Calendar",
+		'X-WR-CALNAME' => $opts{'N'} // "$0 Family Calendar",
+		'X-WR-TIMEZONE' => $ical_tz,
 	);
+	if(defined($opts{'k'})) {
+		$ical->add_properties('X-WR-CALDESC' => $opts{'k'});
+	}
 	$opts{'A'} = $opts{'a'} = 1;
 }
 
@@ -1560,7 +1581,7 @@ sub generate
 			sqlite(person => $person);
 			next;
 		} elsif($ical) {
-			my $dateofbirth = dateofbirth($person);
+			my $dateofbirth = $ical_events{'birth'} ? dateofbirth($person) : undef;
 			if($dateofbirth && ($dateofbirth =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
 				add_to_ical(
 					ical => $ical,
@@ -1568,8 +1589,8 @@ sub generate
 					summary => 'Birth of ' . $person->as_string()
 				);
 			}
-			my $dateofbaptism = get_value({ person => $person, value => 'baptism date' });
-			if((!$dateofbaptism) && (my $baptism = $person->get_record('baptism'))) {
+			my $dateofbaptism = $ical_events{'baptism'} ? get_value({ person => $person, value => 'baptism date' }) : undef;
+			if($ical_events{'baptism'} && (!$dateofbaptism) && (my $baptism = $person->get_record('baptism'))) {
 				$dateofbaptism = $baptism->date();
 			}
 			if($dateofbaptism && ($dateofbaptism =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
@@ -1579,7 +1600,7 @@ sub generate
 					summary => 'Baptism of ' . $person->as_string()
 				);
 			}
-			if(my $marriage = get_marriage($person)) {
+			if($ical_events{'marriage'} && (my $marriage = get_marriage($person))) {
 				if(my $dateofmarriage = $marriage->date()) {
 					if($dateofmarriage && ($dateofmarriage =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
 						my @spouses = $person->spouse();
@@ -1596,7 +1617,7 @@ sub generate
 					}
 				}
 			}
-			my $dateofdeath = dateofdeath($person);
+			my $dateofdeath = $ical_events{'death'} ? dateofdeath($person) : undef;
 			if($dateofdeath && ($dateofdeath =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
 				add_to_ical(
 					ical => $ical,
@@ -1604,8 +1625,8 @@ sub generate
 					summary => 'Death of ' . $person->as_string()
 				);
 			}
-			my $dateofburial = get_value({ person => $person, value => 'burial date' });
-			if((!defined($dateofburial)) && (my $burial = $person->get_record('burial'))) {
+			my $dateofburial = $ical_events{'burial'} ? get_value({ person => $person, value => 'burial date' }) : undef;
+			if($ical_events{'burial'} && (!defined($dateofburial)) && (my $burial = $person->get_record('burial'))) {
 				$dateofburial = $burial->date();
 			}
 			if($dateofburial && ($dateofburial =~ /^\d+\s\w{3}\s\d{3,4}$/)) {
@@ -13701,6 +13722,20 @@ sub DESTROY {
 package main;
 
 # Must all be in lower case
+# A few more to add
+# Afrikaans	Moeder, ma	Vader
+# Asturian	Ma	pá
+# Cambodian	Madai, Mák	ba
+# Hindi	Ma, Maji	Pita, Baap, Babuji
+# Luo	Miyo	baba
+# Mandarin	mama	baba
+# Punjabi	Mai, Mtaji	pita
+# Quechua	Mama	Papa, tayta
+# Swahili	Mama, Mzazi, Mzaa	baba
+# Swedish	Mor	Far, Pappa
+# Vietnamese	me	Bo, ba
+# Welsh	mam	Tad
+# Yiddish	Muter	Tatti, tay, foter, tateh
 __DATA__
 @@ English
 a %s::a %s
