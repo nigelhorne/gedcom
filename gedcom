@@ -12100,8 +12100,14 @@ sub add_to_ical {
 
 	my $event = Data::ICal::Entry::Event->new();
 
-	$event->start($datetime);
-	$event->all_day(1);
+	# All-day event: DTSTART/DTEND are plain dates (VALUE=DATE), and DTEND is exclusive,
+	# so it is the day after DTSTART (RFC 5545 3.6.1)
+	my $start = $datetime->clone()->truncate(to => 'day');
+	my $end = $start->clone()->add(days => 1);
+	$event->add_properties(
+		dtstart => [ $start->strftime('%Y%m%d'), { VALUE => 'DATE' } ],
+		dtend => [ $end->strftime('%Y%m%d'), { VALUE => 'DATE' } ],
+	);
 	# DTSTAMP is the time the calendar was created, in UTC; the same value is used for every event
 	$ical_dtstamp //= DateTime->now(time_zone => 'UTC')->strftime('%Y%m%dT%H%M%SZ');
 	$event->add_properties(
