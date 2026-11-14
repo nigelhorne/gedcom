@@ -1587,6 +1587,7 @@ sub generate
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofbirth),
+					location => scalar(get_value({ person => $person, value => 'birth place' })),
 					summary => 'Birth of ' . $person->as_string()
 				);
 			}
@@ -1598,6 +1599,7 @@ sub generate
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofbaptism),
+					location => scalar(get_value({ person => $person, value => 'baptism place' })) // (($person->get_record('baptism')) ? scalar($person->get_record('baptism')->place()) : undef),
 					summary => 'Baptism of ' . $person->as_string()
 				);
 			}
@@ -1609,6 +1611,7 @@ sub generate
 							add_to_ical(
 								ical => $ical,
 								datetime => date_to_datetime(date => $dateofmarriage),
+								location => scalar(get_value({ person => $person, value => 'marriage place' })) // scalar($marriage->place()),
 								summary => 'Marriage of ' . $person->as_string() . ' and ' . $spouses[0]->as_string()
 							);
 						} elsif(scalar(@spouses) > 1) {
@@ -1623,6 +1626,7 @@ sub generate
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofdeath),
+					location => scalar(get_value({ person => $person, value => 'death place' })),
 					summary => 'Death of ' . $person->as_string()
 				);
 			}
@@ -1634,6 +1638,7 @@ sub generate
 				add_to_ical(
 					ical => $ical,
 					datetime => date_to_datetime(date => $dateofburial),
+					location => scalar(get_value({ person => $person, value => 'burial place' })) // (($person->get_record('burial')) ? scalar($person->get_record('burial')->place()) : undef),
 					summary => 'Burial of ' . $person->as_string()
 				);
 			}
@@ -12114,6 +12119,9 @@ sub add_to_ical {
 		summary => $params{'summary'},
 		dtstamp => $ical_dtstamp,
 	);
+	if(my $location = $params{'location'}) {
+		$event->add_properties(location => $location);
+	}
 
 	$params{'ical'}->add_entry($event);
 }
